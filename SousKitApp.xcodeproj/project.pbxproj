@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		713C181E3047606E0006D2ED /* SousKitAppLibrary */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = SousKitAppLibrary; sourceTree = "<group>"; };
 		71CB48AC30471AC200F07C1F /* SousKitApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SousKitApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -32,6 +33,7 @@
 		71CB48A330471AC200F07C1F = {
 			isa = PBXGroup;
 			children = (
+				713C181E3047606E0006D2ED /* SousKitAppLibrary */,
 				71CB48AE30471AC200F07C1F /* SousKitApp */,
 				71CB48AD30471AC200F07C1F /* Products */,
 			);
