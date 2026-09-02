@@ -10,8 +10,8 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "SousKitAppLibrary",
-            targets: ["SousKitAppLibrary"]
+            name: "AppFeature",
+            targets: ["AppFeature"]
         )
     ],
     dependencies: [
@@ -22,7 +22,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SousKitAppLibrary",
+            name: "AppFeature",
             swiftSettings: [
                 .enableUpcomingFeature("InferIsolatedConformances"),
                 .enableUpcomingFeature("MemberImportVisibility"),

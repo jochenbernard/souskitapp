@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		713C18243047700A0006D2ED /* AppFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 713C18233047700A0006D2ED /* AppFeature */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		713C181E3047606E0006D2ED /* SousKitAppLibrary */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = SousKitAppLibrary; sourceTree = "<group>"; };
 		71CB48AC30471AC200F07C1F /* SousKitApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SousKitApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -24,6 +28,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				713C18243047700A0006D2ED /* AppFeature in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -68,6 +73,7 @@
 			);
 			name = SousKitApp;
 			packageProductDependencies = (
+				713C18233047700A0006D2ED /* AppFeature */,
 			);
 			productName = SousKitApp;
 			productReference = 71CB48AC30471AC200F07C1F /* SousKitApp.app */;
@@ -98,6 +104,7 @@
 			mainGroup = 71CB48A330471AC200F07C1F;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				713C18223047700A0006D2ED /* XCLocalSwiftPackageReference "SousKitAppLibrary" */,
 				713C181F3047641B0006D2ED /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -344,6 +351,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		713C18223047700A0006D2ED /* XCLocalSwiftPackageReference "SousKitAppLibrary" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = SousKitAppLibrary;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		713C181F3047641B0006D2ED /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -360,6 +374,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 713C181F3047641B0006D2ED /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */;
 			productName = "plugin:SwiftLintBuildToolPlugin";
+		};
+		713C18233047700A0006D2ED /* AppFeature */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppFeature;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
