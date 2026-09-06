@@ -13,12 +13,18 @@ disabled_rules:
   - explicit_top_level_acl
   - explicit_type_interface
   - extension_access_modifier
+  - incompatible_concurrency_annotation
   - no_magic_numbers
+  - prefer_self_in_static_references
   - sorted_enum_cases
   - switch_case_on_newline
   - trailing_closure
   - type_contents_order
   - vertical_whitespace_between_cases
+
+attributes:
+  # Replaces the default list, so the two defaults are repeated here.
+  always_on_same_line: ["@IBAction", "@NSManaged", "@Environment"]
 
 indentation_width:
   include_multiline_strings: false

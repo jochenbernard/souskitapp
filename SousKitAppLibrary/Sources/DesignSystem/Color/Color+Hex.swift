@@ -1,0 +1,14 @@
+import SwiftUI
+
+extension Color {
+    /// Creates an sRGB color from a `0xRRGGBB` value.
+    init(hex: UInt32) {
+        self.init(
+            .sRGB,
+            red: Double((hex >> 16) & 0xFF) / 255.0,
+            green: Double((hex >> 8) & 0xFF) / 255.0,
+            blue: Double(hex & 0xFF) / 255.0,
+            opacity: 1.0
+        )
+    }
+}
