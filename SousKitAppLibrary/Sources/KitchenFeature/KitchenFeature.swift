@@ -3,9 +3,14 @@ import SwiftUI
 /// Everything the app does once a recipe directory is set: the recipes in it, one recipe, and
 /// cooking from one.
 public struct KitchenFeature {
+    private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
 
-    init(viewModel: KitchenFeatureViewModel) {
+    init(
+        presenter: KitchenFeaturePresenterProtocol,
+        viewModel: KitchenFeatureViewModel
+    ) {
+        self.presenter = presenter
         self.viewModel = viewModel
     }
 
@@ -14,6 +19,9 @@ public struct KitchenFeature {
     /// - Returns: The view to place in a scene.
     @MainActor
     public func makeView() -> some View {
-        KitchenFeatureView(viewModel: viewModel)
+        KitchenFeatureView(
+            presenter: presenter,
+            viewModel: viewModel
+        )
     }
 }

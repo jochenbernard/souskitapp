@@ -38,6 +38,10 @@ let package = Package(
             name: "KitchenFeature",
             dependencies: ["DesignSystem", "RecipeLibrary"]
         ),
+        .standardTestTarget(
+            name: "KitchenFeatureTests",
+            dependencies: ["KitchenFeature"]
+        ),
         .standardTarget(
             name: "OnboardingFeature",
             dependencies: ["DesignSystem", "RecipeLibrary"]

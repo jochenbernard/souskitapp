@@ -1,6 +1,6 @@
 import RecipeLibrary
 
-/// Builds ``KitchenFeature``.
+/// Builds ``KitchenFeature`` with what it reads.
 public struct KitchenFeatureFactory: Sendable {
     /// Creates a factory.
     public init() {}
@@ -11,6 +11,13 @@ public struct KitchenFeatureFactory: Sendable {
     /// - Returns: The feature.
     public func makeKitchenFeature(recipeDirectory: RecipeDirectory) -> KitchenFeature {
         let viewModel = KitchenFeatureViewModel(recipeDirectory: recipeDirectory)
-        return KitchenFeature(viewModel: viewModel)
+        let presenter = KitchenFeaturePresenter(
+            recipeDirectoryMonitor: RecipeDirectoryMonitor(recipeDirectory: recipeDirectory),
+            viewModel: viewModel
+        )
+        return KitchenFeature(
+            presenter: presenter,
+            viewModel: viewModel
+        )
     }
 }
