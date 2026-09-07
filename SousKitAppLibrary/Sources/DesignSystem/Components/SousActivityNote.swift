@@ -2,8 +2,6 @@ import SwiftUI
 
 /// A spinner beside a label, for what a screen is waiting on.
 public struct SousActivityNote<Label: View>: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     private let label: Label
 
     /// Creates a note.
@@ -17,7 +15,7 @@ public struct SousActivityNote<Label: View>: View {
         HStack(spacing: SousSpacing.medium) {
             // Orange means live, and work still running is what the accent is for.
             ProgressView()
-                .tint(SousColor.accent.color(in: colorScheme))
+                .tint(SousColor.accent)
 
             label
                 .foregroundStyle(SousColor.textMuted)

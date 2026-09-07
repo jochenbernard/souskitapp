@@ -85,32 +85,32 @@ struct SousColorTests {
         let expected: Double
     }
 
-    @Test("light tokens map to the documented palette values")
+    @Test("on a light scheme the tokens draw the documented palette values")
     func lightTokens() {
-        #expect(SousColor.background.color(in: .light) == SousPalette.paper)
-        #expect(SousColor.surface.color(in: .light) == SousPalette.white)
-        #expect(SousColor.border.color(in: .light) == SousPalette.line)
-        #expect(SousColor.text.color(in: .light) == SousPalette.ink)
-        #expect(SousColor.textMuted.color(in: .light) == SousPalette.steel)
-        #expect(SousColor.accent.color(in: .light) == SousPalette.flame)
-        #expect(SousColor.accentText.color(in: .light) == SousPalette.ember)
+        #expect(draws(SousColor.background, SousPalette.paper, in: .light))
+        #expect(draws(SousColor.surface, SousPalette.white, in: .light))
+        #expect(draws(SousColor.border, SousPalette.line, in: .light))
+        #expect(draws(SousColor.text, SousPalette.ink, in: .light))
+        #expect(draws(SousColor.textMuted, SousPalette.steel, in: .light))
+        #expect(draws(SousColor.accent, SousPalette.flame, in: .light))
+        #expect(draws(SousColor.accentText, SousPalette.ember, in: .light))
     }
 
-    @Test("dark tokens map to the documented palette values")
+    @Test("on a dark scheme the tokens draw the documented palette values")
     func darkTokens() {
-        #expect(SousColor.background.color(in: .dark) == SousPalette.char)
-        #expect(SousColor.surface.color(in: .dark) == SousPalette.pan)
-        #expect(SousColor.border.color(in: .dark) == SousPalette.seam)
-        #expect(SousColor.text.color(in: .dark) == SousPalette.paper)
-        #expect(SousColor.textMuted.color(in: .dark) == SousPalette.ash)
-        #expect(SousColor.accent.color(in: .dark) == SousPalette.flame)
-        #expect(SousColor.accentText.color(in: .dark) == SousPalette.flame)
+        #expect(draws(SousColor.background, SousPalette.char, in: .dark))
+        #expect(draws(SousColor.surface, SousPalette.pan, in: .dark))
+        #expect(draws(SousColor.border, SousPalette.seam, in: .dark))
+        #expect(draws(SousColor.text, SousPalette.paper, in: .dark))
+        #expect(draws(SousColor.textMuted, SousPalette.ash, in: .dark))
+        #expect(draws(SousColor.accent, SousPalette.flame, in: .dark))
+        #expect(draws(SousColor.accentText, SousPalette.flame, in: .dark))
     }
 
     @Test("the palette matches the ratios both brand documents state")
     func statedRatios() {
         for entry in Self.documentedRatios {
-            let ratio = contrastRatio(entry.foreground, entry.ground)
+            let ratio = contrastRatio(entry.foreground, entry.ground, in: .light)
             #expect(
                 abs(ratio - entry.expected) < 0.12,
                 "expected \(entry.expected), computed \(ratio)"
@@ -121,10 +121,7 @@ struct SousColorTests {
     @Test("text passes AA against its own ground in both schemes")
     func textOnBackground() {
         for scheme in [ColorScheme.light, .dark] {
-            let ratio = contrastRatio(
-                SousColor.text.color(in: scheme),
-                SousColor.background.color(in: scheme)
-            )
+            let ratio = contrastRatio(SousColor.text, SousColor.background, in: scheme)
             #expect(ratio > 4.5, "text on background is \(ratio) in \(scheme)")
         }
     }
@@ -132,11 +129,8 @@ struct SousColorTests {
     @Test("muted text passes AA against both ground and surface in both schemes")
     func mutedText() {
         for scheme in [ColorScheme.light, .dark] {
-            for ground in [SousColor.background, .surface] {
-                let ratio = contrastRatio(
-                    SousColor.textMuted.color(in: scheme),
-                    ground.color(in: scheme)
-                )
+            for ground in [SousColor.background, SousColor.surface] {
+                let ratio = contrastRatio(SousColor.textMuted, ground, in: scheme)
                 #expect(ratio > 4.5, "muted text is \(ratio) in \(scheme)")
             }
         }
@@ -145,33 +139,51 @@ struct SousColorTests {
     @Test("accent text passes AA against the ground in both schemes")
     func accentText() {
         for scheme in [ColorScheme.light, .dark] {
-            let ratio = contrastRatio(
-                SousColor.accentText.color(in: scheme),
-                SousColor.background.color(in: scheme)
-            )
+            let ratio = contrastRatio(SousColor.accentText, SousColor.background, in: scheme)
             #expect(ratio > 4.5, "accent text on background is \(ratio) in \(scheme)")
         }
     }
 
     @Test("the accent surface carries Ink, not White")
     func accentCarriesInk() {
-        #expect(contrastRatio(SousPalette.ink, SousPalette.flame) > 4.5)
-        #expect(contrastRatio(SousPalette.white, SousPalette.flame) < 4.5)
+        #expect(contrastRatio(SousPalette.ink, SousPalette.flame, in: .light) > 4.5)
+        #expect(contrastRatio(SousPalette.white, SousPalette.flame, in: .light) < 4.5)
     }
 
-    /// The WCAG 2.1 contrast ratio between two colors.
-    private func contrastRatio(_ lhs: Color, _ rhs: Color) -> Double {
-        let lighter = max(relativeLuminance(lhs), relativeLuminance(rhs))
-        let darker = min(relativeLuminance(lhs), relativeLuminance(rhs))
+    /// Whether a token draws a palette value in a given scheme, to within one 8-bit step.
+    ///
+    /// A token reaches the screen through `UIColor`, which costs it a fraction of a step against
+    /// the palette value it is built from.
+    private func draws(_ token: Color, _ value: Color, in scheme: ColorScheme) -> Bool {
+        let drawn = resolved(token, in: scheme)
+        let stated = resolved(value, in: scheme)
+        let step = Float(1.0 / 255.0)
+        return abs(drawn.red - stated.red) < step
+            && abs(drawn.green - stated.green) < step
+            && abs(drawn.blue - stated.blue) < step
+            && abs(drawn.opacity - stated.opacity) < step
+    }
+
+    /// The WCAG 2.1 contrast ratio between two colors, as each is drawn in a given scheme.
+    private func contrastRatio(_ lhs: Color, _ rhs: Color, in scheme: ColorScheme) -> Double {
+        let lighter = max(relativeLuminance(lhs, in: scheme), relativeLuminance(rhs, in: scheme))
+        let darker = min(relativeLuminance(lhs, in: scheme), relativeLuminance(rhs, in: scheme))
         return (lighter + 0.05) / (darker + 0.05)
     }
 
-    /// The WCAG 2.1 relative luminance of a color.
-    private func relativeLuminance(_ color: Color) -> Double {
-        let resolved = color.resolve(in: EnvironmentValues())
+    /// The WCAG 2.1 relative luminance of a color, as it is drawn in a given scheme.
+    private func relativeLuminance(_ color: Color, in scheme: ColorScheme) -> Double {
+        let resolved = resolved(color, in: scheme)
         return 0.2126 * linear(resolved.red)
             + 0.7152 * linear(resolved.green)
             + 0.0722 * linear(resolved.blue)
+    }
+
+    /// A color as it lands on screen in a given scheme.
+    private func resolved(_ color: Color, in scheme: ColorScheme) -> Color.Resolved {
+        var environment = EnvironmentValues()
+        environment.colorScheme = scheme
+        return color.resolve(in: environment)
     }
 
     /// One gamma-encoded channel, linearized.

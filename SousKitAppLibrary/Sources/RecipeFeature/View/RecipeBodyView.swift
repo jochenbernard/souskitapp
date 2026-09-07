@@ -5,8 +5,6 @@ import SwiftUI
 
 /// A parsed recipe, top to bottom: the header, what it takes, and what to do.
 struct RecipeBodyView: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     private let presenter: RecipeFeaturePresenterProtocol
     private let recipe: Recipe
     private let expandedSections: Set<RecipeSection>
@@ -220,7 +218,7 @@ struct RecipeBodyView: View {
         if run.isUnderlined {
             text.underlineStyle = Text.LineStyle(
                 pattern: .solid,
-                color: SousColor.accent.color(in: colorScheme)
+                color: SousColor.accent
             )
         }
 

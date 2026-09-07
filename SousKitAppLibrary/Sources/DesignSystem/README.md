@@ -21,6 +21,8 @@ The Sous brand, expressed in Swift.
 
 - Draw from the semantic layer: `SousColor.text`, not `SousPalette.ink`. Dark is then a
   seven-line override and nothing else.
+- A token reads the scheme it is drawn in, and is a `Color`, so it goes anywhere a style or a
+  color does. Nothing reaches for `@Environment(\.colorScheme)` to pick a value.
 - A screen takes `.sousPage()`, and a container sets the color its content is read in. Only text
   stepping away from what it sits in, a caption in `SousColor.textMuted`, names a color itself.
 - Orange means live, here, or do. Not decoration, category, or mood. Past roughly 5% of a

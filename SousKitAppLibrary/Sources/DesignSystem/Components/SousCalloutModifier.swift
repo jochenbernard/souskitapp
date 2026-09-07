@@ -2,8 +2,6 @@ import SwiftUI
 
 /// Draws the wash the brand gives a callout, which the seven semantic tokens do not name.
 private struct SousCalloutModifier: ViewModifier {
-    @Environment(\.colorScheme) private var colorScheme
-
     func body(content: Content) -> some View {
         content
             .foregroundStyle(SousColor.accentText)
@@ -11,7 +9,7 @@ private struct SousCalloutModifier: ViewModifier {
             .padding(SousSpacing.large)
             .background {
                 RoundedRectangle(cornerRadius: SousRadius.medium)
-                    .fill(colorScheme == .dark ? SousPalette.sear : SousPalette.scorch)
+                    .fill(Color(light: SousPalette.scorch, dark: SousPalette.sear))
             }
     }
 }
