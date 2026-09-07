@@ -1,13 +1,24 @@
 import DesignSystem
+import Foundation
 import SousKit
 import SwiftUI
 
 /// A parsed recipe, top to bottom: the header, what it takes, and what to do.
 struct RecipeBodyView: View {
-    private let recipe: Recipe
+    @Environment(\.colorScheme) private var colorScheme
 
-    init(recipe: Recipe) {
+    private let presenter: RecipeFeaturePresenterProtocol
+    private let recipe: Recipe
+    private let expandedSections: Set<RecipeSection>
+
+    init(
+        presenter: RecipeFeaturePresenterProtocol,
+        recipe: Recipe,
+        expandedSections: Set<RecipeSection>
+    ) {
+        self.presenter = presenter
         self.recipe = recipe
+        self.expandedSections = expandedSections
     }
 
     var body: some View {
@@ -20,6 +31,7 @@ struct RecipeBodyView: View {
 
             stepSection
         }
+        .animation(.spring(duration: 0.3, bounce: 0.0), value: expandedSections)
     }
 
     private var headerSection: some View {
@@ -33,7 +45,7 @@ struct RecipeBodyView: View {
     @ViewBuilder
     private var ingredientSection: some View {
         if !recipe.ingredients.isEmpty {
-            section("Ingredients") {
+            section(.ingredients) {
                 VStack(alignment: .leading, spacing: SousSpacing.small) {
                     ForEach(Array(recipe.ingredients.enumerated()), id: \.offset) { _, ingredient in
                         ingredientRow(ingredient)
@@ -48,7 +60,7 @@ struct RecipeBodyView: View {
         let names = RecipeDisplay.cookwareNames(of: recipe)
 
         if !names.isEmpty {
-            section("Cookware") {
+            section(.cookware) {
                 VStack(alignment: .leading, spacing: SousSpacing.small) {
                     ForEach(names, id: \.self) { name in
                         Text(verbatim: name)
@@ -62,7 +74,7 @@ struct RecipeBodyView: View {
     @ViewBuilder
     private var stepSection: some View {
         if !recipe.steps.isEmpty {
-            section("Steps") {
+            section(.steps) {
                 VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
                     ForEach(Array(recipe.groups.enumerated()), id: \.offset) { index, group in
                         groupView(group, firstNumber: RecipeDisplay.firstNumber(ofGroupAt: index, in: recipe))
@@ -94,16 +106,46 @@ struct RecipeBodyView: View {
     }
 
     private func section(
-        _ label: LocalizedStringKey,
+        _ section: RecipeSection,
         @ViewBuilder content: () -> some View
     ) -> some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
-            Text(label)
+            sectionHeading(section)
+
+            if expandedSections.contains(section) {
+                content()
+            }
+        }
+    }
+
+    private func sectionHeading(_ section: RecipeSection) -> some View {
+        let isExpanded = expandedSections.contains(section)
+
+        return Button(
+            action: { presenter.didToggleSection(section) },
+            label: { sectionHeadingLabel(section, isExpanded: isExpanded) }
+        )
+        .buttonStyle(.plain)
+        .accessibilityValue(isExpanded ? Text("Expanded") : Text("Collapsed"))
+    }
+
+    private func sectionHeadingLabel(_ section: RecipeSection, isExpanded: Bool) -> some View {
+        HStack(spacing: SousSpacing.small) {
+            Text(section.label)
                 .sousTextStyle(.eyebrow)
                 .foregroundStyle(SousColor.textMuted)
 
-            content()
+            Spacer(minLength: 0.0)
+
+            // Decorative: the button already reads as the section, expanded or collapsed.
+            // Set in the label's own entry, so the chevron is drawn at the label's size.
+            Image(systemName: "chevron.down")
+                .sousFont(.eyebrow)
+                .rotationEffect(.degrees(isExpanded ? 0.0 : -90.0))
+                .foregroundStyle(SousColor.textMuted)
+                .accessibilityHidden(true)
         }
+        .contentShape(.rect)
     }
 
     private func ingredientRow(_ ingredient: Ingredient) -> some View {
@@ -157,10 +199,32 @@ struct RecipeBodyView: View {
                 .sousTextStyle(.eyebrow)
                 .foregroundStyle(SousColor.textMuted)
 
-            Text(verbatim: RecipeDisplay.prose(of: step))
+            stepProse(step)
                 .sousTextStyle(.body)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+    }
+
+    /// The step's prose, with what it reaches for underlined in the accent.
+    private func stepProse(_ step: Step) -> Text {
+        let prose = RecipeDisplay.runs(of: step).reduce(into: AttributedString()) { prose, run in
+            prose.append(attributed(run))
+        }
+
+        return Text(prose)
+    }
+
+    private func attributed(_ run: StepRun) -> AttributedString {
+        var text = AttributedString(run.text)
+
+        if run.isUnderlined {
+            text.underlineStyle = Text.LineStyle(
+                pattern: .solid,
+                color: SousColor.accent.color(in: colorScheme)
+            )
+        }
+
+        return text
     }
 
     @ViewBuilder
@@ -196,9 +260,13 @@ private func previewRecipe() -> Recipe {
 
 #Preview("Recipe body") {
     ScrollView {
-        RecipeBodyView(recipe: previewRecipe())
-            .padding(SousSpacing.xLarge)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        RecipeBodyView(
+            presenter: RecipeFeaturePresenterStub(),
+            recipe: previewRecipe(),
+            expandedSections: RecipeSection.openByDefault
+        )
+        .padding(SousSpacing.xLarge)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     .sousPage()
 }

@@ -18,7 +18,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/jochenbernard/souskit",
-            from: "0.1.0"
+            branch: "jochenbernard/treat-step-wraps-as-layout"
         )
     ],
     targets: [

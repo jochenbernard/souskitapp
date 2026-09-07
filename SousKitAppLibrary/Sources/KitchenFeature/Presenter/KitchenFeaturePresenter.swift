@@ -36,8 +36,9 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol {
     func didChangeRecipePath(_ recipePath: [RecipeFile]) {
         viewModel.recipePath = recipePath
 
+        // Left in place on a pop: clearing it empties the screen while it is still animating
+        // away. The next push replaces it.
         guard let recipeFile = recipePath.last else {
-            viewModel.openRecipe = nil
             return
         }
 

@@ -6,6 +6,7 @@ import RecipeLibrary
 final class RecipeFeatureViewModel {
     let recipeFile: RecipeFile
     var recipeContent: RecipeContent = .reading
+    var expandedSections = RecipeSection.openByDefault
 
     nonisolated init(recipeFile: RecipeFile) {
         self.recipeFile = recipeFile

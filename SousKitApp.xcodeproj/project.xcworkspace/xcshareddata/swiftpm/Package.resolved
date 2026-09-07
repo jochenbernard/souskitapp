@@ -1,13 +1,13 @@
 {
-  "originHash" : "afb25fc34f3a1efed61717c0a811571c165adce8d598abd93bd95aeacc1d5a8d",
+  "originHash" : "8484b4d36d7f969491adee6e0e3ac1d7f9eeca6e6c1c3d57ca7a114dbf9c5cb6",
   "pins" : [
     {
       "identity" : "souskit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jochenbernard/souskit",
       "state" : {
-        "revision" : "a54087d3aafe1e8ce689091fa26a4ee4a73326ea",
-        "version" : "0.4.0"
+        "branch" : "jochenbernard/treat-step-wraps-as-layout",
+        "revision" : "e2d7505f62b674235077762fe067d3b6e5de6af5"
       }
     },
     {

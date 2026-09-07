@@ -33,6 +33,14 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         }
     }
 
+    func didToggleSection(_ section: RecipeSection) {
+        if viewModel.expandedSections.contains(section) {
+            viewModel.expandedSections.remove(section)
+        } else {
+            viewModel.expandedSections.insert(section)
+        }
+    }
+
     /// Reads off the main actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
     nonisolated private static func readRecipe(

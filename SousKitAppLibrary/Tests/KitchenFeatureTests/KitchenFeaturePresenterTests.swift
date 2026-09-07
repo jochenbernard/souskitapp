@@ -151,8 +151,8 @@ final class KitchenFeaturePresenterTests: Sendable {
     }
 
     @MainActor
-    @Test("popping the last recipe takes the open recipe with it")
-    func poppingClearsTheOpenRecipe() throws {
+    @Test("popping leaves the recipe in place, so it has something to animate away")
+    func poppingKeepsTheOpenRecipe() throws {
         let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
@@ -161,7 +161,22 @@ final class KitchenFeaturePresenterTests: Sendable {
         presenter.didChangeRecipePath([])
 
         #expect(viewModel.recipePath.isEmpty)
-        #expect(viewModel.openRecipe == nil)
+        #expect(viewModel.openRecipe?.recipeFile == recipeFile)
+    }
+
+    @MainActor
+    @Test("pushing another recipe after a pop replaces the one left behind")
+    func pushingAfterAPopReplacesTheOpenRecipe() throws {
+        let crepes = try writeFile(named: "crepes.sous", "Whisk.")
+        let brioche = try writeFile(named: "brioche.sous", "Knead.")
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didChangeRecipePath([crepes])
+        presenter.didChangeRecipePath([])
+        presenter.didChangeRecipePath([brioche])
+
+        #expect(viewModel.openRecipe?.recipeFile == brioche)
     }
 
     @MainActor

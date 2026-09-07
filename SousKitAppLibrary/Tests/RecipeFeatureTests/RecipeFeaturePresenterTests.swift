@@ -91,6 +91,51 @@ final class RecipeFeaturePresenterTests: Sendable {
     }
 
     @MainActor
+    @Test("the ingredients and the steps open, and the cookware stays closed")
+    func sectionsOpenByDefault() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
+
+        let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
+
+        #expect(viewModel.expandedSections == [.ingredients, .steps])
+    }
+
+    @MainActor
+    @Test("tapping a closed section opens it")
+    func openingASection() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
+        let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
+
+        makePresenter(viewModel: viewModel).didToggleSection(.cookware)
+
+        #expect(viewModel.expandedSections == [.ingredients, .cookware, .steps])
+    }
+
+    @MainActor
+    @Test("tapping an open section closes it")
+    func closingASection() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
+        let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
+
+        makePresenter(viewModel: viewModel).didToggleSection(.ingredients)
+
+        #expect(viewModel.expandedSections == [.steps])
+    }
+
+    @MainActor
+    @Test("tapping a section twice leaves it as it was")
+    func togglingASectionBack() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
+        let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didToggleSection(.cookware)
+        presenter.didToggleSection(.cookware)
+
+        #expect(viewModel.expandedSections == RecipeSection.openByDefault)
+    }
+
+    @MainActor
     @Test("a recipe that is gone reaches the view model as a failure")
     func failureReachesTheViewModel() async throws {
         let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")

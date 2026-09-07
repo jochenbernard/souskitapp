@@ -10,12 +10,20 @@ struct RecipeDisplayTests {
         parser.parseRecipe(source).value
     }
 
-    private func prose(_ source: String) -> String {
+    private func runs(_ source: String) -> [StepRun] {
         guard let step = recipe(source).steps.first else {
-            return ""
+            return []
         }
 
-        return RecipeDisplay.prose(of: step)
+        return RecipeDisplay.runs(of: step)
+    }
+
+    private func prose(_ source: String) -> String {
+        runs(source).map(\.text).joined()
+    }
+
+    private func underlined(_ source: String) -> [String] {
+        runs(source).filter(\.isUnderlined).map(\.text)
     }
 
     @Test("an ingredient reads as its amount and its name")
@@ -56,6 +64,64 @@ struct RecipeDisplayTests {
     @Test("prose with no annotation is left as written")
     func plainProse() {
         #expect(prose("Bake @ 180C until golden.") == "Bake @ 180C until golden.")
+    }
+
+    @Test("an ingredient is underlined, amount and all")
+    func underlinedIngredient() {
+        #expect(underlined("Whisk @{200 g} flour@ in.") == ["200 g flour"])
+    }
+
+    @Test("cookware is underlined")
+    func underlinedCookware() {
+        #expect(underlined("Wipe a #crepe pan# clean.") == ["crepe pan"])
+    }
+
+    @Test("a timer is underlined")
+    func underlinedTimer() {
+        #expect(underlined("Braise it ~3 h~ until tender.") == ["3 h"])
+    }
+
+    @Test("a reference is underlined")
+    func underlinedReference() {
+        #expect(underlined("Serve the >rouille> beside it.") == ["rouille"])
+    }
+
+    @Test("a reference consuming an amount is underlined with it")
+    func underlinedReferenceWithAmount() {
+        #expect(underlined("Fold in >{400 g} bechamel>.") == ["400 g bechamel"])
+    }
+
+    @Test("prose between the annotations is not underlined")
+    func plainRuns() {
+        #expect(underlined("Bake it until it is golden.").isEmpty)
+    }
+
+    @Test("a step underlines each of the things it reaches for")
+    func underlinedRunsOfAStep() {
+        let source = "Brown @{150 g} lardons@ in a #casserole# for ~5 min~ until the fat runs."
+
+        #expect(underlined(source) == ["150 g lardons", "casserole", "5 min"])
+    }
+
+    @Test("a step wrapped over several lines reads as one run of prose")
+    func wrappedStep() {
+        let source = """
+            Cut @{1.2 kg} beef@ into large cubes and pat them dry. Brown
+            @{150 g} lardons@ in a #casserole# for ~5 min~ until the fat runs.
+            """
+
+        #expect(!prose(source).contains("\n"))
+        #expect(prose(source).contains("dry. Brown 150 g lardons in a casserole"))
+    }
+
+    @Test("an annotation wrapped across a break still closes")
+    func wrappedAnnotation() {
+        let source = """
+            Pour over @{750 ml} red
+            wine@ and bring it to a simmer.
+            """
+
+        #expect(underlined(source) == ["750 ml red wine"])
     }
 
     @Test("the title is left out of the header rows, and a list joins onto one line")

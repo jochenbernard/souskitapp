@@ -27,8 +27,11 @@ enum RecipeDisplay {
     }
 
     /// A step as a cook reads it, every annotation resolved to the words it stands for.
-    static func prose(of step: Step) -> String {
-        step.segments.map({ text(of: $0) }).joined()
+    ///
+    /// Every annotation comes back underlined, since each is something the step reaches for.
+    /// Only the prose between them reads plainly.
+    static func runs(of step: Step) -> [StepRun] {
+        step.segments.map({ run(of: $0) })
     }
 
     private static let titleKey = "title"
@@ -42,23 +45,23 @@ enum RecipeDisplay {
         }
     }
 
-    /// What one segment reads as, sigils and fences gone.
-    private static func text(of segment: Segment) -> String {
+    /// What one segment reads as, sigils and fences gone, and whether it is underlined.
+    private static func run(of segment: Segment) -> StepRun {
         switch segment {
         case .text(let text):
-            text
+            StepRun(text: text, isUnderlined: false)
 
         case .ingredient(let ingredient):
-            named(ingredient.name, after: ingredient.amount)
+            StepRun(text: named(ingredient.name, after: ingredient.amount), isUnderlined: true)
 
         case .cookware(let cookware):
-            cookware.name
+            StepRun(text: cookware.name, isUnderlined: true)
 
         case .timer(let timer):
-            timer.text
+            StepRun(text: timer.text, isUnderlined: true)
 
         case .reference(let reference):
-            named(reference.target, after: reference.amount)
+            StepRun(text: named(reference.target, after: reference.amount), isUnderlined: true)
         }
     }
 

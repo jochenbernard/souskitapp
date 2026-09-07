@@ -52,7 +52,11 @@ struct RecipeFeatureView: View {
             if recipe.groups.isEmpty, recipe.metadata.entries.isEmpty {
                 emptyNote
             } else {
-                RecipeBodyView(recipe: recipe)
+                RecipeBodyView(
+                    presenter: presenter,
+                    recipe: recipe,
+                    expandedSections: viewModel.expandedSections
+                )
             }
 
         case .failure(let message):
