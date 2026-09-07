@@ -15,6 +15,10 @@ let package = Package(
         .package(
             url: "https://github.com/SimplyDanny/SwiftLintPlugins",
             from: "0.1.0"
+        ),
+        .package(
+            url: "https://github.com/jochenbernard/souskit",
+            from: "0.1.0"
         )
     ],
     targets: [
@@ -51,7 +55,10 @@ let package = Package(
             name: "RecipeFeatureTests",
             dependencies: ["RecipeFeature"]
         ),
-        .standardTarget(name: "RecipeLibrary"),
+        .standardTarget(
+            name: "RecipeLibrary",
+            dependencies: [.product(name: "SousKit", package: "souskit")]
+        ),
         .standardTestTarget(
             name: "RecipeLibraryTests",
             dependencies: ["RecipeLibrary"]

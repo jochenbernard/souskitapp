@@ -1,6 +1,7 @@
 import Foundation
 @testable import RecipeFeature
 import RecipeLibrary
+import SousKit
 import Testing
 
 @Suite("Recipe feature presenter", .timeLimit(.minutes(1)))
@@ -27,9 +28,7 @@ final class RecipeFeaturePresenterTests: Sendable {
 
     private func makePresenter(viewModel: RecipeFeatureViewModel) -> RecipeFeaturePresenter {
         RecipeFeaturePresenter(
-            recipeTextReader: RecipeTextReader(
-                recipeDirectory: RecipeDirectory(url: directoryURL)
-            ),
+            recipeReader: RecipeReader(recipeDirectory: RecipeDirectory(url: directoryURL)),
             viewModel: viewModel
         )
     }
@@ -39,43 +38,56 @@ final class RecipeFeaturePresenterTests: Sendable {
     func readingBeforeTheFirstRead() throws {
         let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
 
-        guard case .reading = RecipeFeatureViewModel(recipeFile: recipeFile).recipeText else {
-            Issue.record("The recipe text did not start out reading.")
+        guard case .reading = RecipeFeatureViewModel(recipeFile: recipeFile).recipeContent else {
+            Issue.record("The recipe content did not start out reading.")
             return
         }
     }
 
     @MainActor
-    @Test("a recipe's text reaches the view model as it is written")
-    func recipeTextReachesTheViewModel() async throws {
-        let source = "Whisk @{4} eggs@ for ~1 min~ in a #bowl#."
-        let recipeFile = try writeFile(named: "crepes.sous", source)
+    @Test("a parsed recipe reaches the view model")
+    func recipeReachesTheViewModel() async throws {
+        let recipeFile = try writeFile(
+            named: "crepes.sous",
+            """
+            ---
+            title: Crepes
+            servings: 4
+            ---
+
+            Whisk @{4} eggs@ for ~1 min~ in a #bowl#.
+            """
+        )
         let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
 
         await makePresenter(viewModel: viewModel).viewDidAppear()
 
-        guard case .text(let text) = viewModel.recipeText else {
-            Issue.record("The recipe text did not reach the view model.")
+        guard case .recipe(let recipe) = viewModel.recipeContent else {
+            Issue.record("The recipe did not reach the view model.")
             return
         }
 
-        #expect(text == source)
+        #expect(recipe.metadata.title == "Crepes")
+        #expect(recipe.metadata.servings == 4.0)
+        #expect(recipe.ingredients.map(\.name) == ["eggs"])
+        #expect(recipe.cookware.map(\.name) == ["bowl"])
+        #expect(recipe.steps.count == 1)
     }
 
     @MainActor
-    @Test("an empty recipe reaches the view model as empty text")
+    @Test("an empty recipe reaches the view model holding nothing")
     func emptyRecipeReachesTheViewModel() async throws {
         let recipeFile = try writeFile(named: "empty.sous", "")
         let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
 
         await makePresenter(viewModel: viewModel).viewDidAppear()
 
-        guard case .text(let text) = viewModel.recipeText else {
-            Issue.record("The recipe text did not reach the view model.")
+        guard case .recipe(let recipe) = viewModel.recipeContent else {
+            Issue.record("The recipe did not reach the view model.")
             return
         }
 
-        #expect(text.isEmpty)
+        #expect(recipe.steps.isEmpty)
     }
 
     @MainActor
@@ -87,7 +99,7 @@ final class RecipeFeaturePresenterTests: Sendable {
 
         await makePresenter(viewModel: viewModel).viewDidAppear()
 
-        guard case .failure(let message) = viewModel.recipeText else {
+        guard case .failure(let message) = viewModel.recipeContent else {
             Issue.record("The failure did not reach the view model.")
             return
         }

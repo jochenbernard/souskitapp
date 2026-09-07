@@ -1,42 +1,44 @@
 import Foundation
 import RecipeLibrary
+import SousKit
 
 struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
-    private let recipeTextReader: RecipeTextReader
+    private let recipeReader: RecipeReader
     private let viewModel: RecipeFeatureViewModel
 
     init(
-        recipeTextReader: RecipeTextReader,
+        recipeReader: RecipeReader,
         viewModel: RecipeFeatureViewModel
     ) {
-        self.recipeTextReader = recipeTextReader
+        self.recipeReader = recipeReader
         self.viewModel = viewModel
     }
 
     func viewDidAppear() async {
-        viewModel.recipeText = .reading
+        viewModel.recipeContent = .reading
 
-        let result = await Self.readText(of: viewModel.recipeFile, with: recipeTextReader)
+        let result = await Self.readRecipe(of: viewModel.recipeFile, with: recipeReader)
 
         guard !Task.isCancelled else {
             return
         }
 
         switch result {
-        case .success(let text):
-            viewModel.recipeText = .text(text)
+        case .success(let parsed):
+            // The diagnostics are dropped until there is a screen to report them on.
+            viewModel.recipeContent = .recipe(parsed.value)
 
         case .failure(let error):
-            viewModel.recipeText = .failure(error.localizedDescription)
+            viewModel.recipeContent = .failure(error.localizedDescription)
         }
     }
 
     /// Reads off the main actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
-    nonisolated private static func readText(
+    nonisolated private static func readRecipe(
         of recipeFile: RecipeFile,
-        with reader: RecipeTextReader
-    ) async -> Result<String, Error> {
-        Result(catching: { try reader.readText(of: recipeFile) })
+        with reader: RecipeReader
+    ) async -> Result<Parsed<Recipe>, Error> {
+        Result(catching: { try reader.readRecipe(of: recipeFile) })
     }
 }

@@ -5,7 +5,7 @@ import RecipeLibrary
 @MainActor
 final class RecipeFeatureViewModel {
     let recipeFile: RecipeFile
-    var recipeText: RecipeText = .reading
+    var recipeContent: RecipeContent = .reading
 
     nonisolated init(recipeFile: RecipeFile) {
         self.recipeFile = recipeFile

@@ -1,6 +1,7 @@
 import DesignSystem
 import Foundation
 import RecipeLibrary
+import SousKit
 import SwiftUI
 
 struct RecipeFeatureView: View {
@@ -22,24 +23,36 @@ struct RecipeFeatureView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .sousPage()
-        .navigationTitle(viewModel.recipeFile.name)
+        .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await presenter.viewDidAppear()
         }
     }
 
+    /// The recipe's own title once it is read, and the file's name until then.
+    private var navigationTitle: String {
+        guard
+            case .recipe(let recipe) = viewModel.recipeContent,
+            let title = recipe.metadata.title
+        else {
+            return viewModel.recipeFile.name
+        }
+
+        return title
+    }
+
     @ViewBuilder
     private var content: some View {
-        switch viewModel.recipeText {
+        switch viewModel.recipeContent {
         case .reading:
             readingNote
 
-        case .text(let text):
-            if text.isEmpty {
+        case .recipe(let recipe):
+            if recipe.groups.isEmpty, recipe.metadata.entries.isEmpty {
                 emptyNote
             } else {
-                recipeSource(text)
+                RecipeBodyView(recipe: recipe)
             }
 
         case .failure(let message):
@@ -57,13 +70,6 @@ struct RecipeFeatureView: View {
         Text("This recipe is empty.")
             .sousTextStyle(.body)
             .foregroundStyle(SousColor.textMuted)
-    }
-
-    private func recipeSource(_ text: String) -> some View {
-        Text(verbatim: text)
-            .sousTextStyle(.data)
-            .textSelection(.enabled)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func failureNote(_ message: String) -> some View {
@@ -97,35 +103,40 @@ private func previewRecipeFile(_ availability: RecipeFileAvailability) -> Recipe
 }
 
 @MainActor
-private func previewViewModel(_ recipeText: RecipeText) -> RecipeFeatureViewModel {
+private func previewViewModel(_ recipeContent: RecipeContent) -> RecipeFeatureViewModel {
     let viewModel = RecipeFeatureViewModel(recipeFile: previewRecipeFile(.downloaded))
-    viewModel.recipeText = recipeText
+    viewModel.recipeContent = recipeContent
 
     return viewModel
+}
+
+private func previewRecipe() -> Recipe {
+    SousParser().parseRecipe(
+        """
+        ---
+        title: Boeuf Bourguignon
+        servings: 6
+        prep-time: 30 min
+        cook-time: 3 h
+        tags: [dinner, classic, french]
+        allergens: [gluten, dairy]
+        ---
+
+        Cut @{1.2 kg} beef@ into large cubes and pat them dry. Brown @{150 g} lardons@ in a
+        #casserole# for ~5 min~ until the fat runs, lift them out, then brown the beef in
+        batches in the rendered fat over high heat.
+
+        Cover the pot and braise at 150C for ~3 h~, until the beef gives to a fork.
+        """
+    )
+    .value
 }
 
 #Preview("Recipe") {
     NavigationStack {
         RecipeFeatureView(
             presenter: RecipeFeaturePresenterStub(),
-            viewModel: previewViewModel(
-                .text(
-                    """
-                    ---
-                    title: Boeuf Bourguignon
-                    servings: 6
-                    prep-time: 30 min
-                    cook-time: 3 h
-                    ---
-
-                    Cut @{1.2 kg} beef@ into large cubes and pat them dry. Brown
-                    @{150 g} lardons@ in a #casserole# for ~5 min~ until the fat runs.
-
-                    Cover the pot and braise at 150C for ~3 h~, until the beef gives to
-                    a fork.
-                    """
-                )
-            )
+            viewModel: previewViewModel(.recipe(previewRecipe()))
         )
     }
 }

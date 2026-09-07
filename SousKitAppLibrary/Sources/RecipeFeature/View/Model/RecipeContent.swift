@@ -1,12 +1,12 @@
-import RecipeLibrary
+import SousKit
 
 /// What the recipe screen has to show for one recipe.
-enum RecipeText {
+enum RecipeContent {
     /// The recipe has not been read yet.
     case reading
 
-    /// The recipe, as it is written in the file.
-    case text(String)
+    /// The recipe, parsed.
+    case recipe(Recipe)
 
     /// Reading the recipe failed, with the reason to show.
     case failure(String)

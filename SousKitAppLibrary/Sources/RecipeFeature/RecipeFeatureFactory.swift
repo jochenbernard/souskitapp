@@ -2,13 +2,13 @@ import RecipeLibrary
 
 /// Builds ``RecipeFeature`` with what it reads.
 public struct RecipeFeatureFactory: Sendable {
-    private let recipeTextReader: RecipeTextReader
+    private let recipeReader: RecipeReader
 
     /// Creates a factory.
     ///
     /// - Parameter recipeDirectory: The directory the recipes sit in.
     public init(recipeDirectory: RecipeDirectory) {
-        self.recipeTextReader = RecipeTextReader(recipeDirectory: recipeDirectory)
+        self.recipeReader = RecipeReader(recipeDirectory: recipeDirectory)
     }
 
     /// Builds the feature.
@@ -18,7 +18,7 @@ public struct RecipeFeatureFactory: Sendable {
     public func makeRecipeFeature(recipeFile: RecipeFile) -> RecipeFeature {
         let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
         let presenter = RecipeFeaturePresenter(
-            recipeTextReader: recipeTextReader,
+            recipeReader: recipeReader,
             viewModel: viewModel
         )
         return RecipeFeature(

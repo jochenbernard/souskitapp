@@ -1,6 +1,15 @@
 {
-  "originHash" : "9fc9d814d1de1379d8f4501f1645eb17b7fcae7e3ebfc3d65220b106d18e28a6",
+  "originHash" : "afb25fc34f3a1efed61717c0a811571c165adce8d598abd93bd95aeacc1d5a8d",
   "pins" : [
+    {
+      "identity" : "souskit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jochenbernard/souskit",
+      "state" : {
+        "revision" : "a54087d3aafe1e8ce689091fa26a4ee4a73326ea",
+        "version" : "0.4.0"
+      }
+    },
     {
       "identity" : "swiftlintplugins",
       "kind" : "remoteSourceControl",
