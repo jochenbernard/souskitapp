@@ -23,7 +23,7 @@ let package = Package(
     targets: [
         .standardTarget(
             name: "AppFeature",
-            dependencies: ["DesignSystem"]
+            dependencies: ["KitchenFeature", "OnboardingFeature"]
         ),
         .standardTarget(
             name: "DesignSystem",
@@ -33,6 +33,19 @@ let package = Package(
         .standardTestTarget(
             name: "DesignSystemTests",
             dependencies: ["DesignSystem"]
+        ),
+        .standardTarget(
+            name: "KitchenFeature",
+            dependencies: ["DesignSystem", "RecipeLibrary"]
+        ),
+        .standardTarget(
+            name: "OnboardingFeature",
+            dependencies: ["DesignSystem", "RecipeLibrary"]
+        ),
+        .standardTarget(name: "RecipeLibrary"),
+        .standardTestTarget(
+            name: "RecipeLibraryTests",
+            dependencies: ["RecipeLibrary"]
         )
     ],
     swiftLanguageModes: [.v6]

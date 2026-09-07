@@ -8,11 +8,11 @@ struct CatalogSwatch<Fill: ShapeStyle>: View {
 
     var body: some View {
         HStack(spacing: SousSpacing.medium) {
-            RoundedRectangle(cornerRadius: SousRadius.small, style: .continuous)
+            RoundedRectangle(cornerRadius: SousRadius.small)
                 .fill(fill)
                 .frame(width: 44.0, height: 44.0)
                 .overlay {
-                    RoundedRectangle(cornerRadius: SousRadius.small, style: .continuous)
+                    RoundedRectangle(cornerRadius: SousRadius.small)
                         .strokeBorder(SousColor.border, lineWidth: 1.0)
                 }
 

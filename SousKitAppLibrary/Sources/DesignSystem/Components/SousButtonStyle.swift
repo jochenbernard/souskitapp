@@ -29,7 +29,7 @@ public struct SousButtonStyle: ButtonStyle {
         @State private var release: Task<Void, Never>?
 
         var body: some View {
-            let shape = RoundedRectangle(cornerRadius: SousRadius.medium, style: .continuous)
+            let shape = RoundedRectangle(cornerRadius: SousRadius.medium)
 
             configuration.label
                 // Line box included: without it the control sits under the 44pt minimum target.
@@ -175,20 +175,14 @@ extension ButtonStyle where Self == SousButtonStyle {
 
 #Preview("Buttons") {
     VStack(alignment: .leading, spacing: SousSpacing.medium) {
-        Button("Boeuf Bourguignon") {
-            // A preview takes no action.
-        }
-        .buttonStyle(.sous(.primary))
+        Button("Boeuf Bourguignon") {}
+            .buttonStyle(.sous(.primary))
 
-        Button("Gratin Dauphinois") {
-            // A preview takes no action.
-        }
-        .buttonStyle(.sous(.secondary))
+        Button("Gratin Dauphinois") {}
+            .buttonStyle(.sous(.secondary))
 
-        Button("Vinaigrette") {
-            // A preview takes no action.
-        }
-        .buttonStyle(.sous(.quiet))
+        Button("Vinaigrette") {}
+            .buttonStyle(.sous(.quiet))
     }
     .padding(SousSpacing.xLarge)
     .frame(maxWidth: .infinity, maxHeight: .infinity)

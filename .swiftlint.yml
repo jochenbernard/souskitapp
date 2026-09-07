@@ -5,6 +5,7 @@ opt_in_rules:
   - all
 
 disabled_rules:
+  - attributes
   - conditional_returns_on_newline
   - contrasted_opening_brace
   - discouraged_default_parameter
@@ -16,15 +17,12 @@ disabled_rules:
   - incompatible_concurrency_annotation
   - no_magic_numbers
   - prefer_self_in_static_references
+  - required_deinit
   - sorted_enum_cases
   - switch_case_on_newline
   - trailing_closure
   - type_contents_order
   - vertical_whitespace_between_cases
-
-attributes:
-  # Replaces the default list, so the two defaults are repeated here.
-  always_on_same_line: ["@IBAction", "@NSManaged", "@Environment"]
 
 indentation_width:
   include_multiline_strings: false
@@ -33,6 +31,7 @@ nesting:
   type_level: 2
 
 no_empty_block:
+  allow_compact_empty_blocks: true
   disabled_block_types: [initializer_bodies]
 
 opening_brace:

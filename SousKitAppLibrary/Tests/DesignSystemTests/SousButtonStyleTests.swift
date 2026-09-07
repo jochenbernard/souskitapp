@@ -1,5 +1,4 @@
 @testable import DesignSystem
-import Foundation
 import Testing
 
 @MainActor

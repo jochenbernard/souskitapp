@@ -17,10 +17,10 @@ struct CatalogSection<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(SousSpacing.xLarge)
         .background {
-            RoundedRectangle(cornerRadius: SousRadius.large, style: .continuous)
+            RoundedRectangle(cornerRadius: SousRadius.large)
                 .fill(SousColor.surface)
                 .overlay {
-                    RoundedRectangle(cornerRadius: SousRadius.large, style: .continuous)
+                    RoundedRectangle(cornerRadius: SousRadius.large)
                         .strokeBorder(SousColor.border, lineWidth: 1.0)
                 }
         }
