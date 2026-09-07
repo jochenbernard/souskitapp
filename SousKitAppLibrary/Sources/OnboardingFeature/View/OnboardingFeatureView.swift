@@ -3,8 +3,6 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct OnboardingFeatureView: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     private let presenter: OnboardingFeaturePresenterProtocol
     private let viewModel: OnboardingFeatureViewModel
 
@@ -31,7 +29,7 @@ struct OnboardingFeatureView: View {
             maxWidth: .infinity,
             alignment: .topLeading
         )
-        .background(SousColor.background)
+        .sousPage()
         .fileImporter(
             isPresented: isChoosingDirectory,
             allowedContentTypes: [.folder],
@@ -47,7 +45,6 @@ struct OnboardingFeatureView: View {
             // Fixed, not scaled: the wordmark is set at the mark's size.
             Text(verbatim: "Sous")
                 .font(SousFontFace.archivoSemiBold.font(size: 32.0))
-                .foregroundStyle(SousColor.text)
         }
         .accessibilityElement(children: .combine)
     }
@@ -60,7 +57,6 @@ struct OnboardingFeatureView: View {
 
             Text("Where your recipes live")
                 .sousTextStyle(.title)
-                .foregroundStyle(SousColor.text)
 
             Text(
                 """
@@ -86,13 +82,7 @@ struct OnboardingFeatureView: View {
         if let failureMessage = viewModel.failureMessage {
             Text(failureMessage)
                 .sousTextStyle(.body)
-                .foregroundStyle(SousColor.accentText)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(SousSpacing.large)
-                .background {
-                    RoundedRectangle(cornerRadius: SousRadius.medium)
-                        .fill(colorScheme == .dark ? SousPalette.sear : SousPalette.scorch)
-                }
+                .sousCallout()
         }
     }
 

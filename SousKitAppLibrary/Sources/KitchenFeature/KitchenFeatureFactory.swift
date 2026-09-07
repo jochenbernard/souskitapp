@@ -1,3 +1,4 @@
+import RecipeFeature
 import RecipeLibrary
 
 /// Builds ``KitchenFeature`` with what it reads.
@@ -13,6 +14,7 @@ public struct KitchenFeatureFactory: Sendable {
         let viewModel = KitchenFeatureViewModel(recipeDirectory: recipeDirectory)
         let presenter = KitchenFeaturePresenter(
             recipeDirectoryMonitor: RecipeDirectoryMonitor(recipeDirectory: recipeDirectory),
+            recipeFeatureFactory: RecipeFeatureFactory(recipeDirectory: recipeDirectory),
             viewModel: viewModel
         )
         return KitchenFeature(

@@ -61,8 +61,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
         return nil
     }
 
-    @Test("the recipes already there arrive first")
     @MainActor
+    @Test("the recipes already there arrive first")
     func firstRead() async throws {
         try writeFile(named: "crepes.sous")
 
@@ -71,16 +71,16 @@ final class RecipeDirectoryMonitorTests: Sendable {
         #expect(reached)
     }
 
-    @Test("an empty directory arrives as no recipes")
     @MainActor
+    @Test("an empty directory arrives as no recipes")
     func emptyDirectory() async throws {
         let reached = try await names(reach: [], from: makeMonitor())
 
         #expect(reached)
     }
 
-    @Test("a directory that is gone arrives as a failure")
     @MainActor
+    @Test("a directory that is gone arrives as a failure")
     func failingRead() async throws {
         try FileManager.default.removeItem(at: directoryURL)
 
@@ -91,8 +91,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
         }
     }
 
-    @Test("a recipe added to the directory arrives")
     @MainActor
+    @Test("a recipe added to the directory arrives")
     func addedRecipe() async throws {
         try writeFile(named: "crepes.sous")
 
@@ -103,8 +103,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
         #expect(reached)
     }
 
-    @Test("a recipe removed from the directory stops arriving")
     @MainActor
+    @Test("a recipe removed from the directory stops arriving")
     func removedRecipe() async throws {
         try writeFile(named: "crepes.sous")
         try writeFile(named: "brioche.sous")
@@ -116,8 +116,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
         #expect(reached)
     }
 
-    @Test("a recipe renamed in the directory arrives under the new name")
     @MainActor
+    @Test("a recipe renamed in the directory arrives under the new name")
     func renamedRecipe() async throws {
         try writeFile(named: "crepes.sous")
 
@@ -131,8 +131,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
         #expect(reached)
     }
 
-    @Test("refreshing reaches the recipes written since the last read")
     @MainActor
+    @Test("refreshing reaches the recipes written since the last read")
     func refreshing() async throws {
         let monitor = makeMonitor()
 
@@ -144,8 +144,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
         #expect(reached)
     }
 
-    @Test("a second stream ends the first")
     @MainActor
+    @Test("a second stream ends the first")
     func secondStream() async throws {
         let monitor = makeMonitor()
         let first = monitor.recipeFiles()

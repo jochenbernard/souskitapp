@@ -1,10 +1,10 @@
 import DesignSystem
 import Foundation
+import RecipeFeature
 import RecipeLibrary
 import SwiftUI
 
 struct KitchenFeatureView: View {
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
 
     private let presenter: KitchenFeaturePresenterProtocol
@@ -19,6 +19,29 @@ struct KitchenFeatureView: View {
     }
 
     var body: some View {
+        NavigationStack(path: recipePath) {
+            recipeListScreen
+                .navigationDestination(for: RecipeFile.self) { recipeFile in
+                    recipeScreen(for: recipeFile)
+                }
+        }
+    }
+
+    @ViewBuilder
+    private func recipeScreen(for recipeFile: RecipeFile) -> some View {
+        if let openRecipe = viewModel.openRecipe, openRecipe.recipeFile == recipeFile {
+            openRecipe.feature.makeView()
+        }
+    }
+
+    private var recipePath: Binding<[RecipeFile]> {
+        Binding(
+            get: { viewModel.recipePath },
+            set: { presenter.didChangeRecipePath($0) }
+        )
+    }
+
+    private var recipeListScreen: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
                 header
@@ -28,7 +51,8 @@ struct KitchenFeatureView: View {
             .padding(SousSpacing.xLarge)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(SousColor.background)
+        .sousPage()
+        .toolbar(.hidden, for: .navigationBar)
         .task {
             await presenter.viewDidAppear()
         }
@@ -42,7 +66,6 @@ struct KitchenFeatureView: View {
     private var header: some View {
         Text(verbatim: viewModel.recipeDirectory.name)
             .sousTextStyle(.heading)
-            .foregroundStyle(SousColor.text)
     }
 
     @ViewBuilder
@@ -64,13 +87,9 @@ struct KitchenFeatureView: View {
     }
 
     private var readingNote: some View {
-        HStack(spacing: SousSpacing.medium) {
-            ProgressView()
-                .tint(SousColor.accent.color(in: colorScheme))
-
+        SousActivityNote {
             Text("Reading the folder.")
                 .sousTextStyle(.body)
-                .foregroundStyle(SousColor.textMuted)
         }
     }
 
@@ -78,7 +97,6 @@ struct KitchenFeatureView: View {
         VStack(alignment: .leading, spacing: SousSpacing.small) {
             Text("Nothing here yet")
                 .sousTextStyle(.body)
-                .foregroundStyle(SousColor.text)
 
             Text("Put .sous files in this folder and they are listed here.")
                 .sousTextStyle(.body)
@@ -89,7 +107,10 @@ struct KitchenFeatureView: View {
     private func recipeRows(_ recipeFiles: [RecipeFile]) -> some View {
         LazyVStack(spacing: SousSpacing.medium) {
             ForEach(recipeFiles) { recipeFile in
-                recipeRow(recipeFile)
+                NavigationLink(value: recipeFile) {
+                    recipeRow(recipeFile)
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -98,34 +119,24 @@ struct KitchenFeatureView: View {
         VStack(alignment: .leading, spacing: SousSpacing.small) {
             Text("This folder could not be read")
                 .sousTextStyle(.body)
-                .foregroundStyle(SousColor.accentText)
 
             Text(verbatim: message)
                 .sousTextStyle(.body)
-                .foregroundStyle(SousColor.accentText)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(SousSpacing.large)
-        .background {
-            RoundedRectangle(cornerRadius: SousRadius.medium)
-                .fill(colorScheme == .dark ? SousPalette.sear : SousPalette.scorch)
-        }
+        .sousCallout()
     }
 
     private func recipeRow(_ recipeFile: RecipeFile) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
             Text(verbatim: recipeFile.name)
                 .sousTextStyle(.body)
-                .foregroundStyle(SousColor.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             availabilityBadge(recipeFile.availability)
         }
         .padding(.horizontal, SousSpacing.large)
         .padding(.vertical, SousSpacing.medium)
-        .background {
-            rowBackground
-        }
+        .sousSurface(cornerRadius: SousRadius.medium)
     }
 
     @ViewBuilder
@@ -150,16 +161,6 @@ struct KitchenFeatureView: View {
                 .foregroundStyle(SousColor.textMuted)
                 .accessibilityLabel("In iCloud, not downloaded")
         }
-    }
-
-    private var rowBackground: some View {
-        let shape = RoundedRectangle(cornerRadius: SousRadius.medium)
-
-        return shape
-            .fill(SousColor.surface)
-            .overlay {
-                shape.strokeBorder(SousColor.border, lineWidth: 1.0)
-            }
     }
 }
 

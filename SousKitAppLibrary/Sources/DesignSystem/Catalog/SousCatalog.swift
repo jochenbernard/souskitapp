@@ -28,12 +28,14 @@ public struct SousCatalog: View {
                 spacingSection
 
                 buttonSection
+
+                containerSection
             }
             .padding(SousSpacing.xLarge)
             .frame(maxWidth: 720.0, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
-        .background(SousColor.background)
+        .sousPage()
     }
 
     /// Mark and wordmark at matched sizes, the wordmark in Archivo 600.
@@ -168,6 +170,12 @@ public struct SousCatalog: View {
                 }
                 .buttonStyle(.sous(.quiet))
             }
+        }
+    }
+
+    private var containerSection: some View {
+        CatalogSection(number: "06", title: "Containers") {
+            CatalogContainers()
         }
     }
 

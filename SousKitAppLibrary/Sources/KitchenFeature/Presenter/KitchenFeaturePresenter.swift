@@ -1,15 +1,19 @@
 import Foundation
+import RecipeFeature
 import RecipeLibrary
 
 struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol {
     private let recipeDirectoryMonitor: RecipeDirectoryMonitor
+    private let recipeFeatureFactory: RecipeFeatureFactory
     private let viewModel: KitchenFeatureViewModel
 
     init(
         recipeDirectoryMonitor: RecipeDirectoryMonitor,
+        recipeFeatureFactory: RecipeFeatureFactory,
         viewModel: KitchenFeatureViewModel
     ) {
         self.recipeDirectoryMonitor = recipeDirectoryMonitor
+        self.recipeFeatureFactory = recipeFeatureFactory
         self.viewModel = viewModel
     }
 
@@ -27,5 +31,23 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol {
 
     func didBecomeActive() {
         recipeDirectoryMonitor.refresh()
+    }
+
+    func didChangeRecipePath(_ recipePath: [RecipeFile]) {
+        viewModel.recipePath = recipePath
+
+        guard let recipeFile = recipePath.last else {
+            viewModel.openRecipe = nil
+            return
+        }
+
+        guard viewModel.openRecipe?.recipeFile != recipeFile else {
+            return
+        }
+
+        viewModel.openRecipe = OpenRecipe(
+            recipeFile: recipeFile,
+            feature: recipeFeatureFactory.makeRecipeFeature(recipeFile: recipeFile)
+        )
     }
 }

@@ -1,0 +1,52 @@
+import Foundation
+
+/// Reads a recipe's text, fetching it from iCloud where it is not on the device.
+public struct RecipeTextReader: Sendable {
+    private let recipeDirectory: RecipeDirectory
+
+    /// Creates a reader.
+    ///
+    /// - Parameter recipeDirectory: The directory the recipes sit in, whose security scope the
+    ///   read opens.
+    public init(recipeDirectory: RecipeDirectory) {
+        self.recipeDirectory = recipeDirectory
+    }
+
+    /// Reads a recipe.
+    ///
+    /// A recipe held only in iCloud is fetched first, and the call returns once the text is on
+    /// the device, so it takes as long as that fetch does.
+    ///
+    /// - Parameter recipeFile: The recipe to read.
+    /// - Returns: The recipe's text, decoded as UTF-8.
+    /// - Throws: Whatever fetching, coordinating, or decoding the file throws.
+    public func readText(of recipeFile: RecipeFile) throws -> String {
+        let directoryURL = recipeDirectory.url
+        let isScoped = directoryURL.startAccessingSecurityScopedResource()
+        defer {
+            if isScoped {
+                directoryURL.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        if recipeFile.availability != .downloaded {
+            // The coordinated read reports a fetch that cannot start, and waits for one that can.
+            try? FileManager.default.startDownloadingUbiquitousItem(at: recipeFile.url)
+        }
+
+        var outcome = Result<String, Error>.failure(CocoaError(.fileReadUnknown))
+        var coordinationError: NSError?
+        NSFileCoordinator().coordinate(
+            readingItemAt: recipeFile.url,
+            error: &coordinationError
+        ) { coordinatedURL in
+            outcome = Result(catching: { try String(contentsOf: coordinatedURL, encoding: .utf8) })
+        }
+
+        if let coordinationError {
+            throw coordinationError
+        }
+
+        return try outcome.get()
+    }
+}

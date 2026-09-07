@@ -4,10 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "SousKitAppLibrary",
-    platforms: [
-        .iOS(.v26),
-        .macOS(.v26)
-    ],
+    platforms: [.iOS(.v26)],
     products: [
         .library(
             name: "AppFeature",
@@ -36,7 +33,7 @@ let package = Package(
         ),
         .standardTarget(
             name: "KitchenFeature",
-            dependencies: ["DesignSystem", "RecipeLibrary"]
+            dependencies: ["RecipeFeature"]
         ),
         .standardTestTarget(
             name: "KitchenFeatureTests",
@@ -45,6 +42,14 @@ let package = Package(
         .standardTarget(
             name: "OnboardingFeature",
             dependencies: ["DesignSystem", "RecipeLibrary"]
+        ),
+        .standardTarget(
+            name: "RecipeFeature",
+            dependencies: ["DesignSystem", "RecipeLibrary"]
+        ),
+        .standardTestTarget(
+            name: "RecipeFeatureTests",
+            dependencies: ["RecipeFeature"]
         ),
         .standardTarget(name: "RecipeLibrary"),
         .standardTestTarget(

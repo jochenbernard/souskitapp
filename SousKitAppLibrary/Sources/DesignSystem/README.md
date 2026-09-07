@@ -13,12 +13,16 @@ The Sous brand, expressed in Swift.
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `SousButtonStyle` | Buttons, in three emphases. |
+| Page | `.sousPage()` | The ground a screen sits on, and the text token on it. |
+| Containers | `.sousSurface(cornerRadius:)`, `.sousCallout()`, `SousActivityNote` | The card, the wash, the spinner. |
 | Catalog | `SousCatalog` | Every token on one page. Run the app to see it. |
 
 ## Rules
 
 - Draw from the semantic layer: `SousColor.text`, not `SousPalette.ink`. Dark is then a
   seven-line override and nothing else.
+- A screen takes `.sousPage()`, and a container sets the color its content is read in. Only text
+  stepping away from what it sits in, a caption in `SousColor.textMuted`, names a color itself.
 - Orange means live, here, or do. Not decoration, category, or mood. Past roughly 5% of a
   layout it has become decoration, and on a dark ground it reads a third brighter still.
 - Flame carries dark text. Ink on Flame is 5.5; White on Flame is 3.5 and fails.
@@ -73,7 +77,8 @@ roles it names have no token, and take a palette value directly:
   quieter than `SousColor.text`.
 - Eyebrows and captions on dark: `SousPalette.smoke`. The `textMuted` token is Ash.
 - The wash under highlighted rows and callouts: `SousPalette.scorch` on light,
-  `SousPalette.sear` on dark.
+  `SousPalette.sear` on dark. `.sousCallout()` draws it and sets `accentText` on what it holds,
+  so a call site names none of the three.
 
 ## Chosen here, not given by the brand
 
