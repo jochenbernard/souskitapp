@@ -7,4 +7,8 @@ protocol RecipeFeaturePresenterProtocol {
     /// A section heading was tapped, which opens the section or closes it.
     @MainActor
     func didToggleSection(_ section: RecipeSection)
+
+    /// The cook button was tapped.
+    @MainActor
+    func didTapCook()
 }

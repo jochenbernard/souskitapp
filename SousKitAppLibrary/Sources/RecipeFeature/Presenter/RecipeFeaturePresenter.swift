@@ -3,13 +3,16 @@ import RecipeLibrary
 import SousKit
 
 struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
+    private let handler: RecipeFeatureHandler
     private let recipeReader: RecipeReader
     private let viewModel: RecipeFeatureViewModel
 
     init(
+        handler: RecipeFeatureHandler,
         recipeReader: RecipeReader,
         viewModel: RecipeFeatureViewModel
     ) {
+        self.handler = handler
         self.recipeReader = recipeReader
         self.viewModel = viewModel
     }
@@ -39,6 +42,14 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         } else {
             viewModel.expandedSections.insert(section)
         }
+    }
+
+    func didTapCook() {
+        guard case .recipe(let recipe) = viewModel.recipeContent else {
+            return
+        }
+
+        handler.recipeFeatureDidStartCooking(recipe: recipe)
     }
 
     /// Reads off the main actor, where a recipe still in iCloud has to be fetched first.

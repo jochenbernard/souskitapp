@@ -26,8 +26,12 @@ final class RecipeFeaturePresenterTests: Sendable {
         return RecipeFile(url: url, availability: .downloaded)
     }
 
-    private func makePresenter(viewModel: RecipeFeatureViewModel) -> RecipeFeaturePresenter {
+    private func makePresenter(
+        viewModel: RecipeFeatureViewModel,
+        handler: RecipeFeatureHandler = RecipeFeatureHandlerSpy()
+    ) -> RecipeFeaturePresenter {
         RecipeFeaturePresenter(
+            handler: handler,
             recipeReader: RecipeReader(recipeDirectory: RecipeDirectory(url: directoryURL)),
             viewModel: viewModel
         )
@@ -133,6 +137,41 @@ final class RecipeFeaturePresenterTests: Sendable {
         presenter.didToggleSection(.cookware)
 
         #expect(viewModel.expandedSections == RecipeSection.openByDefault)
+    }
+
+    @MainActor
+    @Test("tapping cook reports the recipe that was read")
+    func cookingReportsTheRecipe() async throws {
+        let recipeFile = try writeFile(
+            named: "crepes.sous",
+            """
+            ---
+            title: Crepes
+            ---
+
+            Whisk it.
+            """
+        )
+        let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
+        let handler = RecipeFeatureHandlerSpy()
+        let presenter = makePresenter(viewModel: viewModel, handler: handler)
+
+        await presenter.viewDidAppear()
+        presenter.didTapCook()
+
+        #expect(handler.cookedRecipes.map(\.metadata.title) == ["Crepes"])
+    }
+
+    @MainActor
+    @Test("tapping cook before the recipe is read reports nothing")
+    func cookingBeforeTheRecipeIsRead() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
+        let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
+        let handler = RecipeFeatureHandlerSpy()
+
+        makePresenter(viewModel: viewModel, handler: handler).didTapCook()
+
+        #expect(handler.cookedRecipes.isEmpty)
     }
 
     @MainActor

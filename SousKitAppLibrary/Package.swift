@@ -27,6 +27,14 @@ let package = Package(
             dependencies: ["KitchenFeature", "OnboardingFeature"]
         ),
         .standardTarget(
+            name: "CookingFeature",
+            dependencies: ["DesignSystem", "RecipeLibrary"]
+        ),
+        .standardTestTarget(
+            name: "CookingFeatureTests",
+            dependencies: ["CookingFeature"]
+        ),
+        .standardTarget(
             name: "DesignSystem",
             exclude: ["README.md"],
             resources: [.copy("Resources/Fonts")]
@@ -37,7 +45,7 @@ let package = Package(
         ),
         .standardTarget(
             name: "KitchenFeature",
-            dependencies: ["RecipeFeature"]
+            dependencies: ["CookingFeature", "RecipeFeature"]
         ),
         .standardTestTarget(
             name: "KitchenFeatureTests",

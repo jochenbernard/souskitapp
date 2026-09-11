@@ -22,6 +22,10 @@ struct RecipeFeatureView: View {
                 .padding(SousSpacing.xLarge)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .safeAreaBar(edge: .bottom) {
+            cookBar
+        }
         .sousPage()
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
@@ -96,6 +100,23 @@ struct RecipeFeatureView: View {
             Text("Fetching from iCloud.")
                 .sousTextStyle(.body)
         }
+    }
+
+    /// The cook button, shown once the recipe is read and only where there is something to cook.
+    @ViewBuilder
+    private var cookBar: some View {
+        if case .recipe(let recipe) = viewModel.recipeContent, !recipe.steps.isEmpty {
+            cookButton
+        }
+    }
+
+    private var cookButton: some View {
+        Button(action: presenter.didTapCook) {
+            Text("Start cooking")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.sous(.primary))
+        .padding(SousSpacing.xLarge)
     }
 }
 

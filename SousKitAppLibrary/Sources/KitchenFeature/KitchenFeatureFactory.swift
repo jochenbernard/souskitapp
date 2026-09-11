@@ -1,3 +1,4 @@
+import CookingFeature
 import RecipeFeature
 import RecipeLibrary
 
@@ -13,6 +14,7 @@ public struct KitchenFeatureFactory: Sendable {
     public func makeKitchenFeature(recipeDirectory: RecipeDirectory) -> KitchenFeature {
         let viewModel = KitchenFeatureViewModel(recipeDirectory: recipeDirectory)
         let presenter = KitchenFeaturePresenter(
+            cookingFeatureFactory: CookingFeatureFactory(idleTimer: ApplicationIdleTimer()),
             recipeDirectoryMonitor: RecipeDirectoryMonitor(recipeDirectory: recipeDirectory),
             recipeFeatureFactory: RecipeFeatureFactory(recipeDirectory: recipeDirectory),
             viewModel: viewModel

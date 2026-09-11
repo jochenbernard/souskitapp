@@ -1,5 +1,6 @@
 import DesignSystem
 import Foundation
+import RecipeLibrary
 import SousKit
 import SwiftUI
 
@@ -75,7 +76,7 @@ struct RecipeBodyView: View {
             section(.steps) {
                 VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
                     ForEach(Array(recipe.groups.enumerated()), id: \.offset) { index, group in
-                        groupView(group, firstNumber: RecipeDisplay.firstNumber(ofGroupAt: index, in: recipe))
+                        groupView(group, firstNumber: StepNumbering.firstNumber(ofGroupAt: index, in: recipe))
                     }
                 }
             }
@@ -205,7 +206,7 @@ struct RecipeBodyView: View {
 
     /// The step's prose, with what it reaches for underlined in the accent.
     private func stepProse(_ step: Step) -> Text {
-        let prose = RecipeDisplay.runs(of: step).reduce(into: AttributedString()) { prose, run in
+        let prose = StepProse.runs(of: step).reduce(into: AttributedString()) { prose, run in
             prose.append(attributed(run))
         }
 
@@ -215,7 +216,7 @@ struct RecipeBodyView: View {
     private func attributed(_ run: StepRun) -> AttributedString {
         var text = AttributedString(run.text)
 
-        if run.isUnderlined {
+        if run.isAnnotation {
             text.underlineStyle = Text.LineStyle(
                 pattern: .solid,
                 color: SousColor.accent

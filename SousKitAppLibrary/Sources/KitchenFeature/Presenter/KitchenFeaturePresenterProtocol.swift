@@ -1,5 +1,3 @@
-import RecipeLibrary
-
 /// What ``KitchenFeatureView`` reports to.
 protocol KitchenFeaturePresenterProtocol {
     /// The view is on screen, and the call is cancelled when it leaves.
@@ -10,7 +8,7 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didBecomeActive()
 
-    /// The recipes pushed on the navigation stack changed.
+    /// The screens pushed on the navigation stack changed.
     @MainActor
-    func didChangeRecipePath(_ recipePath: [RecipeFile])
+    func didChangeScreenPath(_ screenPath: [KitchenScreen])
 }

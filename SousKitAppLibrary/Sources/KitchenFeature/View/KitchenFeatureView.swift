@@ -1,7 +1,9 @@
+import CookingFeature
 import DesignSystem
 import Foundation
 import RecipeFeature
 import RecipeLibrary
+import SousKit
 import SwiftUI
 
 struct KitchenFeatureView: View {
@@ -19,11 +21,22 @@ struct KitchenFeatureView: View {
     }
 
     var body: some View {
-        NavigationStack(path: recipePath) {
+        NavigationStack(path: screenPath) {
             recipeListScreen
-                .navigationDestination(for: RecipeFile.self) { recipeFile in
-                    recipeScreen(for: recipeFile)
+                .navigationDestination(for: KitchenScreen.self) { screen in
+                    screenView(for: screen)
                 }
+        }
+    }
+
+    @ViewBuilder
+    private func screenView(for screen: KitchenScreen) -> some View {
+        switch screen {
+        case .recipe(let recipeFile):
+            recipeScreen(for: recipeFile)
+
+        case .cooking(let recipe):
+            cookingScreen(for: recipe)
         }
     }
 
@@ -34,10 +47,17 @@ struct KitchenFeatureView: View {
         }
     }
 
-    private var recipePath: Binding<[RecipeFile]> {
+    @ViewBuilder
+    private func cookingScreen(for recipe: Recipe) -> some View {
+        if let openCooking = viewModel.openCooking, openCooking.recipe == recipe {
+            openCooking.feature.makeView()
+        }
+    }
+
+    private var screenPath: Binding<[KitchenScreen]> {
         Binding(
-            get: { viewModel.recipePath },
-            set: { presenter.didChangeRecipePath($0) }
+            get: { viewModel.screenPath },
+            set: { presenter.didChangeScreenPath($0) }
         )
     }
 
@@ -107,7 +127,7 @@ struct KitchenFeatureView: View {
     private func recipeRows(_ recipeFiles: [RecipeFile]) -> some View {
         LazyVStack(spacing: SousSpacing.medium) {
             ForEach(recipeFiles) { recipeFile in
-                NavigationLink(value: recipeFile) {
+                NavigationLink(value: KitchenScreen.recipe(recipeFile)) {
                     recipeRow(recipeFile)
                 }
                 .buttonStyle(.plain)

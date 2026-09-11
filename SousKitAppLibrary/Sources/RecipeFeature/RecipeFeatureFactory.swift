@@ -13,11 +13,17 @@ public struct RecipeFeatureFactory: Sendable {
 
     /// Builds the feature.
     ///
-    /// - Parameter recipeFile: The recipe to render.
+    /// - Parameters:
+    ///   - recipeFile: The recipe to render.
+    ///   - handler: What the feature reports to.
     /// - Returns: The feature.
-    public func makeRecipeFeature(recipeFile: RecipeFile) -> RecipeFeature {
+    public func makeRecipeFeature(
+        recipeFile: RecipeFile,
+        handler: RecipeFeatureHandler
+    ) -> RecipeFeature {
         let viewModel = RecipeFeatureViewModel(recipeFile: recipeFile)
         let presenter = RecipeFeaturePresenter(
+            handler: handler,
             recipeReader: recipeReader,
             viewModel: viewModel
         )

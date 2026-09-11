@@ -1,7 +1,9 @@
+import CookingFeature
 import Foundation
 @testable import KitchenFeature
 import RecipeFeature
 import RecipeLibrary
+import SousKit
 import Testing
 
 @Suite("Kitchen feature presenter", .timeLimit(.minutes(1)))
@@ -39,6 +41,7 @@ final class KitchenFeaturePresenterTests: Sendable {
         let recipeDirectory = RecipeDirectory(url: directoryURL)
 
         return KitchenFeaturePresenter(
+            cookingFeatureFactory: CookingFeatureFactory(idleTimer: IdleTimerStub()),
             recipeDirectoryMonitor: RecipeDirectoryMonitor(
                 recipeDirectory: recipeDirectory,
                 settleDelay: .milliseconds(20)
@@ -144,9 +147,9 @@ final class KitchenFeaturePresenterTests: Sendable {
         let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
         let viewModel = makeViewModel()
 
-        makePresenter(viewModel: viewModel).didChangeRecipePath([recipeFile])
+        makePresenter(viewModel: viewModel).didChangeScreenPath([.recipe(recipeFile)])
 
-        #expect(viewModel.recipePath == [recipeFile])
+        #expect(viewModel.screenPath == [.recipe(recipeFile)])
         #expect(viewModel.openRecipe?.recipeFile == recipeFile)
     }
 
@@ -157,10 +160,10 @@ final class KitchenFeaturePresenterTests: Sendable {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeRecipePath([recipeFile])
-        presenter.didChangeRecipePath([])
+        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([])
 
-        #expect(viewModel.recipePath.isEmpty)
+        #expect(viewModel.screenPath.isEmpty)
         #expect(viewModel.openRecipe?.recipeFile == recipeFile)
     }
 
@@ -172,9 +175,9 @@ final class KitchenFeaturePresenterTests: Sendable {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeRecipePath([crepes])
-        presenter.didChangeRecipePath([])
-        presenter.didChangeRecipePath([brioche])
+        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.didChangeScreenPath([])
+        presenter.didChangeScreenPath([.recipe(brioche)])
 
         #expect(viewModel.openRecipe?.recipeFile == brioche)
     }
@@ -186,11 +189,71 @@ final class KitchenFeaturePresenterTests: Sendable {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeRecipePath([recipeFile])
+        presenter.didChangeScreenPath([.recipe(recipeFile)])
         let first = viewModel.openRecipe
-        presenter.didChangeRecipePath([recipeFile])
+        presenter.didChangeScreenPath([.recipe(recipeFile)])
 
         #expect(first != nil)
         #expect(viewModel.openRecipe?.recipeFile == first?.recipeFile)
+    }
+
+    @MainActor
+    @Test("cooking a recipe pushes it on the stack with a feature to render it")
+    func cookingPushesTheCookingScreen() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
+        let recipe = SousParser().parseRecipe("Whisk it.").value
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+
+        #expect(viewModel.screenPath == [.recipe(recipeFile), .cooking(recipe)])
+        #expect(viewModel.openCooking?.recipe == recipe)
+    }
+
+    @MainActor
+    @Test("popping the cooking screen leaves the recipe under it open")
+    func poppingCookingKeepsTheOpenRecipe() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
+        let recipe = SousParser().parseRecipe("Whisk it.").value
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+        presenter.didChangeScreenPath([.recipe(recipeFile)])
+
+        #expect(viewModel.screenPath == [.recipe(recipeFile)])
+        #expect(viewModel.openRecipe?.recipeFile == recipeFile)
+        #expect(viewModel.openCooking?.recipe == recipe)
+    }
+
+    @MainActor
+    @Test("exiting the cooking screen pops back to the recipe")
+    func exitingCookingPopsToTheRecipe() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
+        let recipe = SousParser().parseRecipe("Whisk it.").value
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+        presenter.cookingFeatureDidExit()
+
+        #expect(viewModel.screenPath == [.recipe(recipeFile)])
+    }
+
+    @MainActor
+    @Test("an exit with no cooking screen on top leaves the stack alone")
+    func exitWithoutCookingKeepsTheStack() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.cookingFeatureDidExit()
+
+        #expect(viewModel.screenPath == [.recipe(recipeFile)])
     }
 }

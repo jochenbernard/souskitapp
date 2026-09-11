@@ -6,8 +6,9 @@ import RecipeLibrary
 final class KitchenFeatureViewModel {
     let recipeDirectory: RecipeDirectory
     var recipeList: KitchenRecipeList = .reading
-    var recipePath: [RecipeFile] = []
+    var screenPath: [KitchenScreen] = []
     var openRecipe: OpenRecipe?
+    var openCooking: OpenCooking?
 
     nonisolated init(recipeDirectory: RecipeDirectory) {
         self.recipeDirectory = recipeDirectory
