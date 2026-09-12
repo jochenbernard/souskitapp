@@ -9,6 +9,8 @@ import SwiftUI
 struct KitchenFeatureView: View {
     @Environment(\.scenePhase) private var scenePhase
 
+    @ScaledMetric(relativeTo: SousTextStyle.body.textStyle) private var scaledBodySize = SousTextStyle.body.size
+
     private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
 
@@ -54,6 +56,7 @@ struct KitchenFeatureView: View {
     private var header: some View {
         Text(verbatim: viewModel.recipeDirectory.name)
             .sousTextStyle(.heading)
+            .padding(.horizontal, SousSpacing.large)
     }
 
     @ViewBuilder
@@ -117,7 +120,7 @@ struct KitchenFeatureView: View {
         }
         .padding(.horizontal, SousSpacing.large)
         .padding(.vertical, SousSpacing.medium)
-        .sousSurface(cornerRadius: SousRadius.medium)
+        .sousSurface(RoundedRectangle(cornerRadius: rowRadius))
     }
 
     @ViewBuilder
@@ -142,6 +145,13 @@ struct KitchenFeatureView: View {
                 .foregroundStyle(SousColor.textMuted)
                 .accessibilityLabel("In iCloud, not downloaded")
         }
+    }
+
+    /// Half the height of a row of one line, which is the radius a capsule takes there.
+    private var rowRadius: CGFloat {
+        let ratio = scaledBodySize / SousTextStyle.body.size
+
+        return (SousTextStyle.body.lineHeight * ratio + SousSpacing.medium * 2.0) / 2.0
     }
 
     @ViewBuilder

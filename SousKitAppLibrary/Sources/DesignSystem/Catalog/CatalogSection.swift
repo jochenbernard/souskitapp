@@ -16,7 +16,7 @@ struct CatalogSection<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(SousSpacing.xLarge)
-        .sousSurface(cornerRadius: SousRadius.large)
+        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
 }
 

@@ -1,13 +1,11 @@
 import SwiftUI
 
 /// Draws the fill and border a card, row, or sheet sits on.
-private struct SousSurfaceModifier: ViewModifier {
-    let cornerRadius: CGFloat
+private struct SousSurfaceModifier<Surface: InsettableShape>: ViewModifier {
+    let shape: Surface
 
     func body(content: Content) -> some View {
-        let shape = RoundedRectangle(cornerRadius: cornerRadius)
-
-        return content.background {
+        content.background {
             shape
                 .fill(SousColor.surface)
                 .overlay {
@@ -20,13 +18,13 @@ private struct SousSurfaceModifier: ViewModifier {
 extension View {
     /// Draws this view on a surface: the ``SousColor/surface`` fill inside a ``SousColor/border``.
     ///
-    /// The radius names the role: ``SousRadius/medium`` for a row, ``SousRadius/large`` for a card
-    /// or a sheet. Padding stays at the call site, since it varies with what is on the surface.
+    /// The shape names the role: a capsule for a row, ``SousRadius/large`` for a card or a sheet.
+    /// Padding stays at the call site, since it varies with what is on the surface.
     ///
-    /// - Parameter cornerRadius: The radius the surface is rounded to.
+    /// - Parameter shape: The shape the surface takes.
     /// - Returns: The view, on a surface.
-    public func sousSurface(cornerRadius: CGFloat) -> some View {
-        modifier(SousSurfaceModifier(cornerRadius: cornerRadius))
+    public func sousSurface(_ shape: some InsettableShape) -> some View {
+        modifier(SousSurfaceModifier(shape: shape))
     }
 }
 
@@ -36,15 +34,16 @@ extension View {
             .sousTextStyle(.body)
             .foregroundStyle(SousColor.text)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(SousSpacing.large)
-            .sousSurface(cornerRadius: SousRadius.medium)
+            .padding(.horizontal, SousSpacing.large)
+            .padding(.vertical, SousSpacing.medium)
+            .sousSurface(Capsule())
 
         Text("Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
             .sousTextStyle(.body)
             .foregroundStyle(SousColor.text)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(SousSpacing.xLarge)
-            .sousSurface(cornerRadius: SousRadius.large)
+            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
     .padding(SousSpacing.xLarge)
     .background(SousColor.background)

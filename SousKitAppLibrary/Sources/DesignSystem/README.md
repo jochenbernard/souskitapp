@@ -14,7 +14,7 @@ The Sous brand, expressed in Swift.
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet` | The three button styles. |
 | Page | `.sousPage()` | The ground a screen sits on, and the text token on it. |
-| Containers | `.sousSurface(cornerRadius:)`, `.sousCallout()`, `SousActivityNote` | The card, the wash, the spinner. |
+| Containers | `.sousSurface(_:)`, `.sousCallout()`, `SousActivityNote` | The card, the wash, the spinner. |
 | Catalog | `SousCatalog` | Every token on one page. Run the app to see it. |
 
 ## Rules

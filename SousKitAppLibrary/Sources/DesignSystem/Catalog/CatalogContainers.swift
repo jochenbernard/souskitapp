@@ -10,7 +10,7 @@ struct CatalogContainers: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, SousSpacing.large)
                 .padding(.vertical, SousSpacing.medium)
-                .sousSurface(cornerRadius: SousRadius.medium)
+                .sousSurface(Capsule())
 
             Text("This recipe could not be read")
                 .sousTextStyle(.body)
