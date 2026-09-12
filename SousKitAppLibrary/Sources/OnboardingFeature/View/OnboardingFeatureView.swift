@@ -83,7 +83,7 @@ struct OnboardingFeatureView: View {
             Text("Choose folder")
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.sous(.primary))
+        .buttonStyle(.sousPrimary)
     }
 
     private var isChoosingDirectory: Binding<Bool> {

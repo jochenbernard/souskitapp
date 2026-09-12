@@ -108,7 +108,7 @@ struct RecipeFeatureView: View {
             Text("Start cooking")
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.sous(.primary))
+        .buttonStyle(.sousPrimary)
         .padding(SousSpacing.xLarge)
     }
 }

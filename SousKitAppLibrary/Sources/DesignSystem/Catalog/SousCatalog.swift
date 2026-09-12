@@ -150,17 +150,17 @@ public struct SousCatalog: View {
                 Button("Boeuf Bourguignon") {
                     // The catalog shows styling, not behavior.
                 }
-                .buttonStyle(.sous(.primary))
+                .buttonStyle(.sousPrimary)
 
                 Button("Gratin Dauphinois") {
                     // The catalog shows styling, not behavior.
                 }
-                .buttonStyle(.sous(.secondary))
+                .buttonStyle(.sousSecondary)
 
                 Button("Vinaigrette") {
                     // The catalog shows styling, not behavior.
                 }
-                .buttonStyle(.sous(.quiet))
+                .buttonStyle(.sousQuiet)
             }
         }
     }

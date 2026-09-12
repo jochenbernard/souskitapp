@@ -12,7 +12,7 @@ The Sous brand, expressed in Swift.
 | Faces | `SousFontFace` | Archivo and JetBrains Mono, bundled and self-registering. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
-| Components | `SousButtonStyle` | Buttons, in three emphases. |
+| Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet` | The three button styles. |
 | Page | `.sousPage()` | The ground a screen sits on, and the text token on it. |
 | Containers | `.sousSurface(cornerRadius:)`, `.sousCallout()`, `SousActivityNote` | The card, the wash, the spinner. |
 | Catalog | `SousCatalog` | Every token on one page. Run the app to see it. |
@@ -67,7 +67,7 @@ Hence the split:
   anything, and the only option for text a `Text` does not carry: a `TextField`, a `Label`,
   a stack. Blocks set this way sit one correction short of their line height.
 
-`SousButtonStyle` uses the corrected form on its label, since a label is one text block and
+`sousButtonLabel(_:)` uses the corrected form, since a button label is one text block and
 dropping the correction would take the control under the 44pt minimum target.
 
 ## Beyond the seven tokens
@@ -87,17 +87,26 @@ roles it names have no token, and take a palette value directly:
 The `SousSpacing` steps and the `SousRadius` values are read off the mark's grid, where 8 is
 the stroke, 12 the curl pitch, and 64 the grid.
 
-`SousButtonStyle` is mostly chosen here too. The brand gives Ink on Flame at 5.5, Ember for a
+The button styles are mostly chosen here too. The brand gives Ink on Flame at 5.5, Ember for a
 pressed link, Ember as a fill on dark, Paper on Ember at 5.3, and one primary action per view.
-That covers the primary button at rest and nothing else. The `secondary` and `quiet` emphases,
-every padding and radius, and all press behavior are ours.
+That covers the primary button at rest and nothing else. `.sousSecondary` and `.sousQuiet`, the
+capsule outline, every padding, and all press behavior are ours.
 
-A press scales the control and changes no color. Nothing defines a fill for a pressed button,
-and Ink on Ember is 3.37, so darkening the fill would force the label to change color
-mid-press. Dimming fails as well: only 0.9 opacity keeps Ink on Flame above 4.5, which reads
-as no feedback at all. The pressed state also outlives the finger by up to
-`SousButtonStyle.minimumDown`, since a tap can end within a frame of starting and would
-otherwise show nothing.
+`.sousPrimary` draws that Flame as a Liquid Glass tint, not a flat fill. Ink stays the label
+color, and the 5.5 figure holds where the tint sits over the page ground.
+
+The three styles are separate types rather than one carrying an emphasis: no call site picks an
+emphasis at run time, and the primary differs in kind, not degree. What they share is in
+`ButtonPress`, `ButtonPressBody`, and `sousButtonLabel(_:)`.
+
+A press scales the control and changes no color. `.sousPrimary` is the exception: its
+`interactive()` glass flexes under the finger, and a scale on top would be a second reaction
+to one touch. Nothing defines a fill for a pressed button, and Ink on Ember is 3.37, so
+darkening the fill would force the label to change color mid-press. Dimming fails as well:
+only 0.9 opacity keeps Ink on Flame above 4.5, which reads as no feedback at all. The pressed
+state also outlives the finger by up to `ButtonPress.minimumDown`, since a tap can end within
+a frame of starting and would otherwise show nothing. On `.sousPrimary` that hold keeps the
+release haptic off the press.
 
 Two brand states are missing: the Flame outline called Attention, over Sear on dark, and the
 hover Ember is given for.
