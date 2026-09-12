@@ -71,7 +71,9 @@ public struct RecipeDirectoryReader: Sendable {
                 // Built off the entry, not off `directory`: listing resolves the symlinks in
                 // front of a directory, and a URL built the other way matches no entry.
                 let url = entry.deletingLastPathComponent().appending(path: name)
-                placeholders.append(RecipeFile(url: url, availability: .notDownloaded))
+                placeholders.append(
+                    RecipeFile(url: url, availability: availabilityOfPlaceholder(at: url))
+                )
             } else if isRecipeFileName(entryName) {
                 guard
                     let values = try? entry.resourceValues(forKeys: resourceKeys),
@@ -109,6 +111,21 @@ public struct RecipeDirectoryReader: Sendable {
     /// Whether a directory entry's name is a recipe's.
     private static func isRecipeFileName(_ entryName: String) -> Bool {
         !entryName.hasPrefix(".") && entryName.lowercased().hasSuffix(".\(RecipeFile.pathExtension)")
+    }
+
+    /// What a placeholder reports about the recipe it stands in for.
+    ///
+    /// A placeholder stays in the directory while the fetch it triggered runs, so a recipe on its
+    /// way down is reported as ``RecipeFileAvailability/downloading`` rather than as absent.
+    private static func availabilityOfPlaceholder(at url: URL) -> RecipeFileAvailability {
+        guard
+            let values = try? url.resourceValues(forKeys: resourceKeys),
+            values.ubiquitousItemIsDownloading == true
+        else {
+            return .notDownloaded
+        }
+
+        return .downloading
     }
 
     /// What an entry's iCloud metadata reports about its contents.

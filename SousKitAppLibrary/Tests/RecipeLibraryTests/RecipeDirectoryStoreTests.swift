@@ -9,9 +9,9 @@ final class RecipeDirectoryStoreTests {
     private let userDefaults: UserDefaults
 
     init() throws {
-        directory = try TemporaryDirectory(named: "RecipeDirectoryStoreTests")
-        suiteName = directory.url.lastPathComponent
-        userDefaults = try #require(UserDefaults(suiteName: suiteName))
+        self.directory = try TemporaryDirectory(named: "RecipeDirectoryStoreTests")
+        self.suiteName = directory.url.lastPathComponent
+        self.userDefaults = try #require(UserDefaults(suiteName: suiteName))
     }
 
     deinit {

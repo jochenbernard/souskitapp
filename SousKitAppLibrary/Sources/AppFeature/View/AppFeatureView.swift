@@ -14,12 +14,13 @@ struct AppFeatureView: View {
             switch viewModel.screen {
             case .onboarding(let onboardingFeature):
                 onboardingFeature.makeView()
+                    .transition(.blurReplace)
 
             case .kitchen(let kitchenFeature):
                 kitchenFeature.makeView()
+                    .transition(.blurReplace)
             }
         }
-        .transition(.blurReplace)
         .animation(
             .spring(duration: 0.4, bounce: 0.0),
             value: viewModel.screen.isOnboarding

@@ -5,8 +5,10 @@ import SousKit
 enum RecipeDisplay {
     /// The header lines to show, with the title left out because it heads the screen.
     static func metadataRows(of metadata: Metadata) -> [MetadataRow] {
-        metadata.entries.enumerated().compactMap { index, entry in
-            guard entry.key != titleKey else {
+        let titleIndex = indexOfTitle(in: metadata.entries)
+
+        return metadata.entries.enumerated().compactMap { index, entry in
+            guard index != titleIndex else {
                 return nil
             }
 
@@ -22,6 +24,20 @@ enum RecipeDisplay {
     }
 
     private static let titleKey = "title"
+
+    /// Where the entry the screen heads itself with sits, which is the last scalar `title`.
+    ///
+    /// Only that one entry is left out: a header repeating the key, or spelling it as a list,
+    /// carries something the title never shows, and dropping every `title` line loses it.
+    private static func indexOfTitle(in entries: [Metadata.Entry]) -> Int? {
+        entries.lastIndex { entry in
+            guard entry.key == titleKey, case .scalar = entry.value else {
+                return false
+            }
+
+            return true
+        }
+    }
 
     /// What one header entry reads as on a single line.
     private static func value(of value: Metadata.Entry.Value) -> String {

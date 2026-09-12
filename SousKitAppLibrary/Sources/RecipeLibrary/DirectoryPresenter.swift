@@ -2,7 +2,7 @@ import Foundation
 
 /// Reports the changes reaching a directory through file coordination, which is how iCloud
 /// writes into it.
-final class DirectoryPresenter: NSObject, NSFilePresenter {
+final class DirectoryPresenter: NSObject, NSFilePresenter, Sendable {
     let presentedItemURL: URL?
     let presentedItemOperationQueue: OperationQueue
 

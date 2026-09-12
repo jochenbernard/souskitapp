@@ -29,38 +29,6 @@ struct KitchenFeatureView: View {
         }
     }
 
-    @ViewBuilder
-    private func screenView(for screen: KitchenScreen) -> some View {
-        switch screen {
-        case .recipe(let recipeFile):
-            recipeScreen(for: recipeFile)
-
-        case .cooking(let recipe):
-            cookingScreen(for: recipe)
-        }
-    }
-
-    @ViewBuilder
-    private func recipeScreen(for recipeFile: RecipeFile) -> some View {
-        if let openRecipe = viewModel.openRecipe, openRecipe.recipeFile == recipeFile {
-            openRecipe.feature.makeView()
-        }
-    }
-
-    @ViewBuilder
-    private func cookingScreen(for recipe: Recipe) -> some View {
-        if let openCooking = viewModel.openCooking, openCooking.recipe == recipe {
-            openCooking.feature.makeView()
-        }
-    }
-
-    private var screenPath: Binding<[KitchenScreen]> {
-        Binding(
-            get: { viewModel.screenPath },
-            set: { presenter.didChangeScreenPath($0) }
-        )
-    }
-
     private var recipeListScreen: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
@@ -174,6 +142,38 @@ struct KitchenFeatureView: View {
                 .foregroundStyle(SousColor.textMuted)
                 .accessibilityLabel("In iCloud, not downloaded")
         }
+    }
+
+    @ViewBuilder
+    private func screenView(for screen: KitchenScreen) -> some View {
+        switch screen {
+        case .recipe(let recipeFile):
+            recipeScreen(for: recipeFile)
+
+        case .cooking(let recipe):
+            cookingScreen(for: recipe)
+        }
+    }
+
+    @ViewBuilder
+    private func recipeScreen(for recipeFile: RecipeFile) -> some View {
+        if let openRecipe = viewModel.openRecipe, openRecipe.recipeFile == recipeFile {
+            openRecipe.feature.makeView()
+        }
+    }
+
+    @ViewBuilder
+    private func cookingScreen(for recipe: Recipe) -> some View {
+        if let openCooking = viewModel.openCooking, openCooking.recipe == recipe {
+            openCooking.feature.makeView()
+        }
+    }
+
+    private var screenPath: Binding<[KitchenScreen]> {
+        Binding(
+            get: { viewModel.screenPath },
+            set: { presenter.didChangeScreenPath($0) }
+        )
     }
 }
 

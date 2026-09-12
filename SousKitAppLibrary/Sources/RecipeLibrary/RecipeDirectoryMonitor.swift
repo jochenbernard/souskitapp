@@ -36,6 +36,16 @@ public final class RecipeDirectoryMonitor {
         self.reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory)
     }
 
+    /// Lets go of what outlives a released monitor: `NSFileCoordinator` retains a file presenter,
+    /// so a presenter left registered never reaches its own `deinit`.
+    deinit {
+        presenter?.stopPresenting()
+
+        if isScoped {
+            recipeDirectory.url.stopAccessingSecurityScopedResource()
+        }
+    }
+
     /// The recipes in the directory, yielded once now and again after every change to it.
     ///
     /// Watching starts here and stops when the stream ends, which cancelling the task iterating
