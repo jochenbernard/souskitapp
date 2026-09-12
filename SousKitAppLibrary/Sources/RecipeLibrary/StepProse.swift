@@ -1,4 +1,5 @@
 import SousKit
+import SwiftUI
 
 /// A step's segments read as prose, every annotation resolved to the words it stands for.
 public enum StepProse {
@@ -11,6 +12,38 @@ public enum StepProse {
     /// - Returns: The runs the step reads as, in document order.
     public static func runs(of step: Step) -> [StepRun] {
         step.segments.map({ run(of: $0) })
+    }
+
+    /// A step set as prose, with everything it reaches for underlined.
+    ///
+    /// - Parameters:
+    ///   - step: The step to read.
+    ///   - annotationColor: The color an annotation is underlined in.
+    /// - Returns: The prose, ready to set as a `Text`.
+    public static func attributedProse(
+        of step: Step,
+        annotationColor: Color
+    ) -> AttributedString {
+        runs(of: step).reduce(into: AttributedString()) { prose, run in
+            prose.append(attributed(run, annotationColor: annotationColor))
+        }
+    }
+
+    /// One run, underlined where it stands for an annotation.
+    private static func attributed(
+        _ run: StepRun,
+        annotationColor: Color
+    ) -> AttributedString {
+        var text = AttributedString(run.text)
+
+        if run.isAnnotation {
+            text.underlineStyle = Text.LineStyle(
+                pattern: .solid,
+                color: annotationColor
+            )
+        }
+
+        return text
     }
 
     /// What one segment reads as, and whether it is an annotation.

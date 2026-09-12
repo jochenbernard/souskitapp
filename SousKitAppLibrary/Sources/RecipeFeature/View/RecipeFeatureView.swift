@@ -81,14 +81,7 @@ struct RecipeFeatureView: View {
     }
 
     private func failureNote(_ message: String) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.small) {
-            Text("This recipe could not be read")
-                .sousTextStyle(.body)
-
-            Text(verbatim: message)
-                .sousTextStyle(.body)
-        }
-        .sousCallout()
+        SousFailureNote(Text("This recipe could not be read"), message: message)
     }
 
     @ViewBuilder

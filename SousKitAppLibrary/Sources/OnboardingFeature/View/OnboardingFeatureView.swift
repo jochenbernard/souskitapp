@@ -37,16 +37,8 @@ struct OnboardingFeatureView: View {
         )
     }
 
-    /// The mark and the wordmark at matched sizes, the wordmark in Archivo 600.
     private var lockup: some View {
-        HStack(spacing: SousSpacing.xSmall) {
-            SousMark(size: 44.0)
-
-            // Fixed, not scaled: the wordmark is set at the mark's size.
-            Text(verbatim: "Sous")
-                .font(SousFontFace.archivoSemiBold.font(size: 32.0))
-        }
-        .accessibilityElement(children: .combine)
+        SousLockup(markSize: 44.0, wordmarkSize: 32.0)
     }
 
     private var introduction: some View {

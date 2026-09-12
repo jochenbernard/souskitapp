@@ -5,33 +5,19 @@ import Testing
 
 @Suite("Recipe reader")
 final class RecipeReaderTests {
-    private let directoryURL: URL
+    private let directory: TemporaryDirectory
 
     init() throws {
-        let url = URL(filePath: NSTemporaryDirectory())
-            .appending(path: "RecipeReaderTests.\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        self.directoryURL = url
-    }
-
-    deinit {
-        try? FileManager.default.removeItem(at: directoryURL)
-    }
-
-    private func writeFile(named fileName: String, _ text: String) throws -> RecipeFile {
-        let url = directoryURL.appending(path: fileName)
-        try Data(text.utf8).write(to: url)
-
-        return RecipeFile(url: url, availability: .downloaded)
+        self.directory = try TemporaryDirectory(named: "RecipeReaderTests")
     }
 
     private func readRecipe(of recipeFile: RecipeFile) throws -> Recipe {
-        let reader = RecipeReader(recipeDirectory: RecipeDirectory(url: directoryURL))
+        let reader = RecipeReader(recipeDirectory: directory.recipeDirectory)
         return try reader.readRecipe(of: recipeFile).value
     }
 
     private func crepes() throws -> RecipeFile {
-        try writeFile(
+        try directory.writeFile(
             named: "crepes.sous",
             """
             ---
@@ -81,7 +67,7 @@ final class RecipeReaderTests {
 
     @Test("a heading names the group its steps sit in")
     func groups() throws {
-        let recipeFile = try writeFile(
+        let recipeFile = try directory.writeFile(
             named: "bouillabaisse.sous",
             """
             ---
@@ -104,7 +90,7 @@ final class RecipeReaderTests {
 
     @Test("a file that is not a recipe still parses, holding no steps")
     func notARecipe() throws {
-        let recipeFile = try writeFile(named: "empty.sous", "")
+        let recipeFile = try directory.writeFile(named: "empty.sous", "")
 
         let recipe = try readRecipe(of: recipeFile)
 
@@ -114,7 +100,7 @@ final class RecipeReaderTests {
 
     @Test("reading a recipe that is gone throws")
     func missingRecipe() throws {
-        let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
+        let recipeFile = try directory.writeFile(named: "crepes.sous", "Whisk.")
         try FileManager.default.removeItem(at: recipeFile.url)
 
         #expect(throws: (any Error).self) {

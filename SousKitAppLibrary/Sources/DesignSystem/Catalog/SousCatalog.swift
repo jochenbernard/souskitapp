@@ -38,18 +38,10 @@ public struct SousCatalog: View {
         .sousPage()
     }
 
-    /// Mark and wordmark at matched sizes, the wordmark in Archivo 600.
     private var lockup: some View {
         VStack(alignment: .leading, spacing: SousSpacing.small) {
-            HStack(spacing: SousSpacing.xSmall) {
-                SousMark(size: 56.0)
-
-                // Fixed, not scaled: the mark is set at the wordmark's size.
-                Text(verbatim: "Sous")
-                    .font(SousFontFace.archivoSemiBold.font(size: 40.0))
-                    .foregroundStyle(SousColor.text)
-            }
-            .accessibilityElement(children: .combine)
+            SousLockup(markSize: 56.0, wordmarkSize: 40.0)
+                .foregroundStyle(SousColor.text)
 
             Text(verbatim: "Design system \u{B7} brand v1.0")
                 .sousTextStyle(.eyebrow)

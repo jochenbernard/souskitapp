@@ -17,7 +17,24 @@ struct StepNumberingTests {
             """
         let recipe = SousParser().parseRecipe(source).value
 
-        #expect(StepNumbering.firstNumber(ofGroupAt: 0, in: recipe) == 1)
-        #expect(StepNumbering.firstNumber(ofGroupAt: 1, in: recipe) == 3)
+        #expect(StepNumbering.numberedGroups(of: recipe).map(\.firstNumber) == [1, 3])
+    }
+
+    @Test("a group with no steps leaves the count where it was")
+    func emptyGroupKeepsTheCount() {
+        let source = """
+            ## Court-Bouillon
+            Soften it.
+
+            ## Notes
+
+            ## Rouille
+            Pound it.
+            """
+        let recipe = SousParser().parseRecipe(source).value
+        let numbered = StepNumbering.numberedGroups(of: recipe)
+
+        #expect(numbered.map(\.id) == Array(recipe.groups.indices))
+        #expect(numbered.last?.firstNumber == 2)
     }
 }

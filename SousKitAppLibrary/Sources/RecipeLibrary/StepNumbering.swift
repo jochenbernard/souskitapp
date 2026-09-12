@@ -2,13 +2,20 @@ import SousKit
 
 /// Step numbers as a cook reads them, counting on across the groups of a recipe.
 public enum StepNumbering {
-    /// The number the first step of a group takes, counting from the top of the recipe.
+    /// A recipe's groups in order, each carrying the number its first step takes.
     ///
-    /// - Parameters:
-    ///   - index: Where the group sits among the recipe's groups.
-    ///   - recipe: The recipe holding the group.
-    /// - Returns: The number, counting from one.
-    public static func firstNumber(ofGroupAt index: Int, in recipe: Recipe) -> Int {
-        recipe.groups.prefix(index).reduce(1, { $0 + $1.steps.count })
+    /// The count runs on across the groups, so the numbering never restarts part way down a
+    /// recipe.
+    ///
+    /// - Parameter recipe: The recipe to number.
+    /// - Returns: The groups, in document order.
+    public static func numberedGroups(of recipe: Recipe) -> [NumberedGroup] {
+        var firstNumber = 1
+
+        return recipe.groups.enumerated().map { index, group in
+            defer { firstNumber += group.steps.count }
+
+            return NumberedGroup(id: index, group: group, firstNumber: firstNumber)
+        }
     }
 }

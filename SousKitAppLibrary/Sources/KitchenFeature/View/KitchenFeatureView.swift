@@ -136,14 +136,7 @@ struct KitchenFeatureView: View {
     }
 
     private func failureNote(_ message: String) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.small) {
-            Text("This folder could not be read")
-                .sousTextStyle(.body)
-
-            Text(verbatim: message)
-                .sousTextStyle(.body)
-        }
-        .sousCallout()
+        SousFailureNote(Text("This folder could not be read"), message: message)
     }
 
     private func recipeRow(_ recipeFile: RecipeFile) -> some View {

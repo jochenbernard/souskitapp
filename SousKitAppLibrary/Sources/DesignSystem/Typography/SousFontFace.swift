@@ -45,10 +45,26 @@ public enum SousFontFace: String, CaseIterable, Sendable {
     /// - Parameter size: The point size to measure at.
     /// - Returns: The line height in points.
     public func naturalLineHeight(size: CGFloat) -> CGFloat {
-        Self.registerBundledFonts()
-        let font = CTFontCreateWithName(postScriptName as CFString, size, nil)
-        return CTFontGetAscent(font) + CTFontGetDescent(font) + CTFontGetLeading(font)
+        Self.unitLineHeights[self, default: 0.0] * size
     }
+
+    /// Every face's line height at one point, measured once.
+    ///
+    /// Core Text scales these metrics with the point size, so one measurement per face answers
+    /// every size, and the type scale measures nothing again on a redraw.
+    private static let unitLineHeights: [SousFontFace: CGFloat] = {
+        registerBundledFonts()
+
+        return Dictionary(
+            uniqueKeysWithValues: allCases.map { face in
+                let font = CTFontCreateWithName(face.postScriptName as CFString, 1.0, nil)
+                let ascent = CTFontGetAscent(font)
+                let descent = CTFontGetDescent(font)
+
+                return (face, ascent + descent + CTFontGetLeading(font))
+            }
+        )
+    }()
 
     /// Registration, run lazily on first access.
     ///

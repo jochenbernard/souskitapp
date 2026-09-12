@@ -43,8 +43,8 @@ struct CookingFeatureView: View {
     /// The recipe's groups in order, with the steps numbered on across them.
     private var steps: some View {
         VStack(alignment: .leading, spacing: SousSpacing.section) {
-            ForEach(Array(viewModel.recipe.groups.enumerated()), id: \.offset) { index, group in
-                groupView(group, firstNumber: StepNumbering.firstNumber(ofGroupAt: index, in: viewModel.recipe))
+            ForEach(StepNumbering.numberedGroups(of: viewModel.recipe)) { numbered in
+                groupView(numbered.group, firstNumber: numbered.firstNumber)
             }
         }
     }
@@ -81,24 +81,7 @@ struct CookingFeatureView: View {
 
     /// The step's prose, with what it reaches for underlined in the accent.
     private func stepProse(_ step: Step) -> Text {
-        let prose = StepProse.runs(of: step).reduce(into: AttributedString()) { prose, run in
-            prose.append(attributed(run))
-        }
-
-        return Text(prose)
-    }
-
-    private func attributed(_ run: StepRun) -> AttributedString {
-        var text = AttributedString(run.text)
-
-        if run.isAnnotation {
-            text.underlineStyle = Text.LineStyle(
-                pattern: .solid,
-                color: SousColor.accent
-            )
-        }
-
-        return text
+        Text(StepProse.attributedProse(of: step, annotationColor: SousColor.accent))
     }
 
     private var exitButton: some View {

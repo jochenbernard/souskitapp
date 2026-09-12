@@ -43,11 +43,13 @@ struct RecipeBodyView: View {
 
     @ViewBuilder
     private var ingredientSection: some View {
-        if !recipe.ingredients.isEmpty {
+        let ingredients = recipe.ingredients
+
+        if !ingredients.isEmpty {
             section(.ingredients) {
                 VStack(alignment: .leading, spacing: SousSpacing.small) {
-                    ForEach(Array(recipe.ingredients.enumerated()), id: \.offset) { _, ingredient in
-                        ingredientRow(ingredient)
+                    ForEach(ingredients.indices, id: \.self) { index in
+                        ingredientRow(ingredients[index])
                     }
                 }
             }
@@ -75,8 +77,8 @@ struct RecipeBodyView: View {
         if !recipe.steps.isEmpty {
             section(.steps) {
                 VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
-                    ForEach(Array(recipe.groups.enumerated()), id: \.offset) { index, group in
-                        groupView(group, firstNumber: StepNumbering.firstNumber(ofGroupAt: index, in: recipe))
+                    ForEach(StepNumbering.numberedGroups(of: recipe)) { numbered in
+                        groupView(numbered.group, firstNumber: numbered.firstNumber)
                     }
                 }
             }
@@ -206,24 +208,7 @@ struct RecipeBodyView: View {
 
     /// The step's prose, with what it reaches for underlined in the accent.
     private func stepProse(_ step: Step) -> Text {
-        let prose = StepProse.runs(of: step).reduce(into: AttributedString()) { prose, run in
-            prose.append(attributed(run))
-        }
-
-        return Text(prose)
-    }
-
-    private func attributed(_ run: StepRun) -> AttributedString {
-        var text = AttributedString(run.text)
-
-        if run.isAnnotation {
-            text.underlineStyle = Text.LineStyle(
-                pattern: .solid,
-                color: SousColor.accent
-            )
-        }
-
-        return text
+        Text(StepProse.attributedProse(of: step, annotationColor: SousColor.accent))
     }
 
     @ViewBuilder

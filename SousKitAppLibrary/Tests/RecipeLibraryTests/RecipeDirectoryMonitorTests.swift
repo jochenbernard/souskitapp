@@ -4,26 +4,15 @@ import Testing
 
 @Suite("Recipe directory monitor", .timeLimit(.minutes(1)))
 final class RecipeDirectoryMonitorTests: Sendable {
-    private let directoryURL: URL
+    private let directory: TemporaryDirectory
 
     init() throws {
-        let url = URL(filePath: NSTemporaryDirectory())
-            .appending(path: "RecipeDirectoryMonitorTests.\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        self.directoryURL = url
-    }
-
-    deinit {
-        try? FileManager.default.removeItem(at: directoryURL)
-    }
-
-    private func writeFile(named fileName: String) throws {
-        try Data().write(to: directoryURL.appending(path: fileName))
+        self.directory = try TemporaryDirectory(named: "RecipeDirectoryMonitorTests")
     }
 
     private func makeMonitor() -> RecipeDirectoryMonitor {
         RecipeDirectoryMonitor(
-            recipeDirectory: RecipeDirectory(url: directoryURL),
+            recipeDirectory: directory.recipeDirectory,
             settleDelay: .milliseconds(20)
         )
     }
@@ -64,7 +53,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @MainActor
     @Test("the recipes already there arrive first")
     func firstRead() async throws {
-        try writeFile(named: "crepes.sous")
+        try directory.writeFile(named: "crepes.sous")
 
         let reached = try await names(reach: ["Crepes"], from: makeMonitor())
 
@@ -82,7 +71,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @MainActor
     @Test("a directory that is gone arrives as a failure")
     func failingRead() async throws {
-        try FileManager.default.removeItem(at: directoryURL)
+        try FileManager.default.removeItem(at: directory.url)
 
         let result = await firstResult(from: makeMonitor())
 
@@ -94,10 +83,10 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @MainActor
     @Test("a recipe added to the directory arrives")
     func addedRecipe() async throws {
-        try writeFile(named: "crepes.sous")
+        try directory.writeFile(named: "crepes.sous")
 
         let reached = try await names(reach: ["Brioche", "Crepes"], from: makeMonitor()) {
-            try writeFile(named: "brioche.sous")
+            try directory.writeFile(named: "brioche.sous")
         }
 
         #expect(reached)
@@ -106,11 +95,11 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @MainActor
     @Test("a recipe removed from the directory stops arriving")
     func removedRecipe() async throws {
-        try writeFile(named: "crepes.sous")
-        try writeFile(named: "brioche.sous")
+        try directory.writeFile(named: "crepes.sous")
+        try directory.writeFile(named: "brioche.sous")
 
         let reached = try await names(reach: ["Crepes"], from: makeMonitor()) {
-            try FileManager.default.removeItem(at: directoryURL.appending(path: "brioche.sous"))
+            try FileManager.default.removeItem(at: directory.url.appending(path: "brioche.sous"))
         }
 
         #expect(reached)
@@ -119,12 +108,12 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @MainActor
     @Test("a recipe renamed in the directory arrives under the new name")
     func renamedRecipe() async throws {
-        try writeFile(named: "crepes.sous")
+        try directory.writeFile(named: "crepes.sous")
 
         let reached = try await names(reach: ["Crepes Suzette"], from: makeMonitor()) {
             try FileManager.default.moveItem(
-                at: directoryURL.appending(path: "crepes.sous"),
-                to: directoryURL.appending(path: "crepes-suzette.sous")
+                at: directory.url.appending(path: "crepes.sous"),
+                to: directory.url.appending(path: "crepes-suzette.sous")
             )
         }
 
@@ -137,7 +126,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
         let monitor = makeMonitor()
 
         let reached = try await names(reach: ["Crepes"], from: monitor) {
-            try writeFile(named: "crepes.sous")
+            try directory.writeFile(named: "crepes.sous")
             monitor.refresh()
         }
 
