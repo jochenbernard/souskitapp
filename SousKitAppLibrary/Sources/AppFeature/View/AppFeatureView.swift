@@ -26,8 +26,8 @@ struct AppFeatureView: View {
             .spring(duration: 0.4, bounce: 0.0),
             value: viewModel.screen.isOnboarding
         )
-        // A blurred screen fades out at the perimeter, letting the window's own white through,
-        // so the ground is drawn behind the transition rather than by the screens it fades.
+        // A blurred screen fades out at the perimeter, letting the window's own background
+        // through, so the ground is drawn behind the transition rather than by the screens.
         .background(SousColor.background)
     }
 }
