@@ -93,7 +93,7 @@ final class KitchenFeaturePresenterTests: Sendable {
             task.cancel()
         }
 
-        #expect(await names(reach: ["Boeuf Bourguignon", "Crepes"], in: viewModel))
+        #expect(await names(reach: ["boeuf bourguignon", "crepes"], in: viewModel))
     }
 
     @MainActor
@@ -110,11 +110,11 @@ final class KitchenFeaturePresenterTests: Sendable {
             task.cancel()
         }
 
-        #expect(await names(reach: ["Crepes"], in: viewModel))
+        #expect(await names(reach: ["crepes"], in: viewModel))
 
         try writeFile(named: "brioche.sous")
 
-        #expect(await names(reach: ["Brioche", "Crepes"], in: viewModel))
+        #expect(await names(reach: ["brioche", "crepes"], in: viewModel))
     }
 
     @MainActor

@@ -13,37 +13,37 @@ struct RecipeFileTests {
 
     @Test("hyphens part the words of a name")
     func hyphenatedName() {
-        #expect(recipeFile(named: "boeuf-bourguignon.sous").name == "Boeuf Bourguignon")
+        #expect(recipeFile(named: "boeuf-bourguignon.sous").name == "boeuf bourguignon")
     }
 
     @Test("underscores part the words of a name")
     func underscoredName() {
-        #expect(recipeFile(named: "creme_brulee.sous").name == "Creme Brulee")
+        #expect(recipeFile(named: "creme_brulee.sous").name == "creme brulee")
     }
 
     @Test("spaces part the words of a name")
     func spacedName() {
-        #expect(recipeFile(named: "quiche lorraine.sous").name == "Quiche Lorraine")
+        #expect(recipeFile(named: "quiche lorraine.sous").name == "quiche lorraine")
     }
 
-    @Test("a capital already there is left alone")
-    func capitalizedName() {
+    @Test("the name keeps the file's own casing")
+    func casingInName() {
         #expect(recipeFile(named: "Crepes.sous").name == "Crepes")
     }
 
-    @Test("only the first character of a word is raised")
+    @Test("a word in capitals keeps them")
     func innerCapitalsInName() {
-        #expect(recipeFile(named: "pain-de-MIE.sous").name == "Pain De MIE")
+        #expect(recipeFile(named: "pain-de-MIE.sous").name == "pain de MIE")
     }
 
     @Test("repeated separators make one space")
     func repeatedSeparatorsInName() {
-        #expect(recipeFile(named: "gratin--dauphinois.sous").name == "Gratin Dauphinois")
+        #expect(recipeFile(named: "gratin--dauphinois.sous").name == "gratin dauphinois")
     }
 
     @Test("only the last extension comes off the name")
     func innerDotsInName() {
-        #expect(recipeFile(named: "crepes.v2.sous").name == "Crepes.v2")
+        #expect(recipeFile(named: "crepes.v2.sous").name == "crepes.v2")
     }
 
     @Test("an extension in capitals comes off the name too")

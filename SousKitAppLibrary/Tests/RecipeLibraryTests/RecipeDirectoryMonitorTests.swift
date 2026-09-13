@@ -55,7 +55,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
     func firstRead() async throws {
         try directory.writeFile(named: "crepes.sous")
 
-        let reached = try await names(reach: ["Crepes"], from: makeMonitor())
+        let reached = try await names(reach: ["crepes"], from: makeMonitor())
 
         #expect(reached)
     }
@@ -85,7 +85,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
     func addedRecipe() async throws {
         try directory.writeFile(named: "crepes.sous")
 
-        let reached = try await names(reach: ["Brioche", "Crepes"], from: makeMonitor()) {
+        let reached = try await names(reach: ["brioche", "crepes"], from: makeMonitor()) {
             try directory.writeFile(named: "brioche.sous")
         }
 
@@ -98,7 +98,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
         try directory.writeFile(named: "crepes.sous")
         try directory.writeFile(named: "brioche.sous")
 
-        let reached = try await names(reach: ["Crepes"], from: makeMonitor()) {
+        let reached = try await names(reach: ["crepes"], from: makeMonitor()) {
             try FileManager.default.removeItem(at: directory.url.appending(path: "brioche.sous"))
         }
 
@@ -110,7 +110,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
     func renamedRecipe() async throws {
         try directory.writeFile(named: "crepes.sous")
 
-        let reached = try await names(reach: ["Crepes Suzette"], from: makeMonitor()) {
+        let reached = try await names(reach: ["crepes suzette"], from: makeMonitor()) {
             try FileManager.default.moveItem(
                 at: directory.url.appending(path: "crepes.sous"),
                 to: directory.url.appending(path: "crepes-suzette.sous")
@@ -125,7 +125,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
     func refreshing() async throws {
         let monitor = makeMonitor()
 
-        let reached = try await names(reach: ["Crepes"], from: monitor) {
+        let reached = try await names(reach: ["crepes"], from: monitor) {
             try directory.writeFile(named: "crepes.sous")
             monitor.refresh()
         }

@@ -14,7 +14,7 @@ public struct RecipeFile: Sendable, Hashable, Identifiable {
     /// The file's name on disk, extension included.
     public let fileName: String
 
-    /// The file's name set for reading: no extension, separators as spaces, each word capitalized.
+    /// The file's name set for reading: no extension, separators as spaces, casing untouched.
     public let name: String
 
     /// Where the file sits on disk, which no two recipes in one directory share.
@@ -37,9 +37,7 @@ public struct RecipeFile: Sendable, Hashable, Identifiable {
     /// Reduces a file name to the name shown for it.
     private static func name(forFileNamed fileName: String) -> String {
         let stem = URL(filePath: fileName).deletingPathExtension().lastPathComponent
-        let words = stem.split(whereSeparator: isSeparator).map { word in
-            word.prefix(1).uppercased() + String(word.dropFirst())
-        }
+        let words = stem.split(whereSeparator: isSeparator)
 
         guard !words.isEmpty else {
             return stem

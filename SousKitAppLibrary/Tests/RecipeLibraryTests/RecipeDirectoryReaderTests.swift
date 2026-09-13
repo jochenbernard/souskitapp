@@ -31,7 +31,7 @@ final class RecipeDirectoryReaderTests {
         try directory.writeFile(named: "README.md")
         try directory.writeFile(named: "sous")
 
-        #expect(try readNames() == ["Crepes"])
+        #expect(try readNames() == ["crepes"])
     }
 
     @Test("an extension in capitals is a recipe")
@@ -54,7 +54,7 @@ final class RecipeDirectoryReaderTests {
         try Data().write(to: directory.url.appending(path: "Desserts/madeleines.sous"))
         try directory.writeFile(named: "crepes.sous")
 
-        #expect(try readNames() == ["Crepes"])
+        #expect(try readNames() == ["crepes"])
     }
 
     @Test("a hidden file is left out")
@@ -70,7 +70,7 @@ final class RecipeDirectoryReaderTests {
         try directory.writeFile(named: "brioche.sous")
         try directory.writeFile(named: "Crepes.sous")
 
-        #expect(try readNames() == ["Brioche", "Crepes", "Vinaigrette"])
+        #expect(try readNames() == ["brioche", "Crepes", "vinaigrette"])
     }
 
     @Test("numbers in names order by value")
@@ -78,7 +78,7 @@ final class RecipeDirectoryReaderTests {
         try directory.writeFile(named: "recipe-10.sous")
         try directory.writeFile(named: "recipe-2.sous")
 
-        #expect(try readNames() == ["Recipe 2", "Recipe 10"])
+        #expect(try readNames() == ["recipe 2", "recipe 10"])
     }
 
     @Test("a file on disk is downloaded")
