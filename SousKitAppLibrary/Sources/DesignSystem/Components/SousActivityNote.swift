@@ -20,6 +20,7 @@ public struct SousActivityNote<Label: View>: View {
             label
                 .foregroundStyle(SousColor.textMuted)
         }
+        .padding(.horizontal, SousSpacing.small)
     }
 }
 

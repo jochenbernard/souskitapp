@@ -26,6 +26,10 @@ disagrees with this package, this package is right.
   color does. Nothing reaches for `@Environment(\.colorScheme)` to pick a value.
 - A screen takes `.sousPage()`, and a container sets the color its content is read in. Only text
   stepping away from what it sits in, a caption in `SousColor.textMuted`, names a color itself.
+- A container of one line reads as a capsule, and holds that radius as a rounded rectangle
+  where its text wraps, so the curve of a row or a callout is the same whatever it holds. The
+  radius is half the height of one `.body` line inside the container's own vertical padding,
+  taken through `@ScaledMetric` so it follows Dynamic Type.
 - A page is padded `SousSpacing.large` horizontally and `SousSpacing.small` vertically. The
   padding sits on the content, not on `.sousPage()`, which a scroll view needs it to; anything
   else on the screen, a bottom bar included, takes the same two values so its edges line up.
@@ -104,7 +108,8 @@ state also outlives the finger by up to `ButtonPress.minimumDown`, since a tap c
 a frame of starting and would otherwise show nothing. On `.sousPrimary` that hold keeps the
 release haptic off the press.
 
-Two states are not built: Attention, a Flame outline over Sear on dark, and a hover in Ember.
+A callout draws its wash inside a Flame outline, which is Attention on a container. One state
+is not built: the hover Ember is given for.
 
 ## Adding to it
 
