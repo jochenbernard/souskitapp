@@ -26,8 +26,8 @@ struct AppFeatureView: View {
             .spring(duration: 0.4, bounce: 0.0),
             value: viewModel.screen.isOnboarding
         )
-        // A transition clips what it holds to the safe area, so the ground is drawn behind it
-        // here. Left to the screens, it would draw short of the edges until the blur ended.
+        // A blurred screen fades out at the perimeter, letting the window's own white through,
+        // so the ground is drawn behind the transition rather than by the screens it fades.
         .background(SousColor.background)
     }
 }
