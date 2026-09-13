@@ -41,6 +41,11 @@ struct KitchenFeatureView: View {
         }
         .sousPage()
         .navigationTitle(viewModel.recipeDirectory.name)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                debugMenu
+            }
+        }
         .task {
             await presenter.viewDidAppear()
         }
@@ -143,6 +148,30 @@ struct KitchenFeatureView: View {
         (scaledBodyLineHeight + SousSpacing.medium * 2.0) / 2.0
     }
 
+    /// What a debug build offers beside the title, and a release build leaves out.
+    @ViewBuilder
+    private var debugMenu: some View {
+        #if DEBUG
+        Menu("Debug", systemImage: "ladybug") {
+            Button(
+                "Reset the app",
+                systemImage: "arrow.counterclockwise",
+                role: .destructive,
+                action: presenter.didTapReset
+            )
+        }
+        .confirmationDialog(
+            "Reset the app?",
+            isPresented: isConfirmingReset,
+            titleVisibility: .visible
+        ) {
+            Button("Reset the app", role: .destructive, action: presenter.didConfirmReset)
+        } message: {
+            Text("The folder is forgotten and setup starts over. Recipes on disk are left alone.")
+        }
+        #endif
+    }
+
     @ViewBuilder
     private func screenView(for screen: KitchenScreen) -> some View {
         switch screen {
@@ -166,6 +195,13 @@ struct KitchenFeatureView: View {
         if let openCooking = viewModel.openCooking, openCooking.recipe == recipe {
             openCooking.feature.makeView()
         }
+    }
+
+    private var isConfirmingReset: Binding<Bool> {
+        Binding(
+            get: { viewModel.isConfirmingReset },
+            set: { presenter.didChangeIsConfirmingReset($0) }
+        )
     }
 
     private var screenPath: Binding<[KitchenScreen]> {

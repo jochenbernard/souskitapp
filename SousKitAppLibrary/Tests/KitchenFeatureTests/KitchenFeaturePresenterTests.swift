@@ -37,11 +37,16 @@ final class KitchenFeaturePresenterTests: Sendable {
         KitchenFeatureViewModel(recipeDirectory: RecipeDirectory(url: directoryURL))
     }
 
-    private func makePresenter(viewModel: KitchenFeatureViewModel) -> KitchenFeaturePresenter {
+    @MainActor
+    private func makePresenter(
+        viewModel: KitchenFeatureViewModel,
+        handler: KitchenFeatureHandler = KitchenFeatureHandlerStub()
+    ) -> KitchenFeaturePresenter {
         let recipeDirectory = RecipeDirectory(url: directoryURL)
 
         return KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(idleTimer: IdleTimerStub()),
+            handler: handler,
             recipeDirectoryMonitor: RecipeDirectoryMonitor(
                 recipeDirectory: recipeDirectory,
                 settleDelay: .milliseconds(20)
@@ -255,5 +260,45 @@ final class KitchenFeaturePresenterTests: Sendable {
         presenter.cookingFeatureDidExit()
 
         #expect(viewModel.screenPath == [.recipe(recipeFile)])
+    }
+
+    @MainActor
+    @Test("the reset opens the confirmation and reports nothing yet")
+    func resetOpensTheConfirmation() {
+        let handler = KitchenFeatureHandlerStub()
+        let viewModel = makeViewModel()
+
+        makePresenter(viewModel: viewModel, handler: handler).didTapReset()
+
+        #expect(viewModel.isConfirmingReset)
+        #expect(handler.resetCount == 0)
+    }
+
+    @MainActor
+    @Test("a confirmed reset closes the confirmation and reports once")
+    func confirmedResetReports() {
+        let handler = KitchenFeatureHandlerStub()
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel, handler: handler)
+
+        presenter.didTapReset()
+        presenter.didConfirmReset()
+
+        #expect(!viewModel.isConfirmingReset)
+        #expect(handler.resetCount == 1)
+    }
+
+    @MainActor
+    @Test("a dismissed confirmation reports nothing")
+    func dismissedConfirmationReportsNothing() {
+        let handler = KitchenFeatureHandlerStub()
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel, handler: handler)
+
+        presenter.didTapReset()
+        presenter.didChangeIsConfirmingReset(false)
+
+        #expect(!viewModel.isConfirmingReset)
+        #expect(handler.resetCount == 0)
     }
 }
