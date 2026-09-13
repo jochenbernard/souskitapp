@@ -1,3 +1,4 @@
+import DesignSystem
 import KitchenFeature
 import OnboardingFeature
 import SwiftUI
@@ -14,16 +15,19 @@ struct AppFeatureView: View {
             switch viewModel.screen {
             case .onboarding(let onboardingFeature):
                 onboardingFeature.makeView()
-                    .transition(.blurReplace)
+                    .transition(.screenReplace)
 
             case .kitchen(let kitchenFeature):
                 kitchenFeature.makeView()
-                    .transition(.blurReplace)
+                    .transition(.screenReplace)
             }
         }
         .animation(
             .spring(duration: 0.4, bounce: 0.0),
             value: viewModel.screen.isOnboarding
         )
+        // A blurred screen fades out at the perimeter, letting the window's own background
+        // through, so the ground is drawn behind the transition rather than by the screens.
+        .background(SousColor.background)
     }
 }
