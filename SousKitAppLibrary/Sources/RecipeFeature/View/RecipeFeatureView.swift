@@ -19,7 +19,8 @@ struct RecipeFeatureView: View {
     var body: some View {
         ScrollView {
             content
-                .padding(SousSpacing.xLarge)
+                .padding(.horizontal, SousSpacing.large)
+                .padding(.vertical, SousSpacing.small)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollEdgeEffectStyle(.soft, for: .bottom)
@@ -28,7 +29,6 @@ struct RecipeFeatureView: View {
         }
         .sousPage()
         .navigationTitle(navigationTitle)
-        .navigationBarTitleDisplayMode(.inline)
         .task {
             await presenter.viewDidAppear()
         }
@@ -71,12 +71,13 @@ struct RecipeFeatureView: View {
     private var readingNote: some View {
         SousActivityNote {
             readingMessage
+                .font(.body)
         }
     }
 
     private var emptyNote: some View {
         Text("This recipe is empty.")
-            .sousTextStyle(.body)
+            .font(.body)
             .foregroundStyle(SousColor.textMuted)
     }
 
@@ -88,10 +89,8 @@ struct RecipeFeatureView: View {
     private var readingMessage: some View {
         if viewModel.recipeFile.availability == .downloaded {
             Text("Reading the recipe.")
-                .sousTextStyle(.body)
         } else {
             Text("Fetching from iCloud.")
-                .sousTextStyle(.body)
         }
     }
 
@@ -109,7 +108,8 @@ struct RecipeFeatureView: View {
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.sousPrimary)
-        .padding(SousSpacing.xLarge)
+        .padding(.horizontal, SousSpacing.large)
+        .padding(.vertical, SousSpacing.small)
     }
 }
 

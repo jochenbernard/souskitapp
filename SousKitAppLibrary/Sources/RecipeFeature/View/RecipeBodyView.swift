@@ -22,7 +22,7 @@ struct RecipeBodyView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
-            headerSection
+            metadataRows
 
             ingredientSection
 
@@ -33,11 +33,17 @@ struct RecipeBodyView: View {
         .animation(.spring(duration: 0.3, bounce: 0.0), value: expandedSections)
     }
 
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.medium) {
-            title
+    @ViewBuilder
+    private var metadataRows: some View {
+        let rows = RecipeDisplay.metadataRows(of: recipe.metadata)
 
-            metadataRows
+        if !rows.isEmpty {
+            VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
+                ForEach(rows) { row in
+                    metadataRow(row)
+                }
+            }
+            .font(.subheadline)
         }
     }
 
@@ -65,9 +71,9 @@ struct RecipeBodyView: View {
                 VStack(alignment: .leading, spacing: SousSpacing.small) {
                     ForEach(names, id: \.self) { name in
                         Text(verbatim: name)
-                            .sousTextStyle(.body)
                     }
                 }
+                .font(.body)
             }
         }
     }
@@ -80,27 +86,6 @@ struct RecipeBodyView: View {
                     ForEach(StepNumbering.numberedGroups(of: recipe)) { numbered in
                         groupView(numbered.group, firstNumber: numbered.firstNumber)
                     }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var title: some View {
-        if let name = recipe.metadata.title {
-            Text(verbatim: name)
-                .sousTextStyle(.title)
-        }
-    }
-
-    @ViewBuilder
-    private var metadataRows: some View {
-        let rows = RecipeDisplay.metadataRows(of: recipe.metadata)
-
-        if !rows.isEmpty {
-            VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
-                ForEach(rows) { row in
-                    metadataRow(row)
                 }
             }
         }
@@ -133,19 +118,17 @@ struct RecipeBodyView: View {
     private func sectionHeadingLabel(_ section: RecipeSection, isExpanded: Bool) -> some View {
         HStack(spacing: SousSpacing.small) {
             Text(section.label)
-                .sousTextStyle(.eyebrow)
                 .foregroundStyle(SousColor.textMuted)
 
             Spacer(minLength: 0.0)
 
             // Decorative: the button already reads as the section, expanded or collapsed.
-            // Set in the label's own entry, so the chevron is drawn at the label's size.
             Image(systemName: "chevron.down")
-                .sousFont(.eyebrow)
                 .rotationEffect(.degrees(isExpanded ? 0.0 : -90.0))
                 .foregroundStyle(SousColor.textMuted)
                 .accessibilityHidden(true)
         }
+        .font(.caption2)
         .contentShape(.rect)
     }
 
@@ -154,7 +137,7 @@ struct RecipeBodyView: View {
             amountText(ingredient.amount)
 
             Text(verbatim: ingredient.name)
-                .sousTextStyle(.body)
+                .font(.body)
         }
     }
 
@@ -173,7 +156,6 @@ struct RecipeBodyView: View {
             metadataKey(row)
 
             Text(verbatim: row.value)
-                .sousTextStyle(.data)
         }
     }
 
@@ -181,7 +163,7 @@ struct RecipeBodyView: View {
     private func amountText(_ amount: Amount?) -> some View {
         if let amount {
             Text(verbatim: amount.text)
-                .sousTextStyle(.data)
+                .font(.subheadline)
                 .foregroundStyle(SousColor.textMuted)
         }
     }
@@ -190,18 +172,18 @@ struct RecipeBodyView: View {
     private func groupName(_ group: StepGroup) -> some View {
         if let name = group.name {
             Text(verbatim: name)
-                .sousTextStyle(.heading)
+                .font(.title3)
         }
     }
 
     private func stepView(_ step: Step, number: Int) -> some View {
         VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
             Text(verbatim: String(number))
-                .sousTextStyle(.eyebrow)
+                .font(.caption2)
                 .foregroundStyle(SousColor.textMuted)
 
             stepProse(step)
-                .sousTextStyle(.body)
+                .font(.body)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -215,7 +197,6 @@ struct RecipeBodyView: View {
     private func metadataKey(_ row: MetadataRow) -> some View {
         if !row.key.isEmpty {
             Text(verbatim: row.key)
-                .sousTextStyle(.data)
                 .foregroundStyle(SousColor.textMuted)
         }
     }
@@ -249,7 +230,8 @@ private func previewRecipe() -> Recipe {
             recipe: previewRecipe(),
             expandedSections: RecipeSection.openByDefault
         )
-        .padding(SousSpacing.xLarge)
+        .padding(.horizontal, SousSpacing.large)
+        .padding(.vertical, SousSpacing.small)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     .sousPage()

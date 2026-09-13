@@ -20,11 +20,10 @@ public struct SousFailureNote: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.small) {
             title
-                .sousTextStyle(.body)
 
             Text(verbatim: message)
-                .sousTextStyle(.body)
         }
+        .font(.body)
         .sousCallout()
     }
 }

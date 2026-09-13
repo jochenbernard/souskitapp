@@ -31,7 +31,8 @@ public struct SousCatalog: View {
 
                 containerSection
             }
-            .padding(SousSpacing.xLarge)
+            .padding(.horizontal, SousSpacing.large)
+            .padding(.vertical, SousSpacing.small)
             .frame(maxWidth: 720.0, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
@@ -43,8 +44,8 @@ public struct SousCatalog: View {
             SousLockup(markSize: 56.0, wordmarkSize: 40.0)
                 .foregroundStyle(SousColor.text)
 
-            Text(verbatim: "Design system \u{B7} brand v1.0")
-                .sousTextStyle(.eyebrow)
+            Text(verbatim: "Design system")
+                .font(.caption2)
                 .foregroundStyle(SousColor.textMuted)
         }
     }
@@ -78,13 +79,13 @@ public struct SousCatalog: View {
         CatalogSection(number: "02", title: "Type") {
             VStack(alignment: .leading, spacing: SousSpacing.large) {
                 Text("Madeleines")
-                    .sousTextStyle(.display)
+                    .font(.largeTitle)
 
                 Text("Boeuf Bourguignon")
-                    .sousTextStyle(.title)
+                    .font(.title)
 
                 Text("Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
-                    .sousTextStyle(.heading)
+                    .font(.title3)
 
                 Text(
                     """
@@ -93,13 +94,13 @@ public struct SousCatalog: View {
                     with salt, black pepper, and 1/4 tsp nutmeg.
                     """
                 )
-                .sousTextStyle(.body)
+                .font(.body)
 
                 Text(verbatim: "1.2 kg \u{B7} 150C \u{B7} 3 h \u{B7} serves 6")
-                    .sousTextStyle(.data)
+                    .font(.subheadline)
 
                 Text(verbatim: "dinner \u{B7} classic \u{B7} french")
-                    .sousTextStyle(.eyebrow)
+                    .font(.caption2)
                     .foregroundStyle(SousColor.textMuted)
             }
             .foregroundStyle(SousColor.text)
@@ -136,7 +137,7 @@ public struct SousCatalog: View {
                             .frame(width: step.value, height: 8.0)
 
                         Text(verbatim: "\(step.name) \u{B7} \(Int(step.value))")
-                            .sousTextStyle(.eyebrow)
+                            .font(.caption2)
                             .foregroundStyle(SousColor.textMuted)
                     }
                 }

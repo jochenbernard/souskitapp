@@ -26,7 +26,7 @@ public struct SousActivityNote<Label: View>: View {
 #Preview("Activity note") {
     SousActivityNote {
         Text("Fetching from iCloud.")
-            .sousTextStyle(.body)
+            .font(.body)
     }
     .padding(SousSpacing.xLarge)
     .frame(maxWidth: .infinity, alignment: .leading)

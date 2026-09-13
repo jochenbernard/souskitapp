@@ -24,7 +24,8 @@ struct OnboardingFeatureView: View {
 
             actions
         }
-        .padding(SousSpacing.xLarge)
+        .padding(.horizontal, SousSpacing.large)
+        .padding(.vertical, SousSpacing.small)
         .frame(
             maxWidth: .infinity,
             alignment: .topLeading
@@ -44,11 +45,11 @@ struct OnboardingFeatureView: View {
     private var introduction: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
             Text("Setup")
-                .sousTextStyle(.eyebrow)
+                .font(.caption2)
                 .foregroundStyle(SousColor.textMuted)
 
             Text("Where your recipes live")
-                .sousTextStyle(.title)
+                .font(.title)
 
             Text(
                 """
@@ -56,7 +57,7 @@ struct OnboardingFeatureView: View {
                 start; you can change it later.
                 """
             )
-            .sousTextStyle(.body)
+            .font(.body)
             .foregroundStyle(SousColor.textMuted)
         }
     }
@@ -73,7 +74,7 @@ struct OnboardingFeatureView: View {
     private var failureNote: some View {
         if let failureMessage = viewModel.failureMessage {
             Text(failureMessage)
-                .sousTextStyle(.body)
+                .font(.body)
                 .sousCallout()
         }
     }

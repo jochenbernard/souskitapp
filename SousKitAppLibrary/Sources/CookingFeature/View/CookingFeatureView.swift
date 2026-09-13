@@ -18,7 +18,8 @@ struct CookingFeatureView: View {
     var body: some View {
         ScrollView {
             steps
-                .padding(SousSpacing.xLarge)
+                .padding(.horizontal, SousSpacing.large)
+                .padding(.vertical, SousSpacing.small)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .sousPage()
@@ -63,18 +64,18 @@ struct CookingFeatureView: View {
     private func groupName(_ group: StepGroup) -> some View {
         if let name = group.name {
             Text(verbatim: name)
-                .sousTextStyle(.title)
+                .font(.title)
         }
     }
 
     private func stepView(_ step: Step, number: Int) -> some View {
         VStack(alignment: .leading, spacing: SousSpacing.small) {
             Text(verbatim: String(number))
-                .sousTextStyle(.data)
+                .font(.subheadline)
                 .foregroundStyle(SousColor.textMuted)
 
             stepProse(step)
-                .sousTextStyle(.heading)
+                .font(.title3)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }

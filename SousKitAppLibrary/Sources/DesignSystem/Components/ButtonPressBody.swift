@@ -60,7 +60,7 @@ struct ButtonPressBody<Content: View>: View {
 
         Toggle(isOn: $isPressed) {
             Text(verbatim: "isPressed")
-                .sousTextStyle(.data)
+                .font(.subheadline)
         }
         .foregroundStyle(SousColor.text)
     }

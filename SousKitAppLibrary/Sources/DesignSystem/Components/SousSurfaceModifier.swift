@@ -31,7 +31,6 @@ extension View {
 #Preview("Surface") {
     VStack(alignment: .leading, spacing: SousSpacing.medium) {
         Text("Boeuf Bourguignon")
-            .sousTextStyle(.body)
             .foregroundStyle(SousColor.text)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, SousSpacing.large)
@@ -39,12 +38,12 @@ extension View {
             .sousSurface(Capsule())
 
         Text("Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
-            .sousTextStyle(.body)
             .foregroundStyle(SousColor.text)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(SousSpacing.xLarge)
             .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
+    .font(.body)
     .padding(SousSpacing.xLarge)
     .background(SousColor.background)
 }

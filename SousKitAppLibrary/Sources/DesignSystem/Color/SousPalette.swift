@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The raw brand colors: a neutral ramp read from both ends, and one orange in three values.
+/// The raw colors: a neutral ramp read from both ends, and one orange in three values.
 ///
 /// ``SousColor`` is the layer products draw from. Reach in here only for a value the semantic
 /// layer has no token for, such as ``scorch`` and ``sear``.

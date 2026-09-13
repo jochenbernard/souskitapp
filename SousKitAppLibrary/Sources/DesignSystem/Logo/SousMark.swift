@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// The Sous mark: curls of steam over a plate, drawn on the brand's 64-unit grid.
+/// The Sous mark: curls of steam over a plate, drawn on a 64-unit grid.
 ///
-/// `size` is the edge of that grid, and the grid carries the brand's clearspace. The mark
+/// `size` is the edge of that grid, and the grid carries the mark's clearspace. The mark
 /// takes no extra padding.
 public struct SousMark: View {
     /// Which cut of the mark to draw.

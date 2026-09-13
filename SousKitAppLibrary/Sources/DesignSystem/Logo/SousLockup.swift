@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// The mark beside the wordmark, which is the one place Archivo 600 is set outside
-/// ``SousTextStyle/display``.
+/// The mark beside the wordmark, the one place type is set in semibold.
 public struct SousLockup: View {
     private let markSize: CGFloat
     private let wordmarkSize: CGFloat
@@ -23,7 +22,7 @@ public struct SousLockup: View {
             SousMark(size: markSize)
 
             Text(verbatim: "Sous")
-                .font(SousFontFace.archivoSemiBold.font(size: wordmarkSize))
+                .font(.system(size: wordmarkSize, weight: .semibold))
         }
         .accessibilityElement(children: .combine)
     }

@@ -9,7 +9,7 @@ struct CatalogSection<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.large) {
             Text(verbatim: "\(number) / \(title)")
-                .sousTextStyle(.eyebrow)
+                .font(.caption2)
                 .foregroundStyle(SousColor.textMuted)
 
             content
@@ -23,7 +23,7 @@ struct CatalogSection<Content: View>: View {
 #Preview("Section") {
     CatalogSection(number: "01", title: "Color") {
         Text("Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
-            .sousTextStyle(.body)
+            .font(.body)
             .foregroundStyle(SousColor.text)
     }
     .padding(SousSpacing.xLarge)

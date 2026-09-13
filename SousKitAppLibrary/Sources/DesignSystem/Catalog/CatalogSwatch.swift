@@ -18,11 +18,11 @@ struct CatalogSwatch<Fill: ShapeStyle>: View {
 
             VStack(alignment: .leading, spacing: SousSpacing.hairline) {
                 Text(name)
-                    .sousTextStyle(.data)
+                    .font(.subheadline)
                     .foregroundStyle(SousColor.text)
 
                 Text(role)
-                    .sousTextStyle(.eyebrow)
+                    .font(.caption2)
                     .foregroundStyle(SousColor.textMuted)
             }
 

@@ -4,88 +4,88 @@ import Testing
 
 @Suite("Semantic color")
 struct SousColorTests {
-    /// Every ratio the two brand documents give.
-    private static let documentedRatios: [StatedRatio] = [
-        StatedRatio(
+    /// Every contrast ratio the palette is fixed at.
+    private static let pinnedRatios: [PinnedRatio] = [
+        PinnedRatio(
             foreground: SousPalette.ink,
             ground: SousPalette.paper,
             expected: 17.7
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.steel,
             ground: SousPalette.paper,
             expected: 4.9
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.ember,
             ground: SousPalette.paper,
             expected: 5.3
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.ink,
             ground: SousPalette.flame,
             expected: 5.5
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.paper,
             ground: SousPalette.char,
             expected: 17.0
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.chalk,
             ground: SousPalette.char,
             expected: 11.1
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.ash,
             ground: SousPalette.char,
             expected: 7.6
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.smoke,
             ground: SousPalette.char,
             expected: 5.5
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.flame,
             ground: SousPalette.char,
             expected: 5.3
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.paper,
             ground: SousPalette.pan,
             expected: 15.8
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.paper,
             ground: SousPalette.ember,
             expected: 5.3
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.flame,
             ground: SousPalette.pan,
             expected: 4.9
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.seam,
             ground: SousPalette.char,
             expected: 1.4
         ),
-        StatedRatio(
+        PinnedRatio(
             foreground: SousPalette.ember,
             ground: SousPalette.char,
             expected: 3.2
         )
     ]
 
-    /// A contrast ratio one of the brand documents gives, with the pairing it applies to.
-    private struct StatedRatio {
+    /// A contrast ratio the palette holds, with the pairing it applies to.
+    private struct PinnedRatio {
         let foreground: Color
         let ground: Color
         let expected: Double
     }
 
-    @Test("on a light scheme the tokens draw the documented palette values")
+    @Test("on a light scheme the tokens draw their palette values")
     func lightTokens() {
         #expect(draws(SousColor.background, SousPalette.paper, in: .light))
         #expect(draws(SousColor.surface, SousPalette.white, in: .light))
@@ -96,7 +96,7 @@ struct SousColorTests {
         #expect(draws(SousColor.accentText, SousPalette.ember, in: .light))
     }
 
-    @Test("on a dark scheme the tokens draw the documented palette values")
+    @Test("on a dark scheme the tokens draw their palette values")
     func darkTokens() {
         #expect(draws(SousColor.background, SousPalette.char, in: .dark))
         #expect(draws(SousColor.surface, SousPalette.pan, in: .dark))
@@ -107,9 +107,9 @@ struct SousColorTests {
         #expect(draws(SousColor.accentText, SousPalette.flame, in: .dark))
     }
 
-    @Test("the palette matches the ratios both brand documents state")
-    func statedRatios() {
-        for entry in Self.documentedRatios {
+    @Test("the palette holds the contrast ratios it is fixed at")
+    func pinnedContrastRatios() {
+        for entry in Self.pinnedRatios {
             let ratio = contrastRatio(entry.foreground, entry.ground, in: .light)
             #expect(
                 abs(ratio - entry.expected) < 0.12,

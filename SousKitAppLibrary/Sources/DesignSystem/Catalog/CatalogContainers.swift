@@ -5,7 +5,6 @@ struct CatalogContainers: View {
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
             Text("Boeuf Bourguignon")
-                .sousTextStyle(.body)
                 .foregroundStyle(SousColor.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, SousSpacing.large)
@@ -13,14 +12,13 @@ struct CatalogContainers: View {
                 .sousSurface(Capsule())
 
             Text("This recipe could not be read")
-                .sousTextStyle(.body)
                 .sousCallout()
 
             SousActivityNote {
                 Text("Fetching from iCloud.")
-                    .sousTextStyle(.body)
             }
         }
+        .font(.body)
     }
 }
 

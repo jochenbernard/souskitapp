@@ -36,8 +36,7 @@ let package = Package(
         ),
         .standardTarget(
             name: "DesignSystem",
-            exclude: ["README.md"],
-            resources: [.copy("Resources/Fonts")]
+            exclude: ["README.md"]
         ),
         .standardTestTarget(
             name: "DesignSystemTests",

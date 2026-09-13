@@ -1,15 +1,16 @@
 # Sous design system
 
-The Sous brand, expressed in Swift.
+The Sous brand, expressed in Swift, and the source of truth for it. What ships here is the
+design. The design documents it was first read off are out of date, and where one of them
+disagrees with this package, this package is right.
 
 ## Layers
 
 | Layer | Type | Use |
 | --- | --- | --- |
 | Semantic color | `SousColor` | What products draw from. Seven tokens, light and dark. |
-| Raw color | `SousPalette` | The brand values, for what the tokens do not cover. |
-| Type | `SousTextStyle`, `.sousTextStyle(_:)` | The six-entry scale, at its specified line heights. |
-| Faces | `SousFontFace` | Archivo and JetBrains Mono, bundled and self-registering. |
+| Raw color | `SousPalette` | The values themselves, for what the tokens do not cover. |
+| Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.body`, `.subheadline`, `.caption2`. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet` | The three button styles. |
@@ -25,55 +26,49 @@ The Sous brand, expressed in Swift.
   color does. Nothing reaches for `@Environment(\.colorScheme)` to pick a value.
 - A screen takes `.sousPage()`, and a container sets the color its content is read in. Only text
   stepping away from what it sits in, a caption in `SousColor.textMuted`, names a color itself.
+- A page is padded `SousSpacing.large` horizontally and `SousSpacing.small` vertically. The
+  padding sits on the content, not on `.sousPage()`, which a scroll view needs it to; anything
+  else on the screen, a bottom bar included, takes the same two values so its edges line up.
 - Orange means live, here, or do. Not decoration, category, or mood. Past roughly 5% of a
   layout it has become decoration, and on a dark ground it reads a third brighter still.
 - Flame carries dark text. Ink on Flame is 5.5; White on Flame is 3.5 and fails.
-- Quantities, temperatures, and times take `.data` or `.eyebrow`. Everything else is Archivo.
-- Archivo 600 is limited to the wordmark, lockups, and `.display`.
+- Set text with `.font(_:)` and a system text style. Six of them are in use: `.largeTitle` for
+  a hero line, `.title` for a landing headline or a step group, `.title3` for a section
+  heading, `.body` for copy and controls, `.subheadline` for quantities and metadata,
+  `.caption2` for an eyebrow.
+- A screen's title is its `.navigationTitle(_:)`, large by default, and is not drawn again in
+  the content. Cooking is the one screen that takes `.inline`, where the step in front of the
+  cook outranks the recipe's name.
+- A fixed size, `.system(size:weight:)`, is for the wordmark and nothing else. It does not
+  scale, which is right for a lockup and wrong for anything a reader reads.
+- Semibold is limited to the wordmark.
 - One primary button per view.
-- Set text with `.sousTextStyle(_:)`. It carries Dynamic Type, so size, line height, and
-  tracking scale together up through the accessibility sizes. A face taken straight from
-  `SousFontFace` is fixed: right for a lockup, wrong for body text.
-- `.sousTextStyle(_:)` is on `Text`; `.sousFont(_:)` is on `View`. See below for why.
 - Motion is spring only; no easing curves.
+
+## The type is the system type
+
+The scale was six entries of its own: Archivo and JetBrains Mono, bundled and self-registering,
+at fixed sizes and line heights, with a modifier per entry that corrected each text block to its
+line box. All of it is gone, and text takes a SwiftUI text style. The faces, the modifiers, and
+the tests that held them to their line heights are in the history.
+
+Dynamic Type now comes from the text style, so nothing here scales a size or measures a face.
+A layout that needs the height of a line of text takes `@ScaledMetric(relativeTo:)`, as
+`KitchenFeatureView` does for its row radius.
 
 ## What the two themes do not share
 
-Dark is not light inverted, and three things change beyond the token values:
+Dark is not light inverted, and two things change beyond the token values:
 
-- **The mono faces drop a weight.** `.data` and `.eyebrow` are JetBrains Mono Medium on light
-  and Regular on dark; light type on a dark ground gains apparent weight. `SousTextStyle`
-  resolves this, so a call site needs no branch.
 - **The mark's floor moves.** `Cut.automatic` holds three curls at 24pt on light and takes the
   two-curl cut there on dark, where light strokes thin out sooner.
 - **The primary colorway swaps.** `Colorway.automatic` draws `primary` on light and `reversed`
   on dark, the primary cut of the dark theme.
 
-## Why the type scale has two entry points
-
-A block of n lines measures `n * natural + (n - 1) * lineSpacing`, where the brand wants
-`n * lineHeight`. The shortfall is exactly one leading correction whatever n is, so it has to
-be added once per text block. SwiftUI applies `font`, `tracking`, and `lineSpacing` through
-the environment, reaching every descendant, but padding lands once on whatever it wraps.
-There is no hook for per-descendant layout, and `Font` cannot carry an overridden line height,
-so a single modifier cannot do both jobs.
-
-Hence the split:
-
-- `Text.sousTextStyle(_:)` adds the correction, and is on `Text` so it cannot reach a
-  container. A stack of three `.body` texts wrapped in it would render 66pt where 81pt is
-  correct; that is a compile error rather than a silent 15pt.
-- `View.sousFont(_:)` sets face, size, and tracking and leaves the line box alone. Safe on
-  anything, and the only option for text a `Text` does not carry: a `TextField`, a `Label`,
-  a stack. Blocks set this way sit one correction short of their line height.
-
-`sousButtonLabel(_:)` uses the corrected form, since a button label is one text block and
-dropping the correction would take the control under the 44pt minimum target.
-
 ## Beyond the seven tokens
 
-The brand fixes the semantic layer at seven tokens, and this package ships those seven. Three
-roles it names have no token, and take a palette value directly:
+The semantic layer is seven tokens. Three roles have no token, and take a palette value
+directly:
 
 - Long-form prose: `SousPalette.graphite` on light, `SousPalette.chalk` on dark, one step
   quieter than `SousColor.text`.
@@ -82,15 +77,16 @@ roles it names have no token, and take a palette value directly:
   `SousPalette.sear` on dark. `.sousCallout()` draws it and sets `accentText` on what it holds,
   so a call site names none of the three.
 
-## Chosen here, not given by the brand
+## Where the rest of the values come from
 
 The `SousSpacing` steps and the `SousRadius` values are read off the mark's grid, where 8 is
 the stroke, 12 the curl pitch, and 64 the grid.
 
-The button styles are mostly chosen here too. The brand gives Ink on Flame at 5.5, Ember for a
-pressed link, Ember as a fill on dark, Paper on Ember at 5.3, and one primary action per view.
-That covers the primary button at rest and nothing else. `.sousSecondary` and `.sousQuiet`, the
-capsule outline, every padding, and all press behavior are ours.
+Color fixes the primary button at rest and no more: Ink on Flame at 5.5, Ember for a pressed
+link, Ember as a fill on dark, Paper on Ember at 5.3, one primary action per view.
+`.sousSecondary` and `.sousQuiet`, the capsule outline, every padding, and all press behavior
+are decided in this package. A button is one `.body` line inside 12pt of vertical padding,
+which clears the 44pt minimum target and grows from there with Dynamic Type.
 
 `.sousPrimary` draws that Flame as a Liquid Glass tint, not a flat fill. Ink stays the label
 color, and the 5.5 figure holds where the tint sits over the page ground.
@@ -108,8 +104,7 @@ state also outlives the finger by up to `ButtonPress.minimumDown`, since a tap c
 a frame of starting and would otherwise show nothing. On `.sousPrimary` that hold keeps the
 release haptic off the press.
 
-Two brand states are missing: the Flame outline called Attention, over Sear on dark, and the
-hover Ember is given for.
+Two states are not built: Attention, a Flame outline over Sear on dark, and a hover in Ember.
 
 ## Adding to it
 

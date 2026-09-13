@@ -9,7 +9,8 @@ import SwiftUI
 struct KitchenFeatureView: View {
     @Environment(\.scenePhase) private var scenePhase
 
-    @ScaledMetric(relativeTo: SousTextStyle.body.textStyle) private var scaledBodySize = SousTextStyle.body.size
+    /// The line height of one `.body` line, before Dynamic Type scales it.
+    @ScaledMetric(relativeTo: .body) private var scaledBodyLineHeight = 20.3
 
     private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
@@ -33,16 +34,13 @@ struct KitchenFeatureView: View {
 
     private var recipeListScreen: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
-                header
-
-                recipeList
-            }
-            .padding(SousSpacing.xLarge)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            recipeList
+                .padding(.horizontal, SousSpacing.large)
+                .padding(.vertical, SousSpacing.small)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .sousPage()
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle(viewModel.recipeDirectory.name)
         .task {
             await presenter.viewDidAppear()
         }
@@ -51,12 +49,6 @@ struct KitchenFeatureView: View {
                 presenter.didBecomeActive()
             }
         }
-    }
-
-    private var header: some View {
-        Text(verbatim: viewModel.recipeDirectory.name)
-            .sousTextStyle(.heading)
-            .padding(.horizontal, SousSpacing.large)
     }
 
     @ViewBuilder
@@ -80,19 +72,18 @@ struct KitchenFeatureView: View {
     private var readingNote: some View {
         SousActivityNote {
             Text("Reading the folder.")
-                .sousTextStyle(.body)
+                .font(.body)
         }
     }
 
     private var emptyNote: some View {
         VStack(alignment: .leading, spacing: SousSpacing.small) {
             Text("Nothing here yet")
-                .sousTextStyle(.body)
 
             Text("Put .sous files in this folder and they are listed here.")
-                .sousTextStyle(.body)
                 .foregroundStyle(SousColor.textMuted)
         }
+        .font(.body)
     }
 
     private func recipeRows(_ recipeFiles: [RecipeFile]) -> some View {
@@ -113,7 +104,7 @@ struct KitchenFeatureView: View {
     private func recipeRow(_ recipeFile: RecipeFile) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
             Text(verbatim: recipeFile.name)
-                .sousTextStyle(.body)
+                .font(.body)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             availabilityBadge(recipeFile.availability)
@@ -149,9 +140,7 @@ struct KitchenFeatureView: View {
 
     /// Half the height of a row of one line, which is the radius a capsule takes there.
     private var rowRadius: CGFloat {
-        let ratio = scaledBodySize / SousTextStyle.body.size
-
-        return (SousTextStyle.body.lineHeight * ratio + SousSpacing.medium * 2.0) / 2.0
+        (scaledBodyLineHeight + SousSpacing.medium * 2.0) / 2.0
     }
 
     @ViewBuilder
