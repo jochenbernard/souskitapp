@@ -48,7 +48,9 @@ disagrees with this package, this package is right.
   else on the screen, a bottom bar included, takes the same two values so its edges line up.
 - The accent means live, here, or do. Not decoration, category, or mood. Past roughly 5% of a
   layout it has become decoration, and on a dark ground it reads a third brighter still.
-- The accent carries black text. Black on the accent is 6.0; white on it is 3.5 and fails.
+- The accent is `oklch(0.58 0.18 40)`, which sRGB holds as `#CD4805`. A new accent is picked in
+  OKLCH, then written to `Color+Accent`, `AccentColor`, and the app icon's `icon.json`, which takes
+  it as 0.80392, 0.28235, 0.01961. It carries white text, at 4.6.
 - Set text with `.font(_:)` and a system text style. Six of them are in use: `.largeTitle` for
   a hero line, `.title` for a landing headline or a step group, `.title3` for a section
   heading, `.body` for copy and controls, `.subheadline` for quantities and metadata,
@@ -87,13 +89,13 @@ Dark is not light inverted, and two things change beyond the system colors:
 The `SousSpacing` steps and the `SousRadius` values are read off the mark's grid, where 8 is
 the stroke, 12 the curl pitch, and 64 the grid.
 
-Color fixes the primary button at rest and no more: black on the accent at 6.0, one primary action
+Color fixes the primary button at rest and no more: white on the accent at 4.6, one primary action
 per view. `.sousSecondary` and `.sousQuiet`, the capsule outline, every padding, and all press
 behavior are decided in this package. A button is one `.body` line inside 12pt of vertical
 padding, which clears the 44pt minimum target and grows from there with Dynamic Type.
 
-`.sousPrimary` draws that accent as a Liquid Glass tint, not a flat fill. Black stays the label
-color, and the 6.0 figure holds where the tint sits over the page ground.
+`.sousPrimary` draws that accent as a Liquid Glass tint, not a flat fill. White stays the label
+color, and the 4.6 figure holds where the tint sits over the page ground.
 
 The three styles are separate types rather than one carrying an emphasis: no call site picks an
 emphasis at run time, and the primary differs in kind, not degree. What they share is in
@@ -101,12 +103,11 @@ emphasis at run time, and the primary differs in kind, not degree. What they sha
 
 A press scales the control and changes no color. `.sousPrimary` is the exception: its
 `interactive()` glass flexes under the finger, and a scale on top would be a second reaction
-to one touch. Nothing defines a fill for a pressed button, and darkening the fill would force
-the label to change color mid-press. Dimming fails as well: on a dark ground only 0.9 opacity
-keeps black on the accent above 4.5, which reads as no feedback at all. The pressed state also
-outlives the finger by up to `ButtonPress.minimumDown`, since a tap can end within a frame of
-starting and would otherwise show nothing. On `.sousPrimary` that hold keeps the release haptic
-off the press.
+to one touch. Nothing defines a fill for a pressed button: dimming the accent past 0.97 opacity
+over a light ground drops its white label under 4.5, which reads as no feedback at all. The
+pressed state also outlives the finger by up to `ButtonPress.minimumDown`, since a tap can end
+within a frame of starting and would otherwise show nothing. On `.sousPrimary` that hold keeps
+the release haptic off the press.
 
 A callout draws `.quaternaryAccentFill` inside an accent outline, which is Attention on a
 container, and sets `.accent` on what it holds, so a call site names neither.

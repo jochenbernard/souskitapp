@@ -38,10 +38,9 @@ struct AccentTests {
         #expect(try abs(Double(accent.blue) - channel(components.blue)) < 0.5 / 255.0)
     }
 
-    @Test("the accent carries black, not white")
-    func accentCarriesBlack() {
-        #expect(contrastRatio(.black, .accent) > 4.5)
-        #expect(contrastRatio(.white, .accent) < 4.5)
+    @Test("white text on the accent passes AA")
+    func accentCarriesWhite() {
+        #expect(contrastRatio(.white, .accent) >= 4.5)
     }
 
     /// One channel of an asset catalog color, in whichever of Xcode's three input methods it was saved.
