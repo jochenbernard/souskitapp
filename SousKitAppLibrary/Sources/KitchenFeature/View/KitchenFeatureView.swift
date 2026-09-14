@@ -163,12 +163,14 @@ struct KitchenFeatureView: View {
         .confirmationDialog(
             "Reset the app?",
             isPresented: isConfirmingReset,
-            titleVisibility: .visible
-        ) {
-            Button("Reset the app", role: .destructive, action: presenter.didConfirmReset)
-        } message: {
-            Text("The folder is forgotten and setup starts over. Recipes on disk are left alone.")
-        }
+            titleVisibility: .visible,
+            actions: {
+                Button("Reset the app", role: .destructive, action: presenter.didConfirmReset)
+            },
+            message: {
+                Text("The folder is forgotten and setup starts over. Recipes on disk are left alone.")
+            }
+        )
         #endif
     }
 
