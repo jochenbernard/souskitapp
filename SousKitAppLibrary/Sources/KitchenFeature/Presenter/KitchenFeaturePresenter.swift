@@ -6,17 +6,20 @@ import SousKit
 
 struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
     private let cookingFeatureFactory: CookingFeatureFactory
+    private let handler: KitchenFeatureHandler
     private let recipeDirectoryMonitor: RecipeDirectoryMonitor
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let viewModel: KitchenFeatureViewModel
 
     init(
         cookingFeatureFactory: CookingFeatureFactory,
+        handler: KitchenFeatureHandler,
         recipeDirectoryMonitor: RecipeDirectoryMonitor,
         recipeFeatureFactory: RecipeFeatureFactory,
         viewModel: KitchenFeatureViewModel
     ) {
         self.cookingFeatureFactory = cookingFeatureFactory
+        self.handler = handler
         self.recipeDirectoryMonitor = recipeDirectoryMonitor
         self.recipeFeatureFactory = recipeFeatureFactory
         self.viewModel = viewModel
@@ -53,6 +56,19 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         case nil:
             break
         }
+    }
+
+    func didTapReset() {
+        viewModel.isConfirmingReset = true
+    }
+
+    func didChangeIsConfirmingReset(_ isConfirming: Bool) {
+        viewModel.isConfirmingReset = isConfirming
+    }
+
+    func didConfirmReset() {
+        viewModel.isConfirmingReset = false
+        handler.kitchenFeatureDidConfirmReset()
     }
 
     func recipeFeatureDidStartCooking(recipe: Recipe) {

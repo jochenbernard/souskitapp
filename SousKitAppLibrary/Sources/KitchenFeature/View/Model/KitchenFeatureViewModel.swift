@@ -9,6 +9,7 @@ final class KitchenFeatureViewModel {
     var screenPath: [KitchenScreen] = []
     var openRecipe: OpenRecipe?
     var openCooking: OpenCooking?
+    var isConfirmingReset = false
 
     nonisolated init(recipeDirectory: RecipeDirectory) {
         self.recipeDirectory = recipeDirectory

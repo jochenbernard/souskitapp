@@ -21,9 +21,18 @@ struct AppFeatureFactory {
     /// - Returns: The feature.
     @MainActor
     func makeAppFeature() -> AppFeature {
-        let presenter = AppFeaturePresenter(kitchenFeatureFactory: kitchenFeatureFactory)
+        let presenter = AppFeaturePresenter(
+            kitchenFeatureFactory: kitchenFeatureFactory,
+            onboardingFeatureFactory: onboardingFeatureFactory,
+            recipeDirectoryStore: recipeDirectoryStore
+        )
         let screen: AppScreen = if let recipeDirectory = recipeDirectoryStore.recipeDirectory {
-            .kitchen(kitchenFeatureFactory.makeKitchenFeature(recipeDirectory: recipeDirectory))
+            .kitchen(
+                kitchenFeatureFactory.makeKitchenFeature(
+                    recipeDirectory: recipeDirectory,
+                    handler: presenter
+                )
+            )
         } else {
             .onboarding(onboardingFeatureFactory.makeOnboardingFeature(handler: presenter))
         }

@@ -11,4 +11,16 @@ protocol KitchenFeaturePresenterProtocol {
     /// The screens pushed on the navigation stack changed.
     @MainActor
     func didChangeScreenPath(_ screenPath: [KitchenScreen])
+
+    /// The debug menu's reset was tapped, which opens the confirmation.
+    @MainActor
+    func didTapReset()
+
+    /// The confirmation opened or closed.
+    @MainActor
+    func didChangeIsConfirmingReset(_ isConfirming: Bool)
+
+    /// The confirmation was accepted.
+    @MainActor
+    func didConfirmReset()
 }

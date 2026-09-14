@@ -4,4 +4,10 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
     func didBecomeActive() {}
 
     func didChangeScreenPath(_: [KitchenScreen]) {}
+
+    func didTapReset() {}
+
+    func didChangeIsConfirmingReset(_: Bool) {}
+
+    func didConfirmReset() {}
 }
