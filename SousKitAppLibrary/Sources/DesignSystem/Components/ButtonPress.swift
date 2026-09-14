@@ -18,7 +18,7 @@ enum ButtonPress {
     static let releaseBounce = 0.2
 
     /// The shortest time a press shows for, however briefly the finger is down.
-    static let minimumDown = 0.14
+    static let minimumDown = 0.1
 
     /// The spring a control travels on, flat going down and springy coming back.
     ///
