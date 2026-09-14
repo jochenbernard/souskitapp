@@ -34,8 +34,11 @@ public struct SousLockup: View {
 
         SousLockup(markSize: 56.0, wordmarkSize: 40.0)
     }
-    .foregroundStyle(SousColor.text)
     .padding(SousSpacing.xLarge)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .background(SousColor.background)
+    .frame(
+        maxWidth: .infinity,
+        maxHeight: .infinity,
+        alignment: .topLeading
+    )
+    .background(.groupedBackground)
 }

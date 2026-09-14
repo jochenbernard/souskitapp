@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The one primary action on a screen: Flame-tinted glass, labelled in Ink.
+/// The one primary action on a screen: glass tinted in the accent, labelled in black.
 ///
 /// A press flexes the glass and plays a haptic. The control keeps its size, since the
 /// interactive glass already gives under the finger.
@@ -10,8 +10,8 @@ public struct SousPrimaryButtonStyle: ButtonStyle {
             let shape = Capsule()
 
             configuration.label
-                .sousButtonLabel(SousPalette.ink)
-                .glassEffect(.regular.tint(SousColor.accent).interactive(), in: shape)
+                .sousButtonLabel(.black)
+                .glassEffect(.regular.tint(.accent).interactive(), in: shape)
                 .contentShape(shape)
                 .sensoryFeedback(trigger: isDown) { _, isDown in
                     isDown
@@ -34,5 +34,5 @@ extension ButtonStyle where Self == SousPrimaryButtonStyle {
         .buttonStyle(.sousPrimary)
         .padding(SousSpacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(SousColor.background)
+        .background(.groupedBackground)
 }

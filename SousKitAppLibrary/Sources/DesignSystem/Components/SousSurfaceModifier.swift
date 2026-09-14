@@ -1,22 +1,30 @@
 import SwiftUI
 
-/// Draws the fill and border a card, row, or sheet sits on.
+/// Draws the fill, border, and shadow a card, row, or sheet sits on.
 private struct SousSurfaceModifier<Surface: InsettableShape>: ViewModifier {
     let shape: Surface
 
     func body(content: Content) -> some View {
         content.background {
             shape
-                .fill(SousColor.surface)
+                .fill(.secondaryGroupedBackground)
+                .shadow(
+                    color: .separator.opacity(0.25),
+                    radius: 12.0
+                )
                 .overlay {
-                    shape.strokeBorder(SousColor.border, lineWidth: 1.0)
+                    shape.strokeBorder(
+                        .separator.opacity(0.5),
+                        lineWidth: 1.0
+                    )
                 }
         }
     }
 }
 
 extension View {
-    /// Draws this view on a surface: the ``SousColor/surface`` fill inside a ``SousColor/border``.
+    /// Draws this view on a surface: `secondaryGroupedBackground`, the fill of a `List` row, inside
+    /// a border of `separator` at half opacity, over a shadow of `separator` at a quarter.
     ///
     /// The shape names the role: a capsule for a row, ``SousRadius/large`` for a card or a sheet.
     /// Padding stays at the call site, since it varies with what is on the surface.
@@ -31,19 +39,22 @@ extension View {
 #Preview("Surface") {
     VStack(alignment: .leading, spacing: SousSpacing.medium) {
         Text("Boeuf Bourguignon")
-            .foregroundStyle(SousColor.text)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, SousSpacing.large)
             .padding(.vertical, SousSpacing.medium)
             .sousSurface(Capsule())
 
         Text("Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
-            .foregroundStyle(SousColor.text)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(SousSpacing.xLarge)
             .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
     .font(.body)
     .padding(SousSpacing.xLarge)
-    .background(SousColor.background)
+    .frame(
+        maxWidth: .infinity,
+        maxHeight: .infinity,
+        alignment: .topLeading
+    )
+    .background(.groupedBackground)
 }

@@ -1,4 +1,3 @@
-import Foundation
 import SousKit
 
 /// Reads a recipe and parses it.

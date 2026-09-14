@@ -53,7 +53,7 @@ struct ButtonPressBody<Content: View>: View {
     VStack(spacing: SousSpacing.xLarge) {
         ButtonPressBody(isPressed: isPressed) { isDown in
             Capsule()
-                .fill(SousColor.accent)
+                .fill(.accent)
                 .frame(width: 220.0, height: 56.0)
                 .sousPressScale(isDown: isDown)
         }
@@ -62,9 +62,8 @@ struct ButtonPressBody<Content: View>: View {
             Text(verbatim: "isPressed")
                 .font(.subheadline)
         }
-        .foregroundStyle(SousColor.text)
     }
     .padding(SousSpacing.xLarge)
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(SousColor.background)
+    .background(.groupedBackground)
 }

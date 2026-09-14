@@ -86,7 +86,7 @@ struct KitchenFeatureView: View {
             Text("Nothing here yet")
 
             Text("Put .sous files in this folder and they are listed here.")
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
         }
         .font(.body)
     }
@@ -138,7 +138,7 @@ struct KitchenFeatureView: View {
 
         case .notDownloaded:
             Image(systemName: "icloud.and.arrow.down")
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
                 .accessibilityLabel("In iCloud, not downloaded")
         }
     }
@@ -165,7 +165,11 @@ struct KitchenFeatureView: View {
             isPresented: isConfirmingReset,
             titleVisibility: .visible,
             actions: {
-                Button("Reset the app", role: .destructive, action: presenter.didConfirmReset)
+                Button(
+                    "Reset the app",
+                    role: .destructive,
+                    action: presenter.didConfirmReset
+                )
             },
             message: {
                 Text("The folder is forgotten and setup starts over. Recipes on disk are left alone.")

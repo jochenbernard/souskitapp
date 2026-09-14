@@ -7,7 +7,7 @@ public struct SousQuietButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         ButtonPressBody(isPressed: configuration.isPressed) { isDown in
             configuration.label
-                .sousButtonLabel(SousColor.accentText)
+                .sousButtonLabel(.accent)
                 .contentShape(Capsule())
                 .sousPressScale(isDown: isDown)
         }
@@ -26,5 +26,5 @@ extension ButtonStyle where Self == SousQuietButtonStyle {
         .buttonStyle(.sousQuiet)
         .padding(SousSpacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(SousColor.background)
+        .background(.groupedBackground)
 }

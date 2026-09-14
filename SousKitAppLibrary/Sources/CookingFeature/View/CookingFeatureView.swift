@@ -72,7 +72,7 @@ struct CookingFeatureView: View {
         VStack(alignment: .leading, spacing: SousSpacing.small) {
             Text(verbatim: String(number))
                 .font(.subheadline)
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
 
             stepProse(step)
                 .font(.title3)
@@ -82,7 +82,7 @@ struct CookingFeatureView: View {
 
     /// The step's prose, with what it reaches for underlined in the accent.
     private func stepProse(_ step: Step) -> Text {
-        Text(StepProse.attributedProse(of: step, annotationColor: SousColor.accent))
+        Text(StepProse.attributedProse(of: step, annotationColor: .accent))
     }
 
     private var exitButton: some View {
@@ -92,7 +92,11 @@ struct CookingFeatureView: View {
                 isPresented: isConfirmingExit,
                 titleVisibility: .visible
             ) {
-                Button("Stop cooking", role: .destructive, action: presenter.didConfirmExit)
+                Button(
+                    "Stop cooking",
+                    role: .destructive,
+                    action: presenter.didConfirmExit
+                )
             }
     }
 

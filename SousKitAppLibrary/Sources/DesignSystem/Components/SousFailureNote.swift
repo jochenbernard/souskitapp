@@ -41,6 +41,10 @@ public struct SousFailureNote: View {
         )
     }
     .padding(SousSpacing.xLarge)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    .background(SousColor.background)
+    .frame(
+        maxWidth: .infinity,
+        maxHeight: .infinity,
+        alignment: .topLeading
+    )
+    .background(.groupedBackground)
 }

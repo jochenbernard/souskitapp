@@ -12,7 +12,11 @@ enum RecipeDisplay {
                 return nil
             }
 
-            return MetadataRow(id: index, key: entry.key, value: value(of: entry.value))
+            return MetadataRow(
+                id: index,
+                key: entry.key,
+                value: value(of: entry.value)
+            )
         }
     }
 

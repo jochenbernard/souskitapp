@@ -78,7 +78,7 @@ struct RecipeFeatureView: View {
     private var emptyNote: some View {
         Text("This recipe is empty.")
             .font(.body)
-            .foregroundStyle(SousColor.textMuted)
+            .foregroundStyle(.secondary)
     }
 
     private func failureNote(_ message: String) -> some View {

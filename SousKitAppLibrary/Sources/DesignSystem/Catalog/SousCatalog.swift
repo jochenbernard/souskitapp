@@ -6,7 +6,7 @@ public struct SousCatalog: View {
     private struct Swatch: Identifiable {
         let name: String
         let note: String
-        let fill: AnyShapeStyle
+        let fill: Color
 
         var id: String { name }
     }
@@ -42,29 +42,27 @@ public struct SousCatalog: View {
     private var lockup: some View {
         VStack(alignment: .leading, spacing: SousSpacing.small) {
             SousLockup(markSize: 56.0, wordmarkSize: 40.0)
-                .foregroundStyle(SousColor.text)
 
             Text(verbatim: "Design system")
                 .font(.caption2)
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
         }
     }
 
     private var colorSection: some View {
         CatalogSection(number: "01", title: "Color") {
             VStack(alignment: .leading, spacing: SousSpacing.medium) {
-                ForEach(Self.semanticTokens) { token in
+                ForEach(Self.accentColors) { entry in
                     CatalogSwatch(
-                        fill: token.fill,
-                        name: token.name,
-                        role: token.note
+                        fill: entry.fill,
+                        name: entry.name,
+                        role: entry.note
                     )
                 }
 
                 Divider()
-                    .overlay(SousColor.border)
 
-                ForEach(Self.rawPalette) { entry in
+                ForEach(Self.systemColors) { entry in
                     CatalogSwatch(
                         fill: entry.fill,
                         name: entry.name,
@@ -101,9 +99,8 @@ public struct SousCatalog: View {
 
                 Text(verbatim: "dinner \u{B7} classic \u{B7} french")
                     .font(.caption2)
-                    .foregroundStyle(SousColor.textMuted)
+                    .foregroundStyle(.secondary)
             }
-            .foregroundStyle(SousColor.text)
         }
     }
 
@@ -122,7 +119,6 @@ public struct SousCatalog: View {
                         SousMark(.inherited, size: size)
                     }
                 }
-                .foregroundStyle(SousColor.text)
             }
         }
     }
@@ -133,12 +129,12 @@ public struct SousCatalog: View {
                 ForEach(Self.spacingSteps, id: \.name) { step in
                     HStack(spacing: SousSpacing.medium) {
                         Rectangle()
-                            .fill(SousColor.accent)
+                            .fill(.accent)
                             .frame(width: step.value, height: 8.0)
 
                         Text(verbatim: "\(step.name) \u{B7} \(Int(step.value))")
                             .font(.caption2)
-                            .foregroundStyle(SousColor.textMuted)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -172,104 +168,59 @@ public struct SousCatalog: View {
         }
     }
 
-    private static let semanticTokens: [Swatch] = [
-        Swatch(
-            name: "background",
-            note: "the page ground",
-            fill: AnyShapeStyle(.sousBackground)
-        ),
-        Swatch(
-            name: "surface",
-            note: "cards, sheets, inputs",
-            fill: AnyShapeStyle(.sousSurface)
-        ),
-        Swatch(
-            name: "border",
-            note: "every rule and divider",
-            fill: AnyShapeStyle(.sousBorder)
-        ),
-        Swatch(
-            name: "text",
-            note: "body and headings",
-            fill: AnyShapeStyle(.sousText)
-        ),
-        Swatch(
-            name: "textMuted",
-            note: "secondary, captions",
-            fill: AnyShapeStyle(.sousTextMuted)
-        ),
+    private static let accentColors: [Swatch] = [
         Swatch(
             name: "accent",
             note: "live, here, do",
-            fill: AnyShapeStyle(.sousAccent)
+            fill: .accent
         ),
         Swatch(
-            name: "accentText",
-            note: "links and pressed",
-            fill: AnyShapeStyle(.sousAccentText)
+            name: "quaternaryAccentFill",
+            note: "callouts",
+            fill: .quaternaryAccentFill
         )
     ]
 
-    private static let rawPalette: [Swatch] = [
+    private static let systemColors: [Swatch] = [
         Swatch(
-            name: "Ink",
-            note: "#0F0F0F",
-            fill: AnyShapeStyle(SousPalette.ink)
+            name: "groupedBackground",
+            note: "the page ground",
+            fill: .groupedBackground
         ),
         Swatch(
-            name: "Graphite",
-            note: "#3A3A3A",
-            fill: AnyShapeStyle(SousPalette.graphite)
+            name: "secondaryGroupedBackground",
+            note: "rows and cards",
+            fill: .secondaryGroupedBackground
         ),
         Swatch(
-            name: "Steel",
-            note: "#6B6B6B",
-            fill: AnyShapeStyle(SousPalette.steel)
+            name: "tertiaryFill",
+            note: "secondary buttons",
+            fill: .tertiaryFill
         ),
         Swatch(
-            name: "Ash",
-            note: "#A6A6A6",
-            fill: AnyShapeStyle(SousPalette.ash)
+            name: "separator",
+            note: "borders and shadows",
+            fill: .separator
         ),
         Swatch(
-            name: "Line",
-            note: "#E3E3E3",
-            fill: AnyShapeStyle(SousPalette.line)
+            name: "primary",
+            note: "body and headings",
+            fill: .primary
         ),
         Swatch(
-            name: "Paper",
-            note: "#F6F6F6",
-            fill: AnyShapeStyle(SousPalette.paper)
-        ),
-        Swatch(
-            name: "White",
-            note: "#FFFFFF",
-            fill: AnyShapeStyle(SousPalette.white)
-        ),
-        Swatch(
-            name: "Flame",
-            note: "#F1541C",
-            fill: AnyShapeStyle(SousPalette.flame)
-        ),
-        Swatch(
-            name: "Ember",
-            note: "#B83C0C",
-            fill: AnyShapeStyle(SousPalette.ember)
-        ),
-        Swatch(
-            name: "Scorch",
-            note: "#FDEBE3",
-            fill: AnyShapeStyle(SousPalette.scorch)
+            name: "secondary",
+            note: "captions and metadata",
+            fill: .secondary
         )
     ]
 
     /// Each colorway on the ground it was drawn for.
     private static let colorways: [(colorway: SousMark.Colorway, ground: Color)] = [
-        (.primary, SousPalette.paper),
-        (.mono, SousPalette.paper),
-        (.reversed, SousPalette.ink),
-        (.onFlame, SousPalette.flame),
-        (.allFlame, SousPalette.paper)
+        (.primary, .white),
+        (.mono, .white),
+        (.reversed, .black),
+        (.onAccent, .accent),
+        (.allAccent, .white)
     ]
 
     private static let spacingSteps: [(name: String, value: CGFloat)] = [

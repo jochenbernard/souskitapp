@@ -54,20 +54,20 @@ public struct SousMark: View {
         /// ``primary`` on a light color scheme, ``reversed`` on a dark one.
         case automatic
 
-        /// Ink steam and plate, Flame middle curl, for Paper grounds.
+        /// Black steam and plate, accent middle curl, for light grounds.
         case primary
 
-        /// Ink throughout, for print, stamps, and single-ink production.
+        /// Black throughout, for print, stamps, and single-ink production.
         case mono
 
-        /// Paper steam and plate, Flame middle curl, for Ink and other dark grounds.
+        /// White steam and plate, accent middle curl, for dark grounds.
         case reversed
 
-        /// Ink with a White middle curl, for a Flame ground.
-        case onFlame
+        /// Black with a white middle curl, for an accent ground.
+        case onAccent
 
-        /// Flame throughout, for decorative surfaces.
-        case allFlame
+        /// The accent throughout, for decorative surfaces.
+        case allAccent
 
         /// The surrounding `foregroundStyle`, for all curls and the plate alike.
         case inherited
@@ -99,27 +99,35 @@ public struct SousMark: View {
     }
 
     public var body: some View {
-        let stroke = StrokeStyle(
-            lineWidth: SousMarkShape.strokeWidth * size / SousMarkShape.gridSize,
-            lineCap: .round,
-            lineJoin: .round
-        )
-        let resolved = resolvedCut
-
         ZStack {
-            SousMarkShape(part: .outerCurls, cut: resolved)
-                .stroke(base, style: stroke)
+            strokedPart(.outerCurls, in: base)
 
-            SousMarkShape(part: .plate, cut: resolved)
-                .stroke(base, style: stroke)
+            strokedPart(.plate, in: base)
 
-            SousMarkShape(part: .middleCurl, cut: resolved)
-                .stroke(accent, style: stroke)
+            strokedPart(.middleCurl, in: accent)
         }
         .frame(width: size, height: size)
         .accessibilityElement()
         .accessibilityLabel(Text(verbatim: "Sous"))
         .accessibilityAddTraits(.isImage)
+    }
+
+    /// One part of the mark, stroked in `color`, or in the surrounding foreground style where it is
+    /// `nil`.
+    @ViewBuilder
+    private func strokedPart(_ part: SousMarkShape.Part, in color: Color?) -> some View {
+        let shape = SousMarkShape(part: part, cut: resolvedCut)
+        let stroke = StrokeStyle(
+            lineWidth: SousMarkShape.strokeWidth * size / SousMarkShape.gridSize,
+            lineCap: .round,
+            lineJoin: .round
+        )
+
+        if let color {
+            shape.stroke(color, style: stroke)
+        } else {
+            shape.stroke(style: stroke)
+        }
     }
 
     /// The cut drawn, once ``Cut/automatic`` is settled against `size` and the color scheme.
@@ -140,27 +148,28 @@ public struct SousMark: View {
     var resolvedColorway: Colorway {
         switch colorway {
         case .automatic: colorScheme == .dark ? .reversed : .primary
-        case .primary, .mono, .reversed, .onFlame, .allFlame, .inherited: colorway
+        case .primary, .mono, .reversed, .onAccent, .allAccent, .inherited: colorway
         }
     }
 
-    /// The stroke for the outer curls and the plate.
-    private var base: AnyShapeStyle {
+    /// The color of the outer curls and the plate, or `nil` where they take the surrounding
+    /// foreground style.
+    private var base: Color? {
         switch resolvedColorway {
-        case .primary, .mono, .onFlame: AnyShapeStyle(SousPalette.ink)
-        case .reversed: AnyShapeStyle(SousPalette.paper)
-        case .allFlame: AnyShapeStyle(SousPalette.flame)
-        case .automatic, .inherited: AnyShapeStyle(.foreground)
+        case .primary, .mono, .onAccent: .black
+        case .reversed: .white
+        case .allAccent: .accent
+        case .automatic, .inherited: nil
         }
     }
 
-    /// The stroke for the middle curl.
-    private var accent: AnyShapeStyle {
+    /// The color of the middle curl, or `nil` where it takes the surrounding foreground style.
+    private var accent: Color? {
         switch resolvedColorway {
-        case .primary, .reversed, .allFlame: AnyShapeStyle(SousPalette.flame)
-        case .mono: AnyShapeStyle(SousPalette.ink)
-        case .onFlame: AnyShapeStyle(SousPalette.white)
-        case .automatic, .inherited: AnyShapeStyle(.foreground)
+        case .primary, .reversed, .allAccent: .accent
+        case .mono: .black
+        case .onAccent: .white
+        case .automatic, .inherited: nil
         }
     }
 }
@@ -172,15 +181,16 @@ public struct SousMark: View {
         SousMark(.mono, size: 72.0)
 
         SousMark(.reversed, size: 72.0)
-            .background(SousPalette.ink)
+            .background(.black)
 
-        SousMark(.onFlame, size: 72.0)
-            .background(SousPalette.flame)
+        SousMark(.onAccent, size: 72.0)
+            .background(.accent)
 
-        SousMark(.allFlame, size: 72.0)
+        SousMark(.allAccent, size: 72.0)
     }
     .padding(SousSpacing.xLarge)
-    .background(SousPalette.paper)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(.white)
 }
 
 #Preview("Down the sizes") {
@@ -190,5 +200,6 @@ public struct SousMark: View {
         }
     }
     .padding(SousSpacing.xLarge)
-    .background(SousPalette.paper)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(.groupedBackground)
 }

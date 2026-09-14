@@ -117,9 +117,9 @@ struct SousMarkShape: Shape {
             .stroke(style: stroke)
     }
     .frame(height: edge)
-    .foregroundStyle(SousColor.text)
     .padding(SousSpacing.xLarge)
-    .background(SousColor.background)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(.groupedBackground)
 }
 
 #Preview("Both cuts") {
@@ -140,12 +140,12 @@ struct SousMarkShape: Shape {
                     .stroke(style: stroke)
 
                 SousMarkShape(part: .middleCurl, cut: cut)
-                    .stroke(SousColor.accent, style: stroke)
+                    .stroke(.accent, style: stroke)
             }
             .frame(width: edge, height: edge)
         }
     }
-    .foregroundStyle(SousColor.text)
     .padding(SousSpacing.xLarge)
-    .background(SousColor.background)
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+    .background(.groupedBackground)
 }

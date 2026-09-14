@@ -8,24 +8,37 @@ disagrees with this package, this package is right.
 
 | Layer | Type | Use |
 | --- | --- | --- |
-| Semantic color | `SousColor` | What products draw from. Seven tokens, light and dark. |
-| Raw color | `SousPalette` | The values themselves, for what the tokens do not cover. |
+| Color | `Color+Accent`, `Color+System` | The accent and its wash, and the system colors SwiftUI has no name for. |
 | Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.body`, `.subheadline`, `.caption2`. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet` | The three button styles. |
-| Page | `.sousPage()` | The ground a screen sits on, and the text token on it. |
+| Page | `.sousPage()` | The ground a screen sits on. |
 | Containers | `.sousSurface(_:)`, `.sousCallout()`, `SousActivityNote` | The card, the wash, the spinner. |
-| Catalog | `SousCatalog` | Every token on one page. Run the app to see it. |
+| Catalog | `SousCatalog` | Every color, style, and component on one page. Run the app to see it. |
 
 ## Rules
 
-- Draw from the semantic layer: `SousColor.text`, not `SousPalette.ink`. Dark is then a
-  seven-line override and nothing else.
-- A token reads the scheme it is drawn in, and is a `Color`, so it goes anywhere a style or a
-  color does. Nothing reaches for `@Environment(\.colorScheme)` to pick a value.
+- Every color but the accent is a system color, named at the call site and picked for its role
+  rather than its value: `groupedBackground` for a page, `secondaryGroupedBackground` for a row
+  or a card, `tertiaryFill` for a control, `separator` for a border or a shadow, `.primary` and
+  `.secondary` for text. Dark comes with them, and nothing reaches for
+  `@Environment(\.colorScheme)` to pick a value.
+- A UIKit color is a static on `Color` in `Color+System`, so a call site never writes
+  `Color(.x)`. It is repeated on `ShapeStyle`, as `.groupedBackground` is, unless SwiftUI
+  already names a style after it: a second `.separator` there makes both ambiguous, so
+  `Color.separator` stays on `Color` and a style position takes SwiftUI's `.separator`.
+- A page is the ground a SwiftUI `List` draws, and a row or a card is a `List` row. The launch
+  screen takes the same ground through `LaunchBackground`, a color set in the app's asset catalog
+  that points at `systemGroupedBackgroundColor` rather than holding a value.
+- The accent is `.accent`, not `Color.accentColor` or `.tint`, which a package preview resolves
+  to blue. It matches `AccentColor` in the app's asset catalog, and `AccentTests` fails where the
+  two drift apart.
+- A lighter accent is the accent at a named opacity, never a value of its own, so one role takes
+  one opacity everywhere. The names follow the system fills: `.quaternaryAccentFill` fills a
+  large area that holds content, as `quaternarySystemFill` does.
 - A screen takes `.sousPage()`, and a container sets the color its content is read in. Only text
-  stepping away from what it sits in, a caption in `SousColor.textMuted`, names a color itself.
+  stepping away from what it sits in, a caption in `.secondary`, names a color itself.
 - A container of one line reads as a capsule, and holds that radius as a rounded rectangle
   where its text wraps, so the curve of a row or a callout is the same whatever it holds. The
   radius is half the height of one `.body` line inside the container's own vertical padding,
@@ -33,9 +46,9 @@ disagrees with this package, this package is right.
 - A page is padded `SousSpacing.large` horizontally and `SousSpacing.small` vertically. The
   padding sits on the content, not on `.sousPage()`, which a scroll view needs it to; anything
   else on the screen, a bottom bar included, takes the same two values so its edges line up.
-- Orange means live, here, or do. Not decoration, category, or mood. Past roughly 5% of a
+- The accent means live, here, or do. Not decoration, category, or mood. Past roughly 5% of a
   layout it has become decoration, and on a dark ground it reads a third brighter still.
-- Flame carries dark text. Ink on Flame is 5.5; White on Flame is 3.5 and fails.
+- The accent carries black text. Black on the accent is 6.0; white on it is 3.5 and fails.
 - Set text with `.font(_:)` and a system text style. Six of them are in use: `.largeTitle` for
   a hero line, `.title` for a landing headline or a step group, `.title3` for a section
   heading, `.body` for copy and controls, `.subheadline` for quantities and metadata,
@@ -62,38 +75,25 @@ A layout that needs the height of a line of text takes `@ScaledMetric(relativeTo
 
 ## What the two themes do not share
 
-Dark is not light inverted, and two things change beyond the token values:
+Dark is not light inverted, and two things change beyond the system colors:
 
 - **The mark's floor moves.** `Cut.automatic` holds three curls at 24pt on light and takes the
   two-curl cut there on dark, where light strokes thin out sooner.
 - **The primary colorway swaps.** `Colorway.automatic` draws `primary` on light and `reversed`
   on dark, the primary cut of the dark theme.
 
-## Beyond the seven tokens
-
-The semantic layer is seven tokens. Three roles have no token, and take a palette value
-directly:
-
-- Long-form prose: `SousPalette.graphite` on light, `SousPalette.chalk` on dark, one step
-  quieter than `SousColor.text`.
-- Eyebrows and captions on dark: `SousPalette.smoke`. The `textMuted` token is Ash.
-- The wash under highlighted rows and callouts: `SousPalette.scorch` on light,
-  `SousPalette.sear` on dark. `.sousCallout()` draws it and sets `accentText` on what it holds,
-  so a call site names none of the three.
-
 ## Where the rest of the values come from
 
 The `SousSpacing` steps and the `SousRadius` values are read off the mark's grid, where 8 is
 the stroke, 12 the curl pitch, and 64 the grid.
 
-Color fixes the primary button at rest and no more: Ink on Flame at 5.5, Ember for a pressed
-link, Ember as a fill on dark, Paper on Ember at 5.3, one primary action per view.
-`.sousSecondary` and `.sousQuiet`, the capsule outline, every padding, and all press behavior
-are decided in this package. A button is one `.body` line inside 12pt of vertical padding,
-which clears the 44pt minimum target and grows from there with Dynamic Type.
+Color fixes the primary button at rest and no more: black on the accent at 6.0, one primary action
+per view. `.sousSecondary` and `.sousQuiet`, the capsule outline, every padding, and all press
+behavior are decided in this package. A button is one `.body` line inside 12pt of vertical
+padding, which clears the 44pt minimum target and grows from there with Dynamic Type.
 
-`.sousPrimary` draws that Flame as a Liquid Glass tint, not a flat fill. Ink stays the label
-color, and the 5.5 figure holds where the tint sits over the page ground.
+`.sousPrimary` draws that accent as a Liquid Glass tint, not a flat fill. Black stays the label
+color, and the 6.0 figure holds where the tint sits over the page ground.
 
 The three styles are separate types rather than one carrying an emphasis: no call site picks an
 emphasis at run time, and the primary differs in kind, not degree. What they share is in
@@ -101,15 +101,15 @@ emphasis at run time, and the primary differs in kind, not degree. What they sha
 
 A press scales the control and changes no color. `.sousPrimary` is the exception: its
 `interactive()` glass flexes under the finger, and a scale on top would be a second reaction
-to one touch. Nothing defines a fill for a pressed button, and Ink on Ember is 3.37, so
-darkening the fill would force the label to change color mid-press. Dimming fails as well:
-only 0.9 opacity keeps Ink on Flame above 4.5, which reads as no feedback at all. The pressed
-state also outlives the finger by up to `ButtonPress.minimumDown`, since a tap can end within
-a frame of starting and would otherwise show nothing. On `.sousPrimary` that hold keeps the
-release haptic off the press.
+to one touch. Nothing defines a fill for a pressed button, and darkening the fill would force
+the label to change color mid-press. Dimming fails as well: on a dark ground only 0.9 opacity
+keeps black on the accent above 4.5, which reads as no feedback at all. The pressed state also
+outlives the finger by up to `ButtonPress.minimumDown`, since a tap can end within a frame of
+starting and would otherwise show nothing. On `.sousPrimary` that hold keeps the release haptic
+off the press.
 
-A callout draws its wash inside a Flame outline, which is Attention on a container. One state
-is not built: the hover Ember is given for.
+A callout draws `.quaternaryAccentFill` inside an accent outline, which is Attention on a
+container, and sets `.accent` on what it holds, so a call site names neither.
 
 ## Adding to it
 

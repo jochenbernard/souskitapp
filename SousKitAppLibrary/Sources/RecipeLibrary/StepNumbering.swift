@@ -15,7 +15,11 @@ public enum StepNumbering {
         return recipe.groups.enumerated().map { index, group in
             defer { firstNumber += group.steps.count }
 
-            return NumberedGroup(id: index, group: group, firstNumber: firstNumber)
+            return NumberedGroup(
+                id: index,
+                group: group,
+                firstNumber: firstNumber
+            )
         }
     }
 }

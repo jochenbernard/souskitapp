@@ -28,6 +28,6 @@ struct AppFeatureView: View {
         )
         // A blurred screen fades out at the perimeter, letting the window's own background
         // through, so the ground is drawn behind the transition rather than by the screens.
-        .background(SousColor.background)
+        .background(.groupedBackground)
     }
 }

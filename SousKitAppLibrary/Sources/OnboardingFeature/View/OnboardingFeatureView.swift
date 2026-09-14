@@ -46,7 +46,7 @@ struct OnboardingFeatureView: View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
             Text("Setup")
                 .font(.caption2)
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
 
             Text("Where your recipes live")
                 .font(.title)
@@ -58,7 +58,7 @@ struct OnboardingFeatureView: View {
                 """
             )
             .font(.body)
-            .foregroundStyle(SousColor.textMuted)
+            .foregroundStyle(.secondary)
         }
     }
 

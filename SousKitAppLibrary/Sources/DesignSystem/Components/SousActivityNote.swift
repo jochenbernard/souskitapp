@@ -6,19 +6,19 @@ public struct SousActivityNote<Label: View>: View {
 
     /// Creates a note.
     ///
-    /// - Parameter label: What the screen is waiting on, set in ``SousColor/textMuted``.
+    /// - Parameter label: What the screen is waiting on, set in the secondary style.
     public init(@ViewBuilder label: () -> Label) {
         self.label = label()
     }
 
     public var body: some View {
         HStack(spacing: SousSpacing.medium) {
-            // Orange means live, and work still running is what the accent is for.
+            // The accent means live, and work still running is what it is for.
             ProgressView()
-                .tint(SousColor.accent)
+                .tint(.accent)
 
             label
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
         }
         .padding(.horizontal, SousSpacing.small)
     }
@@ -30,6 +30,10 @@ public struct SousActivityNote<Label: View>: View {
             .font(.body)
     }
     .padding(SousSpacing.xLarge)
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .background(SousColor.background)
+    .frame(
+        maxWidth: .infinity,
+        maxHeight: .infinity,
+        alignment: .topLeading
+    )
+    .background(.groupedBackground)
 }

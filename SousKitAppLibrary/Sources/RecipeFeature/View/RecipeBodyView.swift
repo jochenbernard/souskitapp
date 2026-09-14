@@ -1,5 +1,4 @@
 import DesignSystem
-import Foundation
 import RecipeLibrary
 import SousKit
 import SwiftUI
@@ -118,17 +117,16 @@ struct RecipeBodyView: View {
     private func sectionHeadingLabel(_ section: RecipeSection, isExpanded: Bool) -> some View {
         HStack(spacing: SousSpacing.small) {
             Text(section.label)
-                .foregroundStyle(SousColor.textMuted)
 
             Spacer(minLength: 0.0)
 
             // Decorative: the button already reads as the section, expanded or collapsed.
             Image(systemName: "chevron.down")
                 .rotationEffect(.degrees(isExpanded ? 0.0 : -90.0))
-                .foregroundStyle(SousColor.textMuted)
                 .accessibilityHidden(true)
         }
         .font(.caption2)
+        .foregroundStyle(.secondary)
         .contentShape(.rect)
     }
 
@@ -164,7 +162,7 @@ struct RecipeBodyView: View {
         if let amount {
             Text(verbatim: amount.text)
                 .font(.subheadline)
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -180,7 +178,7 @@ struct RecipeBodyView: View {
         VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
             Text(verbatim: String(number))
                 .font(.caption2)
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
 
             stepProse(step)
                 .font(.body)
@@ -190,14 +188,14 @@ struct RecipeBodyView: View {
 
     /// The step's prose, with what it reaches for underlined in the accent.
     private func stepProse(_ step: Step) -> Text {
-        Text(StepProse.attributedProse(of: step, annotationColor: SousColor.accent))
+        Text(StepProse.attributedProse(of: step, annotationColor: .accent))
     }
 
     @ViewBuilder
     private func metadataKey(_ row: MetadataRow) -> some View {
         if !row.key.isEmpty {
             Text(verbatim: row.key)
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
         }
     }
 }

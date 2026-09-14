@@ -1,19 +1,15 @@
 import SwiftUI
 
-/// Draws the ground a screen sits on, and sets the text token on what the screen holds.
+/// Draws the ground a screen sits on.
 private struct SousPageModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .foregroundStyle(SousColor.text)
-            .background(SousColor.background)
+            .background(.groupedBackground)
     }
 }
 
 extension View {
-    /// Draws this screen on the page ground, with what it holds set in ``SousColor/text``.
-    ///
-    /// Text that steps away from that token, a caption in ``SousColor/textMuted`` or a symbol
-    /// drawn quieter, sets its own foreground style and still wins.
+    /// Draws this screen on `groupedBackground`, the ground of a `List`.
     ///
     /// - Returns: The screen, on the page ground.
     public func sousPage() -> some View {
@@ -31,10 +27,14 @@ extension View {
 
         Text(verbatim: "1.2 kg \u{B7} 150C \u{B7} 3 h \u{B7} serves 6")
             .font(.subheadline)
-            .foregroundStyle(SousColor.textMuted)
+            .foregroundStyle(.secondary)
     }
     .padding(.horizontal, SousSpacing.large)
     .padding(.vertical, SousSpacing.small)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .frame(
+        maxWidth: .infinity,
+        maxHeight: .infinity,
+        alignment: .topLeading
+    )
     .sousPage()
 }

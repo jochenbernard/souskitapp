@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// One color chip in ``SousCatalog``, with its name and its use.
-struct CatalogSwatch<Fill: ShapeStyle>: View {
-    let fill: Fill
+struct CatalogSwatch: View {
+    let fill: Color
     let name: String
     let role: String
 
@@ -13,17 +13,19 @@ struct CatalogSwatch<Fill: ShapeStyle>: View {
                 .frame(width: 44.0, height: 44.0)
                 .overlay {
                     RoundedRectangle(cornerRadius: SousRadius.small)
-                        .strokeBorder(SousColor.border, lineWidth: 1.0)
+                        .strokeBorder(
+                            .separator.opacity(0.5),
+                            lineWidth: 1.0
+                        )
                 }
 
             VStack(alignment: .leading, spacing: SousSpacing.hairline) {
                 Text(name)
                     .font(.subheadline)
-                    .foregroundStyle(SousColor.text)
 
                 Text(role)
                     .font(.caption2)
-                    .foregroundStyle(SousColor.textMuted)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 0.0)
@@ -34,21 +36,21 @@ struct CatalogSwatch<Fill: ShapeStyle>: View {
 #Preview("Swatches") {
     VStack(alignment: .leading, spacing: SousSpacing.medium) {
         CatalogSwatch(
-            fill: SousColor.accent,
+            fill: .accent,
             name: "accent",
             role: "live, here, do"
         )
 
         CatalogSwatch(
-            fill: SousColor.surface,
-            name: "surface",
-            role: "cards and sheets"
+            fill: .quaternaryAccentFill,
+            name: "quaternaryAccentFill",
+            role: "callouts"
         )
 
         CatalogSwatch(
-            fill: SousPalette.flame,
-            name: "Flame",
-            role: "#F1541C"
+            fill: .secondaryGroupedBackground,
+            name: "secondaryGroupedBackground",
+            role: "rows and cards"
         )
     }
     .padding(SousSpacing.xLarge)
@@ -57,5 +59,5 @@ struct CatalogSwatch<Fill: ShapeStyle>: View {
         maxHeight: .infinity,
         alignment: .topLeading
     )
-    .background(SousColor.background)
+    .background(.groupedBackground)
 }

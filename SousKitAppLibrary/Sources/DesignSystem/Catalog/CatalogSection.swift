@@ -10,7 +10,7 @@ struct CatalogSection<Content: View>: View {
         VStack(alignment: .leading, spacing: SousSpacing.large) {
             Text(verbatim: "\(number) / \(title)")
                 .font(.caption2)
-                .foregroundStyle(SousColor.textMuted)
+                .foregroundStyle(.secondary)
 
             content
         }
@@ -24,9 +24,8 @@ struct CatalogSection<Content: View>: View {
     CatalogSection(number: "01", title: "Color") {
         Text("Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
             .font(.body)
-            .foregroundStyle(SousColor.text)
     }
     .padding(SousSpacing.xLarge)
     .frame(maxHeight: .infinity)
-    .background(SousColor.background)
+    .background(.groupedBackground)
 }

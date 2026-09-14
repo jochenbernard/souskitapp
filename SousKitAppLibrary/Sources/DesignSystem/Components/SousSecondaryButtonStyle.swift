@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Every button on a screen but the primary one: the surface token inside a border.
+/// Every button on a screen but the primary one: `tertiaryFill` inside a border of `separator` at
+/// half opacity.
 ///
 /// A press scales the control and changes no color.
 public struct SousSecondaryButtonStyle: ButtonStyle {
@@ -9,12 +10,15 @@ public struct SousSecondaryButtonStyle: ButtonStyle {
             let shape = Capsule()
 
             configuration.label
-                .sousButtonLabel(SousColor.text)
+                .sousButtonLabel(.primary)
                 .background {
                     shape
-                        .fill(SousColor.surface)
+                        .fill(.tertiaryFill)
                         .overlay {
-                            shape.strokeBorder(SousColor.border, lineWidth: 1.0)
+                            shape.strokeBorder(
+                                .separator.opacity(0.5),
+                                lineWidth: 1.0
+                            )
                         }
                 }
                 .contentShape(shape)
@@ -35,5 +39,5 @@ extension ButtonStyle where Self == SousSecondaryButtonStyle {
         .buttonStyle(.sousSecondary)
         .padding(SousSpacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(SousColor.background)
+        .background(.groupedBackground)
 }

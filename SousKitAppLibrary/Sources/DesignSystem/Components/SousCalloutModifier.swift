@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Draws the wash and the outline under a callout, which the seven semantic tokens do not name.
+/// Draws the wash and the outline under a callout.
 private struct SousCalloutModifier: ViewModifier {
     /// The height of one `.body` line, before Dynamic Type scales it.
     @ScaledMetric(relativeTo: .body) private var scaledBodyLineHeight = 20.3
@@ -9,16 +9,16 @@ private struct SousCalloutModifier: ViewModifier {
         let shape = RoundedRectangle(cornerRadius: radius)
 
         return content
-            .foregroundStyle(SousColor.accentText)
+            .foregroundStyle(.accent)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, SousSpacing.large)
             .padding(.vertical, SousSpacing.medium)
             .background {
                 shape
-                    .fill(Color(light: SousPalette.scorch, dark: SousPalette.sear))
+                    .fill(.quaternaryAccentFill)
             }
             .overlay {
-                shape.strokeBorder(SousColor.accent, lineWidth: 1.0)
+                shape.strokeBorder(.accent, lineWidth: 1.0)
             }
     }
 
@@ -31,9 +31,8 @@ private struct SousCalloutModifier: ViewModifier {
 extension View {
     /// Draws this view in a callout, across the full width of what holds it.
     ///
-    /// The wash is ``SousPalette/scorch`` on light and ``SousPalette/sear`` on dark, inside an
-    /// outline in ``SousColor/accent``. Text in it is set in ``SousColor/accentText``, which a
-    /// foreground style closer to the text still overrides.
+    /// The wash is `quaternaryAccentFill`, inside an outline in `accent`. Text in it is set in
+    /// `accent`, which a foreground style closer to the text still overrides.
     ///
     /// - Returns: The view, in a callout.
     public func sousCallout() -> some View {
@@ -52,5 +51,10 @@ extension View {
     .font(.body)
     .padding(.horizontal, SousSpacing.large)
     .padding(.vertical, SousSpacing.small)
-    .background(SousColor.background)
+    .frame(
+        maxWidth: .infinity,
+        maxHeight: .infinity,
+        alignment: .topLeading
+    )
+    .background(.groupedBackground)
 }

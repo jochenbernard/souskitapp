@@ -5,7 +5,6 @@ struct CatalogContainers: View {
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
             Text("Boeuf Bourguignon")
-                .foregroundStyle(SousColor.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, SousSpacing.large)
                 .padding(.vertical, SousSpacing.medium)
@@ -26,5 +25,5 @@ struct CatalogContainers: View {
     CatalogContainers()
         .padding(SousSpacing.xLarge)
         .frame(maxHeight: .infinity)
-        .background(SousColor.background)
+        .background(.groupedBackground)
 }
