@@ -1,10 +1,10 @@
-// swift-tools-version: 6.3
+// swift-tools-version: 6.4
 
 import PackageDescription
 
 let package = Package(
     name: "SousKitAppLibrary",
-    platforms: [.iOS(.v26)],
+    platforms: [.iOS(.v27)],
     products: [
         .library(
             name: "AppFeature",
