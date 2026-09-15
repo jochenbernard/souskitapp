@@ -9,41 +9,41 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
 
     private let kitchenFeatureFactory: KitchenFeatureFactory
     private let onboardingFeatureFactory: OnboardingFeatureFactory
-    private let recipeDirectoryStore: RecipeDirectoryStore
+    private let recipeRepositoryStore: RecipeRepositoryStore
 
     init(
         kitchenFeatureFactory: KitchenFeatureFactory,
         onboardingFeatureFactory: OnboardingFeatureFactory,
-        recipeDirectoryStore: RecipeDirectoryStore
+        recipeRepositoryStore: RecipeRepositoryStore
     ) {
         self.kitchenFeatureFactory = kitchenFeatureFactory
         self.onboardingFeatureFactory = onboardingFeatureFactory
-        self.recipeDirectoryStore = recipeDirectoryStore
+        self.recipeRepositoryStore = recipeRepositoryStore
     }
 
-    /// The screen a directory calls for: the kitchen reading it, or onboarding where there is none.
+    /// The screen a repository calls for: the kitchen reading it, or onboarding where there is none.
     ///
-    /// - Parameter recipeDirectory: The directory recipes are read from, or `nil` before one is picked.
+    /// - Parameter recipeRepository: The repository recipes are read from, or `nil` before one is connected.
     /// - Returns: The screen, reporting to this presenter.
-    func makeScreen(recipeDirectory: RecipeDirectory?) -> AppScreen {
-        guard let recipeDirectory else {
+    func makeScreen(recipeRepository: RecipeRepository?) -> AppScreen {
+        guard let recipeRepository else {
             return .onboarding(onboardingFeatureFactory.makeOnboardingFeature(handler: self))
         }
 
         return .kitchen(
             kitchenFeatureFactory.makeKitchenFeature(
-                recipeDirectory: recipeDirectory,
+                recipeRepository: recipeRepository,
                 handler: self
             )
         )
     }
 
-    func onboardingFeatureDidFinish(recipeDirectory: RecipeDirectory) {
-        viewModel?.screen = makeScreen(recipeDirectory: recipeDirectory)
+    func onboardingFeatureDidFinish(recipeRepository: RecipeRepository) {
+        viewModel?.screen = makeScreen(recipeRepository: recipeRepository)
     }
 
     func kitchenFeatureDidConfirmReset() {
-        recipeDirectoryStore.clear()
-        viewModel?.screen = makeScreen(recipeDirectory: nil)
+        recipeRepositoryStore.clear()
+        viewModel?.screen = makeScreen(recipeRepository: nil)
     }
 }

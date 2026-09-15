@@ -1,0 +1,132 @@
+@testable import FileRecipeLibrary
+import Foundation
+import RecipeLibrary
+import SousKit
+import Testing
+
+@Suite("File recipe repository", .timeLimit(.minutes(1)))
+final class FileRecipeRepositoryTests: Sendable {
+    private let directory: TemporaryDirectory
+
+    init() throws {
+        self.directory = try TemporaryDirectory(named: "FileRecipeRepositoryTests")
+    }
+
+    private func makeRepository() -> FileRecipeRepository {
+        FileRecipeRepository(recipeDirectory: directory.recipeDirectory)
+    }
+
+    private func readRecipe(of recipeEntry: RecipeEntry) async throws -> Recipe {
+        try await makeRepository().readRecipe(of: recipeEntry).value
+    }
+
+    private func crepes() throws -> RecipeEntry {
+        try directory.writeFile(
+            named: "crepes.sous",
+            """
+            ---
+            title: Crepes
+            servings: 4
+            tags: [dessert, french]
+            ---
+
+            Whisk @{200 g} flour@ into a batter with @{4} eggs@ in a #bowl#, then rest it ~1 h~.
+
+            Wipe a #crepe pan# with @{10 g} butter@ and cook each crepe ~1 min~ a side.
+            """
+        )
+    }
+
+    @Test("the name is the directory's")
+    func name() {
+        #expect(makeRepository().name == directory.url.lastPathComponent)
+    }
+
+    @Test("the recipes in the directory are listed")
+    func recipeEntries() async throws {
+        try directory.writeFile(named: "crepes.sous")
+        let repository = makeRepository()
+
+        for await result in await repository.recipeEntries() {
+            #expect(try result.get().map(\.name) == ["crepes"])
+            return
+        }
+
+        Issue.record("The stream ended before listing a recipe.")
+    }
+
+    @Test("the header reads back as metadata")
+    func metadata() async throws {
+        let recipe = try await readRecipe(of: crepes())
+
+        #expect(recipe.metadata.title == "Crepes")
+        #expect(recipe.metadata.servings == 4.0)
+        #expect(recipe.metadata.tags == ["dessert", "french"])
+    }
+
+    @Test("the ingredients read back in document order, with their amounts")
+    func ingredients() async throws {
+        let recipe = try await readRecipe(of: crepes())
+
+        #expect(recipe.ingredients.map(\.name) == ["flour", "eggs", "butter"])
+        #expect(recipe.ingredients.compactMap(\.amount).map(\.text) == ["200 g", "4", "10 g"])
+    }
+
+    @Test("the cookware reads back in document order")
+    func cookware() async throws {
+        let recipe = try await readRecipe(of: crepes())
+
+        #expect(recipe.cookware.map(\.name) == ["bowl", "crepe pan"])
+    }
+
+    @Test("a blank line parts one step from the next")
+    func steps() async throws {
+        let recipe = try await readRecipe(of: crepes())
+
+        #expect(recipe.steps.count == 2)
+        #expect(recipe.timers.map(\.text) == ["1 h", "1 min"])
+    }
+
+    @Test("a heading names the group its steps sit in")
+    func groups() async throws {
+        let recipeEntry = try directory.writeFile(
+            named: "bouillabaisse.sous",
+            """
+            ---
+            title: Bouillabaisse
+            ---
+
+            ## Court-Bouillon
+            Soften @{2} fennel bulbs@ in a #stockpot#.
+
+            ## Rouille
+            Pound @{3 cloves} garlic@ in a #mortar#.
+            """
+        )
+
+        let recipe = try await readRecipe(of: recipeEntry)
+
+        #expect(recipe.groups.map(\.name) == ["Court-Bouillon", "Rouille"])
+        #expect(recipe.groups.map(\.steps.count) == [1, 1])
+    }
+
+    @Test("a file that is not a recipe still parses, holding no steps")
+    func notARecipe() async throws {
+        let recipeEntry = try directory.writeFile(named: "empty.sous", "")
+
+        let recipe = try await readRecipe(of: recipeEntry)
+
+        #expect(recipe.metadata.title == nil)
+        #expect(recipe.steps.isEmpty)
+    }
+
+    @Test("reading a recipe that is gone throws")
+    func missingRecipe() async throws {
+        let recipeEntry = try directory.writeFile(named: "crepes.sous", "Whisk.")
+        try FileManager.default.removeItem(at: directory.url.appending(path: recipeEntry.fileName))
+
+        await #expect(throws: (any Error).self) {
+            try await readRecipe(of: recipeEntry)
+        }
+    }
+}

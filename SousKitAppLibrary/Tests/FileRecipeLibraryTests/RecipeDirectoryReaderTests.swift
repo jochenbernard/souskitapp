@@ -1,3 +1,4 @@
+@testable import FileRecipeLibrary
 import Foundation
 import RecipeLibrary
 import Testing
@@ -10,13 +11,13 @@ final class RecipeDirectoryReaderTests {
         self.directory = try TemporaryDirectory(named: "RecipeDirectoryReaderTests")
     }
 
-    private func readRecipeFiles() throws -> [RecipeFile] {
+    private func readRecipeEntries() throws -> [RecipeEntry] {
         let reader = RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory)
-        return try reader.readRecipeFiles()
+        return try reader.readRecipeEntries()
     }
 
     private func readNames() throws -> [String] {
-        try readRecipeFiles().map(\.name)
+        try readRecipeEntries().map(\.name)
     }
 
     @Test("an empty directory holds no recipes")
@@ -85,18 +86,18 @@ final class RecipeDirectoryReaderTests {
     func downloadedAvailability() throws {
         try directory.writeFile(named: "crepes.sous")
 
-        #expect(try readRecipeFiles().map(\.availability) == [.downloaded])
+        #expect(try readRecipeEntries().map(\.availability) == [.downloaded])
     }
 
     @Test("an iCloud placeholder is listed under the recipe's name")
     func placeholder() throws {
         try directory.writeFile(named: ".Crepes.sous.icloud")
 
-        let recipeFiles = try readRecipeFiles()
+        let recipeEntries = try readRecipeEntries()
 
-        #expect(recipeFiles.map(\.name) == ["Crepes"])
-        #expect(recipeFiles.map(\.fileName) == ["Crepes.sous"])
-        #expect(recipeFiles.map(\.availability) == [.notDownloaded])
+        #expect(recipeEntries.map(\.name) == ["Crepes"])
+        #expect(recipeEntries.map(\.fileName) == ["Crepes.sous"])
+        #expect(recipeEntries.map(\.availability) == [.notDownloaded])
     }
 
     @Test("a placeholder beside the file it stands in for is listed once")
@@ -104,10 +105,10 @@ final class RecipeDirectoryReaderTests {
         try directory.writeFile(named: "Crepes.sous")
         try directory.writeFile(named: ".Crepes.sous.icloud")
 
-        let recipeFiles = try readRecipeFiles()
+        let recipeEntries = try readRecipeEntries()
 
-        #expect(recipeFiles.map(\.name) == ["Crepes"])
-        #expect(recipeFiles.map(\.availability) == [.downloaded])
+        #expect(recipeEntries.map(\.name) == ["Crepes"])
+        #expect(recipeEntries.map(\.availability) == [.downloaded])
     }
 
     @Test("a placeholder for something that is not a recipe is left out")
@@ -122,7 +123,7 @@ final class RecipeDirectoryReaderTests {
         try FileManager.default.removeItem(at: directory.url)
 
         #expect(throws: (any Error).self) {
-            try readRecipeFiles()
+            try readRecipeEntries()
         }
     }
 }

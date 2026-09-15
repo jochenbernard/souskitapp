@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The app's one screen at a time: onboarding until a recipe directory is set, the kitchen
+/// The app's one screen at a time: onboarding until a recipe repository is connected, the kitchen
 /// after that.
 struct AppFeature {
     private let presenter: AppFeaturePresenterProtocol

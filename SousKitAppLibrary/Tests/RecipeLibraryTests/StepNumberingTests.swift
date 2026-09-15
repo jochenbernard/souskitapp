@@ -4,6 +4,8 @@ import Testing
 
 @Suite("Step numbering")
 struct StepNumberingTests {
+    private let parser = SousParser()
+
     @Test("step numbers run on across the groups")
     func stepNumbers() {
         let source = """
@@ -15,7 +17,7 @@ struct StepNumberingTests {
             ## Rouille
             Pound it.
             """
-        let recipe = SousParser().parseRecipe(source).value
+        let recipe = parser.parseRecipe(source).value
 
         #expect(StepNumbering.numberedGroups(of: recipe).map(\.firstNumber) == [1, 3])
     }
@@ -31,7 +33,7 @@ struct StepNumberingTests {
             ## Rouille
             Pound it.
             """
-        let recipe = SousParser().parseRecipe(source).value
+        let recipe = parser.parseRecipe(source).value
         let numbers = StepNumbering.numberedGroups(of: recipe).map({ $0.numberedSteps.map(\.number) })
 
         #expect(numbers == [[1, 2], [3]])
@@ -48,7 +50,7 @@ struct StepNumberingTests {
             ## Rouille
             Pound it.
             """
-        let recipe = SousParser().parseRecipe(source).value
+        let recipe = parser.parseRecipe(source).value
         let numbered = StepNumbering.numberedGroups(of: recipe)
 
         #expect(numbered.map(\.id) == Array(recipe.groups.indices))

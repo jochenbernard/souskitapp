@@ -24,7 +24,7 @@ let package = Package(
     targets: [
         .standardTarget(
             name: "AppFeature",
-            dependencies: ["KitchenFeature", "OnboardingFeature"]
+            dependencies: ["FileRecipeLibrary", "KitchenFeature", "OnboardingFeature"]
         ),
         .standardTarget(
             name: "CookingFeature",
@@ -41,6 +41,14 @@ let package = Package(
         .standardTestTarget(
             name: "DesignSystemTests",
             dependencies: ["DesignSystem"]
+        ),
+        .standardTarget(
+            name: "FileRecipeLibrary",
+            dependencies: ["RecipeLibrary"]
+        ),
+        .standardTestTarget(
+            name: "FileRecipeLibraryTests",
+            dependencies: ["FileRecipeLibrary"]
         ),
         .standardTarget(
             name: "KitchenFeature",

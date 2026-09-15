@@ -1,7 +1,8 @@
 import Foundation
+import RecipeLibrary
 
-/// The recipe directory, remembered across launches.
-public struct RecipeDirectoryStore: Sendable {
+/// The recipe directory the user picked, remembered across launches.
+public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     nonisolated(unsafe) private let userDefaults: UserDefaults
 
     /// Creates a store.
@@ -14,7 +15,7 @@ public struct RecipeDirectoryStore: Sendable {
     /// The directory the user picked, or `nil` before they have picked one.
     ///
     /// Reading the directory's contents takes opening the URL's security scope first.
-    public var recipeDirectory: RecipeDirectory? {
+    var recipeDirectory: RecipeDirectory? {
         guard let data = userDefaults.data(forKey: Keys.bookmark) else {
             return nil
         }
@@ -27,27 +28,32 @@ public struct RecipeDirectoryStore: Sendable {
         }
 
         if isStale {
-            try? setRecipeDirectory(at: url)
+            try? rememberRecipeDirectory(at: url)
         }
 
         return RecipeDirectory(url: url)
     }
 
-    /// Records the directory at a URL as the one recipes are read from.
-    ///
-    /// - Parameter url: The directory the user picked.
-    /// - Throws: Whatever remembering `url` throws.
-    public func setRecipeDirectory(at url: URL) throws {
-        let data = try url.withSecurityScope({ try url.bookmarkData() })
-        userDefaults.set(data, forKey: Keys.bookmark)
+    public func makeRecipeRepository() -> RecipeRepository? {
+        recipeDirectory.map({ FileRecipeRepository(recipeDirectory: $0) })
     }
 
-    /// Forgets the directory, leaving the app nowhere to read recipes from.
+    public func connectRecipeDirectory(at url: URL) throws -> RecipeRepository {
+        try rememberRecipeDirectory(at: url)
+
+        return FileRecipeRepository(recipeDirectory: RecipeDirectory(url: url))
+    }
+
     public func clear() {
         userDefaults.removeObject(forKey: Keys.bookmark)
     }
 
+    private func rememberRecipeDirectory(at url: URL) throws {
+        let data = try url.withSecurityScope({ try url.bookmarkData() })
+        userDefaults.set(data, forKey: Keys.bookmark)
+    }
+
     private enum Keys {
-        static let bookmark = "RecipeDirectoryStore.bookmark"
+        static let bookmark = "FileRecipeRepositoryStore.bookmark"
     }
 }

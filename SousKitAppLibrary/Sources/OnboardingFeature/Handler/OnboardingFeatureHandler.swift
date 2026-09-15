@@ -4,7 +4,7 @@ import RecipeLibrary
 public protocol OnboardingFeatureHandler {
     /// The user picked a directory, and it is recorded.
     ///
-    /// - Parameter recipeDirectory: The directory recipes are read from.
+    /// - Parameter recipeRepository: The repository reading the directory.
     @MainActor
-    func onboardingFeatureDidFinish(recipeDirectory: RecipeDirectory)
+    func onboardingFeatureDidFinish(recipeRepository: RecipeRepository)
 }

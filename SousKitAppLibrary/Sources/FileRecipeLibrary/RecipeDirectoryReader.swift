@@ -1,7 +1,8 @@
 import Foundation
+import RecipeLibrary
 
 /// Reads the recipes sitting directly in a directory, leaving the directories inside it alone.
-public struct RecipeDirectoryReader: Sendable {
+struct RecipeDirectoryReader: Sendable {
     private static let resourceKeys: Set<URLResourceKey> = [
         .isDirectoryKey,
         .isUbiquitousItemKey,
@@ -10,40 +11,41 @@ public struct RecipeDirectoryReader: Sendable {
     ]
 
     private static let placeholderExtension = "icloud"
+    private static let recipeExtension = "sous"
 
     private let recipeDirectory: RecipeDirectory
 
     /// Creates a reader.
     ///
     /// - Parameter recipeDirectory: The directory recipes are read from.
-    public init(recipeDirectory: RecipeDirectory) {
+    init(recipeDirectory: RecipeDirectory) {
         self.recipeDirectory = recipeDirectory
     }
 
     /// Reads the directory's top level.
     ///
     /// It downloads nothing: a recipe held only in iCloud is listed as
-    /// ``RecipeFileAvailability/notDownloaded``.
+    /// ``RecipeAvailability/notDownloaded``.
     ///
     /// - Returns: The recipes found, ordered by name.
     /// - Throws: Whatever reading the directory throws.
-    public func readRecipeFiles() throws -> [RecipeFile] {
+    func readRecipeEntries() throws -> [RecipeEntry] {
         let url = recipeDirectory.url
 
         return try url.withSecurityScope {
-            try NSFileCoordinator.coordinateReading(at: url, Self.recipeFiles(inDirectoryAt:))
+            try NSFileCoordinator.coordinateReading(at: url, Self.recipeEntries(inDirectoryAt:))
         }
     }
 
-    private static func recipeFiles(inDirectoryAt directory: URL) throws -> [RecipeFile] {
+    private static func recipeEntries(inDirectoryAt directory: URL) throws -> [RecipeEntry] {
         let entries = try FileManager.default.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: Array(resourceKeys),
             options: []
         )
 
-        var recipeFiles: [RecipeFile] = []
-        var placeholders: [RecipeFile] = []
+        var recipeEntries: [RecipeEntry] = []
+        var placeholders: [RecipeEntry] = []
 
         for entry in entries {
             let entryName = entry.lastPathComponent
@@ -53,7 +55,7 @@ public struct RecipeDirectoryReader: Sendable {
                 // front of a directory, and a URL built the other way matches no entry.
                 let url = entry.deletingLastPathComponent().appending(path: name)
                 placeholders.append(
-                    RecipeFile(url: url, availability: availabilityOfPlaceholder(at: url))
+                    RecipeEntry(fileName: name, availability: availabilityOfPlaceholder(at: url))
                 )
             } else if isRecipeFileName(entryName) {
                 guard
@@ -63,14 +65,14 @@ public struct RecipeDirectoryReader: Sendable {
                     continue
                 }
 
-                recipeFiles.append(RecipeFile(url: entry, availability: availability(of: values)))
+                recipeEntries.append(RecipeEntry(fileName: entryName, availability: availability(of: values)))
             }
         }
 
-        let listed = Set(recipeFiles.map(\.fileName))
-        recipeFiles.append(contentsOf: placeholders.filter({ !listed.contains($0.fileName) }))
+        let listed = Set(recipeEntries.map(\.fileName))
+        recipeEntries.append(contentsOf: placeholders.filter({ !listed.contains($0.fileName) }))
 
-        return recipeFiles.sorted(by: isOrderedBefore)
+        return recipeEntries.sorted(by: isOrderedBefore)
     }
 
     /// The recipe an iCloud placeholder entry stands in for, or `nil` where it stands in for none.
@@ -90,14 +92,14 @@ public struct RecipeDirectoryReader: Sendable {
     }
 
     private static func isRecipeFileName(_ entryName: String) -> Bool {
-        !entryName.hasPrefix(".") && entryName.lowercased().hasSuffix(".\(RecipeFile.pathExtension)")
+        !entryName.hasPrefix(".") && entryName.lowercased().hasSuffix(".\(recipeExtension)")
     }
 
     /// What a placeholder reports about the recipe it stands in for.
     ///
     /// A placeholder stays in the directory while the fetch it triggered runs, so a recipe on its
-    /// way down is reported as ``RecipeFileAvailability/downloading`` rather than as absent.
-    private static func availabilityOfPlaceholder(at url: URL) -> RecipeFileAvailability {
+    /// way down is reported as ``RecipeAvailability/downloading`` rather than as absent.
+    private static func availabilityOfPlaceholder(at url: URL) -> RecipeAvailability {
         guard
             let values = try? url.resourceValues(forKeys: resourceKeys),
             values.ubiquitousItemIsDownloading == true
@@ -108,7 +110,7 @@ public struct RecipeDirectoryReader: Sendable {
         return .downloading
     }
 
-    private static func availability(of values: URLResourceValues) -> RecipeFileAvailability {
+    private static func availability(of values: URLResourceValues) -> RecipeAvailability {
         guard
             values.isUbiquitousItem == true,
             values.ubiquitousItemDownloadingStatus == .notDownloaded
@@ -120,7 +122,7 @@ public struct RecipeDirectoryReader: Sendable {
     }
 
     /// Whether one recipe sorts before another, by name and then by file name.
-    private static func isOrderedBefore(_ lhs: RecipeFile, _ rhs: RecipeFile) -> Bool {
+    private static func isOrderedBefore(_ lhs: RecipeEntry, _ rhs: RecipeEntry) -> Bool {
         switch lhs.name.localizedStandardCompare(rhs.name) {
         case .orderedAscending:
             true

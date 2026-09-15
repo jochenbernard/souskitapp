@@ -1,18 +1,18 @@
 import Foundation
+import RecipeLibrary
 
 /// The recipes in a directory, read once and read again on every change to it.
 @MainActor
-public final class RecipeDirectoryMonitor {
+final class RecipeDirectoryMonitor {
     private let reader: RecipeDirectoryReader
     private let recipeDirectory: RecipeDirectory
     private let settleDelay: Duration
 
-    private var continuation: AsyncStream<Result<[RecipeFile], Error>>.Continuation?
+    private var continuation: AsyncStream<Result<[RecipeEntry], Error>>.Continuation?
     private var eventSource: DirectoryEventSource?
     private var generation = 0
-    private var hasYielded = false
     private var isScoped = false
-    private var lastRecipeFiles: [RecipeFile] = []
+    private var lastRecipeEntries: [RecipeEntry]?
     private var presenter: DirectoryPresenter?
     private var readTask: Task<Void, Never>?
 
@@ -22,7 +22,7 @@ public final class RecipeDirectoryMonitor {
     ///   - recipeDirectory: The directory recipes are read from.
     ///   - settleDelay: How long a burst of changes is given to finish before the directory is
     ///     read again.
-    nonisolated public init(
+    nonisolated init(
         recipeDirectory: RecipeDirectory,
         settleDelay: Duration = .milliseconds(150)
     ) {
@@ -50,7 +50,7 @@ public final class RecipeDirectoryMonitor {
     /// time; a second call ends the first.
     ///
     /// - Returns: The stream.
-    public func recipeFiles() -> AsyncStream<Result<[RecipeFile], Error>> {
+    func recipeEntries() -> AsyncStream<Result<[RecipeEntry], Error>> {
         stop()
         generation += 1
         let startedAt = generation
@@ -68,7 +68,7 @@ public final class RecipeDirectoryMonitor {
 
     /// Reads the directory again, for the changes that reach the app no other way: a sync that
     /// landed while the app was in the background.
-    public func refresh() {
+    func refresh() {
         read(afterSettling: false)
     }
 
@@ -95,8 +95,7 @@ public final class RecipeDirectoryMonitor {
         eventSource = nil
         presenter?.stopPresenting()
         presenter = nil
-        hasYielded = false
-        lastRecipeFiles = []
+        lastRecipeEntries = nil
         continuation?.finish()
         continuation = nil
 
@@ -136,7 +135,7 @@ public final class RecipeDirectoryMonitor {
                 return
             }
 
-            let result = await Self.readRecipeFiles(with: directoryReader)
+            let result = await Self.readRecipeEntries(with: directoryReader)
 
             guard !Task.isCancelled else {
                 return
@@ -148,26 +147,24 @@ public final class RecipeDirectoryMonitor {
 
     /// Reads off the main actor, where a directory in iCloud can take a while to answer.
     @concurrent
-    nonisolated private static func readRecipeFiles(
+    nonisolated private static func readRecipeEntries(
         with reader: RecipeDirectoryReader
-    ) async -> Result<[RecipeFile], Error> {
-        Result(catching: { try reader.readRecipeFiles() })
+    ) async -> Result<[RecipeEntry], Error> {
+        Result(catching: { try reader.readRecipeEntries() })
     }
 
     /// Sends a result on, dropping a list matching the one sent last.
-    private func yield(_ result: Result<[RecipeFile], Error>) {
+    private func yield(_ result: Result<[RecipeEntry], Error>) {
         switch result {
-        case .success(let recipeFiles):
-            guard !hasYielded || recipeFiles != lastRecipeFiles else {
+        case .success(let recipeEntries):
+            guard recipeEntries != lastRecipeEntries else {
                 return
             }
 
-            hasYielded = true
-            lastRecipeFiles = recipeFiles
+            lastRecipeEntries = recipeEntries
 
         case .failure:
-            hasYielded = false
-            lastRecipeFiles = []
+            lastRecipeEntries = nil
         }
 
         continuation?.yield(result)

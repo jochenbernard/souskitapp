@@ -7,29 +7,29 @@ import SousKit
 struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
     private let cookingFeatureFactory: CookingFeatureFactory
     private let handler: KitchenFeatureHandler
-    private let recipeDirectoryMonitor: RecipeDirectoryMonitor
     private let recipeFeatureFactory: RecipeFeatureFactory
+    private let recipeRepository: RecipeRepository
     private let viewModel: KitchenFeatureViewModel
 
     init(
         cookingFeatureFactory: CookingFeatureFactory,
         handler: KitchenFeatureHandler,
-        recipeDirectoryMonitor: RecipeDirectoryMonitor,
         recipeFeatureFactory: RecipeFeatureFactory,
+        recipeRepository: RecipeRepository,
         viewModel: KitchenFeatureViewModel
     ) {
         self.cookingFeatureFactory = cookingFeatureFactory
         self.handler = handler
-        self.recipeDirectoryMonitor = recipeDirectoryMonitor
         self.recipeFeatureFactory = recipeFeatureFactory
+        self.recipeRepository = recipeRepository
         self.viewModel = viewModel
     }
 
     func viewDidAppear() async {
-        for await result in recipeDirectoryMonitor.recipeFiles() {
+        for await result in await recipeRepository.recipeEntries() {
             switch result {
-            case .success(let recipeFiles):
-                viewModel.recipeList = .recipes(recipeFiles)
+            case .success(let recipeEntries):
+                viewModel.recipeList = .recipes(recipeEntries)
 
             case .failure(let error):
                 viewModel.recipeList = .failure(error.localizedDescription)
@@ -37,8 +37,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         }
     }
 
-    func didBecomeActive() {
-        recipeDirectoryMonitor.refresh()
+    func didBecomeActive() async {
+        await recipeRepository.refresh()
     }
 
     func didChangeScreenPath(_ screenPath: [KitchenScreen]) {
@@ -47,8 +47,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         // A pop leaves the screen it popped in place: clearing it empties that screen while it
         // is still animating away. The next push replaces it.
         switch screenPath.last {
-        case .recipe(let recipeFile):
-            openRecipe(recipeFile)
+        case .recipe(let recipeEntry):
+            openRecipe(recipeEntry)
 
         case .cooking(let recipe):
             openCooking(recipe)
@@ -88,15 +88,15 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     @MainActor
-    private func openRecipe(_ recipeFile: RecipeFile) {
-        guard viewModel.openRecipe?.recipeFile != recipeFile else {
+    private func openRecipe(_ recipeEntry: RecipeEntry) {
+        guard viewModel.openRecipe?.recipeEntry != recipeEntry else {
             return
         }
 
         viewModel.openRecipe = OpenRecipe(
-            recipeFile: recipeFile,
+            recipeEntry: recipeEntry,
             feature: recipeFeatureFactory.makeRecipeFeature(
-                recipeFile: recipeFile,
+                recipeEntry: recipeEntry,
                 handler: self
             )
         )

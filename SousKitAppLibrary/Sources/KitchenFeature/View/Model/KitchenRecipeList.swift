@@ -1,13 +1,13 @@
 import RecipeLibrary
 
-/// What the kitchen has to show for the recipe directory.
+/// What the kitchen has to show for the recipe repository.
 enum KitchenRecipeList {
-    /// The directory has not been read yet.
+    /// The repository has not been read yet.
     case reading
 
-    /// What the directory holds, which may be nothing.
-    case recipes([RecipeFile])
+    /// What the repository holds, which may be nothing.
+    case recipes([RecipeEntry])
 
-    /// Reading the directory failed, with the reason to show.
+    /// Reading the repository failed, with the reason to show.
     case failure(String)
 }

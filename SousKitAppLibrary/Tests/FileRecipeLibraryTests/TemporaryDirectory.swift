@@ -1,3 +1,4 @@
+@testable import FileRecipeLibrary
 import Foundation
 import RecipeLibrary
 
@@ -42,11 +43,10 @@ final class TemporaryDirectory: Sendable {
     /// - Returns: The recipe the file is read as.
     /// - Throws: Whatever writing the file throws.
     @discardableResult
-    func writeFile(named fileName: String, _ text: String) throws -> RecipeFile {
-        let fileURL = url.appending(path: fileName)
-        try Data(text.utf8).write(to: fileURL)
+    func writeFile(named fileName: String, _ text: String) throws -> RecipeEntry {
+        try Data(text.utf8).write(to: url.appending(path: fileName))
 
-        return RecipeFile(url: fileURL, availability: .downloaded)
+        return RecipeEntry(fileName: fileName, availability: .downloaded)
     }
 
     /// Creates a directory inside this one.

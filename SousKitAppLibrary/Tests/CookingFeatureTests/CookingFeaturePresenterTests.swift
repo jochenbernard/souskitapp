@@ -4,8 +4,10 @@ import Testing
 
 @Suite("Cooking feature presenter")
 struct CookingFeaturePresenterTests {
+    private let parser = SousParser()
+
     private func makeViewModel() -> CookingFeatureViewModel {
-        CookingFeatureViewModel(recipe: SousParser().parseRecipe("Whisk it.").value)
+        CookingFeatureViewModel(recipe: parser.parseRecipe("Whisk it.").value)
     }
 
     @MainActor
