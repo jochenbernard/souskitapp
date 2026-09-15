@@ -34,6 +34,8 @@ public final class RecipeDirectoryMonitor {
     /// Lets go of what outlives a released monitor: `NSFileCoordinator` retains a file presenter,
     /// so a presenter left registered never reaches its own `deinit`.
     deinit {
+        readTask?.cancel()
+        continuation?.finish()
         presenter?.stopPresenting()
 
         if isScoped {
@@ -44,8 +46,8 @@ public final class RecipeDirectoryMonitor {
     /// The recipes in the directory, yielded once now and again after every change to it.
     ///
     /// Watching starts here and stops when the stream ends, which cancelling the task iterating
-    /// it does. The stream holds no reference back, so a caller that releases the monitor stops
-    /// receiving. One stream runs at a time; a second call ends the first.
+    /// it or releasing the monitor does. The stream holds no reference back. One stream runs at a
+    /// time; a second call ends the first.
     ///
     /// - Returns: The stream.
     public func recipeFiles() -> AsyncStream<Result<[RecipeFile], Error>> {
@@ -67,10 +69,6 @@ public final class RecipeDirectoryMonitor {
     /// Reads the directory again, for the changes that reach the app no other way: a sync that
     /// landed while the app was in the background.
     public func refresh() {
-        guard continuation != nil else {
-            return
-        }
-
         read(afterSettling: false)
     }
 
@@ -121,6 +119,11 @@ public final class RecipeDirectoryMonitor {
     ///
     /// - Parameter afterSettling: Whether to let a burst of changes finish first.
     private func read(afterSettling: Bool) {
+        // A change already on its way when the stream stopped would otherwise read for no one.
+        guard continuation != nil else {
+            return
+        }
+
         readTask?.cancel()
 
         let delay = afterSettling ? settleDelay : .zero

@@ -218,6 +218,21 @@ final class KitchenFeaturePresenterTests: Sendable {
     }
 
     @MainActor
+    @Test("cooking reported again from the cooking screen pushes nothing")
+    func cookingTwicePushesOnce() throws {
+        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
+        let recipe = SousParser().parseRecipe("Whisk it.").value
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+
+        #expect(viewModel.screenPath == [.recipe(recipeFile), .cooking(recipe)])
+    }
+
+    @MainActor
     @Test("popping the cooking screen leaves the recipe under it open")
     func poppingCookingKeepsTheOpenRecipe() throws {
         let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")

@@ -21,7 +21,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
     /// limit ends the test.
     ///
     /// The monitor is taken as a parameter so that it outlives the stream it vends; a caller that
-    /// released it would wait here for a list that never arrives.
+    /// released it would see the stream end before the list arrives.
     @MainActor
     private func names(
         reach expected: [String],

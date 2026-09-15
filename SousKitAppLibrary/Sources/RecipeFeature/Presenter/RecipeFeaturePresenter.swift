@@ -18,8 +18,6 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     }
 
     func viewDidAppear() async {
-        viewModel.recipeContent = .reading
-
         let result = await Self.readRecipe(of: viewModel.recipeFile, with: recipeReader)
 
         guard !Task.isCancelled else {

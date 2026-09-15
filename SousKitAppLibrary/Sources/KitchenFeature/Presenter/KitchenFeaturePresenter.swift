@@ -72,6 +72,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func recipeFeatureDidStartCooking(recipe: Recipe) {
+        guard case .recipe = viewModel.screenPath.last else {
+            return
+        }
+
         didChangeScreenPath(viewModel.screenPath + [.cooking(recipe)])
     }
 

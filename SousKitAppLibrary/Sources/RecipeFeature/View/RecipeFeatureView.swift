@@ -36,7 +36,8 @@ struct RecipeFeatureView: View {
     private var navigationTitle: String {
         guard
             case .recipe(let recipe) = viewModel.recipeContent,
-            let title = recipe.metadata.title
+            let title = recipe.metadata.title,
+            !title.isEmpty
         else {
             return viewModel.recipeFile.name
         }
@@ -51,7 +52,7 @@ struct RecipeFeatureView: View {
             readingNote
 
         case .recipe(let recipe):
-            if recipe.groups.isEmpty, recipe.metadata.entries.isEmpty {
+            if recipe.steps.isEmpty, RecipeDisplay.metadataRows(of: recipe.metadata).isEmpty {
                 emptyNote
             } else {
                 RecipeBodyView(

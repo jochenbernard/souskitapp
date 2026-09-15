@@ -90,6 +90,14 @@ struct RecipeBodyView: View {
         }
     }
 
+    private func metadataRow(_ row: MetadataRow) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.small) {
+            metadataKey(row)
+
+            Text(verbatim: row.value)
+        }
+    }
+
     private func section(
         _ section: RecipeSection,
         @ViewBuilder content: () -> some View
@@ -149,11 +157,11 @@ struct RecipeBodyView: View {
         }
     }
 
-    private func metadataRow(_ row: MetadataRow) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.small) {
-            metadataKey(row)
-
-            Text(verbatim: row.value)
+    @ViewBuilder
+    private func metadataKey(_ row: MetadataRow) -> some View {
+        if !row.key.isEmpty {
+            Text(verbatim: row.key)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -188,14 +196,6 @@ struct RecipeBodyView: View {
 
     private func stepProse(_ step: Step) -> Text {
         Text(StepProse.attributedProse(of: step, annotationColor: .accent))
-    }
-
-    @ViewBuilder
-    private func metadataKey(_ row: MetadataRow) -> some View {
-        if !row.key.isEmpty {
-            Text(verbatim: row.key)
-                .foregroundStyle(.secondary)
-        }
     }
 }
 
