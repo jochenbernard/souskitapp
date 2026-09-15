@@ -6,8 +6,7 @@ public struct RecipeTextReader: Sendable {
 
     /// Creates a reader.
     ///
-    /// - Parameter recipeDirectory: The directory the recipes sit in, whose security scope the
-    ///   read opens.
+    /// - Parameter recipeDirectory: The directory the recipes sit in.
     public init(recipeDirectory: RecipeDirectory) {
         self.recipeDirectory = recipeDirectory
     }
@@ -18,8 +17,8 @@ public struct RecipeTextReader: Sendable {
     /// the device, so it takes as long as that fetch does.
     ///
     /// - Parameter recipeFile: The recipe to read.
-    /// - Returns: The recipe's text, decoded as UTF-8.
-    /// - Throws: Whatever fetching, coordinating, or decoding the file throws.
+    /// - Returns: The recipe's text.
+    /// - Throws: Whatever fetching or reading the file throws.
     public func readText(of recipeFile: RecipeFile) throws -> String {
         try recipeDirectory.url.withSecurityScope {
             if recipeFile.availability != .downloaded {

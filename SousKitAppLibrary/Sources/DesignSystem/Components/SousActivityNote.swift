@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// A spinner beside a label, for what a screen is waiting on.
+/// What a screen is waiting on.
 public struct SousActivityNote<Label: View>: View {
     private let label: Label
 
     /// Creates a note.
     ///
-    /// - Parameter label: What the screen is waiting on, set in `.body` and the secondary style.
+    /// - Parameter label: What the screen is waiting on.
     public init(@ViewBuilder label: () -> Label) {
         self.label = label()
     }

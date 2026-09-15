@@ -33,7 +33,6 @@ struct RecipeFeatureView: View {
         }
     }
 
-    /// The recipe's own title once it is read, and the file's name until then.
     private var navigationTitle: String {
         guard
             case .recipe(let recipe) = viewModel.recipeContent,
@@ -92,7 +91,6 @@ struct RecipeFeatureView: View {
         }
     }
 
-    /// The cook button, shown once the recipe is read and only where there is something to cook.
     @ViewBuilder
     private var cookBar: some View {
         if case .recipe(let recipe) = viewModel.recipeContent, !recipe.steps.isEmpty {

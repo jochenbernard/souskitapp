@@ -2,7 +2,6 @@ import SousKit
 
 /// Reads a recipe and parses it.
 public struct RecipeReader: Sendable {
-    // Held rather than made per read: a parser carries nothing from one source to the next.
     private let parser = SousParser()
 
     private let recipeTextReader: RecipeTextReader

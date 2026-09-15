@@ -1,12 +1,10 @@
 import SwiftUI
 
 extension View {
-    /// Draws this view on a surface: `secondaryGroupedBackground`, the fill of a `List` row, inside
-    /// a border of `separator` at half opacity, over a shadow of `separator` at a quarter.
+    /// Draws this view on a surface, such as a card or a sheet.
     ///
-    /// The shape names the role: ``SousRadius/large`` for a card or a sheet. A row takes
-    /// ``sousRow()`` instead, which pads it and picks its shape. Padding otherwise stays at the call
-    /// site, since it varies with what is on the surface.
+    /// A row takes ``sousRow()`` instead. Padding stays at the call site, since it varies with what
+    /// is on the surface.
     ///
     /// - Parameter shape: The shape the surface takes.
     /// - Returns: The view, on a surface.

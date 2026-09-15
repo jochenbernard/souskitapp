@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// A numbered block in ``SousCatalog``: an eyebrow, a title, and content on a surface.
 struct CatalogSection<Content: View>: View {
     let number: String
     let title: String

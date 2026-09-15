@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Blurs a screen on its way in or out.
 private struct ScreenBlur: ViewModifier {
     let radius: CGFloat
 
@@ -10,11 +9,9 @@ private struct ScreenBlur: ViewModifier {
 }
 
 extension AnyTransition {
-    /// A screen blurring and fading into the one it replaces.
-    ///
-    /// Blurred here rather than by `.blurReplace`, which lays the incoming screen out away from
-    /// the window: a navigation bar comes in 10pt low and jumps as the transition ends.
+    /// One of the app's screens replacing another.
     static var screenReplace: AnyTransition {
+        // Not `.blurReplace`, which lays the incoming screen out low and jumps its navigation bar.
         .modifier(
             active: ScreenBlur(radius: 12.0),
             identity: ScreenBlur(radius: 0.0)

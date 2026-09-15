@@ -8,7 +8,6 @@ struct AppFeatureFactory {
     private let onboardingFeatureFactory: OnboardingFeatureFactory
     private let recipeDirectoryStore: RecipeDirectoryStore
 
-    /// Creates a factory.
     init() {
         let store = RecipeDirectoryStore()
         self.kitchenFeatureFactory = KitchenFeatureFactory()

@@ -14,7 +14,7 @@ public struct RecipeFile: Sendable, Hashable, Identifiable {
     /// The file's name on disk, extension included.
     public let fileName: String
 
-    /// The file's name set for reading: no extension, separators as spaces, casing untouched.
+    /// The recipe's name, read off the file's name.
     public let name: String
 
     /// Where the file sits on disk, which no two recipes in one directory share.
@@ -34,7 +34,6 @@ public struct RecipeFile: Sendable, Hashable, Identifiable {
         self.name = Self.name(forFileNamed: url.lastPathComponent)
     }
 
-    /// Reduces a file name to the name shown for it.
     private static func name(forFileNamed fileName: String) -> String {
         let stem = URL(filePath: fileName).deletingPathExtension().lastPathComponent
         let words = stem.split(whereSeparator: isSeparator)
@@ -46,7 +45,6 @@ public struct RecipeFile: Sendable, Hashable, Identifiable {
         return words.joined(separator: " ")
     }
 
-    /// Whether a character stands between two words of a file name.
     private static func isSeparator(_ character: Character) -> Bool {
         character == "-" || character == "_" || character.isWhitespace
     }

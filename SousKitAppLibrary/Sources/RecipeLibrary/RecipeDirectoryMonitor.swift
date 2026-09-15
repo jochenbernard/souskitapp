@@ -1,10 +1,6 @@
 import Foundation
 
 /// The recipes in a directory, read once and read again on every change to it.
-///
-/// Changes are caught two ways, because neither catches every change on its own: file
-/// coordination, which iCloud writes through, and kernel events, which an uncoordinated write
-/// on the device raises.
 @MainActor
 public final class RecipeDirectoryMonitor {
     private let reader: RecipeDirectoryReader
@@ -25,8 +21,7 @@ public final class RecipeDirectoryMonitor {
     /// - Parameters:
     ///   - recipeDirectory: The directory recipes are read from.
     ///   - settleDelay: How long a burst of changes is given to finish before the directory is
-    ///     read again. A sync landing ten files reports ten changes, and one change is reported
-    ///     by both of the two ways changes are caught.
+    ///     read again.
     nonisolated public init(
         recipeDirectory: RecipeDirectory,
         settleDelay: Duration = .milliseconds(150)
@@ -79,7 +74,6 @@ public final class RecipeDirectoryMonitor {
         read(afterSettling: false)
     }
 
-    /// Opens the directory's security scope, starts watching it, and reads it.
     private func start() {
         let url = recipeDirectory.url
         isScoped = url.startAccessingSecurityScopedResource()
@@ -90,13 +84,13 @@ public final class RecipeDirectoryMonitor {
             }
         }
 
+        // iCloud writes through file coordination and other apps on the device do not, so both are watched.
         presenter = DirectoryPresenter(directoryURL: url, onChange: onChange)
         eventSource = DirectoryEventSource(directoryURL: url, onChange: onChange)
 
         read(afterSettling: false)
     }
 
-    /// Stops watching, ends the stream, and closes the directory's security scope.
     private func stop() {
         readTask?.cancel()
         readTask = nil

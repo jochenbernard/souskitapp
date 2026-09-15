@@ -14,11 +14,11 @@ public enum StepProse {
         step.segments.map({ run(of: $0) })
     }
 
-    /// A step set as prose, with everything it reaches for underlined.
+    /// A step set as prose, with everything it reaches for marked.
     ///
     /// - Parameters:
     ///   - step: The step to read.
-    ///   - annotationColor: The color an annotation is underlined in.
+    ///   - annotationColor: The color an annotation is marked in.
     /// - Returns: The prose, ready to set as a `Text`.
     public static func attributedProse(
         of step: Step,
@@ -29,7 +29,6 @@ public enum StepProse {
         }
     }
 
-    /// One run, underlined where it stands for an annotation.
     private static func attributed(
         _ run: StepRun,
         annotationColor: Color
@@ -46,7 +45,6 @@ public enum StepProse {
         return text
     }
 
-    /// What one segment reads as, and whether it is an annotation.
     private static func run(of segment: Segment) -> StepRun {
         switch segment {
         case .text(let text):

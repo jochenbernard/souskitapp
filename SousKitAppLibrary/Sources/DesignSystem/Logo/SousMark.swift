@@ -1,19 +1,18 @@
 import SwiftUI
 
-/// The Sous mark: curls of steam over a plate, drawn on a 64-unit grid.
+/// The Sous mark.
 ///
-/// `size` is the edge of that grid, and the grid carries the mark's clearspace. The mark
-/// takes no extra padding.
+/// `size` includes the mark's clearspace, so the mark takes no extra padding.
 public struct SousMark: View {
     /// Which cut of the mark to draw.
     public enum Cut: Sendable, Hashable {
-        /// ``threeCurl`` down to the 24pt floor on light, and above it on dark.
+        /// The cut that holds together at the mark's size and in the color scheme.
         case automatic
 
-        /// The full mark, legible down to 24pt.
+        /// The full mark.
         case threeCurl
 
-        /// The small cut: same grid, same plate, the left curl removed.
+        /// The mark for small sizes.
         case twoCurl
 
         /// Axis positions of the unaccented curls, in units.
@@ -51,25 +50,25 @@ public struct SousMark: View {
 
     /// A pairing of colors for the mark.
     public enum Colorway: Sendable, Hashable {
-        /// ``primary`` on a light color scheme, ``reversed`` on a dark one.
+        /// The colorway for the color scheme.
         case automatic
 
-        /// Black steam and plate, accent middle curl, for light grounds.
+        /// For a light ground.
         case primary
 
-        /// Black throughout, for print, stamps, and single-ink production.
+        /// For print, stamps, and single-ink production.
         case mono
 
-        /// White steam and plate, accent middle curl, for dark grounds.
+        /// For a dark ground.
         case reversed
 
-        /// Black with a white middle curl, for an accent ground.
+        /// For an accent ground.
         case onAccent
 
-        /// The accent throughout, for decorative surfaces.
+        /// For a decorative surface.
         case allAccent
 
-        /// The surrounding `foregroundStyle`, for all curls and the plate alike.
+        /// The surrounding foreground style.
         case inherited
     }
 
@@ -86,7 +85,7 @@ public struct SousMark: View {
     ///
     /// - Parameters:
     ///   - colorway: The colors to draw it in.
-    ///   - size: The edge of the 64-unit grid in points, clearspace included.
+    ///   - size: The mark's width and height in points, clearspace included.
     ///   - cut: Which cut to draw.
     public init(
         _ colorway: Colorway = .automatic,

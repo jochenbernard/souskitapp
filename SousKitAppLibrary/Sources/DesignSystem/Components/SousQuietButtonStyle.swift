@@ -1,8 +1,6 @@
 import SwiftUI
 
-/// A button with no surface and no border, reading as a link.
-///
-/// A press scales the control and changes no color.
+/// A button of least emphasis, reading as a link.
 public struct SousQuietButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         ButtonPressBody(isPressed: configuration.isPressed) { isDown in

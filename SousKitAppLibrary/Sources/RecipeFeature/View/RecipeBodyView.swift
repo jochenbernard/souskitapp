@@ -186,7 +186,6 @@ struct RecipeBodyView: View {
         }
     }
 
-    /// The step's prose, with what it reaches for underlined in the accent.
     private func stepProse(_ step: Step) -> Text {
         Text(StepProse.attributedProse(of: step, annotationColor: .accent))
     }

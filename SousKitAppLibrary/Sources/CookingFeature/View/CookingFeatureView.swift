@@ -35,12 +35,10 @@ struct CookingFeatureView: View {
         .onDisappear(perform: presenter.viewDidDisappear)
     }
 
-    /// The recipe's own title, or nothing where the recipe carries none.
     private var navigationTitle: String {
         viewModel.recipe.metadata.title ?? ""
     }
 
-    /// The recipe's groups in order, with the steps numbered on across them.
     private var steps: some View {
         VStack(alignment: .leading, spacing: SousSpacing.section) {
             ForEach(StepNumbering.numberedGroups(of: viewModel.recipe)) { numbered in
@@ -79,7 +77,6 @@ struct CookingFeatureView: View {
         }
     }
 
-    /// The step's prose, with what it reaches for underlined in the accent.
     private func stepProse(_ step: Step) -> Text {
         Text(StepProse.attributedProse(of: step, annotationColor: .accent))
     }

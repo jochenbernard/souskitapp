@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Cooking from one recipe: its steps alone, set large enough to read across a counter.
+/// Cooking from one recipe: its steps, and nothing else.
 public struct CookingFeature {
     private let presenter: CookingFeaturePresenterProtocol
     private let viewModel: CookingFeatureViewModel

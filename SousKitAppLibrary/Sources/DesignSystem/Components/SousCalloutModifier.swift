@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Draws the wash and the outline under a callout.
 private struct SousCalloutModifier: ViewModifier {
     @LineContainerRadius private var radius
 
@@ -24,10 +23,7 @@ private struct SousCalloutModifier: ViewModifier {
 }
 
 extension View {
-    /// Draws this view in a callout, across the full width of what holds it.
-    ///
-    /// The wash is `quaternaryAccentFill`, inside an outline in `accent`. Text in it is set in
-    /// `.body` and `accent`, which a font or foreground style closer to the text still overrides.
+    /// Sets this view apart as a callout, for what a screen needs the reader to notice.
     ///
     /// - Returns: The view, in a callout.
     public func sousCallout() -> some View {

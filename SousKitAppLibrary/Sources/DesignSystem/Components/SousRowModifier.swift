@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Pads a row and draws its surface.
 private struct SousRowModifier: ViewModifier {
     @LineContainerRadius private var radius
 
@@ -14,9 +13,7 @@ private struct SousRowModifier: ViewModifier {
 }
 
 extension View {
-    /// Draws this view as a row, on a surface across the full width of what holds it.
-    ///
-    /// A row of one line is a capsule, and keeps that curve where its text wraps.
+    /// Draws this view as a row.
     ///
     /// - Returns: The view, as a row.
     public func sousRow() -> some View {

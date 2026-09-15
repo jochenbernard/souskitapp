@@ -2,9 +2,9 @@ import KitchenFeature
 import OnboardingFeature
 import RecipeLibrary
 
-/// A class, and the view model it writes arrives after it: the onboarding feature this handles
-/// is built before the view model that holds it, so a copied struct would write to a stale one.
+/// Moves the app between onboarding and the kitchen.
 final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureHandler, KitchenFeatureHandler {
+    // Set after init, and a class so every copy sees it: the features this handles are built first.
     var viewModel: AppFeatureViewModel?
 
     private let kitchenFeatureFactory: KitchenFeatureFactory

@@ -1,20 +1,19 @@
 import SwiftUI
 
 extension View {
-    /// Draws this screen on `groupedBackground`, the ground of a `List`.
+    /// Sets this screen on its page.
     ///
-    /// - Returns: The screen, on the page ground.
+    /// - Returns: The screen, on its page.
     public func sousPage() -> some View {
         background(.groupedBackground)
     }
 
-    /// Pads this view to the page's edges: ``SousSpacing/large`` across and ``SousSpacing/small``
-    /// down.
+    /// Insets this view from the page's edges.
     ///
-    /// It goes on a screen's content rather than on the screen, so a scroll view scrolls the
-    /// padding with the content, and on anything else at the page's edge, a bottom bar included.
+    /// It goes on a screen's content rather than on the screen, so a scroll view scrolls it with
+    /// the content, and on anything else at the page's edge, a bottom bar included.
     ///
-    /// - Returns: The view, padded to the page's edges.
+    /// - Returns: The view, inset from the page's edges.
     public func sousPagePadding() -> some View {
         padding(.horizontal, SousSpacing.large)
             .padding(.vertical, SousSpacing.small)

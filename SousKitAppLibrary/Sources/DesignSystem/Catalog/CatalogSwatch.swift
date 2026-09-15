@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// One color chip in ``SousCatalog``, with its name and its use.
 struct CatalogSwatch: View {
     let fill: Color
     let name: String

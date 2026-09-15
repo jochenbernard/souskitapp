@@ -22,12 +22,11 @@ public struct RecipeDirectoryReader: Sendable {
 
     /// Reads the directory's top level.
     ///
-    /// The read is coordinated, so it lands after whatever iCloud or another app is writing, and
-    /// it downloads nothing: a recipe held only in iCloud is listed from its metadata, with
-    /// ``RecipeFileAvailability/notDownloaded`` availability.
+    /// It downloads nothing: a recipe held only in iCloud is listed as
+    /// ``RecipeFileAvailability/notDownloaded``.
     ///
     /// - Returns: The recipes found, ordered by name.
-    /// - Throws: Whatever coordinating the read or listing the directory throws.
+    /// - Throws: Whatever reading the directory throws.
     public func readRecipeFiles() throws -> [RecipeFile] {
         let url = recipeDirectory.url
 
@@ -36,7 +35,6 @@ public struct RecipeDirectoryReader: Sendable {
         }
     }
 
-    /// Lists a directory, keeping the recipes in it.
     private static func recipeFiles(inDirectoryAt directory: URL) throws -> [RecipeFile] {
         let entries = try FileManager.default.contentsOfDirectory(
             at: directory,
@@ -91,7 +89,6 @@ public struct RecipeDirectoryReader: Sendable {
         return isRecipeFileName(name) ? name : nil
     }
 
-    /// Whether a directory entry's name is a recipe's.
     private static func isRecipeFileName(_ entryName: String) -> Bool {
         !entryName.hasPrefix(".") && entryName.lowercased().hasSuffix(".\(RecipeFile.pathExtension)")
     }
@@ -111,7 +108,6 @@ public struct RecipeDirectoryReader: Sendable {
         return .downloading
     }
 
-    /// What an entry's iCloud metadata reports about its contents.
     private static func availability(of values: URLResourceValues) -> RecipeFileAvailability {
         guard
             values.isUbiquitousItem == true,

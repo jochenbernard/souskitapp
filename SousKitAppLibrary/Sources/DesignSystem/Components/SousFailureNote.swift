@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// What a screen could not do, with the reason under it, in a callout.
+/// What a screen could not do, and why.
 ///
 /// The title is taken as a `Text` so it reads from the screen's own bundle.
 public struct SousFailureNote: View {
@@ -11,7 +11,7 @@ public struct SousFailureNote: View {
     ///
     /// - Parameters:
     ///   - title: What failed, in the screen's own words.
-    ///   - message: The reason to show under the title.
+    ///   - message: Why it failed.
     public init(_ title: Text, message: String) {
         self.title = title
         self.message = message

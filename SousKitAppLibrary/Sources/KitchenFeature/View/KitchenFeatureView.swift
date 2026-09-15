@@ -136,7 +136,6 @@ struct KitchenFeatureView: View {
         }
     }
 
-    /// What a debug build offers beside the title, and a release build leaves out.
     @ViewBuilder
     private var debugMenu: some View {
         #if DEBUG

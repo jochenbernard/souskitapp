@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// The containers block of ``SousCatalog``: a row on a surface, a callout, and an activity note.
 struct CatalogContainers: View {
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {

@@ -6,10 +6,8 @@ enum RecipeSection: Hashable {
     case cookware
     case steps
 
-    /// The sections a recipe opens on, which leaves the cookware closed.
     static let openByDefault: Set<RecipeSection> = [.ingredients, .steps]
 
-    /// The label the section is headed by.
     var label: LocalizedStringKey {
         switch self {
         case .ingredients: "Ingredients"

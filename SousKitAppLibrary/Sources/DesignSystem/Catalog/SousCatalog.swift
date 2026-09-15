@@ -126,20 +126,14 @@ public struct SousCatalog: View {
     private var buttonSection: some View {
         CatalogSection(number: "05", title: "Buttons") {
             VStack(alignment: .leading, spacing: SousSpacing.medium) {
-                Button("Boeuf Bourguignon") {
-                    // The catalog shows styling, not behavior.
-                }
-                .buttonStyle(.sousPrimary)
+                Button("Boeuf Bourguignon", action: {})
+                    .buttonStyle(.sousPrimary)
 
-                Button("Gratin Dauphinois") {
-                    // The catalog shows styling, not behavior.
-                }
-                .buttonStyle(.sousSecondary)
+                Button("Gratin Dauphinois", action: {})
+                    .buttonStyle(.sousSecondary)
 
-                Button("Vinaigrette") {
-                    // The catalog shows styling, not behavior.
-                }
-                .buttonStyle(.sousQuiet)
+                Button("Vinaigrette", action: {})
+                    .buttonStyle(.sousQuiet)
             }
         }
     }
@@ -196,7 +190,6 @@ public struct SousCatalog: View {
         )
     ]
 
-    /// Each colorway on the ground it was drawn for.
     private static let colorways: [(colorway: SousMark.Colorway, ground: Color)] = [
         (.primary, .white),
         (.mono, .white),

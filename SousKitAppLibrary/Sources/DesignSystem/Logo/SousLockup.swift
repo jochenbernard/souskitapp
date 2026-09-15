@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// The mark beside the wordmark, the one place type is set in semibold.
+/// The mark beside the wordmark.
 public struct SousLockup: View {
     private let markSize: CGFloat
     private let wordmarkSize: CGFloat
 
     /// Creates a lockup.
     ///
-    /// Both sizes are fixed, not scaled: the wordmark is set at the mark's size.
+    /// Both sizes are fixed, and do not follow Dynamic Type.
     ///
     /// - Parameters:
     ///   - markSize: The height the mark is drawn at.

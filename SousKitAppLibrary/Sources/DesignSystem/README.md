@@ -15,7 +15,7 @@ disagrees with this package, this package is right.
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet` | The three button styles. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
 | Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousCallout()`, `SousActivityNote` | The card, the row, the wash, the spinner. |
-| Catalog | `SousCatalog` | Every color, style, and component on one page. Run the app to see it. |
+| Catalog | `SousCatalog` | Every color, style, and component on one page. |
 
 ## Rules
 
@@ -68,12 +68,8 @@ disagrees with this package, this package is right.
 
 ## The type is the system type
 
-The scale was six entries of its own: Archivo and JetBrains Mono, bundled and self-registering,
-at fixed sizes and line heights, with a modifier per entry that corrected each text block to its
-line box. All of it is gone, and text takes a SwiftUI text style. The faces, the modifiers, and
-the tests that held them to their line heights are in the history.
-
-Dynamic Type now comes from the text style, so nothing here scales a size or measures a face.
+Text takes a SwiftUI text style, and Dynamic Type comes from it, so nothing here scales a size or
+measures a face.
 A layout that needs the height of a line of text takes `@ScaledMetric(relativeTo:)`, as
 `LineContainerRadius` does for the radius of a row or a callout.
 

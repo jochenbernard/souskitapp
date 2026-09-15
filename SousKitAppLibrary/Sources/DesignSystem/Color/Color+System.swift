@@ -1,19 +1,16 @@
 import SwiftUI
 
 extension Color {
-    /// The ground of a `List`, for the page a screen sits on. UIKit's `systemGroupedBackground`.
+    /// The ground a screen sits on.
     public static let groupedBackground = Color(uiColor: .systemGroupedBackground)
 
-    /// The fill of a `List` row, for a row or a card on the page. UIKit's
-    /// `secondarySystemGroupedBackground`.
+    /// The fill of a row or a card on the page.
     public static let secondaryGroupedBackground = Color(uiColor: .secondarySystemGroupedBackground)
 
-    /// The fill for a large control, such as a button or an input field. UIKit's
-    /// `tertiarySystemFill`.
+    /// The fill for a large control, such as a button or an input field.
     public static let tertiaryFill = Color(uiColor: .tertiarySystemFill)
 
-    /// The color of a border, a divider, or a shadow, translucent so what is under it shows through.
-    /// UIKit's `separator`.
+    /// The color of a border, a divider, or a shadow.
     ///
     /// Not repeated on `ShapeStyle`, where it would make SwiftUI's own `.separator` ambiguous. Where
     /// a style is taken, write `.separator`.
@@ -21,10 +18,10 @@ extension Color {
 }
 
 extension ShapeStyle where Self == Color {
-    /// The ground of a `List`. See ``Color/groupedBackground``.
+    /// The ground a screen sits on. See ``Color/groupedBackground``.
     public static var groupedBackground: Color { .groupedBackground }
 
-    /// The fill of a `List` row. See ``Color/secondaryGroupedBackground``.
+    /// The fill of a row or a card. See ``Color/secondaryGroupedBackground``.
     public static var secondaryGroupedBackground: Color { .secondaryGroupedBackground }
 
     /// The fill for a large control. See ``Color/tertiaryFill``.
