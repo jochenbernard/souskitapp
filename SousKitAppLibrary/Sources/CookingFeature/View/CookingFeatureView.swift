@@ -18,8 +18,7 @@ struct CookingFeatureView: View {
     var body: some View {
         ScrollView {
             steps
-                .padding(.horizontal, SousSpacing.large)
-                .padding(.vertical, SousSpacing.small)
+                .sousPagePadding()
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .sousPage()
@@ -45,17 +44,17 @@ struct CookingFeatureView: View {
     private var steps: some View {
         VStack(alignment: .leading, spacing: SousSpacing.section) {
             ForEach(StepNumbering.numberedGroups(of: viewModel.recipe)) { numbered in
-                groupView(numbered.group, firstNumber: numbered.firstNumber)
+                groupView(numbered)
             }
         }
     }
 
-    private func groupView(_ group: StepGroup, firstNumber: Int) -> some View {
+    private func groupView(_ numbered: NumberedGroup) -> some View {
         VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
-            groupName(group)
+            groupName(numbered.group)
 
-            ForEach(Array(group.steps.enumerated()), id: \.offset) { index, step in
-                stepView(step, number: firstNumber + index)
+            ForEach(numbered.numberedSteps, id: \.number) { number, step in
+                stepView(step, number: number)
             }
         }
     }

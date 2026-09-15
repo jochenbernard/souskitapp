@@ -13,10 +13,7 @@ struct CatalogSwatch: View {
                 .frame(width: 44.0, height: 44.0)
                 .overlay {
                     RoundedRectangle(cornerRadius: SousRadius.small)
-                        .strokeBorder(
-                            .separator.opacity(0.5),
-                            lineWidth: 1.0
-                        )
+                        .sousBorder()
                 }
 
             VStack(alignment: .leading, spacing: SousSpacing.hairline) {

@@ -15,10 +15,7 @@ public struct SousSecondaryButtonStyle: ButtonStyle {
                     shape
                         .fill(.tertiaryFill)
                         .overlay {
-                            shape.strokeBorder(
-                                .separator.opacity(0.5),
-                                lineWidth: 1.0
-                            )
+                            shape.sousBorder()
                         }
                 }
                 .contentShape(shape)

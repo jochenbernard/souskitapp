@@ -21,8 +21,16 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
         self.recipeDirectoryStore = recipeDirectoryStore
     }
 
-    func onboardingFeatureDidFinish(recipeDirectory: RecipeDirectory) {
-        viewModel?.screen = .kitchen(
+    /// The screen a directory calls for: the kitchen reading it, or onboarding where there is none.
+    ///
+    /// - Parameter recipeDirectory: The directory recipes are read from, or `nil` before one is picked.
+    /// - Returns: The screen, reporting to this presenter.
+    func makeScreen(recipeDirectory: RecipeDirectory?) -> AppScreen {
+        guard let recipeDirectory else {
+            return .onboarding(onboardingFeatureFactory.makeOnboardingFeature(handler: self))
+        }
+
+        return .kitchen(
             kitchenFeatureFactory.makeKitchenFeature(
                 recipeDirectory: recipeDirectory,
                 handler: self
@@ -30,8 +38,12 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
         )
     }
 
+    func onboardingFeatureDidFinish(recipeDirectory: RecipeDirectory) {
+        viewModel?.screen = makeScreen(recipeDirectory: recipeDirectory)
+    }
+
     func kitchenFeatureDidConfirmReset() {
         recipeDirectoryStore.clear()
-        viewModel?.screen = .onboarding(onboardingFeatureFactory.makeOnboardingFeature(handler: self))
+        viewModel?.screen = makeScreen(recipeDirectory: nil)
     }
 }

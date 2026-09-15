@@ -10,4 +10,9 @@ public struct NumberedGroup: Identifiable {
 
     /// The number of the group's first step, counting from one across the whole recipe.
     public let firstNumber: Int
+
+    /// The group's steps in order, each beside its number.
+    public var numberedSteps: [(number: Int, step: Step)] {
+        group.steps.enumerated().map({ (number: firstNumber + $0.offset, step: $0.element) })
+    }
 }

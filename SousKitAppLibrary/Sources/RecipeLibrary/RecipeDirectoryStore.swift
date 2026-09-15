@@ -31,7 +31,7 @@ public struct RecipeDirectoryStore: Sendable {
         }
 
         if isStale {
-            try? bookmark(url)
+            try? setRecipeDirectory(at: url)
         }
 
         return RecipeDirectory(url: url)
@@ -42,25 +42,13 @@ public struct RecipeDirectoryStore: Sendable {
     /// - Parameter url: The directory the user picked.
     /// - Throws: Whatever bookmarking `url` throws.
     public func setRecipeDirectory(at url: URL) throws {
-        try bookmark(url)
+        let data = try url.withSecurityScope({ try url.bookmarkData() })
+        userDefaults.set(data, forKey: Keys.bookmark)
     }
 
     /// Forgets the directory, leaving the app nowhere to read recipes from.
     public func clear() {
         userDefaults.removeObject(forKey: Keys.bookmark)
-    }
-
-    /// Bookmarks a URL and keeps the result.
-    private func bookmark(_ url: URL) throws {
-        let isScoped = url.startAccessingSecurityScopedResource()
-        defer {
-            if isScoped {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-
-        let data = try url.bookmarkData()
-        userDefaults.set(data, forKey: Keys.bookmark)
     }
 
     private enum Keys {

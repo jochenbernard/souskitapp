@@ -19,8 +19,8 @@ final class RecipeDirectoryStoreTests {
     }
 
     /// The path a URL points at, with the symlinks in front of a temporary directory taken out.
-    private func resolvedPath(of url: URL) -> String {
-        RecipeDirectory(url: url.resolvingSymlinksInPath()).path
+    private func resolvedPath(of url: URL) -> [String] {
+        url.resolvingSymlinksInPath().pathComponents
     }
 
     @Test("nothing is remembered before a directory is set")

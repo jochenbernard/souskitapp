@@ -98,14 +98,12 @@ private extension Target {
     static func standardTarget(
         name: String,
         dependencies: [Dependency] = [],
-        exclude: [String] = [],
-        resources: [Resource]? = nil
+        exclude: [String] = []
     ) -> Target {
         .target(
             name: name,
             dependencies: dependencies,
             exclude: exclude,
-            resources: resources,
             swiftSettings: sharedSwiftSettings,
             plugins: sharedPlugins
         )
@@ -114,7 +112,7 @@ private extension Target {
     /// A test target built with this package's shared settings and plugins.
     static func standardTestTarget(
         name: String,
-        dependencies: [Dependency] = []
+        dependencies: [Dependency]
     ) -> Target {
         .testTarget(
             name: name,

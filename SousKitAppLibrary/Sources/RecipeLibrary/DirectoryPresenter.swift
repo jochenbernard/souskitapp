@@ -19,11 +19,7 @@ final class DirectoryPresenter: NSObject, NSFilePresenter, Sendable {
         NSFileCoordinator.addFilePresenter(self)
     }
 
-    deinit {
-        NSFileCoordinator.removeFilePresenter(self)
-    }
-
-    /// Unregisters, for a caller that cannot wait for this to be deallocated.
+    /// Unregisters, which releases the presenter: `NSFileCoordinator` retains it until then.
     func stopPresenting() {
         NSFileCoordinator.removeFilePresenter(self)
     }

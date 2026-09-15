@@ -23,7 +23,6 @@ public struct SousFailureNote: View {
 
             Text(verbatim: message)
         }
-        .font(.body)
         .sousCallout()
     }
 }

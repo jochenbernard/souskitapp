@@ -6,7 +6,7 @@ import SwiftUI
 /// takes no extra padding.
 public struct SousMark: View {
     /// Which cut of the mark to draw.
-    public enum Cut: Sendable, Hashable, CaseIterable {
+    public enum Cut: Sendable, Hashable {
         /// ``threeCurl`` down to the 24pt floor on light, and above it on dark.
         case automatic
 
@@ -50,7 +50,7 @@ public struct SousMark: View {
     }
 
     /// A pairing of colors for the mark.
-    public enum Colorway: Sendable, Hashable, CaseIterable {
+    public enum Colorway: Sendable, Hashable {
         /// ``primary`` on a light color scheme, ``reversed`` on a dark one.
         case automatic
 
@@ -117,11 +117,7 @@ public struct SousMark: View {
     @ViewBuilder
     private func strokedPart(_ part: SousMarkShape.Part, in color: Color?) -> some View {
         let shape = SousMarkShape(part: part, cut: resolvedCut)
-        let stroke = StrokeStyle(
-            lineWidth: SousMarkShape.strokeWidth * size / SousMarkShape.gridSize,
-            lineCap: .round,
-            lineJoin: .round
-        )
+        let stroke = SousMarkShape.strokeStyle(size: size)
 
         if let color {
             shape.stroke(color, style: stroke)

@@ -83,7 +83,7 @@ struct RecipeBodyView: View {
             section(.steps) {
                 VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
                     ForEach(StepNumbering.numberedGroups(of: recipe)) { numbered in
-                        groupView(numbered.group, firstNumber: numbered.firstNumber)
+                        groupView(numbered)
                     }
                 }
             }
@@ -139,12 +139,12 @@ struct RecipeBodyView: View {
         }
     }
 
-    private func groupView(_ group: StepGroup, firstNumber: Int) -> some View {
+    private func groupView(_ numbered: NumberedGroup) -> some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
-            groupName(group)
+            groupName(numbered.group)
 
-            ForEach(Array(group.steps.enumerated()), id: \.offset) { index, step in
-                stepView(step, number: firstNumber + index)
+            ForEach(numbered.numberedSteps, id: \.number) { number, step in
+                stepView(step, number: number)
             }
         }
     }
@@ -228,8 +228,7 @@ private func previewRecipe() -> Recipe {
             recipe: previewRecipe(),
             expandedSections: RecipeSection.openByDefault
         )
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.vertical, SousSpacing.small)
+        .sousPagePadding()
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     .sousPage()

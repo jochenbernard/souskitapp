@@ -10,7 +10,7 @@ public enum StepProse {
     ///
     /// - Parameter step: The step to read.
     /// - Returns: The runs the step reads as, in document order.
-    public static func runs(of step: Step) -> [StepRun] {
+    static func runs(of step: Step) -> [StepRun] {
         step.segments.map({ run(of: $0) })
     }
 

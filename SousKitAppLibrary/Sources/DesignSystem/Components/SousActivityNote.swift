@@ -6,7 +6,7 @@ public struct SousActivityNote<Label: View>: View {
 
     /// Creates a note.
     ///
-    /// - Parameter label: What the screen is waiting on, set in the secondary style.
+    /// - Parameter label: What the screen is waiting on, set in `.body` and the secondary style.
     public init(@ViewBuilder label: () -> Label) {
         self.label = label()
     }
@@ -18,6 +18,7 @@ public struct SousActivityNote<Label: View>: View {
                 .tint(.accent)
 
             label
+                .font(.body)
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, SousSpacing.small)
@@ -27,7 +28,6 @@ public struct SousActivityNote<Label: View>: View {
 #Preview("Activity note") {
     SousActivityNote {
         Text("Fetching from iCloud.")
-            .font(.body)
     }
     .padding(SousSpacing.xLarge)
     .frame(

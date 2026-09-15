@@ -2,15 +2,6 @@ import SwiftUI
 
 /// Every token in the design system, on one scrolling page.
 public struct SousCatalog: View {
-    /// One row in either of the color lists.
-    private struct Swatch: Identifiable {
-        let name: String
-        let note: String
-        let fill: Color
-
-        var id: String { name }
-    }
-
     /// Creates the catalog.
     public init() {}
 
@@ -31,8 +22,7 @@ public struct SousCatalog: View {
 
                 containerSection
             }
-            .padding(.horizontal, SousSpacing.large)
-            .padding(.vertical, SousSpacing.small)
+            .sousPagePadding()
             .frame(maxWidth: 720.0, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
@@ -52,22 +42,14 @@ public struct SousCatalog: View {
     private var colorSection: some View {
         CatalogSection(number: "01", title: "Color") {
             VStack(alignment: .leading, spacing: SousSpacing.medium) {
-                ForEach(Self.accentColors) { entry in
-                    CatalogSwatch(
-                        fill: entry.fill,
-                        name: entry.name,
-                        role: entry.note
-                    )
+                ForEach(Self.accentColors, id: \.name) { swatch in
+                    swatch
                 }
 
                 Divider()
 
-                ForEach(Self.systemColors) { entry in
-                    CatalogSwatch(
-                        fill: entry.fill,
-                        name: entry.name,
-                        role: entry.note
-                    )
+                ForEach(Self.systemColors, id: \.name) { swatch in
+                    swatch
                 }
             }
         }
@@ -168,49 +150,49 @@ public struct SousCatalog: View {
         }
     }
 
-    private static let accentColors: [Swatch] = [
-        Swatch(
+    private static let accentColors: [CatalogSwatch] = [
+        CatalogSwatch(
+            fill: .accent,
             name: "accent",
-            note: "live, here, do",
-            fill: .accent
+            role: "live, here, do"
         ),
-        Swatch(
+        CatalogSwatch(
+            fill: .quaternaryAccentFill,
             name: "quaternaryAccentFill",
-            note: "callouts",
-            fill: .quaternaryAccentFill
+            role: "callouts"
         )
     ]
 
-    private static let systemColors: [Swatch] = [
-        Swatch(
+    private static let systemColors: [CatalogSwatch] = [
+        CatalogSwatch(
+            fill: .groupedBackground,
             name: "groupedBackground",
-            note: "the page ground",
-            fill: .groupedBackground
+            role: "the page ground"
         ),
-        Swatch(
+        CatalogSwatch(
+            fill: .secondaryGroupedBackground,
             name: "secondaryGroupedBackground",
-            note: "rows and cards",
-            fill: .secondaryGroupedBackground
+            role: "rows and cards"
         ),
-        Swatch(
+        CatalogSwatch(
+            fill: .tertiaryFill,
             name: "tertiaryFill",
-            note: "secondary buttons",
-            fill: .tertiaryFill
+            role: "secondary buttons"
         ),
-        Swatch(
+        CatalogSwatch(
+            fill: .separator,
             name: "separator",
-            note: "borders and shadows",
-            fill: .separator
+            role: "borders and shadows"
         ),
-        Swatch(
+        CatalogSwatch(
+            fill: .primary,
             name: "primary",
-            note: "body and headings",
-            fill: .primary
+            role: "body and headings"
         ),
-        Swatch(
+        CatalogSwatch(
+            fill: .secondary,
             name: "secondary",
-            note: "captions and metadata",
-            fill: .secondary
+            role: "captions and metadata"
         )
     ]
 

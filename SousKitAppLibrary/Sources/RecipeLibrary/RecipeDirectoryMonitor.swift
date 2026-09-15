@@ -82,10 +82,7 @@ public final class RecipeDirectoryMonitor {
     /// Opens the directory's security scope, starts watching it, and reads it.
     private func start() {
         let url = recipeDirectory.url
-
-        if !isScoped {
-            isScoped = url.startAccessingSecurityScopedResource()
-        }
+        isScoped = url.startAccessingSecurityScopedResource()
 
         let onChange: @Sendable () -> Void = { [weak self] in
             Task { @MainActor in

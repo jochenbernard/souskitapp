@@ -26,16 +26,7 @@ struct AppFeatureFactory {
             onboardingFeatureFactory: onboardingFeatureFactory,
             recipeDirectoryStore: recipeDirectoryStore
         )
-        let screen: AppScreen = if let recipeDirectory = recipeDirectoryStore.recipeDirectory {
-            .kitchen(
-                kitchenFeatureFactory.makeKitchenFeature(
-                    recipeDirectory: recipeDirectory,
-                    handler: presenter
-                )
-            )
-        } else {
-            .onboarding(onboardingFeatureFactory.makeOnboardingFeature(handler: presenter))
-        }
+        let screen = presenter.makeScreen(recipeDirectory: recipeDirectoryStore.recipeDirectory)
         let viewModel = AppFeatureViewModel(screen: screen)
         presenter.viewModel = viewModel
 

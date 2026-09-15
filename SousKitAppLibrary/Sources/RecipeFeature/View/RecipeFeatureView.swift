@@ -19,8 +19,7 @@ struct RecipeFeatureView: View {
     var body: some View {
         ScrollView {
             content
-                .padding(.horizontal, SousSpacing.large)
-                .padding(.vertical, SousSpacing.small)
+                .sousPagePadding()
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .scrollEdgeEffectStyle(.soft, for: .bottom)
@@ -71,7 +70,6 @@ struct RecipeFeatureView: View {
     private var readingNote: some View {
         SousActivityNote {
             readingMessage
-                .font(.body)
         }
     }
 
@@ -108,8 +106,7 @@ struct RecipeFeatureView: View {
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.sousPrimary)
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.vertical, SousSpacing.small)
+        .sousPagePadding()
     }
 }
 

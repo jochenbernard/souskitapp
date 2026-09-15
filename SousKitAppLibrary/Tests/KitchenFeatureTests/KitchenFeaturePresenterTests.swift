@@ -22,7 +22,7 @@ final class KitchenFeaturePresenterTests: Sendable {
     }
 
     private func writeFile(named fileName: String) throws {
-        try Data().write(to: directoryURL.appending(path: fileName))
+        try writeFile(named: fileName, "")
     }
 
     @discardableResult

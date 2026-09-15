@@ -5,10 +5,7 @@ struct CatalogContainers: View {
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
             Text("Boeuf Bourguignon")
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, SousSpacing.large)
-                .padding(.vertical, SousSpacing.medium)
-                .sousSurface(Capsule())
+                .sousRow()
 
             Text("This recipe could not be read")
                 .sousCallout()

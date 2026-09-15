@@ -24,8 +24,7 @@ struct OnboardingFeatureView: View {
 
             actions
         }
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.vertical, SousSpacing.small)
+        .sousPagePadding()
         .frame(
             maxWidth: .infinity,
             alignment: .topLeading
@@ -74,7 +73,6 @@ struct OnboardingFeatureView: View {
     private var failureNote: some View {
         if let failureMessage = viewModel.failureMessage {
             Text(failureMessage)
-                .font(.body)
                 .sousCallout()
         }
     }

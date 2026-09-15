@@ -13,8 +13,8 @@ disagrees with this package, this package is right.
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet` | The three button styles. |
-| Page | `.sousPage()` | The ground a screen sits on. |
-| Containers | `.sousSurface(_:)`, `.sousCallout()`, `SousActivityNote` | The card, the wash, the spinner. |
+| Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
+| Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousCallout()`, `SousActivityNote` | The card, the row, the wash, the spinner. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. Run the app to see it. |
 
 ## Rules
@@ -42,10 +42,12 @@ disagrees with this package, this package is right.
 - A container of one line reads as a capsule, and holds that radius as a rounded rectangle
   where its text wraps, so the curve of a row or a callout is the same whatever it holds. The
   radius is half the height of one `.body` line inside the container's own vertical padding,
-  taken through `@ScaledMetric` so it follows Dynamic Type.
-- A page is padded `SousSpacing.large` horizontally and `SousSpacing.small` vertically. The
-  padding sits on the content, not on `.sousPage()`, which a scroll view needs it to; anything
-  else on the screen, a bottom bar included, takes the same two values so its edges line up.
+  taken through `@ScaledMetric` so it follows Dynamic Type. `.sousRow()` and `.sousCallout()`
+  share it through `LineContainerRadius`.
+- A page is padded `SousSpacing.large` horizontally and `SousSpacing.small` vertically, through
+  `.sousPagePadding()`. The padding sits on the content, not on `.sousPage()`, which a scroll view
+  needs it to; anything else on the screen, a bottom bar included, takes it too so its edges line
+  up.
 - The accent means live, here, or do. Not decoration, category, or mood. Past roughly 5% of a
   layout it has become decoration, and on a dark ground it reads a third brighter still.
 - The accent is `oklch(0.58 0.18 40)`, which sRGB holds as `#CD4805`. A new accent is picked in
@@ -73,7 +75,7 @@ the tests that held them to their line heights are in the history.
 
 Dynamic Type now comes from the text style, so nothing here scales a size or measures a face.
 A layout that needs the height of a line of text takes `@ScaledMetric(relativeTo:)`, as
-`KitchenFeatureView` does for its row radius.
+`LineContainerRadius` does for the radius of a row or a callout.
 
 ## What the two themes do not share
 

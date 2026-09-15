@@ -1,0 +1,46 @@
+import SwiftUI
+
+extension View {
+    /// Draws this view on a surface: `secondaryGroupedBackground`, the fill of a `List` row, inside
+    /// a border of `separator` at half opacity, over a shadow of `separator` at a quarter.
+    ///
+    /// The shape names the role: ``SousRadius/large`` for a card or a sheet. A row takes
+    /// ``sousRow()`` instead, which pads it and picks its shape. Padding otherwise stays at the call
+    /// site, since it varies with what is on the surface.
+    ///
+    /// - Parameter shape: The shape the surface takes.
+    /// - Returns: The view, on a surface.
+    public func sousSurface(_ shape: some InsettableShape) -> some View {
+        background {
+            shape
+                .fill(.secondaryGroupedBackground)
+                .shadow(
+                    color: .separator.opacity(0.25),
+                    radius: 12.0
+                )
+                .overlay {
+                    shape.sousBorder()
+                }
+        }
+    }
+}
+
+#Preview("Surface") {
+    VStack(alignment: .leading, spacing: SousSpacing.medium) {
+        Text("Boeuf Bourguignon")
+            .sousRow()
+
+        Text("Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(SousSpacing.xLarge)
+            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+    }
+    .font(.body)
+    .padding(SousSpacing.xLarge)
+    .frame(
+        maxWidth: .infinity,
+        maxHeight: .infinity,
+        alignment: .topLeading
+    )
+    .sousPage()
+}

@@ -21,32 +21,15 @@ public struct RecipeTextReader: Sendable {
     /// - Returns: The recipe's text, decoded as UTF-8.
     /// - Throws: Whatever fetching, coordinating, or decoding the file throws.
     public func readText(of recipeFile: RecipeFile) throws -> String {
-        let directoryURL = recipeDirectory.url
-        let isScoped = directoryURL.startAccessingSecurityScopedResource()
-        defer {
-            if isScoped {
-                directoryURL.stopAccessingSecurityScopedResource()
+        try recipeDirectory.url.withSecurityScope {
+            if recipeFile.availability != .downloaded {
+                // The coordinated read reports a fetch that cannot start, and waits for one that can.
+                try? FileManager.default.startDownloadingUbiquitousItem(at: recipeFile.url)
+            }
+
+            return try NSFileCoordinator.coordinateReading(at: recipeFile.url) { coordinatedURL in
+                try String(contentsOf: coordinatedURL, encoding: .utf8)
             }
         }
-
-        if recipeFile.availability != .downloaded {
-            // The coordinated read reports a fetch that cannot start, and waits for one that can.
-            try? FileManager.default.startDownloadingUbiquitousItem(at: recipeFile.url)
-        }
-
-        var outcome = Result<String, Error>.failure(CocoaError(.fileReadUnknown))
-        var coordinationError: NSError?
-        NSFileCoordinator().coordinate(
-            readingItemAt: recipeFile.url,
-            error: &coordinationError
-        ) { coordinatedURL in
-            outcome = Result(catching: { try String(contentsOf: coordinatedURL, encoding: .utf8) })
-        }
-
-        if let coordinationError {
-            throw coordinationError
-        }
-
-        return try outcome.get()
     }
 }

@@ -9,9 +9,6 @@ import SwiftUI
 struct KitchenFeatureView: View {
     @Environment(\.scenePhase) private var scenePhase
 
-    /// The line height of one `.body` line, before Dynamic Type scales it.
-    @ScaledMetric(relativeTo: .body) private var scaledBodyLineHeight = 20.3
-
     private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
 
@@ -35,8 +32,7 @@ struct KitchenFeatureView: View {
     private var recipeListScreen: some View {
         ScrollView {
             recipeList
-                .padding(.horizontal, SousSpacing.large)
-                .padding(.vertical, SousSpacing.small)
+                .sousPagePadding()
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .sousPage()
@@ -77,7 +73,6 @@ struct KitchenFeatureView: View {
     private var readingNote: some View {
         SousActivityNote {
             Text("Reading the folder.")
-                .font(.body)
         }
     }
 
@@ -114,9 +109,7 @@ struct KitchenFeatureView: View {
 
             availabilityBadge(recipeFile.availability)
         }
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.vertical, SousSpacing.medium)
-        .sousSurface(RoundedRectangle(cornerRadius: rowRadius))
+        .sousRow()
     }
 
     @ViewBuilder
@@ -141,11 +134,6 @@ struct KitchenFeatureView: View {
                 .foregroundStyle(.secondary)
                 .accessibilityLabel("In iCloud, not downloaded")
         }
-    }
-
-    /// Half the height of a row of one line, which is the radius a capsule takes there.
-    private var rowRadius: CGFloat {
-        (scaledBodyLineHeight + SousSpacing.medium * 2.0) / 2.0
     }
 
     /// What a debug build offers beside the title, and a release build leaves out.

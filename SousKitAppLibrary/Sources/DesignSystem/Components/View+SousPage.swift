@@ -1,19 +1,23 @@
 import SwiftUI
 
-/// Draws the ground a screen sits on.
-private struct SousPageModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .background(.groupedBackground)
-    }
-}
-
 extension View {
     /// Draws this screen on `groupedBackground`, the ground of a `List`.
     ///
     /// - Returns: The screen, on the page ground.
     public func sousPage() -> some View {
-        modifier(SousPageModifier())
+        background(.groupedBackground)
+    }
+
+    /// Pads this view to the page's edges: ``SousSpacing/large`` across and ``SousSpacing/small``
+    /// down.
+    ///
+    /// It goes on a screen's content rather than on the screen, so a scroll view scrolls the
+    /// padding with the content, and on anything else at the page's edge, a bottom bar included.
+    ///
+    /// - Returns: The view, padded to the page's edges.
+    public func sousPagePadding() -> some View {
+        padding(.horizontal, SousSpacing.large)
+            .padding(.vertical, SousSpacing.small)
     }
 }
 
@@ -29,8 +33,7 @@ extension View {
             .font(.subheadline)
             .foregroundStyle(.secondary)
     }
-    .padding(.horizontal, SousSpacing.large)
-    .padding(.vertical, SousSpacing.small)
+    .sousPagePadding()
     .frame(
         maxWidth: .infinity,
         maxHeight: .infinity,

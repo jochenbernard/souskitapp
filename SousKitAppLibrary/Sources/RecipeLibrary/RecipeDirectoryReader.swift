@@ -30,27 +30,10 @@ public struct RecipeDirectoryReader: Sendable {
     /// - Throws: Whatever coordinating the read or listing the directory throws.
     public func readRecipeFiles() throws -> [RecipeFile] {
         let url = recipeDirectory.url
-        let isScoped = url.startAccessingSecurityScopedResource()
-        defer {
-            if isScoped {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
 
-        var outcome = Result<[RecipeFile], Error>.failure(CocoaError(.fileReadUnknown))
-        var coordinationError: NSError?
-        NSFileCoordinator().coordinate(
-            readingItemAt: url,
-            error: &coordinationError
-        ) { coordinatedURL in
-            outcome = Result(catching: { try Self.recipeFiles(inDirectoryAt: coordinatedURL) })
+        return try url.withSecurityScope {
+            try NSFileCoordinator.coordinateReading(at: url, Self.recipeFiles(inDirectoryAt:))
         }
-
-        if let coordinationError {
-            throw coordinationError
-        }
-
-        return try outcome.get()
     }
 
     /// Lists a directory, keeping the recipes in it.

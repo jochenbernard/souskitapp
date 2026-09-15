@@ -53,6 +53,18 @@ struct SousMarkShape: Shape {
     let part: Part
     let cut: SousMark.Cut
 
+    /// The stroke every part is drawn with, scaled for a mark `size` points on a side.
+    ///
+    /// - Parameter size: The edge of the grid, in points.
+    /// - Returns: The stroke, round at its caps and joins.
+    static func strokeStyle(size: CGFloat) -> StrokeStyle {
+        StrokeStyle(
+            lineWidth: strokeWidth * size / gridSize,
+            lineCap: .round,
+            lineJoin: .round
+        )
+    }
+
     func path(in rect: CGRect) -> Path {
         let grid = Grid(fitting: rect)
         var path = Path()
@@ -100,11 +112,7 @@ struct SousMarkShape: Shape {
 
 #Preview("Parts") {
     let edge = 96.0
-    let stroke = StrokeStyle(
-        lineWidth: SousMarkShape.strokeWidth * edge / SousMarkShape.gridSize,
-        lineCap: .round,
-        lineJoin: .round
-    )
+    let stroke = SousMarkShape.strokeStyle(size: edge)
 
     HStack(spacing: SousSpacing.large) {
         SousMarkShape(part: .outerCurls, cut: .threeCurl)
@@ -124,11 +132,7 @@ struct SousMarkShape: Shape {
 
 #Preview("Both cuts") {
     let edge = 96.0
-    let stroke = StrokeStyle(
-        lineWidth: SousMarkShape.strokeWidth * edge / SousMarkShape.gridSize,
-        lineCap: .round,
-        lineJoin: .round
-    )
+    let stroke = SousMarkShape.strokeStyle(size: edge)
 
     HStack(spacing: SousSpacing.large) {
         ForEach([SousMark.Cut.threeCurl, .twoCurl], id: \.self) { cut in
