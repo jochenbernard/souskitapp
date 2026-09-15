@@ -7,7 +7,8 @@ public protocol RecipeRepository: Sendable {
 
     /// The recipes, yielded once now and again after every change to them.
     ///
-    /// Cancelling the task iterating the stream ends it. One stream runs at a time; a second call ends the first.
+    /// Cancelling the task iterating the stream ends it, and so does releasing the repository. One stream runs at a
+    /// time; a second call ends the first.
     ///
     /// - Returns: The stream.
     func recipeEntries() async -> AsyncStream<Result<[RecipeEntry], Error>>
