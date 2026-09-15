@@ -1,6 +1,5 @@
 import CookingFeature
 import DesignSystem
-import Foundation
 import RecipeFeature
 import RecipeLibrary
 import SousKit
@@ -36,7 +35,7 @@ struct KitchenFeatureView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .sousPage()
-        .navigationTitle(viewModel.recipeDirectory.name)
+        .navigationTitle(viewModel.recipeRepositoryName)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 debugMenu
@@ -47,7 +46,9 @@ struct KitchenFeatureView: View {
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
-                presenter.didBecomeActive()
+                Task {
+                    await presenter.didBecomeActive()
+                }
             }
         }
     }
@@ -58,11 +59,11 @@ struct KitchenFeatureView: View {
         case .reading:
             readingNote
 
-        case .recipes(let recipeFiles):
-            if recipeFiles.isEmpty {
+        case .recipes(let recipeEntries):
+            if recipeEntries.isEmpty {
                 emptyNote
             } else {
-                recipeRows(recipeFiles)
+                recipeRows(recipeEntries)
             }
 
         case .failure(let message):
@@ -86,11 +87,11 @@ struct KitchenFeatureView: View {
         .font(.body)
     }
 
-    private func recipeRows(_ recipeFiles: [RecipeFile]) -> some View {
+    private func recipeRows(_ recipeEntries: [RecipeEntry]) -> some View {
         LazyVStack(spacing: SousSpacing.medium) {
-            ForEach(recipeFiles) { recipeFile in
-                NavigationLink(value: KitchenScreen.recipe(recipeFile)) {
-                    recipeRow(recipeFile)
+            ForEach(recipeEntries) { recipeEntry in
+                NavigationLink(value: KitchenScreen.recipe(recipeEntry)) {
+                    recipeRow(recipeEntry)
                 }
                 .buttonStyle(.plain)
             }
@@ -101,19 +102,19 @@ struct KitchenFeatureView: View {
         SousFailureNote(Text("This folder could not be read"), message: message)
     }
 
-    private func recipeRow(_ recipeFile: RecipeFile) -> some View {
+    private func recipeRow(_ recipeEntry: RecipeEntry) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
-            Text(verbatim: recipeFile.name)
+            Text(verbatim: recipeEntry.name)
                 .font(.body)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            availabilityBadge(recipeFile.availability)
+            availabilityBadge(recipeEntry.availability)
         }
         .sousRow()
     }
 
     @ViewBuilder
-    private func availabilityBadge(_ availability: RecipeFileAvailability) -> some View {
+    private func availabilityBadge(_ availability: RecipeAvailability) -> some View {
         switch availability {
         case .downloaded:
             EmptyView()
@@ -168,8 +169,8 @@ struct KitchenFeatureView: View {
     @ViewBuilder
     private func screenView(for screen: KitchenScreen) -> some View {
         switch screen {
-        case .recipe(let recipeFile):
-            recipeScreen(for: recipeFile)
+        case .recipe(let recipeEntry):
+            recipeScreen(for: recipeEntry)
 
         case .cooking(let recipe):
             cookingScreen(for: recipe)
@@ -177,8 +178,8 @@ struct KitchenFeatureView: View {
     }
 
     @ViewBuilder
-    private func recipeScreen(for recipeFile: RecipeFile) -> some View {
-        if let openRecipe = viewModel.openRecipe, openRecipe.recipeFile == recipeFile {
+    private func recipeScreen(for recipeEntry: RecipeEntry) -> some View {
+        if let openRecipe = viewModel.openRecipe, openRecipe.recipeEntry == recipeEntry {
             openRecipe.feature.makeView()
         }
     }
@@ -205,24 +206,21 @@ struct KitchenFeatureView: View {
     }
 }
 
-private func previewDirectory() -> RecipeDirectory {
-    RecipeDirectory(url: URL(filePath: "/Users/cook/Recipes"))
-}
-
 @MainActor
 private func previewViewModel(_ recipeList: KitchenRecipeList) -> KitchenFeatureViewModel {
-    let viewModel = KitchenFeatureViewModel(recipeDirectory: previewDirectory())
+    let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
     viewModel.recipeList = recipeList
 
     return viewModel
 }
 
-private func previewRecipeFile(
-    _ fileName: String,
-    _ availability: RecipeFileAvailability
-) -> RecipeFile {
-    RecipeFile(
-        url: previewDirectory().url.appending(path: fileName),
+private func previewRecipeEntry(
+    _ name: String,
+    _ availability: RecipeAvailability
+) -> RecipeEntry {
+    RecipeEntry(
+        id: name,
+        name: name,
         availability: availability
     )
 }
@@ -232,11 +230,11 @@ private func previewRecipeFile(
         presenter: KitchenFeaturePresenterStub(),
         viewModel: previewViewModel(
             .recipes([
-                previewRecipeFile("boeuf-bourguignon.sous", .downloaded),
-                previewRecipeFile("bouillabaisse.sous", .downloaded),
-                previewRecipeFile("crepes.sous", .notDownloaded),
-                previewRecipeFile("gratin-dauphinois.sous", .downloading),
-                previewRecipeFile("vinaigrette.sous", .downloaded)
+                previewRecipeEntry("boeuf bourguignon", .downloaded),
+                previewRecipeEntry("bouillabaisse", .downloaded),
+                previewRecipeEntry("crepes", .notDownloaded),
+                previewRecipeEntry("gratin dauphinois", .downloading),
+                previewRecipeEntry("vinaigrette", .downloaded)
             ])
         )
     )

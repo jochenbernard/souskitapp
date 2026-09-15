@@ -8,6 +8,6 @@ import RecipeLibrary
 /// into the old one would never reach the screen. It outlives the pop, which needs something to
 /// draw while the screen animates away.
 struct OpenRecipe {
-    let recipeFile: RecipeFile
+    let recipeEntry: RecipeEntry
     let feature: RecipeFeature
 }

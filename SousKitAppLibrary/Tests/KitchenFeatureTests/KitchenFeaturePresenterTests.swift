@@ -7,51 +7,32 @@ import SousKit
 import Testing
 
 @Suite("Kitchen feature presenter", .timeLimit(.minutes(1)))
-final class KitchenFeaturePresenterTests: Sendable {
-    private let directoryURL: URL
+struct KitchenFeaturePresenterTests {
+    private let parser = SousParser()
 
-    init() throws {
-        let url = URL(filePath: NSTemporaryDirectory())
-            .appending(path: "KitchenFeaturePresenterTests.\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        self.directoryURL = url
-    }
-
-    deinit {
-        try? FileManager.default.removeItem(at: directoryURL)
-    }
-
-    private func writeFile(named fileName: String) throws {
-        try writeFile(named: fileName, "")
-    }
-
-    @discardableResult
-    private func writeFile(named fileName: String, _ text: String) throws -> RecipeFile {
-        let url = directoryURL.appending(path: fileName)
-        try Data(text.utf8).write(to: url)
-
-        return RecipeFile(url: url, availability: .downloaded)
+    private func recipeEntry(named name: String) -> RecipeEntry {
+        RecipeEntry(
+            id: name,
+            name: name,
+            availability: .downloaded
+        )
     }
 
     private func makeViewModel() -> KitchenFeatureViewModel {
-        KitchenFeatureViewModel(recipeDirectory: RecipeDirectory(url: directoryURL))
+        KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
     }
 
     @MainActor
     private func makePresenter(
         viewModel: KitchenFeatureViewModel,
-        handler: KitchenFeatureHandler = KitchenFeatureHandlerStub()
+        handler: KitchenFeatureHandler = KitchenFeatureHandlerStub(),
+        recipeRepository: RecipeRepository = RecipeRepositorySpy()
     ) -> KitchenFeaturePresenter {
-        let recipeDirectory = RecipeDirectory(url: directoryURL)
-
-        return KitchenFeaturePresenter(
+        KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(idleTimer: IdleTimerStub()),
             handler: handler,
-            recipeDirectoryMonitor: RecipeDirectoryMonitor(
-                recipeDirectory: recipeDirectory,
-                settleDelay: .milliseconds(20)
-            ),
-            recipeFeatureFactory: RecipeFeatureFactory(recipeDirectory: recipeDirectory),
+            recipeFeatureFactory: RecipeFeatureFactory(recipeRepository: recipeRepository),
+            recipeRepository: recipeRepository,
             viewModel: viewModel
         )
     }
@@ -62,8 +43,8 @@ final class KitchenFeaturePresenterTests: Sendable {
     private func names(reach expected: [String], in viewModel: KitchenFeatureViewModel) async -> Bool {
         while !Task.isCancelled {
             if
-                case .recipes(let recipeFiles) = viewModel.recipeList,
-                recipeFiles.map(\.name) == expected
+                case .recipes(let recipeEntries) = viewModel.recipeList,
+                recipeEntries.map(\.name) == expected
             {
                 return true
             }
@@ -84,30 +65,29 @@ final class KitchenFeaturePresenterTests: Sendable {
     }
 
     @MainActor
-    @Test("the recipes in the directory reach the view model")
-    func recipesReachTheViewModel() async throws {
-        try writeFile(named: "crepes.sous")
-        try writeFile(named: "boeuf-bourguignon.sous")
-
+    @Test("the recipes the repository lists reach the view model")
+    func recipesReachTheViewModel() async {
+        let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
+        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
         let task = Task {
             await presenter.viewDidAppear()
         }
         defer {
             task.cancel()
         }
+
+        recipeRepository.send(.success([recipeEntry(named: "boeuf bourguignon"), recipeEntry(named: "crepes")]))
 
         #expect(await names(reach: ["boeuf bourguignon", "crepes"], in: viewModel))
     }
 
     @MainActor
-    @Test("a recipe added to the directory reaches the view model")
-    func addedRecipeReachesTheViewModel() async throws {
-        try writeFile(named: "crepes.sous")
-
+    @Test("a recipe the repository lists later reaches the view model")
+    func addedRecipeReachesTheViewModel() async {
+        let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
+        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
         let task = Task {
             await presenter.viewDidAppear()
         }
@@ -115,26 +95,29 @@ final class KitchenFeaturePresenterTests: Sendable {
             task.cancel()
         }
 
+        recipeRepository.send(.success([recipeEntry(named: "crepes")]))
+
         #expect(await names(reach: ["crepes"], in: viewModel))
 
-        try writeFile(named: "brioche.sous")
+        recipeRepository.send(.success([recipeEntry(named: "brioche"), recipeEntry(named: "crepes")]))
 
         #expect(await names(reach: ["brioche", "crepes"], in: viewModel))
     }
 
     @MainActor
-    @Test("a directory that is gone reaches the view model as a failure")
+    @Test("a failed read reaches the view model as a failure")
     func failureReachesTheViewModel() async throws {
-        try FileManager.default.removeItem(at: directoryURL)
-
+        let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
+        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
         let task = Task {
             await presenter.viewDidAppear()
         }
         defer {
             task.cancel()
         }
+
+        recipeRepository.send(.failure(CocoaError(.fileReadNoSuchFile)))
 
         while true {
             if case .failure(let message) = viewModel.recipeList {
@@ -147,36 +130,46 @@ final class KitchenFeaturePresenterTests: Sendable {
     }
 
     @MainActor
+    @Test("coming back to the foreground refreshes the repository")
+    func becomingActiveRefreshes() async {
+        let recipeRepository = RecipeRepositorySpy()
+
+        await makePresenter(viewModel: makeViewModel(), recipeRepository: recipeRepository).didBecomeActive()
+
+        #expect(recipeRepository.refreshCount == 1)
+    }
+
+    @MainActor
     @Test("a recipe pushed on the stack reaches the view model with a feature to render it")
-    func recipePathReachesTheViewModel() throws {
-        let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
+    func recipePathReachesTheViewModel() {
+        let crepes = recipeEntry(named: "crepes")
         let viewModel = makeViewModel()
 
-        makePresenter(viewModel: viewModel).didChangeScreenPath([.recipe(recipeFile)])
+        makePresenter(viewModel: viewModel).didChangeScreenPath([.recipe(crepes)])
 
-        #expect(viewModel.screenPath == [.recipe(recipeFile)])
-        #expect(viewModel.openRecipe?.recipeFile == recipeFile)
+        #expect(viewModel.screenPath == [.recipe(crepes)])
+        #expect(viewModel.openRecipe?.recipeEntry == crepes)
     }
 
     @MainActor
     @Test("popping leaves the recipe in place, so it has something to animate away")
-    func poppingKeepsTheOpenRecipe() throws {
-        let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
+    func poppingKeepsTheOpenRecipe() {
+        let crepes = recipeEntry(named: "crepes")
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.didChangeScreenPath([])
 
         #expect(viewModel.screenPath.isEmpty)
-        #expect(viewModel.openRecipe?.recipeFile == recipeFile)
+        #expect(viewModel.openRecipe?.recipeEntry == crepes)
     }
 
     @MainActor
     @Test("pushing another recipe after a pop replaces the one left behind")
-    func pushingAfterAPopReplacesTheOpenRecipe() throws {
-        let crepes = try writeFile(named: "crepes.sous", "Whisk.")
-        let brioche = try writeFile(named: "brioche.sous", "Knead.")
+    func pushingAfterAPopReplacesTheOpenRecipe() {
+        let crepes = recipeEntry(named: "crepes")
+        let brioche = recipeEntry(named: "brioche")
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
@@ -184,97 +177,97 @@ final class KitchenFeaturePresenterTests: Sendable {
         presenter.didChangeScreenPath([])
         presenter.didChangeScreenPath([.recipe(brioche)])
 
-        #expect(viewModel.openRecipe?.recipeFile == brioche)
+        #expect(viewModel.openRecipe?.recipeEntry == brioche)
     }
 
     @MainActor
     @Test("a recipe pushed again keeps the feature already built for it")
-    func pushingTheSameRecipeKeepsItsFeature() throws {
-        let recipeFile = try writeFile(named: "crepes.sous", "Whisk.")
+    func pushingTheSameRecipeKeepsItsFeature() {
+        let crepes = recipeEntry(named: "crepes")
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([.recipe(crepes)])
         let first = viewModel.openRecipe
-        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([.recipe(crepes)])
 
         #expect(first != nil)
-        #expect(viewModel.openRecipe?.recipeFile == first?.recipeFile)
+        #expect(viewModel.openRecipe?.recipeEntry == first?.recipeEntry)
     }
 
     @MainActor
     @Test("cooking a recipe pushes it on the stack with a feature to render it")
-    func cookingPushesTheCookingScreen() throws {
-        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
-        let recipe = SousParser().parseRecipe("Whisk it.").value
+    func cookingPushesTheCookingScreen() {
+        let crepes = recipeEntry(named: "crepes")
+        let recipe = parser.parseRecipe("Whisk it.").value
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
-        #expect(viewModel.screenPath == [.recipe(recipeFile), .cooking(recipe)])
+        #expect(viewModel.screenPath == [.recipe(crepes), .cooking(recipe)])
         #expect(viewModel.openCooking?.recipe == recipe)
     }
 
     @MainActor
     @Test("cooking reported again from the cooking screen pushes nothing")
-    func cookingTwicePushesOnce() throws {
-        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
-        let recipe = SousParser().parseRecipe("Whisk it.").value
+    func cookingTwicePushesOnce() {
+        let crepes = recipeEntry(named: "crepes")
+        let recipe = parser.parseRecipe("Whisk it.").value
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
-        #expect(viewModel.screenPath == [.recipe(recipeFile), .cooking(recipe)])
+        #expect(viewModel.screenPath == [.recipe(crepes), .cooking(recipe)])
     }
 
     @MainActor
     @Test("popping the cooking screen leaves the recipe under it open")
-    func poppingCookingKeepsTheOpenRecipe() throws {
-        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
-        let recipe = SousParser().parseRecipe("Whisk it.").value
+    func poppingCookingKeepsTheOpenRecipe() {
+        let crepes = recipeEntry(named: "crepes")
+        let recipe = parser.parseRecipe("Whisk it.").value
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
-        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([.recipe(crepes)])
 
-        #expect(viewModel.screenPath == [.recipe(recipeFile)])
-        #expect(viewModel.openRecipe?.recipeFile == recipeFile)
+        #expect(viewModel.screenPath == [.recipe(crepes)])
+        #expect(viewModel.openRecipe?.recipeEntry == crepes)
         #expect(viewModel.openCooking?.recipe == recipe)
     }
 
     @MainActor
     @Test("exiting the cooking screen pops back to the recipe")
-    func exitingCookingPopsToTheRecipe() throws {
-        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
-        let recipe = SousParser().parseRecipe("Whisk it.").value
+    func exitingCookingPopsToTheRecipe() {
+        let crepes = recipeEntry(named: "crepes")
+        let recipe = parser.parseRecipe("Whisk it.").value
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         presenter.cookingFeatureDidExit()
 
-        #expect(viewModel.screenPath == [.recipe(recipeFile)])
+        #expect(viewModel.screenPath == [.recipe(crepes)])
     }
 
     @MainActor
     @Test("an exit with no cooking screen on top leaves the stack alone")
-    func exitWithoutCookingKeepsTheStack() throws {
-        let recipeFile = try writeFile(named: "crepes.sous", "Whisk it.")
+    func exitWithoutCookingKeepsTheStack() {
+        let crepes = recipeEntry(named: "crepes")
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(recipeFile)])
+        presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.cookingFeatureDidExit()
 
-        #expect(viewModel.screenPath == [.recipe(recipeFile)])
+        #expect(viewModel.screenPath == [.recipe(crepes)])
     }
 
     @MainActor

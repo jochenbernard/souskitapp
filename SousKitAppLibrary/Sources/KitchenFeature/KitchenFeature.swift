@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Everything the app does once a recipe directory is set: the recipes in it, one recipe, and
+/// Everything the app does once a recipe repository is connected: the recipes in it, one recipe, and
 /// cooking from one.
 public struct KitchenFeature {
     private let presenter: KitchenFeaturePresenterProtocol

@@ -2,13 +2,13 @@ import RecipeLibrary
 
 /// Builds ``OnboardingFeature`` with what it reads and writes.
 public struct OnboardingFeatureFactory: Sendable {
-    private let recipeDirectoryStore: RecipeDirectoryStore
+    private let recipeRepositoryStore: RecipeRepositoryStore
 
     /// Creates a factory.
     ///
-    /// - Parameter recipeDirectoryStore: Where the picked directory is recorded.
-    public init(recipeDirectoryStore: RecipeDirectoryStore) {
-        self.recipeDirectoryStore = recipeDirectoryStore
+    /// - Parameter recipeRepositoryStore: Where the picked directory is recorded.
+    public init(recipeRepositoryStore: RecipeRepositoryStore) {
+        self.recipeRepositoryStore = recipeRepositoryStore
     }
 
     /// Builds the feature.
@@ -19,7 +19,7 @@ public struct OnboardingFeatureFactory: Sendable {
         let viewModel = OnboardingFeatureViewModel()
         let presenter = OnboardingFeaturePresenter(
             handler: handler,
-            recipeDirectoryStore: recipeDirectoryStore,
+            recipeRepositoryStore: recipeRepositoryStore,
             viewModel: viewModel
         )
         return OnboardingFeature(

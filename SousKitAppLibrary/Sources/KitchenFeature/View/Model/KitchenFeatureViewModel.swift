@@ -1,17 +1,16 @@
 import Observation
-import RecipeLibrary
 
 @Observable
 @MainActor
 final class KitchenFeatureViewModel {
-    let recipeDirectory: RecipeDirectory
+    let recipeRepositoryName: String
     var recipeList: KitchenRecipeList = .reading
     var screenPath: [KitchenScreen] = []
     var openRecipe: OpenRecipe?
     var openCooking: OpenCooking?
     var isConfirmingReset = false
 
-    nonisolated init(recipeDirectory: RecipeDirectory) {
-        self.recipeDirectory = recipeDirectory
+    nonisolated init(recipeRepositoryName: String) {
+        self.recipeRepositoryName = recipeRepositoryName
     }
 }

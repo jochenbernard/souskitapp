@@ -1,5 +1,5 @@
+@testable import FileRecipeLibrary
 import Foundation
-import RecipeLibrary
 import Testing
 
 @Suite("Recipe directory")

@@ -1,3 +1,4 @@
+import FileRecipeLibrary
 import KitchenFeature
 import OnboardingFeature
 import RecipeLibrary
@@ -6,16 +7,16 @@ import RecipeLibrary
 struct AppFeatureFactory {
     private let kitchenFeatureFactory: KitchenFeatureFactory
     private let onboardingFeatureFactory: OnboardingFeatureFactory
-    private let recipeDirectoryStore: RecipeDirectoryStore
+    private let recipeRepositoryStore: RecipeRepositoryStore
 
     init() {
-        let store = RecipeDirectoryStore()
+        let store = FileRecipeRepositoryStore()
         self.kitchenFeatureFactory = KitchenFeatureFactory()
-        self.onboardingFeatureFactory = OnboardingFeatureFactory(recipeDirectoryStore: store)
-        self.recipeDirectoryStore = store
+        self.onboardingFeatureFactory = OnboardingFeatureFactory(recipeRepositoryStore: store)
+        self.recipeRepositoryStore = store
     }
 
-    /// Builds the feature, opening on whichever screen the remembered directory calls for.
+    /// Builds the feature, opening on whichever screen the connected repository calls for.
     ///
     /// - Returns: The feature.
     @MainActor
@@ -23,9 +24,9 @@ struct AppFeatureFactory {
         let presenter = AppFeaturePresenter(
             kitchenFeatureFactory: kitchenFeatureFactory,
             onboardingFeatureFactory: onboardingFeatureFactory,
-            recipeDirectoryStore: recipeDirectoryStore
+            recipeRepositoryStore: recipeRepositoryStore
         )
-        let screen = presenter.makeScreen(recipeDirectory: recipeDirectoryStore.recipeDirectory)
+        let screen = presenter.makeScreen(recipeRepository: recipeRepositoryStore.makeRecipeRepository())
         let viewModel = AppFeatureViewModel(screen: screen)
         presenter.viewModel = viewModel
 

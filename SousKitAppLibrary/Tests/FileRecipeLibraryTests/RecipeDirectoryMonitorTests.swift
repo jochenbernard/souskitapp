@@ -1,3 +1,4 @@
+@testable import FileRecipeLibrary
 import Foundation
 import RecipeLibrary
 import Testing
@@ -28,7 +29,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
         from monitor: RecipeDirectoryMonitor,
         whileChanging change: () throws -> Void = {}
     ) async throws -> Bool {
-        let stream = monitor.recipeFiles()
+        let stream = monitor.recipeEntries()
         try change()
 
         for await result in stream where (try? result.get())?.map(\.name) == expected {
@@ -42,8 +43,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @MainActor
     private func firstResult(
         from monitor: RecipeDirectoryMonitor
-    ) async -> Result<[RecipeFile], Error>? {
-        for await result in monitor.recipeFiles() {
+    ) async -> Result<[RecipeEntry], Error>? {
+        for await result in monitor.recipeEntries() {
             return result
         }
 
@@ -137,11 +138,11 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @Test("a second stream ends the first")
     func secondStream() async throws {
         let monitor = makeMonitor()
-        let first = monitor.recipeFiles()
+        let first = monitor.recipeEntries()
 
         let reached = try await names(reach: [], from: monitor)
 
-        var firstResults: [Result<[RecipeFile], Error>] = []
+        var firstResults: [Result<[RecipeEntry], Error>] = []
         for await result in first {
             firstResults.append(result)
         }

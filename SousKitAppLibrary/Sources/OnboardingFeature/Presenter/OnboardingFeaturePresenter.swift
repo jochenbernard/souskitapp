@@ -3,16 +3,16 @@ import RecipeLibrary
 
 struct OnboardingFeaturePresenter: OnboardingFeaturePresenterProtocol {
     private let handler: OnboardingFeatureHandler
-    private let recipeDirectoryStore: RecipeDirectoryStore
+    private let recipeRepositoryStore: RecipeRepositoryStore
     private let viewModel: OnboardingFeatureViewModel
 
     init(
         handler: OnboardingFeatureHandler,
-        recipeDirectoryStore: RecipeDirectoryStore,
+        recipeRepositoryStore: RecipeRepositoryStore,
         viewModel: OnboardingFeatureViewModel
     ) {
         self.handler = handler
-        self.recipeDirectoryStore = recipeDirectoryStore
+        self.recipeRepositoryStore = recipeRepositoryStore
         self.viewModel = viewModel
     }
 
@@ -30,9 +30,9 @@ struct OnboardingFeaturePresenter: OnboardingFeaturePresenterProtocol {
     func didChooseDirectory(_ result: Result<URL, Error>) {
         do {
             let url = try result.get()
-            try recipeDirectoryStore.setRecipeDirectory(at: url)
+            let recipeRepository = try recipeRepositoryStore.connectRecipeDirectory(at: url)
             viewModel.failureMessage = nil
-            handler.onboardingFeatureDidFinish(recipeDirectory: RecipeDirectory(url: url))
+            handler.onboardingFeatureDidFinish(recipeRepository: recipeRepository)
         } catch {
             viewModel.failureMessage = error.localizedDescription
         }

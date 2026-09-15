@@ -1,5 +1,4 @@
 import DesignSystem
-import Foundation
 import RecipeLibrary
 import SousKit
 import SwiftUI
@@ -39,7 +38,7 @@ struct RecipeFeatureView: View {
             let title = recipe.metadata.title,
             !title.isEmpty
         else {
-            return viewModel.recipeFile.name
+            return viewModel.recipeEntry.name
         }
 
         return title
@@ -85,7 +84,7 @@ struct RecipeFeatureView: View {
 
     @ViewBuilder
     private var readingMessage: some View {
-        if viewModel.recipeFile.availability == .downloaded {
+        if viewModel.recipeEntry.availability == .downloaded {
             Text("Reading the recipe.")
         } else {
             Text("Fetching from iCloud.")
@@ -109,16 +108,17 @@ struct RecipeFeatureView: View {
     }
 }
 
-private func previewRecipeFile(_ availability: RecipeFileAvailability) -> RecipeFile {
-    RecipeFile(
-        url: URL(filePath: "/Users/cook/Recipes/boeuf-bourguignon.sous"),
+private func previewRecipeEntry(_ availability: RecipeAvailability) -> RecipeEntry {
+    RecipeEntry(
+        id: "boeuf-bourguignon",
+        name: "boeuf bourguignon",
         availability: availability
     )
 }
 
 @MainActor
 private func previewViewModel(_ recipeContent: RecipeContent) -> RecipeFeatureViewModel {
-    let viewModel = RecipeFeatureViewModel(recipeFile: previewRecipeFile(.downloaded))
+    let viewModel = RecipeFeatureViewModel(recipeEntry: previewRecipeEntry(.downloaded))
     viewModel.recipeContent = recipeContent
 
     return viewModel
@@ -159,7 +159,7 @@ private func previewRecipe() -> Recipe {
     NavigationStack {
         RecipeFeatureView(
             presenter: RecipeFeaturePresenterStub(),
-            viewModel: RecipeFeatureViewModel(recipeFile: previewRecipeFile(.notDownloaded))
+            viewModel: RecipeFeatureViewModel(recipeEntry: previewRecipeEntry(.notDownloaded))
         )
     }
 }
