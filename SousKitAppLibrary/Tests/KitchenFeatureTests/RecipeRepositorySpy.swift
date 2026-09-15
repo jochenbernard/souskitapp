@@ -33,4 +33,9 @@ final class RecipeRepositorySpy: RecipeRepository {
     func send(_ result: Result<[RecipeEntry], Error>) {
         continuation.yield(result)
     }
+
+    /// Ends the stream once the results already sent are iterated.
+    func finish() {
+        continuation.finish()
+    }
 }

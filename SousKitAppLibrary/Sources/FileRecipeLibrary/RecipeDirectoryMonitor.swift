@@ -11,9 +11,8 @@ final class RecipeDirectoryMonitor {
     private var continuation: AsyncStream<Result<[RecipeEntry], Error>>.Continuation?
     private var eventSource: DirectoryEventSource?
     private var generation = 0
-    private var hasYielded = false
     private var isScoped = false
-    private var lastRecipeEntries: [RecipeEntry] = []
+    private var lastRecipeEntries: [RecipeEntry]?
     private var presenter: DirectoryPresenter?
     private var readTask: Task<Void, Never>?
 
@@ -96,8 +95,7 @@ final class RecipeDirectoryMonitor {
         eventSource = nil
         presenter?.stopPresenting()
         presenter = nil
-        hasYielded = false
-        lastRecipeEntries = []
+        lastRecipeEntries = nil
         continuation?.finish()
         continuation = nil
 
@@ -159,16 +157,14 @@ final class RecipeDirectoryMonitor {
     private func yield(_ result: Result<[RecipeEntry], Error>) {
         switch result {
         case .success(let recipeEntries):
-            guard !hasYielded || recipeEntries != lastRecipeEntries else {
+            guard recipeEntries != lastRecipeEntries else {
                 return
             }
 
-            hasYielded = true
             lastRecipeEntries = recipeEntries
 
         case .failure:
-            hasYielded = false
-            lastRecipeEntries = []
+            lastRecipeEntries = nil
         }
 
         continuation?.yield(result)

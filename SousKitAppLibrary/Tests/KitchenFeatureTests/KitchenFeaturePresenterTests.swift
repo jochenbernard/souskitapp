@@ -69,17 +69,17 @@ struct KitchenFeaturePresenterTests {
     func recipesReachTheViewModel() async {
         let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
-        let task = Task {
-            await presenter.viewDidAppear()
-        }
-        defer {
-            task.cancel()
-        }
 
         recipeRepository.send(.success([recipeEntry(named: "boeuf bourguignon"), recipeEntry(named: "crepes")]))
+        recipeRepository.finish()
+        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
 
-        #expect(await names(reach: ["boeuf bourguignon", "crepes"], in: viewModel))
+        guard case .recipes(let recipeEntries) = viewModel.recipeList else {
+            Issue.record("The recipe list did not list recipes.")
+            return
+        }
+
+        #expect(recipeEntries.map(\.name) == ["boeuf bourguignon", "crepes"])
     }
 
     @MainActor
@@ -106,27 +106,20 @@ struct KitchenFeaturePresenterTests {
 
     @MainActor
     @Test("a failed read reaches the view model as a failure")
-    func failureReachesTheViewModel() async throws {
+    func failureReachesTheViewModel() async {
         let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
-        let task = Task {
-            await presenter.viewDidAppear()
-        }
-        defer {
-            task.cancel()
-        }
 
         recipeRepository.send(.failure(CocoaError(.fileReadNoSuchFile)))
+        recipeRepository.finish()
+        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
 
-        while true {
-            if case .failure(let message) = viewModel.recipeList {
-                #expect(!message.isEmpty)
-                return
-            }
-
-            try await Task.sleep(for: .milliseconds(10))
+        guard case .failure(let message) = viewModel.recipeList else {
+            Issue.record("The recipe list did not fail.")
+            return
         }
+
+        #expect(!message.isEmpty)
     }
 
     @MainActor

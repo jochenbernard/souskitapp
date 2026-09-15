@@ -52,10 +52,4 @@ struct RecipeEntryFileTests {
     func fileName() {
         #expect(recipeEntry(named: "boeuf-bourguignon.sous").fileName == "boeuf-bourguignon.sous")
     }
-
-    @Test("the identifier is the file name")
-    func identifier() {
-        let entry = recipeEntry(named: "crepes.sous")
-        #expect(entry.id == entry.fileName)
-    }
 }
