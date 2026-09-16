@@ -1,5 +1,5 @@
-import CoreGraphics
 @testable import DesignSystem
+import SwiftUI
 import Testing
 
 @Suite("The mark")
@@ -64,25 +64,21 @@ struct SousMarkTests {
         #expect(SousMarkShape.gridSize - inkBottom == curlHeight)
     }
 
-    /// Main actor: building a `SousMark` builds a `View`.
-    @MainActor
     @Test("on light the automatic cut holds three curls at the 24pt floor")
     func automaticCutHoldsAtTheFloorOnLight() {
-        #expect(SousMark(size: 24.0).resolvedCut == .threeCurl)
-        #expect(SousMark(size: 23.9).resolvedCut == .twoCurl)
+        #expect(SousMark.Cut.automatic.resolved(size: 24.0, colorScheme: .light) == .threeCurl)
+        #expect(SousMark.Cut.automatic.resolved(size: 23.9, colorScheme: .light) == .twoCurl)
     }
 
-    @MainActor
     @Test("an explicit cut overrides the floor")
     func explicitCutOverridesTheFloor() {
-        #expect(SousMark(size: 16.0, cut: .threeCurl).resolvedCut == .threeCurl)
-        #expect(SousMark(size: 64.0, cut: .twoCurl).resolvedCut == .twoCurl)
+        #expect(SousMark.Cut.threeCurl.resolved(size: 16.0, colorScheme: .light) == .threeCurl)
+        #expect(SousMark.Cut.twoCurl.resolved(size: 64.0, colorScheme: .light) == .twoCurl)
     }
 
-    @MainActor
     @Test("the automatic colorway is the light cut on a light scheme")
     func automaticColorwayFollowsTheScheme() {
-        #expect(SousMark().resolvedColorway == .primary)
-        #expect(SousMark(.mono).resolvedColorway == .mono)
+        #expect(SousMark.Colorway.automatic.resolved(colorScheme: .light) == .primary)
+        #expect(SousMark.Colorway.mono.resolved(colorScheme: .light) == .mono)
     }
 }
