@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct CatalogContainers: View {
+    @State private var isExpanded = true
+
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
             Text("Boeuf Bourguignon")
@@ -12,8 +14,18 @@ struct CatalogContainers: View {
             SousActivityNote {
                 Text("Fetching from iCloud.")
             }
+
+            disclosureGroup
         }
         .font(.body)
+    }
+
+    private var disclosureGroup: some View {
+        DisclosureGroup("Gratin Dauphinois", isExpanded: $isExpanded) {
+            Text("Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
+                .sousRow()
+        }
+        .disclosureGroupStyle(.sous)
     }
 }
 

@@ -12,7 +12,7 @@ disagrees with this package, this package is right.
 | Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.body`, `.subheadline`, `.caption2`. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
-| Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet` | The three button styles. |
+| Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sous` | The three button styles, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
 | Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousCallout()`, `SousActivityNote` | The card, the row, the wash, the spinner. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
@@ -109,6 +109,9 @@ the release haptic off the press.
 
 A callout draws `.quaternaryAccentFill` inside an accent outline, which is Attention on a
 container, and sets `.accent` on what it holds, so a call site names neither.
+
+A disclosure group takes `.sous` rather than the automatic style, which clips its content, a
+surface's shadow included, and cannot inset its chevron to line up with what is on a surface.
 
 ## Adding to it
 

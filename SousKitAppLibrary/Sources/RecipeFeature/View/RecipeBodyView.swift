@@ -36,12 +36,14 @@ struct RecipeBodyView: View {
         let rows = RecipeDisplay.metadataRows(of: recipe.metadata)
 
         if !rows.isEmpty {
-            VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
-                ForEach(rows) { row in
-                    metadataRow(row)
+            surface {
+                VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
+                    ForEach(rows) { row in
+                        metadataRow(row)
+                    }
                 }
+                .font(.subheadline)
             }
-            .font(.subheadline)
         }
     }
 
@@ -51,9 +53,11 @@ struct RecipeBodyView: View {
 
         if !ingredients.isEmpty {
             section(.ingredients) {
-                VStack(alignment: .leading, spacing: SousSpacing.small) {
-                    ForEach(ingredients.indices, id: \.self) { index in
-                        ingredientRow(ingredients[index])
+                surface {
+                    VStack(alignment: .leading, spacing: SousSpacing.small) {
+                        ForEach(ingredients.indices, id: \.self) { index in
+                            ingredientRow(ingredients[index])
+                        }
                     }
                 }
             }
@@ -66,12 +70,14 @@ struct RecipeBodyView: View {
 
         if !names.isEmpty {
             section(.cookware) {
-                VStack(alignment: .leading, spacing: SousSpacing.small) {
-                    ForEach(names, id: \.self) { name in
-                        Text(verbatim: name)
+                surface {
+                    VStack(alignment: .leading, spacing: SousSpacing.small) {
+                        ForEach(names, id: \.self) { name in
+                            Text(verbatim: name)
+                        }
                     }
+                    .font(.body)
                 }
-                .font(.body)
             }
         }
     }
@@ -85,8 +91,17 @@ struct RecipeBodyView: View {
                         groupView(numbered)
                     }
                 }
+                // Lines up with the text on the surfaces above.
+                .padding(.horizontal, SousSpacing.large)
             }
         }
+    }
+
+    private func surface(@ViewBuilder content: () -> some View) -> some View {
+        content()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(SousSpacing.large)
+            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
 
     private func metadataRow(_ row: MetadataRow) -> some View {
@@ -101,11 +116,12 @@ struct RecipeBodyView: View {
         _ section: RecipeSection,
         @ViewBuilder content: @escaping () -> some View
     ) -> some View {
-        DisclosureGroup(section.label, isExpanded: isExpanded(section)) {
-            // A disclosure group centers its content.
-            content()
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
+        DisclosureGroup(
+            section.label,
+            isExpanded: isExpanded(section),
+            content: content
+        )
+        .disclosureGroupStyle(.sous)
     }
 
     private func ingredientRow(_ ingredient: Ingredient) -> some View {
