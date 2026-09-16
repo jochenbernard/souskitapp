@@ -1,7 +1,7 @@
 struct RecipeFeaturePresenterStub: RecipeFeaturePresenterProtocol {
     func viewDidAppear() {}
 
-    func didToggleSection(_: RecipeSection) {}
+    func didChangeIsExpanded(_: Bool, of _: RecipeSection) {}
 
     func didTapCook() {}
 }

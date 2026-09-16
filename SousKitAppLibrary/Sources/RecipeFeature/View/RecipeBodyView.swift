@@ -29,7 +29,6 @@ struct RecipeBodyView: View {
 
             stepSection
         }
-        .animation(.spring(duration: 0.3, bounce: 0.0), value: expandedSections)
     }
 
     @ViewBuilder
@@ -100,42 +99,13 @@ struct RecipeBodyView: View {
 
     private func section(
         _ section: RecipeSection,
-        @ViewBuilder content: () -> some View
+        @ViewBuilder content: @escaping () -> some View
     ) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.medium) {
-            sectionHeading(section)
-
-            if expandedSections.contains(section) {
-                content()
-            }
+        DisclosureGroup(section.label, isExpanded: isExpanded(section)) {
+            // A disclosure group centers its content.
+            content()
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-    }
-
-    private func sectionHeading(_ section: RecipeSection) -> some View {
-        let isExpanded = expandedSections.contains(section)
-
-        return Button(
-            action: { presenter.didToggleSection(section) },
-            label: { sectionHeadingLabel(section, isExpanded: isExpanded) }
-        )
-        .buttonStyle(.plain)
-        .accessibilityValue(isExpanded ? Text("Expanded") : Text("Collapsed"))
-    }
-
-    private func sectionHeadingLabel(_ section: RecipeSection, isExpanded: Bool) -> some View {
-        HStack(spacing: SousSpacing.small) {
-            Text(section.label)
-
-            Spacer(minLength: 0.0)
-
-            // Decorative: the button already reads as the section, expanded or collapsed.
-            Image(systemName: "chevron.down")
-                .rotationEffect(.degrees(isExpanded ? 0.0 : -90.0))
-                .accessibilityHidden(true)
-        }
-        .font(.caption2)
-        .foregroundStyle(.secondary)
-        .contentShape(.rect)
     }
 
     private func ingredientRow(_ ingredient: Ingredient) -> some View {
@@ -196,6 +166,13 @@ struct RecipeBodyView: View {
 
     private func stepProse(_ step: Step) -> Text {
         Text(StepProse.attributedProse(of: step, annotationColor: .accent))
+    }
+
+    private func isExpanded(_ section: RecipeSection) -> Binding<Bool> {
+        Binding(
+            get: { expandedSections.contains(section) },
+            set: { presenter.didChangeIsExpanded($0, of: section) }
+        )
     }
 }
 

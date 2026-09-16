@@ -5,7 +5,7 @@ protocol RecipeFeaturePresenterProtocol {
     func viewDidAppear() async
 
     @MainActor
-    func didToggleSection(_ section: RecipeSection)
+    func didChangeIsExpanded(_ isExpanded: Bool, of section: RecipeSection)
 
     @MainActor
     func didTapCook()
