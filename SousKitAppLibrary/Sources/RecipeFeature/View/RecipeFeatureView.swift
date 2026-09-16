@@ -51,7 +51,7 @@ struct RecipeFeatureView: View {
             readingNote
 
         case .recipe(let recipe):
-            if recipe.steps.isEmpty, RecipeDisplay.metadataRows(of: recipe.metadata).isEmpty {
+            if recipe.steps.isEmpty, RecipeDisplay.metadata(of: recipe.metadata).isEmpty {
                 emptyNote
             } else {
                 RecipeBodyView(

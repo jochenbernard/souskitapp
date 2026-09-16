@@ -14,15 +14,16 @@ disagrees with this package, this package is right.
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sous` | The three button styles, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
-| Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousCallout()`, `SousActivityNote` | The card, the row, the wash, the spinner. |
+| Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row, the wash, the chip, the spinner. |
+| Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
 
 ## Rules
 
 - Every color but the accent is a system color, named at the call site and picked for its role
   rather than its value: `groupedBackground` for a page, `secondaryGroupedBackground` for a row
-  or a card, `tertiaryFill` for a control, `separator` for a border or a shadow, `.primary` and
-  `.secondary` for text. Dark comes with them, and nothing reaches for
+  or a card, `tertiaryFill` for a control or a chip, `separator` for a border or a shadow,
+  `.primary` and `.secondary` for text. Dark comes with them, and nothing reaches for
   `@Environment(\.colorScheme)` to pick a value.
 - A UIKit color is a static on `Color` in `Color+System`, so a call site never writes
   `Color(.x)`. It is repeated on `ShapeStyle`, as `.groupedBackground` is, unless SwiftUI

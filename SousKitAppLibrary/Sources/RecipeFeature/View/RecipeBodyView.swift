@@ -21,7 +21,7 @@ struct RecipeBodyView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
-            metadataRows
+            metadataView
 
             ingredientSection
 
@@ -32,33 +32,24 @@ struct RecipeBodyView: View {
     }
 
     @ViewBuilder
-    private var metadataRows: some View {
-        let rows = RecipeDisplay.metadataRows(of: recipe.metadata)
+    private var metadataView: some View {
+        let metadata = RecipeDisplay.metadata(of: recipe.metadata)
 
-        if !rows.isEmpty {
-            surface {
-                VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
-                    ForEach(rows) { row in
-                        metadataRow(row)
-                    }
-                }
-                .font(.subheadline)
-            }
+        if !metadata.isEmpty {
+            RecipeMetadataView(metadata: metadata)
         }
     }
 
     @ViewBuilder
     private var ingredientSection: some View {
-        let ingredients = recipe.ingredients
+        let ingredientList = RecipeDisplay.ingredientList(of: recipe)
 
-        if !ingredients.isEmpty {
+        if !ingredientList.rows.isEmpty {
             section(.ingredients) {
-                surface {
-                    VStack(alignment: .leading, spacing: SousSpacing.small) {
-                        ForEach(ingredients.indices, id: \.self) { index in
-                            ingredientRow(ingredients[index])
-                        }
-                    }
+                VStack(alignment: .leading, spacing: SousSpacing.small) {
+                    ingredientRows(ingredientList.rows)
+
+                    stapleNote(ingredientList.staples)
                 }
             }
         }
@@ -71,12 +62,12 @@ struct RecipeBodyView: View {
         if !names.isEmpty {
             section(.cookware) {
                 surface {
-                    VStack(alignment: .leading, spacing: SousSpacing.small) {
+                    SousFlowLayout(spacing: SousSpacing.small) {
                         ForEach(names, id: \.self) { name in
                             Text(verbatim: name)
+                                .sousChip()
                         }
                     }
-                    .font(.body)
                 }
             }
         }
@@ -97,21 +88,6 @@ struct RecipeBodyView: View {
         }
     }
 
-    private func surface(@ViewBuilder content: () -> some View) -> some View {
-        content()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(SousSpacing.large)
-            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
-    }
-
-    private func metadataRow(_ row: MetadataRow) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.small) {
-            metadataKey(row)
-
-            Text(verbatim: row.value)
-        }
-    }
-
     private func section(
         _ section: RecipeSection,
         @ViewBuilder content: @escaping () -> some View
@@ -124,13 +100,32 @@ struct RecipeBodyView: View {
         .disclosureGroupStyle(.sous)
     }
 
-    private func ingredientRow(_ ingredient: Ingredient) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.small) {
-            amountText(ingredient.amount)
+    private func ingredientRows(_ ingredients: [Ingredient]) -> some View {
+        VStack(spacing: 0.0) {
+            ForEach(ingredients.indices, id: \.self) { index in
+                ingredientDivider(index: index)
 
-            Text(verbatim: ingredient.name)
-                .font(.body)
+                ingredientRow(ingredients[index])
+            }
         }
+        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+    }
+
+    @ViewBuilder
+    private func stapleNote(_ staples: [String]) -> some View {
+        if !staples.isEmpty {
+            Text("Plus \(RecipeDisplay.joinedList(staples)) from the pantry.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, SousSpacing.large)
+        }
+    }
+
+    private func surface(@ViewBuilder content: () -> some View) -> some View {
+        content()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(SousSpacing.large)
+            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
 
     private func groupView(_ numbered: NumberedGroup) -> some View {
@@ -144,20 +139,24 @@ struct RecipeBodyView: View {
     }
 
     @ViewBuilder
-    private func metadataKey(_ row: MetadataRow) -> some View {
-        if !row.key.isEmpty {
-            Text(verbatim: row.key)
-                .foregroundStyle(.secondary)
+    private func ingredientDivider(index: Int) -> some View {
+        if index > 0 {
+            Divider()
+                .padding(.horizontal, SousSpacing.large)
         }
     }
 
-    @ViewBuilder
-    private func amountText(_ amount: Amount?) -> some View {
-        if let amount {
-            Text(verbatim: amount.text)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+    private func ingredientRow(_ ingredient: Ingredient) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
+            Text(verbatim: ingredient.name)
+
+            Spacer(minLength: 0.0)
+
+            amountText(ingredient.amount)
         }
+        .font(.body)
+        .padding(.horizontal, SousSpacing.large)
+        .padding(.vertical, SousSpacing.medium)
     }
 
     @ViewBuilder
@@ -177,6 +176,15 @@ struct RecipeBodyView: View {
             stepProse(step)
                 .font(.body)
                 .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder
+    private func amountText(_ amount: Amount?) -> some View {
+        if let amount {
+            Text(verbatim: amount.text)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.trailing)
         }
     }
 

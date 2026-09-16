@@ -15,9 +15,20 @@ struct CatalogContainers: View {
                 Text("Fetching from iCloud.")
             }
 
+            chips
+
             disclosureGroup
         }
         .font(.body)
+    }
+
+    private var chips: some View {
+        SousFlowLayout(spacing: SousSpacing.small) {
+            ForEach(["dinner", "classic", "french"], id: \.self) { tag in
+                Text(verbatim: tag)
+                    .sousChip()
+            }
+        }
     }
 
     private var disclosureGroup: some View {
