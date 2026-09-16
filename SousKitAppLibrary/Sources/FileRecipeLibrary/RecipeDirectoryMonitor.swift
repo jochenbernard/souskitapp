@@ -12,6 +12,7 @@ final class RecipeDirectoryMonitor {
     private var eventSource: DirectoryEventSource?
     private var generation = 0
     private var isScoped = false
+    // swiftlint:disable:next discouraged_optional_collection
     private var lastRecipeEntries: [RecipeEntry]?
     private var presenter: DirectoryPresenter?
     private var readTask: Task<Void, Never>?
