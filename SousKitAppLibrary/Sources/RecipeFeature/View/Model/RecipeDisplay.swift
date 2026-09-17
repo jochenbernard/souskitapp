@@ -43,8 +43,6 @@ enum RecipeDisplay {
 
     private static let allergensKey = "allergens"
 
-    private static let languageKey = "language"
-
     /// The language the screen is written in, which is the one it reads names and lists in.
     ///
     /// The screen's own strings, not the region: a name or a conjunction sits among that copy.
@@ -73,11 +71,10 @@ enum RecipeDisplay {
 
     /// The header lines no fact, tag, or allergen shows, with the title left out.
     private static func metadataRows(of metadata: Metadata) -> [MetadataRow] {
-        let titleIndex = indexOfTitle(in: metadata.entries)
-        let shownKeys = Set(MetadataFact.Kind.allCases.map(\.key) + [tagsKey, allergensKey])
+        let shown = shownIndices(in: metadata.entries)
 
         return metadata.entries.enumerated().compactMap { index, entry in
-            guard index != titleIndex, !shownKeys.contains(entry.key) else {
+            guard !shown.contains(index) else {
                 return nil
             }
 
@@ -89,13 +86,36 @@ enum RecipeDisplay {
         }
     }
 
-    /// Where the entry the screen heads itself with sits, which is the last scalar `title`.
+    /// Where the entries shown elsewhere sit: the title, the facts, the tags, and the allergens.
     ///
-    /// Only that one entry is left out: a header repeating the key, or spelling it as a list,
-    /// carries something the title never shows, and dropping every `title` line loses it.
-    private static func indexOfTitle(in entries: [Metadata.Entry]) -> Int? {
+    /// Only the entry a reader sees is left out: a header repeating the key, or spelling it as a
+    /// list, carries something the one value shown never shows, and dropping every line under that
+    /// key loses it. Every `tags` line is left out, because every one of them merges into the chips.
+    private static func shownIndices(in entries: [Metadata.Entry]) -> Set<Int> {
+        var indices = Set(entries.indices.filter({ isTagList(entries[$0]) }))
+
+        for key in [titleKey, allergensKey] + MetadataFact.Kind.allCases.map(\.key) {
+            if let index = lastScalarIndex(of: key, in: entries) {
+                indices.insert(index)
+            }
+        }
+
+        return indices
+    }
+
+    /// Whether the entry is a `tags` line, whose items the chips hold.
+    private static func isTagList(_ entry: Metadata.Entry) -> Bool {
+        guard entry.key == tagsKey, case .list = entry.value else {
+            return false
+        }
+
+        return true
+    }
+
+    /// Where the last scalar entry under a key sits, which is the one shown as that key's value.
+    private static func lastScalarIndex(of key: String, in entries: [Metadata.Entry]) -> Int? {
         entries.lastIndex { entry in
-            guard entry.key == titleKey, case .scalar = entry.value else {
+            guard entry.key == key, case .scalar = entry.value else {
                 return false
             }
 
@@ -107,7 +127,7 @@ enum RecipeDisplay {
     private static func shownValue(of entry: Metadata.Entry) -> String {
         let text = value(of: entry.value)
 
-        guard entry.key == languageKey else {
+        guard MetadataKey(key: entry.key) == .language else {
             return text
         }
 
@@ -158,15 +178,28 @@ enum RecipeDisplay {
     }
 
     /// What lies between the brackets of an inline list, or `nil` when the text is not one.
+    ///
+    /// A list opens with `[` and closes with the first unescaped `]`, which has to end the text,
+    /// the reading the specification gives a list key.
     private static func inlineListContent(of text: String) -> Substring? {
-        guard text.count >= 2, text.hasPrefix("["), text.hasSuffix("]") else {
+        guard text.hasPrefix("[") else {
             return nil
         }
 
-        let inner = text.dropFirst().dropLast()
-        let trailingBackslashes = inner.reversed().prefix(while: { $0 == "\\" }).count
+        let inner = text.dropFirst()
+        var isEscaped = false
 
-        return trailingBackslashes.isMultiple(of: 2) ? inner : nil
+        for index in inner.indices {
+            if isEscaped {
+                isEscaped = false
+            } else if inner[index] == "\\" {
+                isEscaped = true
+            } else if inner[index] == "]" {
+                return index == inner.index(before: inner.endIndex) ? inner[..<index] : nil
+            }
+        }
+
+        return nil
     }
 
     private static func uniqueNames(_ names: [String]) -> [String] {

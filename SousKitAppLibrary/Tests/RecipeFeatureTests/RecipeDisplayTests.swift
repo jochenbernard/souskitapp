@@ -77,9 +77,25 @@ struct RecipeDisplayTests {
             language: cook's own
             ---
             """
+        let rows = RecipeDisplay.metadata(of: recipe(code).metadata).rows
 
-        #expect(RecipeDisplay.metadata(of: recipe(code).metadata).rows.map(\.value) != ["nl-BE"])
+        #expect(rows.map(\.key) == ["language"])
+        #expect(rows.map(\.value) != ["nl-BE"])
         #expect(RecipeDisplay.metadata(of: recipe(plain).metadata).rows.map(\.value) == ["cook's own"])
+    }
+
+    @Test("a key written twice keeps the line the facts leave out")
+    func repeatedFactKey() {
+        let source = """
+            ---
+            servings: 4
+            servings: 6
+            ---
+            """
+        let metadata = RecipeDisplay.metadata(of: recipe(source).metadata)
+
+        #expect(metadata.facts.map(\.value) == ["6"])
+        #expect(metadata.rows.map(\.value) == ["4"])
     }
 
     @Test("a header key reads as a label")

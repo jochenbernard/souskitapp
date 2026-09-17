@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 
 /// A header key the recipe screen has a label for, whatever language the recipe is written in.

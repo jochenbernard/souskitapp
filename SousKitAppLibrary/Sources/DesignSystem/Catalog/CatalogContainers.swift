@@ -8,6 +8,8 @@ struct CatalogContainers: View {
             Text(verbatim: "Boeuf Bourguignon")
                 .sousRow()
 
+            rowGroup
+
             Text(verbatim: "This recipe could not be read")
                 .sousCallout()
 
@@ -18,6 +20,17 @@ struct CatalogContainers: View {
             chips
 
             disclosureGroup
+        }
+    }
+
+    private var rowGroup: some View {
+        SousRowGroup {
+            ForEach(["Crepes", "Gratin Dauphinois", "Madeleines"], id: \.self) { name in
+                Text(verbatim: name)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, SousSpacing.large)
+                    .padding(.vertical, SousSpacing.medium)
+            }
         }
     }
 
