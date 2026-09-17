@@ -29,7 +29,6 @@ extension View {
         Text(verbatim: "Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
             .sousRow()
     }
-    .font(.body)
     .sousPagePadding()
     .frame(
         maxWidth: .infinity,

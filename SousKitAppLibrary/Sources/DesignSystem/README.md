@@ -14,7 +14,7 @@ disagrees with this package, this package is right.
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sous` | The three button styles, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
-| Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row, the wash, the chip, the spinner. |
+| Containers | `.sousSurface(_:)`, `.sousRow()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row, the rows that share one card, the wash, the chip, the spinner. |
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
 
@@ -55,9 +55,9 @@ disagrees with this package, this package is right.
   OKLCH, then written to `Color+Accent`, `AccentColor`, and the app icon's `icon.json`, which takes
   it as 0.80392, 0.28235, 0.01961. It carries white text, at 4.6.
 - Set text with `.font(_:)` and a system text style. Six of them are in use: `.largeTitle` for
-  a hero line, `.title` for a landing headline or a step group, `.title3` for a section
-  heading, `.body` for copy and controls, `.subheadline` for quantities and metadata,
-  `.caption2` for an eyebrow.
+  a hero line, `.title` for a landing headline, `.title3` for the step in front of the cook,
+  `.body` for copy and controls, `.subheadline` for quantities and metadata, `.caption2` for
+  an eyebrow.
 - A screen's title is its `.navigationTitle(_:)`, large by default, and is not drawn again in
   the content. Cooking is the one screen that takes `.inline`, where the step in front of the
   cook outranks the recipe's name.

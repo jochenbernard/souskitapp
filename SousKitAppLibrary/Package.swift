@@ -34,7 +34,7 @@ let package = Package(
         ),
         .standardTestTarget(
             name: "CookingFeatureTests",
-            dependencies: ["CookingFeature"]
+            dependencies: ["LocalizationTestSupport", "CookingFeature"]
         ),
         .standardTarget(
             name: "DesignSystem",
@@ -43,7 +43,7 @@ let package = Package(
         ),
         .standardTestTarget(
             name: "DesignSystemTests",
-            dependencies: ["DesignSystem"]
+            dependencies: ["LocalizationTestSupport", "DesignSystem"]
         ),
         .standardTarget(
             name: "FileRecipeLibrary",
@@ -60,8 +60,9 @@ let package = Package(
         ),
         .standardTestTarget(
             name: "KitchenFeatureTests",
-            dependencies: ["KitchenFeature"]
+            dependencies: ["LocalizationTestSupport", "KitchenFeature"]
         ),
+        .standardTarget(name: "LocalizationTestSupport"),
         .standardTarget(
             name: "OnboardingFeature",
             dependencies: ["DesignSystem", "RecipeLibrary"],
@@ -69,7 +70,7 @@ let package = Package(
         ),
         .standardTestTarget(
             name: "OnboardingFeatureTests",
-            dependencies: ["OnboardingFeature"]
+            dependencies: ["LocalizationTestSupport", "OnboardingFeature"]
         ),
         .standardTarget(
             name: "RecipeFeature",
@@ -78,7 +79,7 @@ let package = Package(
         ),
         .standardTestTarget(
             name: "RecipeFeatureTests",
-            dependencies: ["RecipeFeature"]
+            dependencies: ["LocalizationTestSupport", "RecipeFeature"]
         ),
         .standardTarget(
             name: "RecipeLibrary",

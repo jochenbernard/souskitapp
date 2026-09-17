@@ -82,7 +82,6 @@ struct OnboardingFeatureView: View {
                 """,
                 bundle: .module
             )
-            .font(.body)
             .foregroundStyle(.secondary)
         }
     }

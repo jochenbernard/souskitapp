@@ -11,26 +11,37 @@ public struct SousFlowLayout: Layout {
         self.spacing = spacing
     }
 
+    /// The size each view takes unconstrained, which a pass measures once however often it is asked for.
+    public func makeCache(subviews: Subviews) -> [CGSize?] {
+        Array(repeating: nil, count: subviews.count)
+    }
+
+    public func updateCache(_ cache: inout [CGSize?], subviews: Subviews) {
+        cache = makeCache(subviews: subviews)
+    }
+
     public func sizeThatFits(
         proposal: ProposedViewSize,
         subviews: Subviews,
-        cache _: inout ()
+        cache: inout [CGSize?]
     ) -> CGSize {
-        let frames = frames(of: subviews, width: proposal.width ?? .infinity)
+        var size = CGSize.zero
 
-        return CGSize(
-            width: frames.map(\.maxX).max() ?? 0.0,
-            height: frames.map(\.maxY).max() ?? 0.0
-        )
+        for frame in frames(of: subviews, width: proposal.width ?? .infinity, cache: &cache) {
+            size.width = max(size.width, frame.maxX)
+            size.height = max(size.height, frame.maxY)
+        }
+
+        return size
     }
 
     public func placeSubviews(
         in bounds: CGRect,
         proposal _: ProposedViewSize,
         subviews: Subviews,
-        cache _: inout ()
+        cache: inout [CGSize?]
     ) {
-        let frames = frames(of: subviews, width: bounds.width)
+        let frames = frames(of: subviews, width: bounds.width, cache: &cache)
 
         for (subview, frame) in zip(subviews, frames) {
             subview.place(
@@ -40,13 +51,17 @@ public struct SousFlowLayout: Layout {
         }
     }
 
-    private func frames(of subviews: Subviews, width: CGFloat) -> [CGRect] {
+    private func frames(
+        of subviews: Subviews,
+        width: CGFloat,
+        cache: inout [CGSize?]
+    ) -> [CGRect] {
         var frames: [CGRect] = []
         var origin = CGPoint.zero
         var rowHeight = 0.0
 
-        for subview in subviews {
-            let size = size(of: subview, width: width)
+        for index in subviews.indices {
+            let size = size(of: subviews[index], at: index, width: width, cache: &cache)
 
             if origin.x > 0.0, origin.x + size.width > width {
                 origin = CGPoint(x: 0.0, y: origin.y + rowHeight + spacing)
@@ -61,13 +76,20 @@ public struct SousFlowLayout: Layout {
         return frames
     }
 
-    private func size(of subview: LayoutSubview, width: CGFloat) -> CGSize {
-        let size = subview.sizeThatFits(.unspecified)
+    private func size(
+        of subview: LayoutSubview,
+        at index: Int,
+        width: CGFloat,
+        cache: inout [CGSize?]
+    ) -> CGSize {
+        let size = cache[index] ?? subview.sizeThatFits(.unspecified)
+        cache[index] = size
 
         guard size.width > width else {
             return size
         }
 
+        // Too wide to stand on its own line, so it is measured again against the width it has.
         return subview.sizeThatFits(ProposedViewSize(width: width, height: nil))
     }
 }

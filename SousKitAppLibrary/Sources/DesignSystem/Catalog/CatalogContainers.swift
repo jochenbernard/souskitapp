@@ -19,7 +19,6 @@ struct CatalogContainers: View {
 
             disclosureGroup
         }
-        .font(.body)
     }
 
     private var chips: some View {

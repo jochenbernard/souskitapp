@@ -2,6 +2,9 @@ import SwiftUI
 
 /// Shows the top part of content, faded to match, so what follows moves with its lower edge.
 struct DisclosureReveal: ViewModifier, Animatable {
+    /// How the reveal moves, which whatever toggles it takes so the two run together.
+    static let animation = Animation.spring(duration: 0.3, bounce: 0.0)
+
     // How far past its bounds content draws at rest, a surface's shadow included.
     private static let overdraw: CGFloat = 32.0
 
@@ -46,7 +49,7 @@ extension View {
     VStack(alignment: .leading, spacing: 0.0) {
         Button(
             action: {
-                withAnimation(.spring(duration: 0.3, bounce: 0.0)) {
+                withAnimation(DisclosureReveal.animation) {
                     isRevealed.toggle()
                 }
             },
@@ -62,7 +65,6 @@ extension View {
             .sousRow()
             .padding(.top, SousSpacing.medium)
     }
-    .font(.body)
     .sousPagePadding()
     .frame(
         maxWidth: .infinity,

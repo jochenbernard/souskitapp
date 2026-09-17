@@ -1,29 +1,20 @@
 @testable import CookingFeature
 import Foundation
+import LocalizationTestSupport
 import Testing
 
 @Suite("Dutch strings")
 struct DutchStringsTests {
     @Test("every English string has a Dutch one")
     func dutchCoversEnglish() throws {
-        #expect(try strings(of: "nl-BE").keys == strings(of: "en").keys)
+        #expect(
+            try LocalizableStrings.strings(of: "nl-BE", in: .module).keys
+                == LocalizableStrings.strings(of: "en", in: .module).keys
+        )
     }
 
     @Test("no Dutch string is left empty")
     func dutchIsWritten() throws {
-        #expect(try strings(of: "nl-BE").values.allSatisfy({ !$0.isEmpty }))
-    }
-
-    private func strings(of localization: String) throws -> [String: String] {
-        let url = try #require(
-            Bundle.module.url(
-                forResource: "Localizable",
-                withExtension: "strings",
-                subdirectory: nil,
-                localization: localization
-            )
-        )
-
-        return try PropertyListDecoder().decode([String: String].self, from: Data(contentsOf: url))
+        #expect(try LocalizableStrings.strings(of: "nl-BE", in: .module).values.allSatisfy({ !$0.isEmpty }))
     }
 }

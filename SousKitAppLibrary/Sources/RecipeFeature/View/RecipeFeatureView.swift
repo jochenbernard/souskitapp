@@ -56,15 +56,7 @@ struct RecipeFeatureView: View {
             readingNote
 
         case .recipe(let recipe):
-            if recipe.steps.isEmpty, RecipeDisplay.metadata(of: recipe.metadata).isEmpty {
-                emptyNote
-            } else {
-                RecipeBodyView(
-                    presenter: presenter,
-                    recipe: recipe,
-                    expandedSections: viewModel.expandedSections
-                )
-            }
+            recipeBody(recipe)
 
         case .failure(let message):
             failureNote(message)
@@ -77,9 +69,24 @@ struct RecipeFeatureView: View {
         }
     }
 
+    @ViewBuilder
+    private func recipeBody(_ recipe: Recipe) -> some View {
+        let metadata = RecipeDisplay.metadata(of: recipe.metadata)
+
+        if recipe.steps.isEmpty, metadata.isEmpty {
+            emptyNote
+        } else {
+            RecipeBodyView(
+                presenter: presenter,
+                recipe: recipe,
+                metadata: metadata,
+                expandedSections: viewModel.expandedSections
+            )
+        }
+    }
+
     private var emptyNote: some View {
         Text("This recipe is empty.", bundle: .module)
-            .font(.body)
             .foregroundStyle(.secondary)
     }
 

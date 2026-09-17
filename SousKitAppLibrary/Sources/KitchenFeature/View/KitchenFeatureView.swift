@@ -84,7 +84,6 @@ struct KitchenFeatureView: View {
             Text("Put .sous files in this folder and they are listed here.", bundle: .module)
                 .foregroundStyle(.secondary)
         }
-        .font(.body)
     }
 
     private func recipeRows(_ recipeEntries: [RecipeEntry]) -> some View {
@@ -105,7 +104,6 @@ struct KitchenFeatureView: View {
     private func recipeRow(_ recipeEntry: RecipeEntry) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
             Text(verbatim: recipeEntry.name)
-                .font(.body)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             availabilityBadge(recipeEntry.availability)

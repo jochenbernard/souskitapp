@@ -18,7 +18,6 @@ public struct SousActivityNote<Label: View>: View {
                 .tint(.accent)
 
             label
-                .font(.body)
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, SousSpacing.small)

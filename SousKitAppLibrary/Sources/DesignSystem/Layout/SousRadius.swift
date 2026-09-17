@@ -2,7 +2,7 @@ import CoreGraphics
 
 /// Corner radii, in points.
 public enum SousRadius {
-    /// 8pt, for inputs, chips, and small controls.
+    /// 8pt, for inputs and small controls.
     public static let small: CGFloat = 8.0
 
     /// 12pt, for buttons and rows.

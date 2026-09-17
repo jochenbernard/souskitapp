@@ -27,7 +27,6 @@ struct DisclosureRevealLayout: Layout {
     ) {
         subviews.first?.place(
             at: bounds.origin,
-            anchor: .topLeading,
             proposal: proposal
         )
     }

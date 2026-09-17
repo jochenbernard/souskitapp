@@ -33,7 +33,6 @@ extension View {
             .padding(SousSpacing.xLarge)
             .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
-    .font(.body)
     .padding(SousSpacing.xLarge)
     .frame(
         maxWidth: .infinity,

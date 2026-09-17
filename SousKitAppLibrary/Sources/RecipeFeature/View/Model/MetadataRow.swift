@@ -12,14 +12,22 @@ struct MetadataRow: Identifiable {
     let value: String
 
     /// The key where the screen has a label for it, or `nil` where the file's own words stand.
-    var knownKey: MetadataKey? {
-        MetadataKey(key: key)
-    }
+    let knownKey: MetadataKey?
 
     /// The key as the file writes it, `prep-time` reading as "Prep time".
-    var label: String {
+    let label: String
+
+    init(
+        id: Int,
+        key: String,
+        value: String
+    ) {
         let words = key.replacingOccurrences(of: "-", with: " ")
 
-        return words.prefix(1).uppercased() + words.dropFirst()
+        self.id = id
+        self.key = key
+        self.value = value
+        self.knownKey = MetadataKey(key: key)
+        self.label = words.prefix(1).uppercased() + words.dropFirst()
     }
 }

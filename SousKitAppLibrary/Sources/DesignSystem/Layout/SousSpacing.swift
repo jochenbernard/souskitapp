@@ -2,7 +2,7 @@ import CoreGraphics
 
 /// The spacing scale, in points.
 public enum SousSpacing {
-    /// 2pt, for the gap inside a chip.
+    /// 2pt, the finest step.
     public static let hairline: CGFloat = 2.0
 
     /// 4pt, the smallest step.

@@ -66,28 +66,16 @@ struct CookingFeatureView: View {
     private func groupName(_ group: StepGroup) -> some View {
         if let name = group.name {
             Text(verbatim: name)
-                .font(.body)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, SousSpacing.xLarge)
         }
     }
 
     private func stepRows(_ numbered: NumberedGroup) -> some View {
-        VStack(spacing: 0.0) {
+        SousRowGroup(dividerInset: SousSpacing.xLarge) {
             ForEach(numbered.numberedSteps, id: \.number) { number, step in
-                stepDivider(isFirst: number == numbered.firstNumber)
-
                 stepView(step, number: number)
             }
-        }
-        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
-    }
-
-    @ViewBuilder
-    private func stepDivider(isFirst: Bool) -> some View {
-        if !isFirst {
-            Divider()
-                .padding(.horizontal, SousSpacing.xLarge)
         }
     }
 
@@ -105,7 +93,6 @@ struct CookingFeatureView: View {
 
     private func stepNumber(_ number: Int) -> some View {
         Text(verbatim: String(number))
-            .font(.body)
             .monospacedDigit()
             .frame(width: stepNumberDiameter, height: stepNumberDiameter)
             .background(.tertiaryFill, in: Circle())

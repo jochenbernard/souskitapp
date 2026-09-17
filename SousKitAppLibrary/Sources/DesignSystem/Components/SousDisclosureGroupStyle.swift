@@ -19,7 +19,7 @@ public struct SousDisclosureGroupStyle: DisclosureGroupStyle {
     private func header(_ configuration: Configuration) -> some View {
         Button(
             action: {
-                withAnimation(.spring(duration: 0.3, bounce: 0.0)) {
+                withAnimation(DisclosureReveal.animation) {
                     configuration.isExpanded.toggle()
                 }
             },
@@ -39,12 +39,6 @@ public struct SousDisclosureGroupStyle: DisclosureGroupStyle {
         .accessibilityValue(expandedValue(isExpanded: configuration.isExpanded))
     }
 
-    private func expandedValue(isExpanded: Bool) -> Text {
-        isExpanded
-            ? Text("Expanded", bundle: .module)
-            : Text("Collapsed", bundle: .module)
-    }
-
     private func chevron(isExpanded: Bool) -> some View {
         Image(systemName: "chevron.right")
             .imageScale(.small)
@@ -53,6 +47,12 @@ public struct SousDisclosureGroupStyle: DisclosureGroupStyle {
             .foregroundStyle(.primary)
             .rotationEffect(.degrees(isExpanded ? 90.0 : 0.0))
             .accessibilityHidden(true)
+    }
+
+    private func expandedValue(isExpanded: Bool) -> Text {
+        isExpanded
+            ? Text("Expanded", bundle: .module)
+            : Text("Collapsed", bundle: .module)
     }
 }
 
@@ -77,7 +77,6 @@ extension DisclosureGroupStyle where Self == SousDisclosureGroupStyle {
         label: { Text(verbatim: "Boeuf Bourguignon") }
     )
     .disclosureGroupStyle(.sous)
-    .font(.body)
     .sousPagePadding()
     .frame(
         maxWidth: .infinity,

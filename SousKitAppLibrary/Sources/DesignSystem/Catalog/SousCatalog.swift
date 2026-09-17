@@ -74,7 +74,6 @@ public struct SousCatalog: View {
                     with salt, black pepper, and 1/4 tsp nutmeg.
                     """
                 )
-                .font(.body)
 
                 Text(verbatim: "1.2 kg \u{B7} 150C \u{B7} 3 h \u{B7} serves 6")
                     .font(.subheadline)

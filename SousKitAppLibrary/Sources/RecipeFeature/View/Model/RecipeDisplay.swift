@@ -46,14 +46,15 @@ enum RecipeDisplay {
     private static let languageKey = "language"
 
     /// The language the screen is written in, which is the one it reads names and lists in.
-    private static var displayLocale: Locale {
-        // The screen's own strings, not the region: a name or a conjunction sits among that copy.
-        Locale(identifier: Bundle.module.preferredLocalizations.first ?? "en")
-    }
+    ///
+    /// The screen's own strings, not the region: a name or a conjunction sits among that copy.
+    private static let displayLocale = Locale(
+        identifier: Bundle.module.preferredLocalizations.first ?? "en"
+    )
 
     private static func facts(of metadata: Metadata) -> [MetadataFact] {
         MetadataFact.Kind.allCases.compactMap { kind in
-            guard let value = lastScalar(kind.key, in: metadata), !value.isEmpty else {
+            guard let value = metadata[kind.key], !value.isEmpty else {
                 return nil
             }
 
@@ -63,7 +64,7 @@ enum RecipeDisplay {
 
     /// The allergens, which the specification does not name as a list key, read the way a list key is.
     private static func allergens(of metadata: Metadata) -> [String] {
-        guard let value = lastScalar(allergensKey, in: metadata) else {
+        guard let value = metadata[allergensKey] else {
             return []
         }
 
@@ -99,16 +100,6 @@ enum RecipeDisplay {
             }
 
             return true
-        }
-    }
-
-    private static func lastScalar(_ key: String, in metadata: Metadata) -> String? {
-        metadata.entries.last(where: { $0.key == key }).flatMap { entry in
-            guard case .scalar(let text) = entry.value else {
-                return nil
-            }
-
-            return text
         }
     }
 

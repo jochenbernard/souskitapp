@@ -47,6 +47,31 @@ struct RecipeMetadataView: View {
     }
 
     @ViewBuilder
+    private func factDivider(_ fact: MetadataFact) -> some View {
+        if fact.id != metadata.facts.first?.id {
+            Divider()
+        }
+    }
+
+    private func factTile(_ fact: MetadataFact) -> some View {
+        VStack(spacing: SousSpacing.xSmall) {
+            Image(systemName: fact.kind.systemImage)
+                .foregroundStyle(.secondary)
+
+            Text(verbatim: fact.value)
+
+            Text(fact.kind.label, bundle: .module)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(fact.kind.label, bundle: .module))
+        .accessibilityValue(Text(verbatim: fact.value))
+    }
+
+    @ViewBuilder
     private var labelsDivider: some View {
         if !metadata.facts.isEmpty, hasLabels {
             Divider()
@@ -108,35 +133,8 @@ struct RecipeMetadataView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
         }
-        .font(.body)
         .padding(.horizontal, SousSpacing.large)
         .padding(.vertical, SousSpacing.medium)
-    }
-
-    @ViewBuilder
-    private func factDivider(_ fact: MetadataFact) -> some View {
-        if fact.id != metadata.facts.first?.id {
-            Divider()
-        }
-    }
-
-    private func factTile(_ fact: MetadataFact) -> some View {
-        VStack(spacing: SousSpacing.xSmall) {
-            Image(systemName: fact.kind.systemImage)
-                .foregroundStyle(.secondary)
-
-            Text(verbatim: fact.value)
-                .font(.body)
-
-            Text(fact.kind.label, bundle: .module)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(fact.kind.label, bundle: .module))
-        .accessibilityValue(Text(verbatim: fact.value))
     }
 
     @ViewBuilder

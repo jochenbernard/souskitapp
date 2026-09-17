@@ -7,6 +7,7 @@ import SwiftUI
 struct RecipeBodyView: View {
     private let presenter: RecipeFeaturePresenterProtocol
     private let recipe: Recipe
+    private let metadata: MetadataDisplay
     private let expandedSections: Set<RecipeSection>
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -20,10 +21,12 @@ struct RecipeBodyView: View {
     init(
         presenter: RecipeFeaturePresenterProtocol,
         recipe: Recipe,
+        metadata: MetadataDisplay,
         expandedSections: Set<RecipeSection>
     ) {
         self.presenter = presenter
         self.recipe = recipe
+        self.metadata = metadata
         self.expandedSections = expandedSections
     }
 
@@ -39,10 +42,6 @@ struct RecipeBodyView: View {
         horizontalSizeClass == .regular
     }
 
-    private var hasOverview: Bool {
-        !RecipeDisplay.metadata(of: recipe.metadata).isEmpty || !recipe.ingredients.isEmpty || !recipe.cookware.isEmpty
-    }
-
     // One layout either way, so a change of size class keeps the sections rather than rebuilding them.
     private var columns: AnyLayout {
         isSideBySide
@@ -52,13 +51,16 @@ struct RecipeBodyView: View {
 
     @ViewBuilder
     private var overview: some View {
-        if hasOverview {
+        let ingredientList = RecipeDisplay.ingredientList(of: recipe)
+        let cookwareNames = RecipeDisplay.cookwareNames(of: recipe)
+
+        if !metadata.isEmpty || !ingredientList.rows.isEmpty || !cookwareNames.isEmpty {
             VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
                 metadataView
 
-                ingredientSection
+                ingredientSection(ingredientList)
 
-                cookwareSection
+                cookwareSection(cookwareNames)
             }
             .frame(maxWidth: isSideBySide ? overviewWidth : .infinity)
         }
@@ -77,17 +79,13 @@ struct RecipeBodyView: View {
 
     @ViewBuilder
     private var metadataView: some View {
-        let metadata = RecipeDisplay.metadata(of: recipe.metadata)
-
         if !metadata.isEmpty {
             RecipeMetadataView(metadata: metadata)
         }
     }
 
     @ViewBuilder
-    private var ingredientSection: some View {
-        let ingredientList = RecipeDisplay.ingredientList(of: recipe)
-
+    private func ingredientSection(_ ingredientList: IngredientList) -> some View {
         if !ingredientList.rows.isEmpty {
             section(.ingredients) {
                 VStack(alignment: .leading, spacing: SousSpacing.small) {
@@ -100,9 +98,7 @@ struct RecipeBodyView: View {
     }
 
     @ViewBuilder
-    private var cookwareSection: some View {
-        let names = RecipeDisplay.cookwareNames(of: recipe)
-
+    private func cookwareSection(_ names: [String]) -> some View {
         if !names.isEmpty {
             section(.cookware) {
                 surface {
@@ -138,14 +134,11 @@ struct RecipeBodyView: View {
     }
 
     private func ingredientRows(_ ingredients: [Ingredient]) -> some View {
-        VStack(spacing: 0.0) {
+        SousRowGroup {
             ForEach(ingredients.indices, id: \.self) { index in
-                rowDivider(isFirst: index == 0)
-
                 ingredientRow(ingredients[index])
             }
         }
-        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
 
     @ViewBuilder
@@ -176,21 +169,10 @@ struct RecipeBodyView: View {
     }
 
     private func stepRows(_ numbered: NumberedGroup) -> some View {
-        VStack(spacing: 0.0) {
+        SousRowGroup {
             ForEach(numbered.numberedSteps, id: \.number) { number, step in
-                rowDivider(isFirst: number == numbered.firstNumber)
-
                 stepView(step, number: number)
             }
-        }
-        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
-    }
-
-    @ViewBuilder
-    private func rowDivider(isFirst: Bool) -> some View {
-        if !isFirst {
-            Divider()
-                .padding(.horizontal, SousSpacing.large)
         }
     }
 
@@ -202,7 +184,6 @@ struct RecipeBodyView: View {
 
             amountText(ingredient.amount)
         }
-        .font(.body)
         .padding(.horizontal, SousSpacing.large)
         .padding(.vertical, SousSpacing.medium)
     }
@@ -212,7 +193,6 @@ struct RecipeBodyView: View {
             stepNumber(number)
 
             stepProse(step)
-                .font(.body)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         // The number is the row's tallest line, so padding it evenly sets it as far from the top as from the side.
@@ -270,10 +250,13 @@ private func previewRecipe() -> Recipe {
 }
 
 #Preview("Recipe body") {
-    ScrollView {
+    let recipe = previewRecipe()
+
+    return ScrollView {
         RecipeBodyView(
             presenter: RecipeFeaturePresenterStub(),
-            recipe: previewRecipe(),
+            recipe: recipe,
+            metadata: RecipeDisplay.metadata(of: recipe.metadata),
             expandedSections: RecipeSection.openByDefault
         )
         .sousPagePadding()
@@ -283,10 +266,13 @@ private func previewRecipe() -> Recipe {
 }
 
 #Preview("Recipe body, side by side", traits: .fixedLayout(width: 1_210.0, height: 834.0)) {
-    ScrollView {
+    let recipe = previewRecipe()
+
+    return ScrollView {
         RecipeBodyView(
             presenter: RecipeFeaturePresenterStub(),
-            recipe: previewRecipe(),
+            recipe: recipe,
+            metadata: RecipeDisplay.metadata(of: recipe.metadata),
             expandedSections: RecipeSection.openByDefault
         )
         .sousPagePadding()

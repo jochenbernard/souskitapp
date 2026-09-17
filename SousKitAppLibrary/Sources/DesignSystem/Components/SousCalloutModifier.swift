@@ -7,7 +7,6 @@ private struct SousCalloutModifier: ViewModifier {
         let shape = RoundedRectangle(cornerRadius: radius)
 
         return content
-            .font(.body)
             .foregroundStyle(.accent)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, SousSpacing.large)
