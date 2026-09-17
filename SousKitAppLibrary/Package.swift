@@ -4,6 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "SousKitAppLibrary",
+    defaultLocalization: "en",
     platforms: [.iOS(.v27)],
     products: [
         .library(
@@ -28,7 +29,8 @@ let package = Package(
         ),
         .standardTarget(
             name: "CookingFeature",
-            dependencies: ["DesignSystem", "RecipeLibrary"]
+            dependencies: ["DesignSystem", "RecipeLibrary"],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
             name: "CookingFeatureTests",
@@ -36,7 +38,8 @@ let package = Package(
         ),
         .standardTarget(
             name: "DesignSystem",
-            exclude: ["README.md"]
+            exclude: ["README.md"],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
             name: "DesignSystemTests",
@@ -52,7 +55,8 @@ let package = Package(
         ),
         .standardTarget(
             name: "KitchenFeature",
-            dependencies: ["CookingFeature", "RecipeFeature"]
+            dependencies: ["CookingFeature", "RecipeFeature"],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
             name: "KitchenFeatureTests",
@@ -60,11 +64,13 @@ let package = Package(
         ),
         .standardTarget(
             name: "OnboardingFeature",
-            dependencies: ["DesignSystem", "RecipeLibrary"]
+            dependencies: ["DesignSystem", "RecipeLibrary"],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTarget(
             name: "RecipeFeature",
-            dependencies: ["DesignSystem", "RecipeLibrary"]
+            dependencies: ["DesignSystem", "RecipeLibrary"],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
             name: "RecipeFeatureTests",
@@ -106,12 +112,14 @@ private extension Target {
     static func standardTarget(
         name: String,
         dependencies: [Dependency] = [],
-        exclude: [String] = []
+        exclude: [String] = [],
+        resources: [Resource] = []
     ) -> Target {
         .target(
             name: name,
             dependencies: dependencies,
             exclude: exclude,
+            resources: resources,
             swiftSettings: sharedSwiftSettings,
             plugins: sharedPlugins
         )

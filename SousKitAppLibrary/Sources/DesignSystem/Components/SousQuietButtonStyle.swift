@@ -20,7 +20,7 @@ extension ButtonStyle where Self == SousQuietButtonStyle {
 }
 
 #Preview("Quiet button") {
-    Button("Vinaigrette") {}
+    Button(action: {}, label: { Text(verbatim: "Vinaigrette") })
         .buttonStyle(.sousQuiet)
         .padding(SousSpacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

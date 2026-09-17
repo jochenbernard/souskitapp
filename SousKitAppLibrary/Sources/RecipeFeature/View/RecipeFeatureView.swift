@@ -78,21 +78,21 @@ struct RecipeFeatureView: View {
     }
 
     private var emptyNote: some View {
-        Text("This recipe is empty.")
+        Text("This recipe is empty.", bundle: .module)
             .font(.body)
             .foregroundStyle(.secondary)
     }
 
     private func failureNote(_ message: String) -> some View {
-        SousFailureNote(Text("This recipe could not be read"), message: message)
+        SousFailureNote(Text("This recipe could not be read", bundle: .module), message: message)
     }
 
     @ViewBuilder
     private var readingMessage: some View {
         if viewModel.recipeEntry.availability == .downloaded {
-            Text("Reading the recipe.")
+            Text("Reading the recipe.", bundle: .module)
         } else {
-            Text("Fetching from iCloud.")
+            Text("Fetching from iCloud.", bundle: .module)
         }
     }
 
@@ -105,7 +105,7 @@ struct RecipeFeatureView: View {
 
     private var cookButton: some View {
         Button(action: presenter.didTapCook) {
-            Text("Start cooking")
+            Text("Start cooking", bundle: .module)
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.sousPrimary)

@@ -47,8 +47,8 @@ enum RecipeDisplay {
 
     /// The language the screen is written in, which is the one it reads names and lists in.
     private static var displayLocale: Locale {
-        // Not the region's language: a name or a conjunction would sit in copy written in another.
-        Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+        // The screen's own strings, not the region: a name or a conjunction sits among that copy.
+        Locale(identifier: Bundle.module.preferredLocalizations.first ?? "en")
     }
 
     private static func facts(of metadata: Metadata) -> [MetadataFact] {

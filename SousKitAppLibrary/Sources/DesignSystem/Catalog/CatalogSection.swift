@@ -21,7 +21,7 @@ struct CatalogSection<Content: View>: View {
 
 #Preview("Section") {
     CatalogSection(number: "01", title: "Color") {
-        Text("Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
+        Text(verbatim: "Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
             .font(.body)
     }
     .padding(SousSpacing.xLarge)

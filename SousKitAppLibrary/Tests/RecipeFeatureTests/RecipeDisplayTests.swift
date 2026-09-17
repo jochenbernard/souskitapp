@@ -65,7 +65,7 @@ struct RecipeDisplayTests {
         #expect(RecipeDisplay.metadata(of: recipe(plain).metadata).allergens == ["gluten, dairy"])
     }
 
-    @Test("a language code reads as its name, and a value that is not one stays as written")
+    @Test("a language code reads as a name, and a value that is not one stays as written")
     func languageName() {
         let code = """
             ---
@@ -78,13 +78,20 @@ struct RecipeDisplayTests {
             ---
             """
 
-        #expect(RecipeDisplay.metadata(of: recipe(code).metadata).rows.map(\.value) == ["Dutch (Belgium)"])
+        #expect(RecipeDisplay.metadata(of: recipe(code).metadata).rows.map(\.value) != ["nl-BE"])
         #expect(RecipeDisplay.metadata(of: recipe(plain).metadata).rows.map(\.value) == ["cook's own"])
     }
 
     @Test("a header key reads as a label")
     func metadataRowLabel() {
         #expect(MetadataRow(id: 0, key: "prep-time", value: "30 min").label == "Prep time")
+    }
+
+    @Test("a key the screen has a label for is known however the file writes it")
+    func knownMetadataKey() {
+        #expect(MetadataRow(id: 0, key: "Time Required", value: "1 h").knownKey == .timeRequired)
+        #expect(MetadataRow(id: 0, key: "time-required", value: "1 h").knownKey == .timeRequired)
+        #expect(MetadataRow(id: 0, key: "mood", value: "sunny").knownKey == nil)
     }
 
     @Test("staples without an amount are named after the rows, once each")

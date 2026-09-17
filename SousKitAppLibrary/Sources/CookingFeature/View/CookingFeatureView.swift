@@ -118,16 +118,17 @@ struct CookingFeatureView: View {
     private var exitButton: some View {
         Button(role: .close, action: presenter.didTapExit)
             .confirmationDialog(
-                "Stop cooking?",
+                Text("Are you sure you want to stop cooking?", bundle: .module),
                 isPresented: isConfirmingExit,
-                titleVisibility: .visible
-            ) {
-                Button(
-                    "Stop cooking",
-                    role: .destructive,
-                    action: presenter.didConfirmExit
-                )
-            }
+                titleVisibility: .visible,
+                actions: { confirmExitButton }
+            )
+    }
+
+    private var confirmExitButton: some View {
+        Button(role: .destructive, action: presenter.didConfirmExit) {
+            Text("Stop cooking", bundle: .module)
+        }
     }
 
     private var isConfirmingExit: Binding<Bool> {

@@ -44,18 +44,21 @@ extension View {
     @Previewable @State var isRevealed = true
 
     VStack(alignment: .leading, spacing: 0.0) {
-        Button("Gratin Dauphinois") {
-            withAnimation(.spring(duration: 0.3, bounce: 0.0)) {
-                isRevealed.toggle()
-            }
-        }
+        Button(
+            action: {
+                withAnimation(.spring(duration: 0.3, bounce: 0.0)) {
+                    isRevealed.toggle()
+                }
+            },
+            label: { Text(verbatim: "Gratin Dauphinois") }
+        )
 
-        Text("Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
+        Text(verbatim: "Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
             .sousRow()
             .padding(.top, SousSpacing.medium)
             .disclosureReveal(isRevealed: isRevealed)
 
-        Text("Boeuf Bourguignon")
+        Text(verbatim: "Boeuf Bourguignon")
             .sousRow()
             .padding(.top, SousSpacing.medium)
     }

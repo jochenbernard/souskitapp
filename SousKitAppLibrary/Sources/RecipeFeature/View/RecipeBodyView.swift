@@ -130,9 +130,9 @@ struct RecipeBodyView: View {
         @ViewBuilder content: @escaping () -> some View
     ) -> some View {
         DisclosureGroup(
-            section.label,
             isExpanded: isExpanded(section),
-            content: content
+            content: content,
+            label: { Text(section.label, bundle: .module) }
         )
         .disclosureGroupStyle(.sous)
     }
@@ -151,7 +151,7 @@ struct RecipeBodyView: View {
     @ViewBuilder
     private func stapleNote(_ staples: [String]) -> some View {
         if !staples.isEmpty {
-            Text("Plus \(RecipeDisplay.joinedList(staples)) from the pantry.")
+            Text("Plus \(RecipeDisplay.joinedList(staples)) from the pantry.", bundle: .module)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, SousSpacing.large)

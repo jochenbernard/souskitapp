@@ -11,7 +11,12 @@ struct MetadataRow: Identifiable {
     /// What the line holds, with a list joined into one line.
     let value: String
 
-    /// The key as a label, `prep-time` reading as "Prep time".
+    /// The key where the screen has a label for it, or `nil` where the file's own words stand.
+    var knownKey: MetadataKey? {
+        MetadataKey(key: key)
+    }
+
+    /// The key as the file writes it, `prep-time` reading as "Prep time".
     var label: String {
         let words = key.replacingOccurrences(of: "-", with: " ")
 

@@ -5,14 +5,14 @@ struct CatalogContainers: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
-            Text("Boeuf Bourguignon")
+            Text(verbatim: "Boeuf Bourguignon")
                 .sousRow()
 
-            Text("This recipe could not be read")
+            Text(verbatim: "This recipe could not be read")
                 .sousCallout()
 
             SousActivityNote {
-                Text("Fetching from iCloud.")
+                Text(verbatim: "Fetching from iCloud.")
             }
 
             chips
@@ -32,11 +32,16 @@ struct CatalogContainers: View {
     }
 
     private var disclosureGroup: some View {
-        DisclosureGroup("Gratin Dauphinois", isExpanded: $isExpanded) {
-            Text("Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
-                .sousRow()
-        }
+        DisclosureGroup(
+            isExpanded: $isExpanded,
+            content: { gratinStep.sousRow() },
+            label: { Text(verbatim: "Gratin Dauphinois") }
+        )
         .disclosureGroupStyle(.sous)
+    }
+
+    private var gratinStep: Text {
+        Text(verbatim: "Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
     }
 }
 

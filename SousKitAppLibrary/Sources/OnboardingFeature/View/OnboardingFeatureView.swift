@@ -43,18 +43,19 @@ struct OnboardingFeatureView: View {
 
     private var introduction: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
-            Text("Setup")
+            Text("Setup", bundle: .module)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
 
-            Text("Where your recipes live")
+            Text("Where your recipes live", bundle: .module)
                 .font(.title)
 
             Text(
                 """
                 Sous reads your recipes from a folder of .sous files. Pick that folder to \
                 start; you can change it later.
-                """
+                """,
+                bundle: .module
             )
             .font(.body)
             .foregroundStyle(.secondary)
@@ -79,7 +80,7 @@ struct OnboardingFeatureView: View {
 
     private var chooseButton: some View {
         Button(action: presenter.didTapChooseDirectory) {
-            Text("Choose folder")
+            Text("Choose folder", bundle: .module)
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.sousPrimary)

@@ -28,7 +28,7 @@ extension ButtonStyle where Self == SousPrimaryButtonStyle {
 }
 
 #Preview("Primary button") {
-    Button("Boeuf Bourguignon") {}
+    Button(action: {}, label: { Text(verbatim: "Boeuf Bourguignon") })
         .buttonStyle(.sousPrimary)
         .padding(SousSpacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -82,7 +82,7 @@ struct RecipeMetadataView: View {
     private var allergenNote: some View {
         if !metadata.allergens.isEmpty {
             Label(
-                title: { Text("Contains \(RecipeDisplay.joinedList(metadata.allergens))") },
+                title: { Text("Contains \(RecipeDisplay.joinedList(metadata.allergens))", bundle: .module) },
                 icon: { Image(systemName: "allergens") }
             )
             .font(.subheadline)
@@ -128,20 +128,22 @@ struct RecipeMetadataView: View {
             Text(verbatim: fact.value)
                 .font(.body)
 
-            Text(fact.kind.label)
+            Text(fact.kind.label, bundle: .module)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(fact.kind.label))
+        .accessibilityLabel(Text(fact.kind.label, bundle: .module))
         .accessibilityValue(Text(verbatim: fact.value))
     }
 
     @ViewBuilder
     private func metadataKey(_ row: MetadataRow) -> some View {
-        if !row.key.isEmpty {
+        if let knownKey = row.knownKey {
+            Text(knownKey.label, bundle: .module)
+        } else if !row.key.isEmpty {
             Text(verbatim: row.label)
         }
     }

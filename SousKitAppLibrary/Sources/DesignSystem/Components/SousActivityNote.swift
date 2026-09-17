@@ -27,7 +27,7 @@ public struct SousActivityNote<Label: View>: View {
 
 #Preview("Activity note") {
     SousActivityNote {
-        Text("Fetching from iCloud.")
+        Text(verbatim: "Fetching from iCloud.")
     }
     .padding(SousSpacing.xLarge)
     .frame(

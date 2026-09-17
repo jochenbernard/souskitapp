@@ -25,10 +25,10 @@ extension View {
 
 #Preview("Surface") {
     VStack(alignment: .leading, spacing: SousSpacing.medium) {
-        Text("Boeuf Bourguignon")
+        Text(verbatim: "Boeuf Bourguignon")
             .sousRow()
 
-        Text("Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
+        Text(verbatim: "Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(SousSpacing.xLarge)
             .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))

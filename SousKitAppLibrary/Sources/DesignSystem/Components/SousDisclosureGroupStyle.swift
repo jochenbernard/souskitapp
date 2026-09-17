@@ -36,7 +36,13 @@ public struct SousDisclosureGroupStyle: DisclosureGroupStyle {
                 .contentShape(.rect)
             }
         )
-        .accessibilityValue(configuration.isExpanded ? Text("Expanded") : Text("Collapsed"))
+        .accessibilityValue(expandedValue(isExpanded: configuration.isExpanded))
+    }
+
+    private func expandedValue(isExpanded: Bool) -> Text {
+        isExpanded
+            ? Text("Expanded", bundle: .module)
+            : Text("Collapsed", bundle: .module)
     }
 
     private func chevron(isExpanded: Bool) -> some View {
@@ -60,12 +66,16 @@ extension DisclosureGroupStyle where Self == SousDisclosureGroupStyle {
 #Preview("Disclosure group") {
     @Previewable @State var isExpanded = true
 
-    DisclosureGroup("Boeuf Bourguignon", isExpanded: $isExpanded) {
-        Text("Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(SousSpacing.large)
-            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
-    }
+    DisclosureGroup(
+        isExpanded: $isExpanded,
+        content: {
+            Text(verbatim: "Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(SousSpacing.large)
+                .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+        },
+        label: { Text(verbatim: "Boeuf Bourguignon") }
+    )
     .disclosureGroupStyle(.sous)
     .font(.body)
     .sousPagePadding()
