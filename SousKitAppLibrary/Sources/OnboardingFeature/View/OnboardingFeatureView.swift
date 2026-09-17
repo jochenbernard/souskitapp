@@ -6,6 +6,11 @@ struct OnboardingFeatureView: View {
     private let presenter: OnboardingFeaturePresenterProtocol
     private let viewModel: OnboardingFeatureViewModel
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    // A comfortable line length for the introduction, growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var columnWidth = 480.0
+
     init(
         presenter: OnboardingFeaturePresenterProtocol,
         viewModel: OnboardingFeatureViewModel
@@ -15,26 +20,46 @@ struct OnboardingFeatureView: View {
     }
 
     var body: some View {
+        column
+            .frame(
+                maxWidth: columnWidth,
+                maxHeight: isOneBlock ? nil : .infinity,
+                alignment: .topLeading
+            )
+            .sousPagePadding()
+            .frame(
+                maxWidth: .infinity,
+                maxHeight: .infinity,
+                alignment: isOneBlock ? .center : .topLeading
+            )
+            .sousPage()
+            .fileImporter(
+                isPresented: isChoosingDirectory,
+                allowedContentTypes: [.folder],
+                onCompletion: presenter.didChooseDirectory
+            )
+    }
+
+    // Where the page is wide, the setup reads as one block. On a phone the button stays in reach.
+    private var isOneBlock: Bool {
+        horizontalSizeClass == .regular
+    }
+
+    private var column: some View {
+        VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
+            introductionBlock
+
+            actions
+        }
+    }
+
+    private var introductionBlock: some View {
         VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
             lockup
 
             introduction
-
-            Spacer(minLength: 0.0)
-
-            actions
         }
-        .sousPagePadding()
-        .frame(
-            maxWidth: .infinity,
-            alignment: .topLeading
-        )
-        .sousPage()
-        .fileImporter(
-            isPresented: isChoosingDirectory,
-            allowedContentTypes: [.folder],
-            onCompletion: presenter.didChooseDirectory
-        )
+        .frame(maxHeight: isOneBlock ? nil : .infinity, alignment: .leading)
     }
 
     private var lockup: some View {

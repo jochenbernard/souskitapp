@@ -67,6 +67,10 @@ let package = Package(
             dependencies: ["DesignSystem", "RecipeLibrary"],
             resources: [.process("Resources/Localizable.xcstrings")]
         ),
+        .standardTestTarget(
+            name: "OnboardingFeatureTests",
+            dependencies: ["OnboardingFeature"]
+        ),
         .standardTarget(
             name: "RecipeFeature",
             dependencies: ["DesignSystem", "RecipeLibrary"],
