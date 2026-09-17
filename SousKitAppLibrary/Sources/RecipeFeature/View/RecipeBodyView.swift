@@ -9,6 +9,9 @@ struct RecipeBodyView: View {
     private let recipe: Recipe
     private let expandedSections: Set<RecipeSection>
 
+    // A `.subheadline` number with room around it, growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .subheadline) private var stepNumberDiameter = 26.0
+
     init(
         presenter: RecipeFeaturePresenterProtocol,
         recipe: Recipe,
@@ -82,8 +85,6 @@ struct RecipeBodyView: View {
                         groupView(numbered)
                     }
                 }
-                // Lines up with the text on the surfaces above.
-                .padding(.horizontal, SousSpacing.large)
             }
         }
     }
@@ -103,7 +104,7 @@ struct RecipeBodyView: View {
     private func ingredientRows(_ ingredients: [Ingredient]) -> some View {
         VStack(spacing: 0.0) {
             ForEach(ingredients.indices, id: \.self) { index in
-                ingredientDivider(index: index)
+                rowDivider(isFirst: index == 0)
 
                 ingredientRow(ingredients[index])
             }
@@ -129,18 +130,16 @@ struct RecipeBodyView: View {
     }
 
     private func groupView(_ numbered: NumberedGroup) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.medium) {
+        VStack(alignment: .leading, spacing: SousSpacing.small) {
             groupName(numbered.group)
 
-            ForEach(numbered.numberedSteps, id: \.number) { number, step in
-                stepView(step, number: number)
-            }
+            stepRows(numbered)
         }
     }
 
     @ViewBuilder
-    private func ingredientDivider(index: Int) -> some View {
-        if index > 0 {
+    private func rowDivider(isFirst: Bool) -> some View {
+        if !isFirst {
             Divider()
                 .padding(.horizontal, SousSpacing.large)
         }
@@ -163,20 +162,21 @@ struct RecipeBodyView: View {
     private func groupName(_ group: StepGroup) -> some View {
         if let name = group.name {
             Text(verbatim: name)
-                .font(.title3)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, SousSpacing.large)
         }
     }
 
-    private func stepView(_ step: Step, number: Int) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
-            Text(verbatim: String(number))
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+    private func stepRows(_ numbered: NumberedGroup) -> some View {
+        VStack(spacing: 0.0) {
+            ForEach(numbered.numberedSteps, id: \.number) { number, step in
+                rowDivider(isFirst: number == numbered.firstNumber)
 
-            stepProse(step)
-                .font(.body)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                stepView(step, number: number)
+            }
         }
+        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
 
     @ViewBuilder
@@ -186,6 +186,26 @@ struct RecipeBodyView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
         }
+    }
+
+    private func stepView(_ step: Step, number: Int) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
+            stepNumber(number)
+
+            stepProse(step)
+                .font(.body)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, SousSpacing.large)
+        .padding(.vertical, SousSpacing.medium)
+    }
+
+    private func stepNumber(_ number: Int) -> some View {
+        Text(verbatim: String(number))
+            .font(.subheadline)
+            .monospacedDigit()
+            .frame(width: stepNumberDiameter, height: stepNumberDiameter)
+            .background(.tertiaryFill, in: Circle())
     }
 
     private func stepProse(_ step: Step) -> Text {
