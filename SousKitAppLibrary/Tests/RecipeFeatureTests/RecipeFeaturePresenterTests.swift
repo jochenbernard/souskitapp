@@ -78,11 +78,11 @@ struct RecipeFeaturePresenterTests {
     }
 
     @MainActor
-    @Test("the ingredients and the steps open, and the cookware stays closed")
+    @Test("the ingredients open, and the cookware stays closed")
     func sectionsOpenByDefault() {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
 
-        #expect(viewModel.expandedSections == [.ingredients, .steps])
+        #expect(viewModel.expandedSections == [.ingredients])
     }
 
     @MainActor
@@ -92,7 +92,7 @@ struct RecipeFeaturePresenterTests {
 
         makePresenter(viewModel: viewModel).didChangeIsExpanded(true, of: .cookware)
 
-        #expect(viewModel.expandedSections == [.ingredients, .cookware, .steps])
+        #expect(viewModel.expandedSections == [.ingredients, .cookware])
     }
 
     @MainActor
@@ -102,7 +102,7 @@ struct RecipeFeaturePresenterTests {
 
         makePresenter(viewModel: viewModel).didChangeIsExpanded(false, of: .ingredients)
 
-        #expect(viewModel.expandedSections == [.steps])
+        #expect(viewModel.expandedSections.isEmpty)
     }
 
     @MainActor

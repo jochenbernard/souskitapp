@@ -3,11 +3,16 @@ import RecipeLibrary
 import SousKit
 import SwiftUI
 
-/// A parsed recipe, top to bottom: the header, what it takes, and what to do.
+/// A parsed recipe: the header and what it takes, then what to do, side by side where the width allows.
 struct RecipeBodyView: View {
     private let presenter: RecipeFeaturePresenterProtocol
     private let recipe: Recipe
     private let expandedSections: Set<RecipeSection>
+
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    // The overview's width beside the steps, growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var overviewWidth = 360.0
 
     // A `.subheadline` number with room around it, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .subheadline) private var stepNumberDiameter = 26.0
@@ -23,14 +28,50 @@ struct RecipeBodyView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
-            metadataView
-
-            ingredientSection
-
-            cookwareSection
+        columns {
+            overview
 
             stepSection
+        }
+    }
+
+    private var isSideBySide: Bool {
+        horizontalSizeClass == .regular
+    }
+
+    private var hasOverview: Bool {
+        !RecipeDisplay.metadata(of: recipe.metadata).isEmpty || !recipe.ingredients.isEmpty || !recipe.cookware.isEmpty
+    }
+
+    // One layout either way, so a change of size class keeps the sections rather than rebuilding them.
+    private var columns: AnyLayout {
+        isSideBySide
+            ? AnyLayout(HStackLayout(alignment: .top, spacing: SousSpacing.xxLarge))
+            : AnyLayout(VStackLayout(alignment: .leading, spacing: SousSpacing.xxLarge))
+    }
+
+    @ViewBuilder
+    private var overview: some View {
+        if hasOverview {
+            VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
+                metadataView
+
+                ingredientSection
+
+                cookwareSection
+            }
+            .frame(maxWidth: isSideBySide ? overviewWidth : .infinity)
+        }
+    }
+
+    @ViewBuilder
+    private var stepSection: some View {
+        if !recipe.steps.isEmpty {
+            VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
+                ForEach(StepNumbering.numberedGroups(of: recipe)) { numbered in
+                    groupView(numbered)
+                }
+            }
         }
     }
 
@@ -76,16 +117,11 @@ struct RecipeBodyView: View {
         }
     }
 
-    @ViewBuilder
-    private var stepSection: some View {
-        if !recipe.steps.isEmpty {
-            section(.steps) {
-                VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
-                    ForEach(StepNumbering.numberedGroups(of: recipe)) { numbered in
-                        groupView(numbered)
-                    }
-                }
-            }
+    private func groupView(_ numbered: NumberedGroup) -> some View {
+        VStack(alignment: .leading, spacing: SousSpacing.small) {
+            groupName(numbered.group)
+
+            stepRows(numbered)
         }
     }
 
@@ -129,12 +165,25 @@ struct RecipeBodyView: View {
             .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
 
-    private func groupView(_ numbered: NumberedGroup) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.small) {
-            groupName(numbered.group)
-
-            stepRows(numbered)
+    @ViewBuilder
+    private func groupName(_ group: StepGroup) -> some View {
+        if let name = group.name {
+            Text(verbatim: name)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, SousSpacing.large)
         }
+    }
+
+    private func stepRows(_ numbered: NumberedGroup) -> some View {
+        VStack(spacing: 0.0) {
+            ForEach(numbered.numberedSteps, id: \.number) { number, step in
+                rowDivider(isFirst: number == numbered.firstNumber)
+
+                stepView(step, number: number)
+            }
+        }
+        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
 
     @ViewBuilder
@@ -158,25 +207,16 @@ struct RecipeBodyView: View {
         .padding(.vertical, SousSpacing.medium)
     }
 
-    @ViewBuilder
-    private func groupName(_ group: StepGroup) -> some View {
-        if let name = group.name {
-            Text(verbatim: name)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, SousSpacing.large)
-        }
-    }
+    private func stepView(_ step: Step, number: Int) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
+            stepNumber(number)
 
-    private func stepRows(_ numbered: NumberedGroup) -> some View {
-        VStack(spacing: 0.0) {
-            ForEach(numbered.numberedSteps, id: \.number) { number, step in
-                rowDivider(isFirst: number == numbered.firstNumber)
-
-                stepView(step, number: number)
-            }
+            stepProse(step)
+                .font(.body)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+        // The number is the row's tallest line, so padding it evenly sets it as far from the top as from the side.
+        .padding(SousSpacing.large)
     }
 
     @ViewBuilder
@@ -186,18 +226,6 @@ struct RecipeBodyView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
         }
-    }
-
-    private func stepView(_ step: Step, number: Int) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
-            stepNumber(number)
-
-            stepProse(step)
-                .font(.body)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.vertical, SousSpacing.medium)
     }
 
     private func stepNumber(_ number: Int) -> some View {
@@ -251,5 +279,19 @@ private func previewRecipe() -> Recipe {
         .sousPagePadding()
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+    .sousPage()
+}
+
+#Preview("Recipe body, side by side", traits: .fixedLayout(width: 1_210.0, height: 834.0)) {
+    ScrollView {
+        RecipeBodyView(
+            presenter: RecipeFeaturePresenterStub(),
+            recipe: previewRecipe(),
+            expandedSections: RecipeSection.openByDefault
+        )
+        .sousPagePadding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    .environment(\.horizontalSizeClass, .regular)
     .sousPage()
 }

@@ -4,15 +4,13 @@ import SwiftUI
 enum RecipeSection: Hashable {
     case ingredients
     case cookware
-    case steps
 
-    static let openByDefault: Set<RecipeSection> = [.ingredients, .steps]
+    static let openByDefault: Set<RecipeSection> = [.ingredients]
 
     var label: LocalizedStringKey {
         switch self {
         case .ingredients: "Ingredients"
         case .cookware: "Cookware"
-        case .steps: "Steps"
         }
     }
 }
