@@ -29,10 +29,7 @@ enum RecipeDisplay {
 
     /// Items joined into a list in the language the screen is shown in, such as "salt and black pepper".
     static func joinedList(_ items: [String]) -> String {
-        // Not the region's language: its conjunction would sit in copy written in another.
-        let language = Bundle.main.preferredLocalizations.first ?? "en"
-
-        return items.formatted(.list(type: .and).locale(Locale(identifier: language)))
+        items.formatted(.list(type: .and).locale(displayLocale))
     }
 
     /// The cookware in document order, each piece named once however often it is reached for.
@@ -45,6 +42,14 @@ enum RecipeDisplay {
     private static let tagsKey = "tags"
 
     private static let allergensKey = "allergens"
+
+    private static let languageKey = "language"
+
+    /// The language the screen is written in, which is the one it reads names and lists in.
+    private static var displayLocale: Locale {
+        // Not the region's language: a name or a conjunction would sit in copy written in another.
+        Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+    }
 
     private static func facts(of metadata: Metadata) -> [MetadataFact] {
         MetadataFact.Kind.allCases.compactMap { kind in
@@ -78,7 +83,7 @@ enum RecipeDisplay {
             return MetadataRow(
                 id: index,
                 key: entry.key,
-                value: value(of: entry.value)
+                value: shownValue(of: entry)
             )
         }
     }
@@ -105,6 +110,17 @@ enum RecipeDisplay {
 
             return text
         }
+    }
+
+    /// What a header line shows, with a language read as its name and anything else as written.
+    private static func shownValue(of entry: Metadata.Entry) -> String {
+        let text = value(of: entry.value)
+
+        guard entry.key == languageKey else {
+            return text
+        }
+
+        return displayLocale.localizedString(forIdentifier: text) ?? text
     }
 
     /// What one header entry reads as on a single line.

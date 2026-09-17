@@ -65,6 +65,23 @@ struct RecipeDisplayTests {
         #expect(RecipeDisplay.metadata(of: recipe(plain).metadata).allergens == ["gluten, dairy"])
     }
 
+    @Test("a language code reads as its name, and a value that is not one stays as written")
+    func languageName() {
+        let code = """
+            ---
+            language: nl-BE
+            ---
+            """
+        let plain = """
+            ---
+            language: cook's own
+            ---
+            """
+
+        #expect(RecipeDisplay.metadata(of: recipe(code).metadata).rows.map(\.value) == ["Dutch (Belgium)"])
+        #expect(RecipeDisplay.metadata(of: recipe(plain).metadata).rows.map(\.value) == ["cook's own"])
+    }
+
     @Test("a header key reads as a label")
     func metadataRowLabel() {
         #expect(MetadataRow(id: 0, key: "prep-time", value: "30 min").label == "Prep time")
