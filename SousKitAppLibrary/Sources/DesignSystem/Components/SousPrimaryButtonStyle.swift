@@ -9,7 +9,7 @@ public struct SousPrimaryButtonStyle: ButtonStyle {
             configuration.label
                 .sousButtonLabel(.white)
                 // No press scale: the interactive glass already gives under the finger.
-                .glassEffect(.clear.tint(.accent).interactive(), in: shape)
+                .glassEffect(.regular.tint(.accent).interactive(), in: shape)
                 .contentShape(shape)
                 .sensoryFeedback(trigger: isDown) { _, isDown in
                     isDown
