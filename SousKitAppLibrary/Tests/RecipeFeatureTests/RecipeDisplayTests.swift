@@ -10,21 +10,123 @@ struct RecipeDisplayTests {
         parser.parseRecipe(source).value
     }
 
-    @Test("the title is left out of the header rows, and a list joins onto one line")
-    func metadataRows() {
+    @Test("the header sorts into facts, tags, allergens, and the lines left over, without the title")
+    func metadata() {
         let source = """
             ---
-            title: Crepes
-            servings: 4
-            tags: [dessert, french]
+            title: Boeuf Bourguignon
+            cook-time: 3 h
+            servings: 6
+            tags: [dinner, french]
+            allergens: [gluten, dairy]
+            source: https://example.com
+            prep-time: 30 min
+            ---
+
+            Braise it.
+            """
+        let metadata = RecipeDisplay.metadata(of: recipe(source).metadata)
+
+        #expect(metadata.facts.map(\.kind) == [.servings, .prepTime, .cookTime])
+        #expect(metadata.facts.map(\.value) == ["6", "30 min", "3 h"])
+        #expect(metadata.tags == ["dinner", "french"])
+        #expect(metadata.allergens == ["gluten", "dairy"])
+        #expect(metadata.rows.map(\.key) == ["source"])
+        #expect(metadata.rows.map(\.value) == ["https://example.com"])
+    }
+
+    @Test("a list in a line left over joins onto one line")
+    func metadataRowList() {
+        let source = """
+            ---
+            yield: [12 crepes, 1 l batter]
             ---
 
             Whisk it.
             """
-        let rows = RecipeDisplay.metadataRows(of: recipe(source).metadata)
 
-        #expect(rows.map(\.key) == ["servings", "tags"])
-        #expect(rows.map(\.value) == ["4", "dessert, french"])
+        #expect(RecipeDisplay.metadata(of: recipe(source).metadata).rows.map(\.value) == ["12 crepes, 1 l batter"])
+    }
+
+    @Test("allergens read the escapes of an inline list, and a value without brackets is one allergen")
+    func allergens() {
+        let escaped = """
+            ---
+            allergens: [nuts\\, tree, dairy\\\\]
+            ---
+            """
+        let plain = """
+            ---
+            allergens: gluten, dairy
+            ---
+            """
+
+        #expect(RecipeDisplay.metadata(of: recipe(escaped).metadata).allergens == ["nuts, tree", "dairy\\"])
+        #expect(RecipeDisplay.metadata(of: recipe(plain).metadata).allergens == ["gluten, dairy"])
+    }
+
+    @Test("a language code reads as a name, and a value that is not one stays as written")
+    func languageName() {
+        let code = """
+            ---
+            language: nl-BE
+            ---
+            """
+        let plain = """
+            ---
+            language: cook's own
+            ---
+            """
+        let rows = RecipeDisplay.metadata(of: recipe(code).metadata).rows
+
+        #expect(rows.map(\.key) == ["language"])
+        #expect(rows.map(\.value) != ["nl-BE"])
+        #expect(RecipeDisplay.metadata(of: recipe(plain).metadata).rows.map(\.value) == ["cook's own"])
+    }
+
+    @Test("a key written twice keeps the line the facts leave out")
+    func repeatedFactKey() {
+        let source = """
+            ---
+            servings: 4
+            servings: 6
+            ---
+            """
+        let metadata = RecipeDisplay.metadata(of: recipe(source).metadata)
+
+        #expect(metadata.facts.map(\.value) == ["6"])
+        #expect(metadata.rows.map(\.value) == ["4"])
+    }
+
+    @Test("a header key reads as a label")
+    func metadataRowLabel() {
+        #expect(MetadataRow(id: 0, key: "prep-time", value: "30 min").label == "Prep time")
+    }
+
+    @Test("a key the screen has a label for is known however the file writes it")
+    func knownMetadataKey() {
+        #expect(MetadataRow(id: 0, key: "Time Required", value: "1 h").knownKey == .timeRequired)
+        #expect(MetadataRow(id: 0, key: "time-required", value: "1 h").knownKey == .timeRequired)
+        #expect(MetadataRow(id: 0, key: "mood", value: "sunny").knownKey == nil)
+    }
+
+    @Test("staples without an amount are named after the rows, once each")
+    func ingredientStaples() {
+        let source = """
+            Season @{1.2 kg} beef@ with @salt@:staple, @{1/2 tsp} pepper@:staple, and more @salt@:staple.
+            """
+        let ingredientList = RecipeDisplay.ingredientList(of: recipe(source))
+
+        #expect(ingredientList.rows.map(\.name) == ["beef", "pepper"])
+        #expect(ingredientList.staples == ["salt"])
+    }
+
+    @Test("staples are listed as rows when nothing else is")
+    func ingredientStaplesOnly() {
+        let ingredientList = RecipeDisplay.ingredientList(of: recipe("Season with @salt@:staple."))
+
+        #expect(ingredientList.rows.map(\.name) == ["salt"])
+        #expect(ingredientList.staples.isEmpty)
     }
 
     @Test("cookware reached for twice is named once")

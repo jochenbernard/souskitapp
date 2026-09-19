@@ -12,17 +12,18 @@ disagrees with this package, this package is right.
 | Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.body`, `.subheadline`, `.caption2`. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
-| Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet` | The three button styles. |
+| Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sous` | The three button styles, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
-| Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousCallout()`, `SousActivityNote` | The card, the row, the wash, the spinner. |
+| Containers | `.sousSurface(_:)`, `.sousRow()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row, the rows that share one card, the wash, the chip, the spinner. |
+| Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
 
 ## Rules
 
 - Every color but the accent is a system color, named at the call site and picked for its role
   rather than its value: `groupedBackground` for a page, `secondaryGroupedBackground` for a row
-  or a card, `tertiaryFill` for a control, `separator` for a border or a shadow, `.primary` and
-  `.secondary` for text. Dark comes with them, and nothing reaches for
+  or a card, `tertiaryFill` for a control or a chip, `separator` for a border or a shadow,
+  `.primary` and `.secondary` for text. Dark comes with them, and nothing reaches for
   `@Environment(\.colorScheme)` to pick a value.
 - A UIKit color is a static on `Color` in `Color+System`, so a call site never writes
   `Color(.x)`. It is repeated on `ShapeStyle`, as `.groupedBackground` is, unless SwiftUI
@@ -54,9 +55,9 @@ disagrees with this package, this package is right.
   OKLCH, then written to `Color+Accent`, `AccentColor`, and the app icon's `icon.json`, which takes
   it as 0.80392, 0.28235, 0.01961. It carries white text, at 4.6.
 - Set text with `.font(_:)` and a system text style. Six of them are in use: `.largeTitle` for
-  a hero line, `.title` for a landing headline or a step group, `.title3` for a section
-  heading, `.body` for copy and controls, `.subheadline` for quantities and metadata,
-  `.caption2` for an eyebrow.
+  a hero line, `.title` for a landing headline, `.title3` for the step in front of the cook,
+  `.body` for copy and controls, `.subheadline` for quantities and metadata, `.caption2` for
+  an eyebrow.
 - A screen's title is its `.navigationTitle(_:)`, large by default, and is not drawn again in
   the content. Cooking is the one screen that takes `.inline`, where the step in front of the
   cook outranks the recipe's name.
@@ -109,6 +110,9 @@ the release haptic off the press.
 
 A callout draws `.quaternaryAccentFill` inside an accent outline, which is Attention on a
 container, and sets `.accent` on what it holds, so a call site names neither.
+
+A disclosure group takes `.sous` rather than the automatic style, which clips its content, a
+surface's shadow included, and cannot inset its chevron to line up with what is on a surface.
 
 ## Adding to it
 

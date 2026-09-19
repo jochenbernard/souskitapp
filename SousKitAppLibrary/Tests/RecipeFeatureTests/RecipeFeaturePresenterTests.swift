@@ -78,41 +78,39 @@ struct RecipeFeaturePresenterTests {
     }
 
     @MainActor
-    @Test("the ingredients and the steps open, and the cookware stays closed")
+    @Test("the ingredients open, and the cookware stays closed")
     func sectionsOpenByDefault() {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
 
-        #expect(viewModel.expandedSections == [.ingredients, .steps])
+        #expect(viewModel.expandedSections == [.ingredients])
     }
 
     @MainActor
-    @Test("tapping a closed section opens it")
+    @Test("expanding a closed section opens it")
     func openingASection() {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
 
-        makePresenter(viewModel: viewModel).didToggleSection(.cookware)
+        makePresenter(viewModel: viewModel).didChangeIsExpanded(true, of: .cookware)
 
-        #expect(viewModel.expandedSections == [.ingredients, .cookware, .steps])
+        #expect(viewModel.expandedSections == [.ingredients, .cookware])
     }
 
     @MainActor
-    @Test("tapping an open section closes it")
+    @Test("collapsing an open section closes it")
     func closingASection() {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
 
-        makePresenter(viewModel: viewModel).didToggleSection(.ingredients)
+        makePresenter(viewModel: viewModel).didChangeIsExpanded(false, of: .ingredients)
 
-        #expect(viewModel.expandedSections == [.steps])
+        #expect(viewModel.expandedSections.isEmpty)
     }
 
     @MainActor
-    @Test("tapping a section twice leaves it as it was")
-    func togglingASectionBack() {
+    @Test("expanding an open section leaves it open")
+    func openingAnOpenSection() {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
-        let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didToggleSection(.cookware)
-        presenter.didToggleSection(.cookware)
+        makePresenter(viewModel: viewModel).didChangeIsExpanded(true, of: .ingredients)
 
         #expect(viewModel.expandedSections == RecipeSection.openByDefault)
     }

@@ -136,3 +136,6 @@ iOSInjectionProject/
 ### Custom ###
 # Local files
 *.local.*
+
+# The app project's workspace holds the lock that governs the build
+SousKitAppLibrary/Package.resolved

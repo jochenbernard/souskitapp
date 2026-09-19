@@ -4,6 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "SousKitAppLibrary",
+    defaultLocalization: "en",
     platforms: [.iOS(.v27)],
     products: [
         .library(
@@ -28,19 +29,21 @@ let package = Package(
         ),
         .standardTarget(
             name: "CookingFeature",
-            dependencies: ["DesignSystem", "RecipeLibrary"]
+            dependencies: ["DesignSystem", "RecipeLibrary"],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
             name: "CookingFeatureTests",
-            dependencies: ["CookingFeature"]
+            dependencies: ["LocalizationTestSupport", "CookingFeature"]
         ),
         .standardTarget(
             name: "DesignSystem",
-            exclude: ["README.md"]
+            exclude: ["README.md"],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
             name: "DesignSystemTests",
-            dependencies: ["DesignSystem"]
+            dependencies: ["LocalizationTestSupport", "DesignSystem"]
         ),
         .standardTarget(
             name: "FileRecipeLibrary",
@@ -52,23 +55,31 @@ let package = Package(
         ),
         .standardTarget(
             name: "KitchenFeature",
-            dependencies: ["CookingFeature", "RecipeFeature"]
+            dependencies: ["CookingFeature", "RecipeFeature"],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
             name: "KitchenFeatureTests",
-            dependencies: ["KitchenFeature"]
+            dependencies: ["LocalizationTestSupport", "KitchenFeature"]
         ),
+        .standardTarget(name: "LocalizationTestSupport"),
         .standardTarget(
             name: "OnboardingFeature",
-            dependencies: ["DesignSystem", "RecipeLibrary"]
+            dependencies: ["DesignSystem", "RecipeLibrary"],
+            resources: [.process("Resources/Localizable.xcstrings")]
+        ),
+        .standardTestTarget(
+            name: "OnboardingFeatureTests",
+            dependencies: ["LocalizationTestSupport", "OnboardingFeature"]
         ),
         .standardTarget(
             name: "RecipeFeature",
-            dependencies: ["DesignSystem", "RecipeLibrary"]
+            dependencies: ["DesignSystem", "RecipeLibrary"],
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
             name: "RecipeFeatureTests",
-            dependencies: ["RecipeFeature"]
+            dependencies: ["LocalizationTestSupport", "RecipeFeature"]
         ),
         .standardTarget(
             name: "RecipeLibrary",
@@ -106,12 +117,14 @@ private extension Target {
     static func standardTarget(
         name: String,
         dependencies: [Dependency] = [],
-        exclude: [String] = []
+        exclude: [String] = [],
+        resources: [Resource] = []
     ) -> Target {
         .target(
             name: name,
             dependencies: dependencies,
             exclude: exclude,
+            resources: resources,
             swiftSettings: sharedSwiftSettings,
             plugins: sharedPlugins
         )

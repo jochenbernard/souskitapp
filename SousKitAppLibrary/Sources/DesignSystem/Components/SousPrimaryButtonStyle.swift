@@ -9,7 +9,7 @@ public struct SousPrimaryButtonStyle: ButtonStyle {
             configuration.label
                 .sousButtonLabel(.white)
                 // No press scale: the interactive glass already gives under the finger.
-                .glassEffect(.clear.tint(.accent).interactive(), in: shape)
+                .glassEffect(.regular.tint(.accent).interactive(), in: shape)
                 .contentShape(shape)
                 .sensoryFeedback(trigger: isDown) { _, isDown in
                     isDown
@@ -28,7 +28,7 @@ extension ButtonStyle where Self == SousPrimaryButtonStyle {
 }
 
 #Preview("Primary button") {
-    Button("Boeuf Bourguignon") {}
+    Button(action: {}, label: { Text(verbatim: "Boeuf Bourguignon") })
         .buttonStyle(.sousPrimary)
         .padding(SousSpacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

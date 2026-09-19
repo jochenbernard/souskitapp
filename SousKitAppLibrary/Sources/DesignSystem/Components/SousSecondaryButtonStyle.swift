@@ -29,7 +29,7 @@ extension ButtonStyle where Self == SousSecondaryButtonStyle {
 }
 
 #Preview("Secondary button") {
-    Button("Gratin Dauphinois") {}
+    Button(action: {}, label: { Text(verbatim: "Gratin Dauphinois") })
         .buttonStyle(.sousSecondary)
         .padding(SousSpacing.xLarge)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

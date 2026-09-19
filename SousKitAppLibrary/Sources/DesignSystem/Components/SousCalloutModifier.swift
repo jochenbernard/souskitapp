@@ -7,7 +7,6 @@ private struct SousCalloutModifier: ViewModifier {
         let shape = RoundedRectangle(cornerRadius: radius)
 
         return content
-            .font(.body)
             .foregroundStyle(.accent)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, SousSpacing.large)
@@ -33,10 +32,10 @@ extension View {
 
 #Preview("Callout") {
     VStack(alignment: .leading, spacing: SousSpacing.medium) {
-        Text("The folder no longer exists.")
+        Text(verbatim: "The folder no longer exists.")
             .sousCallout()
 
-        Text("This recipe could not be read, and neither could the folder holding it.")
+        Text(verbatim: "This recipe could not be read, and neither could the folder holding it.")
             .sousCallout()
     }
     .sousPagePadding()

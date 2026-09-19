@@ -1,0 +1,71 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Choose folder" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose folder"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map kiezen"
+          }
+        }
+      }
+    },
+    "Setup" : {
+      "comment" : "The eyebrow above the onboarding headline.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setup"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instellen"
+          }
+        }
+      }
+    },
+    "Sous reads your recipes from a folder of .sous files. Pick that folder to start; you can change it later." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sous reads your recipes from a folder of .sous files. Pick that folder to start; you can change it later."
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sous leest je recepten uit een map met .sous-bestanden. Kies die map om te beginnen; je kunt ze later wijzigen."
+          }
+        }
+      }
+    },
+    "Where your recipes live" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where your recipes live"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waar je recepten staan"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -15,6 +15,9 @@ public struct SousMark: View {
         /// The mark for small sizes.
         case twoCurl
 
+        /// The size at and above which the three-curl cut holds together.
+        private static let threeCurlFloor: CGFloat = 24.0
+
         /// Axis positions of the unaccented curls, in units.
         var outerCurlAxes: [CGFloat] {
             switch self {
@@ -46,6 +49,20 @@ public struct SousMark: View {
             case .automatic, .threeCurl: 46.0
             }
         }
+
+        /// The cut drawn, once ``automatic`` is settled against `size` and `colorScheme`.
+        func resolved(size: CGFloat, colorScheme: ColorScheme) -> Self {
+            switch self {
+            case .threeCurl, .twoCurl:
+                return self
+            case .automatic:
+                // Dark takes the two-curl cut at the floor, light only below it.
+                let holds = colorScheme == .dark
+                    ? size > Self.threeCurlFloor
+                    : size >= Self.threeCurlFloor
+                return holds ? .threeCurl : .twoCurl
+            }
+        }
     }
 
     /// A pairing of colors for the mark.
@@ -70,10 +87,15 @@ public struct SousMark: View {
 
         /// The surrounding foreground style.
         case inherited
-    }
 
-    /// The size at and above which the three-curl cut holds together.
-    private static let threeCurlFloor: CGFloat = 24.0
+        /// The colorway drawn, once ``automatic`` is settled against `colorScheme`.
+        func resolved(colorScheme: ColorScheme) -> Self {
+            switch self {
+            case .automatic: colorScheme == .dark ? .reversed : .primary
+            case .primary, .mono, .reversed, .onAccent, .allAccent, .inherited: self
+            }
+        }
+    }
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -115,7 +137,7 @@ public struct SousMark: View {
     /// `nil`.
     @ViewBuilder
     private func strokedPart(_ part: SousMarkShape.Part, in color: Color?) -> some View {
-        let shape = SousMarkShape(part: part, cut: resolvedCut)
+        let shape = SousMarkShape(part: part, cut: cut.resolved(size: size, colorScheme: colorScheme))
         let stroke = SousMarkShape.strokeStyle(size: size)
 
         if let color {
@@ -125,32 +147,10 @@ public struct SousMark: View {
         }
     }
 
-    /// The cut drawn, once ``Cut/automatic`` is settled against `size` and the color scheme.
-    var resolvedCut: Cut {
-        switch cut {
-        case .threeCurl, .twoCurl:
-            return cut
-        case .automatic:
-            // Dark takes the two-curl cut at the floor, light only below it.
-            let holds = colorScheme == .dark
-                ? size > Self.threeCurlFloor
-                : size >= Self.threeCurlFloor
-            return holds ? .threeCurl : .twoCurl
-        }
-    }
-
-    /// The colorway drawn, once ``Colorway/automatic`` is settled against the color scheme.
-    var resolvedColorway: Colorway {
-        switch colorway {
-        case .automatic: colorScheme == .dark ? .reversed : .primary
-        case .primary, .mono, .reversed, .onAccent, .allAccent, .inherited: colorway
-        }
-    }
-
     /// The color of the outer curls and the plate, or `nil` where they take the surrounding
     /// foreground style.
     private var base: Color? {
-        switch resolvedColorway {
+        switch colorway.resolved(colorScheme: colorScheme) {
         case .primary, .mono, .onAccent: .black
         case .reversed: .white
         case .allAccent: .accent
@@ -160,7 +160,7 @@ public struct SousMark: View {
 
     /// The color of the middle curl, or `nil` where it takes the surrounding foreground style.
     private var accent: Color? {
-        switch resolvedColorway {
+        switch colorway.resolved(colorScheme: colorScheme) {
         case .primary, .reversed, .allAccent: .accent
         case .mono: .black
         case .onAccent: .white

@@ -1,19 +1,59 @@
 import SwiftUI
 
 struct CatalogContainers: View {
+    @State private var isExpanded = true
+
     var body: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
-            Text("Boeuf Bourguignon")
+            Text(verbatim: "Boeuf Bourguignon")
                 .sousRow()
 
-            Text("This recipe could not be read")
+            rowGroup
+
+            Text(verbatim: "This recipe could not be read")
                 .sousCallout()
 
             SousActivityNote {
-                Text("Fetching from iCloud.")
+                Text(verbatim: "Fetching from iCloud.")
+            }
+
+            chips
+
+            disclosureGroup
+        }
+    }
+
+    private var rowGroup: some View {
+        SousRowGroup {
+            ForEach(["Crepes", "Gratin Dauphinois", "Madeleines"], id: \.self) { name in
+                Text(verbatim: name)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, SousSpacing.large)
+                    .padding(.vertical, SousSpacing.medium)
             }
         }
-        .font(.body)
+    }
+
+    private var chips: some View {
+        SousFlowLayout(spacing: SousSpacing.small) {
+            ForEach(["dinner", "classic", "french"], id: \.self) { tag in
+                Text(verbatim: tag)
+                    .sousChip()
+            }
+        }
+    }
+
+    private var disclosureGroup: some View {
+        DisclosureGroup(
+            isExpanded: $isExpanded,
+            content: { gratinStep.sousRow() },
+            label: { Text(verbatim: "Gratin Dauphinois") }
+        )
+        .disclosureGroupStyle(.sous)
+    }
+
+    private var gratinStep: Text {
+        Text(verbatim: "Rub a gratin dish with 1 clove garlic, butter it with 20 g butter, and heat the oven to 150C.")
     }
 }
 

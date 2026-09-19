@@ -18,7 +18,6 @@ public struct SousActivityNote<Label: View>: View {
                 .tint(.accent)
 
             label
-                .font(.body)
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, SousSpacing.small)
@@ -27,7 +26,7 @@ public struct SousActivityNote<Label: View>: View {
 
 #Preview("Activity note") {
     SousActivityNote {
-        Text("Fetching from iCloud.")
+        Text(verbatim: "Fetching from iCloud.")
     }
     .padding(SousSpacing.xLarge)
     .frame(

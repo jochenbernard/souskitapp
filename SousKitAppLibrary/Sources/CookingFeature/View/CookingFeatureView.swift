@@ -7,6 +7,12 @@ struct CookingFeatureView: View {
     private let presenter: CookingFeaturePresenterProtocol
     private let viewModel: CookingFeatureViewModel
 
+    // A comfortable line length for the `.title3` steps, growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .title3) private var stepsWidth = 720.0
+
+    // A `.body` number with room around it, growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var stepNumberDiameter = 32.0
+
     init(
         presenter: CookingFeaturePresenterProtocol,
         viewModel: CookingFeatureViewModel
@@ -18,8 +24,9 @@ struct CookingFeatureView: View {
     var body: some View {
         ScrollView {
             steps
+                .frame(maxWidth: stepsWidth)
                 .sousPagePadding()
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity)
         }
         .sousPage()
         .navigationTitle(navigationTitle)
@@ -40,7 +47,7 @@ struct CookingFeatureView: View {
     }
 
     private var steps: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.section) {
+        VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
             ForEach(StepNumbering.numberedGroups(of: viewModel.recipe)) { numbered in
                 groupView(numbered)
             }
@@ -48,12 +55,10 @@ struct CookingFeatureView: View {
     }
 
     private func groupView(_ numbered: NumberedGroup) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
+        VStack(alignment: .leading, spacing: SousSpacing.small) {
             groupName(numbered.group)
 
-            ForEach(numbered.numberedSteps, id: \.number) { number, step in
-                stepView(step, number: number)
-            }
+            stepRows(numbered)
         }
     }
 
@@ -61,20 +66,36 @@ struct CookingFeatureView: View {
     private func groupName(_ group: StepGroup) -> some View {
         if let name = group.name {
             Text(verbatim: name)
-                .font(.title)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, SousSpacing.xLarge)
+        }
+    }
+
+    private func stepRows(_ numbered: NumberedGroup) -> some View {
+        SousRowGroup(dividerInset: SousSpacing.xLarge) {
+            ForEach(numbered.numberedSteps, id: \.number) { number, step in
+                stepView(step, number: number)
+            }
         }
     }
 
     private func stepView(_ step: Step, number: Int) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.small) {
-            Text(verbatim: String(number))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.large) {
+            stepNumber(number)
 
             stepProse(step)
                 .font(.title3)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        // The number is the row's tallest line, so padding it evenly sets it as far from the top as from the side.
+        .padding(SousSpacing.xLarge)
+    }
+
+    private func stepNumber(_ number: Int) -> some View {
+        Text(verbatim: String(number))
+            .monospacedDigit()
+            .frame(width: stepNumberDiameter, height: stepNumberDiameter)
+            .background(.tertiaryFill, in: Circle())
     }
 
     private func stepProse(_ step: Step) -> Text {
@@ -84,16 +105,17 @@ struct CookingFeatureView: View {
     private var exitButton: some View {
         Button(role: .close, action: presenter.didTapExit)
             .confirmationDialog(
-                "Stop cooking?",
+                Text("Are you sure you want to stop cooking?", bundle: .module),
                 isPresented: isConfirmingExit,
-                titleVisibility: .visible
-            ) {
-                Button(
-                    "Stop cooking",
-                    role: .destructive,
-                    action: presenter.didConfirmExit
-                )
-            }
+                titleVisibility: .visible,
+                actions: { confirmExitButton }
+            )
+    }
+
+    private var confirmExitButton: some View {
+        Button(role: .destructive, action: presenter.didConfirmExit) {
+            Text("Stop cooking", bundle: .module)
+        }
     }
 
     private var isConfirmingExit: Binding<Bool> {

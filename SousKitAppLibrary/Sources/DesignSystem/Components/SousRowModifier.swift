@@ -23,13 +23,12 @@ extension View {
 
 #Preview("Row") {
     VStack(alignment: .leading, spacing: SousSpacing.medium) {
-        Text("Boeuf Bourguignon")
+        Text(verbatim: "Boeuf Bourguignon")
             .sousRow()
 
-        Text("Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
+        Text(verbatim: "Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
             .sousRow()
     }
-    .font(.body)
     .sousPagePadding()
     .frame(
         maxWidth: .infinity,

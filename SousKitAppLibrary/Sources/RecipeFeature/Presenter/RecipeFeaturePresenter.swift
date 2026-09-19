@@ -34,11 +34,11 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         viewModel.recipeContent = recipeContent
     }
 
-    func didToggleSection(_ section: RecipeSection) {
-        if viewModel.expandedSections.contains(section) {
-            viewModel.expandedSections.remove(section)
-        } else {
+    func didChangeIsExpanded(_ isExpanded: Bool, of section: RecipeSection) {
+        if isExpanded {
             viewModel.expandedSections.insert(section)
+        } else {
+            viewModel.expandedSections.remove(section)
         }
     }
 

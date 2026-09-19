@@ -73,18 +73,17 @@ struct KitchenFeatureView: View {
 
     private var readingNote: some View {
         SousActivityNote {
-            Text("Reading the folder.")
+            Text("Reading the folder.", bundle: .module)
         }
     }
 
     private var emptyNote: some View {
         VStack(alignment: .leading, spacing: SousSpacing.small) {
-            Text("Nothing here yet")
+            Text("Nothing here yet", bundle: .module)
 
-            Text("Put .sous files in this folder and they are listed here.")
+            Text("Put .sous files in this folder and they are listed here.", bundle: .module)
                 .foregroundStyle(.secondary)
         }
-        .font(.body)
     }
 
     private func recipeRows(_ recipeEntries: [RecipeEntry]) -> some View {
@@ -99,13 +98,12 @@ struct KitchenFeatureView: View {
     }
 
     private func failureNote(_ message: String) -> some View {
-        SousFailureNote(Text("This folder could not be read"), message: message)
+        SousFailureNote(Text("This folder could not be read", bundle: .module), message: message)
     }
 
     private func recipeRow(_ recipeEntry: RecipeEntry) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
             Text(verbatim: recipeEntry.name)
-                .font(.body)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             availabilityBadge(recipeEntry.availability)
@@ -127,44 +125,61 @@ struct KitchenFeatureView: View {
                 .overlay {
                     ProgressView()
                         .controlSize(.small)
-                        .accessibilityLabel("Downloading from iCloud")
+                        .accessibilityLabel(Text("Downloading from iCloud", bundle: .module))
                 }
 
         case .notDownloaded:
             Image(systemName: "icloud.and.arrow.down")
                 .foregroundStyle(.secondary)
-                .accessibilityLabel("In iCloud, not downloaded")
+                .accessibilityLabel(Text("In iCloud, not downloaded", bundle: .module))
         }
     }
 
     @ViewBuilder
     private var debugMenu: some View {
         #if DEBUG
-        Menu("Debug", systemImage: "ladybug") {
-            Button(
-                "Reset the app",
-                systemImage: "arrow.counterclockwise",
-                role: .destructive,
-                action: presenter.didTapReset
-            )
-        }
+        Menu(
+            content: { resetButton },
+            label: {
+                Label(
+                    title: { Text("Debug", bundle: .module) },
+                    icon: { Image(systemName: "ladybug") }
+                )
+            }
+        )
         .confirmationDialog(
-            "Reset the app?",
+            Text("Are you sure you want to reset the app?", bundle: .module),
             isPresented: isConfirmingReset,
             titleVisibility: .visible,
-            actions: {
-                Button(
-                    "Reset the app",
-                    role: .destructive,
-                    action: presenter.didConfirmReset
-                )
-            },
-            message: {
-                Text("The folder is forgotten and setup starts over. Recipes on disk are left alone.")
-            }
+            actions: { confirmResetButton },
+            message: { resetNote }
         )
         #endif
     }
+
+    #if DEBUG
+    private var resetButton: some View {
+        Button(role: .destructive, action: presenter.didTapReset) {
+            Label(
+                title: { Text("Reset the app", bundle: .module) },
+                icon: { Image(systemName: "arrow.counterclockwise") }
+            )
+        }
+    }
+
+    private var confirmResetButton: some View {
+        Button(role: .destructive, action: presenter.didConfirmReset) {
+            Text("Reset the app", bundle: .module)
+        }
+    }
+
+    private var resetNote: some View {
+        Text(
+            "The folder is forgotten and setup starts over. Recipes on disk are left alone.",
+            bundle: .module
+        )
+    }
+    #endif
 
     @ViewBuilder
     private func screenView(for screen: KitchenScreen) -> some View {

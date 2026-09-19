@@ -30,12 +30,12 @@ public struct SousFailureNote: View {
 #Preview("Failure note") {
     VStack(alignment: .leading, spacing: SousSpacing.medium) {
         SousFailureNote(
-            Text("This folder could not be read"),
+            Text(verbatim: "This folder could not be read"),
             message: "The folder no longer exists."
         )
 
         SousFailureNote(
-            Text("This recipe could not be read"),
+            Text(verbatim: "This recipe could not be read"),
             message: "The recipe no longer exists."
         )
     }

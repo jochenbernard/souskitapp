@@ -7,6 +7,11 @@ struct RecipeFeatureView: View {
     private let presenter: RecipeFeaturePresenterProtocol
     private let viewModel: RecipeFeatureViewModel
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    // The cook button's width where the screen is wide, growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var wideCookButtonWidth = 360.0
+
     init(
         presenter: RecipeFeaturePresenterProtocol,
         viewModel: RecipeFeatureViewModel
@@ -51,15 +56,7 @@ struct RecipeFeatureView: View {
             readingNote
 
         case .recipe(let recipe):
-            if recipe.steps.isEmpty, RecipeDisplay.metadataRows(of: recipe.metadata).isEmpty {
-                emptyNote
-            } else {
-                RecipeBodyView(
-                    presenter: presenter,
-                    recipe: recipe,
-                    expandedSections: viewModel.expandedSections
-                )
-            }
+            recipeBody(recipe)
 
         case .failure(let message):
             failureNote(message)
@@ -72,22 +69,37 @@ struct RecipeFeatureView: View {
         }
     }
 
+    @ViewBuilder
+    private func recipeBody(_ recipe: Recipe) -> some View {
+        let metadata = RecipeDisplay.metadata(of: recipe.metadata)
+
+        if recipe.steps.isEmpty, metadata.isEmpty {
+            emptyNote
+        } else {
+            RecipeBodyView(
+                presenter: presenter,
+                recipe: recipe,
+                metadata: metadata,
+                expandedSections: viewModel.expandedSections
+            )
+        }
+    }
+
     private var emptyNote: some View {
-        Text("This recipe is empty.")
-            .font(.body)
+        Text("This recipe is empty.", bundle: .module)
             .foregroundStyle(.secondary)
     }
 
     private func failureNote(_ message: String) -> some View {
-        SousFailureNote(Text("This recipe could not be read"), message: message)
+        SousFailureNote(Text("This recipe could not be read", bundle: .module), message: message)
     }
 
     @ViewBuilder
     private var readingMessage: some View {
         if viewModel.recipeEntry.availability == .downloaded {
-            Text("Reading the recipe.")
+            Text("Reading the recipe.", bundle: .module)
         } else {
-            Text("Fetching from iCloud.")
+            Text("Fetching from iCloud.", bundle: .module)
         }
     }
 
@@ -100,10 +112,11 @@ struct RecipeFeatureView: View {
 
     private var cookButton: some View {
         Button(action: presenter.didTapCook) {
-            Text("Start cooking")
+            Text("Start cooking", bundle: .module)
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.sousPrimary)
+        .frame(maxWidth: horizontalSizeClass == .regular ? wideCookButtonWidth : .infinity)
         .sousPagePadding()
     }
 }

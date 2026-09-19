@@ -58,23 +58,22 @@ public struct SousCatalog: View {
     private var typeSection: some View {
         CatalogSection(number: "02", title: "Type") {
             VStack(alignment: .leading, spacing: SousSpacing.large) {
-                Text("Madeleines")
+                Text(verbatim: "Madeleines")
                     .font(.largeTitle)
 
-                Text("Boeuf Bourguignon")
+                Text(verbatim: "Boeuf Bourguignon")
                     .font(.title)
 
-                Text("Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
+                Text(verbatim: "Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
                     .font(.title3)
 
                 Text(
-                    """
+                    verbatim: """
                     Peel 1.2 kg potatoes and slice them 3 mm thick on a mandoline, then \
                     bring them to a simmer in 500 ml cream and 300 ml milk in a heavy pot \
                     with salt, black pepper, and 1/4 tsp nutmeg.
                     """
                 )
-                .font(.body)
 
                 Text(verbatim: "1.2 kg \u{B7} 150C \u{B7} 3 h \u{B7} serves 6")
                     .font(.subheadline)
@@ -126,13 +125,13 @@ public struct SousCatalog: View {
     private var buttonSection: some View {
         CatalogSection(number: "05", title: "Buttons") {
             VStack(alignment: .leading, spacing: SousSpacing.medium) {
-                Button("Boeuf Bourguignon", action: {})
+                Button(action: {}, label: { Text(verbatim: "Boeuf Bourguignon") })
                     .buttonStyle(.sousPrimary)
 
-                Button("Gratin Dauphinois", action: {})
+                Button(action: {}, label: { Text(verbatim: "Gratin Dauphinois") })
                     .buttonStyle(.sousSecondary)
 
-                Button("Vinaigrette", action: {})
+                Button(action: {}, label: { Text(verbatim: "Vinaigrette") })
                     .buttonStyle(.sousQuiet)
             }
         }
