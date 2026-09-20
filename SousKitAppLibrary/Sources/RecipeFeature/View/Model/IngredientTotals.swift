@@ -11,9 +11,12 @@ enum IngredientTotals {
 
         for ingredient in ingredients {
             let key = Normalization.normalized(ingredient.name)
-            let index = indices[key] ?? gathered.count
+            let index: Int
 
-            if index == gathered.count {
+            if let known = indices[key] {
+                index = known
+            } else {
+                index = gathered.count
                 indices[key] = index
                 gathered.append((ingredient.name, []))
             }

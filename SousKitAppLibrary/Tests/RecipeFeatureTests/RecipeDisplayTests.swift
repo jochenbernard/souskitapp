@@ -121,6 +121,19 @@ struct RecipeDisplayTests {
         #expect(ingredientList.staples == ["salt"])
     }
 
+    @Test("a staple the list already has a row for is not named after it as well")
+    func stapleWithARowOfItsOwn() {
+        let source = """
+            Season @{1.2 kg} beef@ with @salt@:staple.
+
+            Stir in @{1/4 tsp} salt@:staple.
+            """
+        let ingredientList = RecipeDisplay.ingredientList(of: recipe(source))
+
+        #expect(ingredientList.rows.map(\.name) == ["beef", "salt"])
+        #expect(ingredientList.staples.isEmpty)
+    }
+
     @Test("staples are listed as rows when nothing else is")
     func ingredientStaplesOnly() {
         let ingredientList = RecipeDisplay.ingredientList(of: recipe("Season with @salt@:staple."))
@@ -149,9 +162,10 @@ struct RecipeDisplayTests {
 
             Stir in more @salt@:staple and return it to the #frying pan#.
             """
+        let parsed = recipe(source)
 
-        #expect(RecipeDisplay.ingredientList(of: recipe(source)).staples == ["Salt"])
-        #expect(RecipeDisplay.cookwareNames(of: recipe(source)) == ["Frying pan"])
+        #expect(RecipeDisplay.ingredientList(of: parsed).staples == ["Salt"])
+        #expect(RecipeDisplay.cookwareNames(of: parsed) == ["Frying pan"])
     }
 
     @Test("cookware reached for twice is named once")

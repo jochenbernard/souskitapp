@@ -16,6 +16,7 @@ enum RecipeDisplay {
     /// The ingredients to list, with the staples written without an amount named after them.
     ///
     /// Where every ingredient is such a staple, they are all listed and none is named after.
+    /// A staple the list already has a row for is left to that row rather than named twice.
     static func ingredientList(of recipe: Recipe) -> IngredientList {
         let ingredients = recipe.ingredients
         let staples = ingredients.filter(isNamedAfter)
@@ -25,9 +26,12 @@ enum RecipeDisplay {
             return IngredientList(rows: IngredientTotals.rows(of: staples), staples: [])
         }
 
+        let listedNames = Set(listed.map({ Normalization.normalized($0.name) }))
+
         return IngredientList(
             rows: IngredientTotals.rows(of: listed),
             staples: uniqueNames(staples.map(\.name))
+                .filter({ !listedNames.contains(Normalization.normalized($0)) })
         )
     }
 
