@@ -1,0 +1,127 @@
+import SousKit
+
+/// Gathers a recipe's ingredient annotations into the rows an ingredients list shows.
+enum IngredientTotals {
+    /// The rows for these ingredients, one to a name however a step capitalizes or accents it,
+    /// with the amounts under a shared unit summed.
+    static func rows(of ingredients: [Ingredient]) -> [IngredientRow] {
+        var named: [(name: String, key: String)] = []
+        var amounts: [String: [Amount]] = [:]
+
+        for ingredient in ingredients {
+            let key = Normalization.normalized(ingredient.name)
+
+            if amounts[key] == nil {
+                named.append((ingredient.name, key))
+                amounts[key] = []
+            }
+
+            if let amount = ingredient.amount {
+                amounts[key, default: []].append(amount)
+            }
+        }
+
+        return named.map({ IngredientRow(name: $0.name, amount: total(of: amounts[$0.key, default: []])) })
+    }
+
+    /// One term of a row: an amount as written, or the amounts sharing its unit summed into it.
+    private struct Term {
+        /// The unit these amounts carry, or `nil` where they carry none.
+        let unit: String?
+
+        /// The first of these amounts, as the recipe writes it.
+        let text: String
+
+        /// The low and the high of these amounts, or `nil` where the first holds no number.
+        var bounds: (low: Double, high: Double)?
+
+        /// Whether a second amount was summed into this term.
+        var isSummed = false
+
+        init(_ amount: Amount) {
+            self.unit = amount.unit
+            self.text = amount.text
+            self.bounds = Self.bounds(of: amount.kind)
+        }
+
+        /// Whether an amount carrying the unit sums into this term.
+        func sums(_ unit: String?) -> Bool {
+            bounds != nil && self.unit == unit
+        }
+
+        /// The low and the high one amount covers, or `nil` where it holds no number to sum.
+        private static func bounds(of kind: Amount.Kind) -> (low: Double, high: Double)? {
+            switch kind {
+            case let .precise(quantity): (quantity.value, quantity.value)
+            case let .range(low, high): (low.value, high.value)
+            case .imprecise: nil
+            }
+        }
+    }
+
+    /// What joins the amounts of a row that could not be summed into one.
+    private static let separator = " + "
+
+    private static let wholeSuffix = ".0"
+
+    /// The scale a summed value is rounded on, which keeps three decimals.
+    private static let precision = 1_000.0
+
+    /// What a row shows for these amounts, or `nil` where there are none.
+    private static func total(of amounts: [Amount]) -> String? {
+        guard !amounts.isEmpty else {
+            return nil
+        }
+
+        return terms(of: amounts)
+            .map(written)
+            .joined(separator: separator)
+    }
+
+    /// The amounts gathered into terms, one per unit that can be summed and one per amount that cannot.
+    private static func terms(of amounts: [Amount]) -> [Term] {
+        var terms: [Term] = []
+
+        for amount in amounts {
+            let incoming = Term(amount)
+
+            guard
+                let added = incoming.bounds,
+                let index = terms.firstIndex(where: { $0.sums(incoming.unit) }),
+                let total = terms[index].bounds
+            else {
+                terms.append(incoming)
+                continue
+            }
+
+            terms[index].bounds = (total.low + added.low, total.high + added.high)
+            terms[index].isSummed = true
+        }
+
+        return terms
+    }
+
+    /// What one term reads as: the amount as written, or the sum where more than one was added.
+    private static func written(_ term: Term) -> String {
+        guard term.isSummed, let bounds = term.bounds else {
+            return term.text
+        }
+
+        let total = bounds.low == bounds.high
+            ? number(bounds.low)
+            : "\(number(bounds.low))-\(number(bounds.high))"
+
+        guard let unit = term.unit else {
+            return total
+        }
+
+        return "\(total) \(unit)"
+    }
+
+    /// The value written without a trailing `.0`, rounded to three decimals.
+    private static func number(_ value: Double) -> String {
+        let text = String((value * precision).rounded() / precision)
+
+        return text.hasSuffix(wholeSuffix) ? String(text.dropLast(wholeSuffix.count)) : text
+    }
+}

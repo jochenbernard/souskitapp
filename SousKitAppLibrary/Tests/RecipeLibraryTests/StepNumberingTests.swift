@@ -45,7 +45,7 @@ struct StepNumberingTests {
             ## Court-Bouillon
             Soften it.
 
-            ## Notes
+            ## Assemble
 
             ## Rouille
             Pound it.

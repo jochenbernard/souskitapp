@@ -178,11 +178,24 @@ private func previewMetadata(_ header: String) -> MetadataDisplay {
             metadata: previewMetadata(
                 """
                 ---
-                title: Crepes
-                servings: 4
-                yield: [12 crepes]
-                prep-time: 10 min
-                source: https://example.com/crepes
+                title: Gratin Dauphinois
+                language: en
+                version: 1.0
+                servings: 6
+                yield: [1.8 kg]
+                tags: [comfort food, french, make-ahead]
+                diet: [vegetarian]
+                allergens: [dairy]
+                source: https://example.com/gratin-dauphinois
+                author: Jean Dupont
+                license: CC-BY-4.0
+                image: images/gratin-dauphinois.jpg
+                prep-time: 30 min
+                cook-time: 1 h 30 min
+                make-ahead: best assembled a day ahead and baked from cold
+                nutrition:
+                  calories: 3300 kcal
+                  protein: 44 g
                 ---
                 """
             )

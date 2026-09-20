@@ -44,7 +44,7 @@ struct RecipeFeaturePresenterTests {
                 servings: 4
                 ---
 
-                Whisk @{4} eggs@ for ~1 min~ in a #bowl#.
+                Whisk @{4} eggs@ for ~1 min~ in a #mixing bowl#.
                 """
         )
 
@@ -58,7 +58,7 @@ struct RecipeFeaturePresenterTests {
         #expect(recipe.metadata.title == "Crepes")
         #expect(recipe.metadata.servings == 4.0)
         #expect(recipe.ingredients.map(\.name) == ["eggs"])
-        #expect(recipe.cookware.map(\.name) == ["bowl"])
+        #expect(recipe.cookware.map(\.name) == ["mixing bowl"])
         #expect(recipe.steps.count == 1)
     }
 

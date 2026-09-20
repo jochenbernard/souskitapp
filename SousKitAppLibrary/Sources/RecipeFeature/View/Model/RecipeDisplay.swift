@@ -18,13 +18,16 @@ enum RecipeDisplay {
     /// Where every ingredient is such a staple, they are all listed and none is named after.
     static func ingredientList(of recipe: Recipe) -> IngredientList {
         let staples = recipe.ingredients.filter({ $0.flags.isStaple && $0.amount == nil })
-        let rows = recipe.ingredients.filter({ !$0.flags.isStaple || $0.amount != nil })
+        let listed = recipe.ingredients.filter({ !$0.flags.isStaple || $0.amount != nil })
 
-        guard !rows.isEmpty else {
-            return IngredientList(rows: staples, staples: [])
+        guard !listed.isEmpty else {
+            return IngredientList(rows: IngredientTotals.rows(of: staples), staples: [])
         }
 
-        return IngredientList(rows: rows, staples: uniqueNames(staples.map(\.name)))
+        return IngredientList(
+            rows: IngredientTotals.rows(of: listed),
+            staples: uniqueNames(staples.map(\.name))
+        )
     }
 
     /// Items joined into a list in the language the screen is shown in, such as "salt and black pepper".
@@ -202,9 +205,10 @@ enum RecipeDisplay {
         return nil
     }
 
+    /// The names in the order they are written, each kept once however the file writes it.
     private static func uniqueNames(_ names: [String]) -> [String] {
         var seen: Set<String> = []
 
-        return names.filter({ seen.insert($0).inserted })
+        return names.filter({ seen.insert(Normalization.normalized($0)).inserted })
     }
 }
