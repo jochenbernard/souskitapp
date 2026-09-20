@@ -16,15 +16,23 @@ enum RecipeDisplay {
     /// The ingredients to list, with the staples written without an amount named after them.
     ///
     /// Where every ingredient is such a staple, they are all listed and none is named after.
+    /// A staple the list already has a row for is left to that row rather than named twice.
     static func ingredientList(of recipe: Recipe) -> IngredientList {
-        let staples = recipe.ingredients.filter({ $0.flags.isStaple && $0.amount == nil })
-        let rows = recipe.ingredients.filter({ !$0.flags.isStaple || $0.amount != nil })
+        let ingredients = recipe.ingredients
+        let staples = ingredients.filter(isNamedAfter)
+        let listed = ingredients.filter({ !isNamedAfter($0) })
 
-        guard !rows.isEmpty else {
-            return IngredientList(rows: staples, staples: [])
+        guard !listed.isEmpty else {
+            return IngredientList(rows: IngredientTotals.rows(of: staples), staples: [])
         }
 
-        return IngredientList(rows: rows, staples: uniqueNames(staples.map(\.name)))
+        let listedNames = Set(listed.map({ Normalization.normalized($0.name) }))
+
+        return IngredientList(
+            rows: IngredientTotals.rows(of: listed),
+            staples: uniqueNames(staples.map(\.name))
+                .filter({ !listedNames.contains(Normalization.normalized($0)) })
+        )
     }
 
     /// Items joined into a list in the language the screen is shown in, such as "salt and black pepper".
@@ -202,9 +210,15 @@ enum RecipeDisplay {
         return nil
     }
 
+    /// Whether the ingredient is a staple written without an amount, which is named after the list.
+    private static func isNamedAfter(_ ingredient: Ingredient) -> Bool {
+        ingredient.flags.isStaple && ingredient.amount == nil
+    }
+
+    /// The names in the order they are written, each kept once however the file writes it.
     private static func uniqueNames(_ names: [String]) -> [String] {
         var seen: Set<String> = []
 
-        return names.filter({ seen.insert($0).inserted })
+        return names.filter({ seen.insert(Normalization.normalized($0)).inserted })
     }
 }

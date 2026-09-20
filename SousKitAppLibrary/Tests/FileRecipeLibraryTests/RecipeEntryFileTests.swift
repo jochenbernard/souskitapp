@@ -15,7 +15,7 @@ struct RecipeEntryFileTests {
 
     @Test("underscores part the words of a name")
     func underscoredName() {
-        #expect(recipeEntry(named: "creme_brulee.sous").name == "creme brulee")
+        #expect(recipeEntry(named: "moules_marinieres.sous").name == "moules marinieres")
     }
 
     @Test("spaces part the words of a name")

@@ -33,14 +33,14 @@ final class RecipeTextReaderTests {
 
     @Test("the markers are left as written")
     func unparsed() throws {
-        let recipeEntry = try directory.writeFile(named: "vinaigrette.sous", "Whisk ~1 min~ in a #bowl#.")
+        let recipeEntry = try directory.writeFile(named: "crepes.sous", "Whisk ~1 min~ in a #mixing bowl#.")
 
-        #expect(try readText(of: recipeEntry) == "Whisk ~1 min~ in a #bowl#.")
+        #expect(try readText(of: recipeEntry) == "Whisk ~1 min~ in a #mixing bowl#.")
     }
 
     @Test("text beyond ASCII reads back unchanged")
     func nonASCII() throws {
-        let text = "Cr\u{EA}pes with cr\u{E8}me fra\u{EE}che, 180\u{B0}C"
+        let text = "Whisk @{\u{0663} g} caster sugar@ with @{\u{FF13}} eggs@."
         let recipeEntry = try directory.writeFile(named: "crepes.sous", text)
 
         #expect(try readText(of: recipeEntry) == text)

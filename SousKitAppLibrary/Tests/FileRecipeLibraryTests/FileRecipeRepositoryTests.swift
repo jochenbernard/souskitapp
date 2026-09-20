@@ -27,10 +27,10 @@ final class FileRecipeRepositoryTests: Sendable {
             ---
             title: Crepes
             servings: 4
-            tags: [dessert, french]
+            tags: [dessert, classic, french]
             ---
 
-            Whisk @{200 g} flour@ into a batter with @{4} eggs@ in a #bowl#, then rest it ~1 h~.
+            Whisk @{200 g} flour@ into a batter with @{4} eggs@ in a #mixing bowl#, then rest it ~1 h~.
 
             Wipe a #crepe pan# with @{10 g} butter@ and cook each crepe ~1 min~ a side.
             """
@@ -61,7 +61,7 @@ final class FileRecipeRepositoryTests: Sendable {
 
         #expect(recipe.metadata.title == "Crepes")
         #expect(recipe.metadata.servings == 4.0)
-        #expect(recipe.metadata.tags == ["dessert", "french"])
+        #expect(recipe.metadata.tags == ["dessert", "classic", "french"])
     }
 
     @Test("the ingredients read back in document order, with their amounts")
@@ -76,7 +76,7 @@ final class FileRecipeRepositoryTests: Sendable {
     func cookware() async throws {
         let recipe = try await readRecipe(of: crepes())
 
-        #expect(recipe.cookware.map(\.name) == ["bowl", "crepe pan"])
+        #expect(recipe.cookware.map(\.name) == ["mixing bowl", "crepe pan"])
     }
 
     @Test("a blank line parts one step from the next")

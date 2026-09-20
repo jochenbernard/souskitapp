@@ -130,21 +130,31 @@ private func previewRecipe() -> Recipe {
     SousParser().parseRecipe(
         """
         ---
-        title: Crepes
-        servings: 4
+        title: Quiche Lorraine
+        language: en
+        version: 1.0
+        servings: 6
+        prep-time: 30 min
+        cook-time: 50 min
+        tags: [lunch, classic, french]
+        allergens: [gluten, dairy, eggs]
         ---
 
-        ## Batter
+        ## Pastry
+        Rub @{125 g} butter@ into @{250 g} flour@ with @{1/2 tsp} salt@:staple in a
+        #mixing bowl# until it looks like breadcrumbs, bind it with @{3 tbsp} water@, and
+        rest the dough in the fridge for ~30 min~.
 
-        Whisk @{200 g} flour@ into a batter with @{4} eggs@, @{500 ml} milk@, and
-        @{1/2 tsp} salt@:staple in a #bowl#, then rest it ~1 h~.
+        ## Filling
+        Fry @{200 g} lardons@ in a #frying pan# over medium heat for ~5-6 min~ until the
+        fat runs, drain them, and stir them through @{4} eggs@ beaten with
+        @{300 ml} cream@, @{1/4 tsp} nutmeg@, and @black pepper@:staple.
 
-        ## Crepes
-
-        Wipe a #crepe pan# with @{10 g} butter@ over medium heat, ladle in a thin layer,
-        and cook each crepe for ~1 min~ a side until lacy and gold.
-
-        Stack them under a cloth and serve with sugar and lemon.
+        ## Assemble
+        Roll the >pastry> out and line a 24 cm #tart tin#. Cover it with @parchment@:non-food,
+        fill it with @{500 g} baking beans@:non-food, and bake it blind at 190C for ~15 min~.
+        Lift them out, pour in the >filling>, scatter over @{50 g} gruyere@?, and bake at
+        180C for ~35 min~ until just set.
         """
     )
     .value

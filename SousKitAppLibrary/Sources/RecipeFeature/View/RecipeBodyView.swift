@@ -133,10 +133,10 @@ struct RecipeBodyView: View {
         .disclosureGroupStyle(.sous)
     }
 
-    private func ingredientRows(_ ingredients: [Ingredient]) -> some View {
+    private func ingredientRows(_ rows: [IngredientRow]) -> some View {
         SousRowGroup {
-            ForEach(ingredients.indices, id: \.self) { index in
-                ingredientRow(ingredients[index])
+            ForEach(rows, id: \.name) { row in
+                ingredientRow(row)
             }
         }
     }
@@ -176,13 +176,13 @@ struct RecipeBodyView: View {
         }
     }
 
-    private func ingredientRow(_ ingredient: Ingredient) -> some View {
+    private func ingredientRow(_ row: IngredientRow) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
-            Text(verbatim: ingredient.name)
+            Text(verbatim: row.name)
 
             Spacer(minLength: 0.0)
 
-            amountText(ingredient.amount)
+            amountText(row.amount)
         }
         .padding(.horizontal, SousSpacing.large)
         .padding(.vertical, SousSpacing.medium)
@@ -200,9 +200,9 @@ struct RecipeBodyView: View {
     }
 
     @ViewBuilder
-    private func amountText(_ amount: Amount?) -> some View {
+    private func amountText(_ amount: String?) -> some View {
         if let amount {
-            Text(verbatim: amount.text)
+            Text(verbatim: amount)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
         }
@@ -232,18 +232,25 @@ private func previewRecipe() -> Recipe {
     SousParser().parseRecipe(
         """
         ---
-        title: Crepes
-        servings: 4
-        yield: [12 crepes]
-        prep-time: 10 min
-        tags: [dessert, classic, french]
+        title: Brioche
+        servings: 10
+        yield: [1 loaf]
+        prep-time: 40 min
+        cook-time: 55 min
+        tags: [baking, classic, french]
+        allergens: [gluten, dairy, eggs]
         ---
 
-        Whisk @{200 g} flour@ into a batter with @{4} eggs@, @{500 ml} milk@, and
-        @{1/2 tsp} salt@:staple in a #bowl#, then rest it ~1 h~.
+        Mix @{500 g} flour@, @{60 g} caster sugar@, @{10 g} salt@:staple, and
+        @{=10 g} yeast@ in a #mixing bowl#, add @{6} eggs@ and @{60 ml} milk@, and work
+        the dough until it pulls away clean.
 
-        Wipe a #crepe pan# with @{10 g} butter@ over medium heat, ladle in a thin layer,
-        and cook each crepe for ~1 min~ a side until lacy and gold.
+        Beat @{250 g} butter@ in a piece at a time, then bring the dough together and
+        refrigerate it ~overnight~ (or up to ~2 days~).
+
+        The next day, shape it into a #loaf tin# buttered with @{10 g} butter@, prove it
+        until puffy, about ~2-3 h~, then bake at 180C for ~45-55 min~, tenting it with
+        @foil@:non-food once it is deep brown, until it sounds hollow underneath.
         """
     )
     .value
