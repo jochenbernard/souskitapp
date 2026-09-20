@@ -17,8 +17,9 @@ enum RecipeDisplay {
     ///
     /// Where every ingredient is such a staple, they are all listed and none is named after.
     static func ingredientList(of recipe: Recipe) -> IngredientList {
-        let staples = recipe.ingredients.filter({ $0.flags.isStaple && $0.amount == nil })
-        let listed = recipe.ingredients.filter({ !$0.flags.isStaple || $0.amount != nil })
+        let ingredients = recipe.ingredients
+        let staples = ingredients.filter(isNamedAfter)
+        let listed = ingredients.filter({ !isNamedAfter($0) })
 
         guard !listed.isEmpty else {
             return IngredientList(rows: IngredientTotals.rows(of: staples), staples: [])
@@ -203,6 +204,11 @@ enum RecipeDisplay {
         }
 
         return nil
+    }
+
+    /// Whether the ingredient is a staple written without an amount, which is named after the list.
+    private static func isNamedAfter(_ ingredient: Ingredient) -> Bool {
+        ingredient.flags.isStaple && ingredient.amount == nil
     }
 
     /// The names in the order they are written, each kept once however the file writes it.

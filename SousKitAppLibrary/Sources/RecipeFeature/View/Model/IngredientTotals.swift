@@ -1,3 +1,4 @@
+import Foundation
 import SousKit
 
 /// Gathers a recipe's ingredient annotations into the rows an ingredients list shows.
@@ -5,23 +6,24 @@ enum IngredientTotals {
     /// The rows for these ingredients, one to a name however a step capitalizes or accents it,
     /// with the amounts under a shared unit summed.
     static func rows(of ingredients: [Ingredient]) -> [IngredientRow] {
-        var named: [(name: String, key: String)] = []
-        var amounts: [String: [Amount]] = [:]
+        var gathered: [(name: String, amounts: [Amount])] = []
+        var indices: [String: Int] = [:]
 
         for ingredient in ingredients {
             let key = Normalization.normalized(ingredient.name)
+            let index = indices[key] ?? gathered.count
 
-            if amounts[key] == nil {
-                named.append((ingredient.name, key))
-                amounts[key] = []
+            if index == gathered.count {
+                indices[key] = index
+                gathered.append((ingredient.name, []))
             }
 
             if let amount = ingredient.amount {
-                amounts[key, default: []].append(amount)
+                gathered[index].amounts.append(amount)
             }
         }
 
-        return named.map({ IngredientRow(name: $0.name, amount: total(of: amounts[$0.key, default: []])) })
+        return gathered.map({ IngredientRow(name: $0.name, amount: total(of: $0.amounts)) })
     }
 
     /// One term of a row: an amount as written, or the amounts sharing its unit summed into it.
@@ -62,10 +64,13 @@ enum IngredientTotals {
     /// What joins the amounts of a row that could not be summed into one.
     private static let separator = " + "
 
-    private static let wholeSuffix = ".0"
-
-    /// The scale a summed value is rounded on, which keeps three decimals.
-    private static let precision = 1_000.0
+    /// How a summed number is written: to three decimals, in the recipe's notation rather than
+    /// the reader's, since it stands beside amounts the file wrote.
+    private static let numberStyle = FloatingPointFormatStyle<Double>()
+        .precision(.fractionLength(0...3))
+        .rounded(rule: .toNearestOrAwayFromZero)
+        .grouping(.never)
+        .locale(Locale(identifier: "en_US_POSIX"))
 
     /// What a row shows for these amounts, or `nil` where there are none.
     private static func total(of amounts: [Amount]) -> String? {
@@ -118,10 +123,7 @@ enum IngredientTotals {
         return "\(total) \(unit)"
     }
 
-    /// The value written without a trailing `.0`, rounded to three decimals.
     private static func number(_ value: Double) -> String {
-        let text = String((value * precision).rounded() / precision)
-
-        return text.hasSuffix(wholeSuffix) ? String(text.dropLast(wholeSuffix.count)) : text
+        value.formatted(numberStyle)
     }
 }
