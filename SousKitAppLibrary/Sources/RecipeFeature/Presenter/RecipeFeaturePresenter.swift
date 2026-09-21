@@ -69,7 +69,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         }
 
         // The field is left as it is being typed, so only the recipe moves.
-        _ = scaled(to: RecipeScale(target: recipe.scale.target, value: value))
+        rescale(to: RecipeScale(target: recipe.scale.target, value: value))
     }
 
     func didStepScale(by steps: Double) {
@@ -116,32 +116,44 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             return ScaledRecipe(asWritten: recipe)
         }
 
-        return ScaledRecipe(asWritten: recipe, scale: current.scale) ?? ScaledRecipe(asWritten: recipe)
+        return ScaledRecipe(asWritten: recipe, scale: current.scale)
     }
 
     /// Takes the recipe to the scale and writes that back into the field.
     @MainActor
     private func apply(_ scale: RecipeScale) {
-        guard let recipe = scaled(to: scale) else {
+        guard rescale(to: scale) else {
             return
         }
 
-        writeField(of: recipe)
+        writeField()
     }
 
     /// Takes the recipe on screen to the scale, or leaves it where it is.
+    ///
+    /// - Returns: Whether the recipe stands at the scale.
     @MainActor
-    private func scaled(to scale: RecipeScale) -> ScaledRecipe? {
-        guard
-            case .recipe(let recipe) = viewModel.recipeContent,
-            let scaled = ScaledRecipe(asWritten: recipe.asWritten, scale: scale)
-        else {
-            return nil
+    @discardableResult
+    private func rescale(to scale: RecipeScale) -> Bool {
+        guard case .recipe(let recipe) = viewModel.recipeContent else {
+            return false
+        }
+
+        // A plus held at the top of its range asks for the scale in force on every repeat.
+        guard scale != recipe.scale else {
+            return true
+        }
+
+        let scaled = ScaledRecipe(asWritten: recipe.asWritten, scale: scale)
+
+        // A recipe that does not scale that way falls back to its default.
+        guard scaled.scale == scale else {
+            return false
         }
 
         viewModel.recipeContent = .recipe(scaled)
 
-        return scaled
+        return true
     }
 
     @MainActor
@@ -150,11 +162,6 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             return
         }
 
-        writeField(of: recipe)
-    }
-
-    @MainActor
-    private func writeField(of recipe: ScaledRecipe) {
         viewModel.scaleText = ScaleNumber.text(recipe.scale.value)
     }
 }

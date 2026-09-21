@@ -177,7 +177,7 @@ private func previewRecipe(scale: RecipeScale? = nil) -> ScaledRecipe {
     )
     .value
 
-    return scale.flatMap({ ScaledRecipe(asWritten: recipe, scale: $0) }) ?? ScaledRecipe(asWritten: recipe)
+    return ScaledRecipe(asWritten: recipe, scale: scale)
 }
 
 #Preview("Recipe") {

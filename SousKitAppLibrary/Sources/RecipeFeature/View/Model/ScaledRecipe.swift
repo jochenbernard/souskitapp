@@ -12,15 +12,18 @@ struct ScaledRecipe {
     /// The recipe at that scale, which is ``asWritten`` itself where nothing moves.
     let scaled: Recipe
 
+    /// Each of the ``targets``, at what the header declares of it.
+    private let declaredScales: [RecipeScale]
+
     /// The targets this recipe can be scaled by, in the order a cook reaches for them: the servings,
     /// then the yields, then the multiplier, which every recipe has.
     var targets: [ScaleTarget] {
-        Self.targets(of: asWritten)
+        declaredScales.map(\.target)
     }
 
     /// The scale the recipe opens on: the first of its ``targets``, at what the header declares of it.
     var defaultScale: RecipeScale {
-        Self.defaultScale(of: asWritten)
+        declaredScales[0]
     }
 
     /// Whether the recipe stands at its ``defaultScale``, which leaves nothing to reset.
@@ -43,28 +46,23 @@ struct ScaledRecipe {
         .grouping(.never)
         .locale(Locale(identifier: "en_US_POSIX"))
 
-    /// A recipe at its ``defaultScale``, which is the scale its file writes it in.
-    ///
-    /// - Parameter asWritten: The recipe as it was read.
-    init(asWritten: Recipe) {
-        self.asWritten = asWritten
-        self.scaled = asWritten
-        self.scale = Self.defaultScale(of: asWritten)
-    }
-
-    /// A recipe at a scale, or `nil` where it does not scale that way.
+    /// A recipe at a scale, or at its ``defaultScale``, the scale its file writes it in, where no scale
+    /// is given or it does not scale that way.
     ///
     /// - Parameters:
     ///   - asWritten: The recipe as it was read.
     ///   - scale: How much of it to make.
-    init?(asWritten: Recipe, scale: RecipeScale) {
-        guard let recipe = Self.scaled(asWritten, to: scale) else {
-            return nil
-        }
-
+    init(asWritten: Recipe, scale: RecipeScale? = nil) {
         self.asWritten = asWritten
-        self.scale = scale
-        self.scaled = recipe
+        self.declaredScales = Self.declaredScales(of: asWritten)
+
+        if let scale, let recipe = Self.scaled(asWritten, to: scale) {
+            self.scale = scale
+            self.scaled = recipe
+        } else {
+            self.scale = self.declaredScales[0]
+            self.scaled = asWritten
+        }
     }
 
     /// What the header declares of a target, or `nil` where it declares none to scale toward.
@@ -72,7 +70,7 @@ struct ScaledRecipe {
     /// - Parameter target: The target to read.
     /// - Returns: What one of the recipe as written is worth on that target.
     func declared(of target: ScaleTarget) -> Double? {
-        Self.declared(target, of: asWritten)
+        declaredScales.first(where: { $0.target == target })?.value
     }
 
     /// What the scale in force comes to on a target, or `nil` where the recipe has no such target.
@@ -98,29 +96,11 @@ struct ScaledRecipe {
         )
     }
 
-    private static func targets(of recipe: Recipe) -> [ScaleTarget] {
-        let servings: [ScaleTarget] = declaredServings(of: recipe) == nil ? [] : [.servings]
+    private static func declaredScales(of recipe: Recipe) -> [RecipeScale] {
+        let servings = declaredServings(of: recipe).map({ [RecipeScale(target: .servings, value: $0)] }) ?? []
+        let yields = declaredYields(of: recipe).map({ RecipeScale(target: .yield(unit: $0.unit), value: $0.value) })
 
-        return servings + declaredYields(of: recipe).map({ .yield(unit: $0.unit) }) + [.multiplier]
-    }
-
-    private static func defaultScale(of recipe: Recipe) -> RecipeScale {
-        let target = targets(of: recipe).first ?? .multiplier
-
-        return RecipeScale(target: target, value: declared(target, of: recipe) ?? 1.0)
-    }
-
-    private static func declared(_ target: ScaleTarget, of recipe: Recipe) -> Double? {
-        switch target {
-        case .multiplier:
-            1.0
-
-        case .servings:
-            declaredServings(of: recipe)
-
-        case .yield(let unit):
-            declaredYields(of: recipe).first(where: { $0.unit == unit })?.value
-        }
+        return servings + yields + [RecipeScale(target: .multiplier, value: 1.0)]
     }
 
     /// The servings the header declares, or `nil` where it declares none to scale toward.

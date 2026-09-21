@@ -40,11 +40,10 @@ struct RecipeFeatureScalingTests {
 
     private func makePresenter(
         viewModel: RecipeFeatureViewModel,
-        handler: RecipeFeatureHandler = RecipeFeatureHandlerSpy(),
         recipeText: String? = "Whisk."
     ) -> RecipeFeaturePresenter {
         RecipeFeaturePresenter(
-            handler: handler,
+            handler: RecipeFeatureHandlerSpy(),
             recipeRepository: RecipeRepositoryStub(text: recipeText),
             viewModel: viewModel
         )
@@ -268,6 +267,19 @@ struct RecipeFeatureScalingTests {
         #expect(recipe.scaled.ingredients.map(\.amount?.text) == ["2.4 kg", "1000 ml"])
         // Read back rather than compared as text, which is written in the reader's notation.
         #expect(ScaleNumber.value(of: viewModel.scaleText) == 3.6)
+    }
+
+    @MainActor
+    @Test("choosing another target lands on the number a cook would type")
+    func choosingATargetLandsClean() async {
+        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
+        let presenter = makePresenter(viewModel: viewModel, recipeText: gratinText)
+
+        await presenter.viewDidAppear()
+        presenter.didChangeScaleText("17")
+        presenter.didTapTarget(.yield(unit: "kg"))
+
+        #expect(scaledRecipe(of: viewModel)?.scale.value == 5.1)
     }
 
     @MainActor

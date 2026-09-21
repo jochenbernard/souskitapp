@@ -20,14 +20,6 @@ struct RecipeFeaturePresenterTests {
         Whisk @{4} eggs@ into @{250 g} flour@.
         """
 
-    private let vinaigretteText = """
-        ---
-        title: Vinaigrette
-        ---
-
-        Whisk @{1 tsp} dijon mustard@ into @{2 tbsp} red wine vinegar@.
-        """
-
     private func makePresenter(
         viewModel: RecipeFeatureViewModel,
         handler: RecipeFeatureHandler = RecipeFeatureHandlerSpy(),

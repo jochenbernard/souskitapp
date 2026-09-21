@@ -1,4 +1,3 @@
-import Foundation
 import SwiftUI
 
 /// What a recipe is scaled by: the recipe itself, or a quantity its header declares.
@@ -23,11 +22,11 @@ enum ScaleTarget: Hashable {
 
     /// What the number is labelled, which carries the unit for a yield.
     var label: Text {
-        switch self {
-        case .multiplier: Text("Multiplier", bundle: .module)
-        case .servings: Text("Servings", bundle: .module)
-        case .yield(let unit): Text("Yield (\(unit))", bundle: .module)
+        guard case .yield(let unit) = self else {
+            return name
         }
+
+        return Text("Yield (\(unit))", bundle: .module)
     }
 
     /// What one tap of the plus adds, and one tap of the minus takes.
@@ -86,7 +85,6 @@ enum ScaleTarget: Hashable {
             return value
         }
 
-        // Tenths add up to 1.9000000000000001, which is not a number anyone typed.
-        return (clamped * 1_000_000.0).rounded() / 1_000_000.0
+        return clamped
     }
 }

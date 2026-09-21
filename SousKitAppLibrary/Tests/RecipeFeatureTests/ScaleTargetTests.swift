@@ -31,12 +31,6 @@ struct ScaleTargetTests {
         #expect(ScaleTarget.yield(unit: "loaf").step(declared: declared) == 1.0)
     }
 
-    @Test("a step of a yield lands on the number a cook would type")
-    func yieldStepsLandClean() {
-        #expect(ScaleTarget.yield(unit: "kg").stepped(1.8, by: 1.0, declared: 1.8) == 1.9)
-        #expect(ScaleTarget.yield(unit: "kg").stepped(2.0, by: -1.0, declared: 1.8) == 1.9)
-    }
-
     @Test("stepping stops where a recipe stops making sense")
     func steppingStaysInRange() {
         #expect(ScaleTarget.servings.stepped(1.0, by: -1.0, declared: 6.0) == 1.0)

@@ -1,5 +1,4 @@
 import CookingFeature
-import Foundation
 @testable import KitchenFeature
 import Observation
 import os
@@ -25,14 +24,12 @@ struct KitchenFeatureStackTests {
     }
 
     @MainActor
-    private func makePresenter(
-        viewModel: KitchenFeatureViewModel,
-        handler: KitchenFeatureHandler = KitchenFeatureHandlerStub(),
-        recipeRepository: RecipeRepository = RecipeRepositorySpy()
-    ) -> KitchenFeaturePresenter {
-        KitchenFeaturePresenter(
+    private func makePresenter(viewModel: KitchenFeatureViewModel) -> KitchenFeaturePresenter {
+        let recipeRepository = RecipeRepositorySpy()
+
+        return KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(idleTimer: IdleTimerStub()),
-            handler: handler,
+            handler: KitchenFeatureHandlerStub(),
             recipeFeatureFactory: RecipeFeatureFactory(recipeRepository: recipeRepository),
             recipeRepository: recipeRepository,
             viewModel: viewModel

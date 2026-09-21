@@ -105,16 +105,10 @@ struct RecipeScaleView: View {
     @ViewBuilder
     private var targets: some View {
         if !scale.targets.isEmpty {
-            HStack(spacing: 0.0) {
-                Spacer(minLength: 0.0)
-
-                SousFlowLayout(spacing: SousSpacing.small) {
-                    ForEach(scale.targets, id: \.self) { target in
-                        targetChip(target)
-                    }
+            SousFlowLayout(spacing: SousSpacing.small) {
+                ForEach(scale.targets, id: \.self) { target in
+                    targetChip(target)
                 }
-
-                Spacer(minLength: 0.0)
             }
         }
     }
@@ -124,12 +118,12 @@ struct RecipeScaleView: View {
     private var follows: some View {
         if !scale.follows.isEmpty {
             HStack(spacing: SousSpacing.small) {
-                ForEach(scale.follows.indices, id: \.self) { index in
-                    if index > scale.follows.startIndex {
+                ForEach(scale.follows, id: \.self) { follow in
+                    if follow != scale.follows.first {
                         Text(verbatim: "·")
                     }
 
-                    ScaleValueText(scale: scale.follows[index])
+                    ScaleValueText(scale: follow)
                 }
             }
             .font(.subheadline)
@@ -169,7 +163,7 @@ private func previewScaleView(
             Whisk @{1 tsp} dijon mustard@ into @{2 tbsp} red wine vinegar@.
             """
     let recipe = SousParser().parseRecipe(source).value
-    let scaled = ScaledRecipe(asWritten: recipe, scale: scale) ?? ScaledRecipe(asWritten: recipe)
+    let scaled = ScaledRecipe(asWritten: recipe, scale: scale)
 
     return RecipeScaleView(
         presenter: RecipeFeaturePresenterStub(),
