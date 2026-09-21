@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CatalogContainers: View {
+    // swiftlint:disable:next unused_declaration
     @State private var isExpanded = true
 
     var body: some View {

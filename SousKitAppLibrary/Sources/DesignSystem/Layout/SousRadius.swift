@@ -1,4 +1,4 @@
-import CoreGraphics
+import CoreFoundation
 
 /// Corner radii, in points.
 public enum SousRadius {
