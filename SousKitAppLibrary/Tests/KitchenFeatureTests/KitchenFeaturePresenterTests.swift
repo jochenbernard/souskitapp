@@ -3,10 +3,13 @@ import Foundation
 @testable import KitchenFeature
 import RecipeFeature
 import RecipeLibrary
+import SousKit
 import Testing
 
 @Suite("Kitchen feature presenter", .timeLimit(.minutes(1)))
 struct KitchenFeaturePresenterTests {
+    private let parser = SousParser()
+
     private func recipeEntry(named name: String) -> RecipeEntry {
         RecipeEntry(
             id: name,
@@ -28,7 +31,7 @@ struct KitchenFeaturePresenterTests {
         KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(idleTimer: IdleTimerStub()),
             handler: handler,
-            recipeFeatureFactory: RecipeFeatureFactory(recipeRepository: recipeRepository),
+            recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
             recipeRepository: recipeRepository,
             viewModel: viewModel
         )

@@ -141,15 +141,6 @@ struct RecipeMetadataView: View {
         }
     }
 
-    /// The scale is the last row, so it is divided from anything the header put above it.
-    @ViewBuilder
-    private var scaleDivider: some View {
-        if !metadata.isEmpty {
-            Divider()
-                .padding(.horizontal, SousSpacing.large)
-        }
-    }
-
     @ViewBuilder
     private func rowDivider(_ row: MetadataRow) -> some View {
         if row.id != metadata.rows.first?.id || !metadata.facts.isEmpty || hasLabels {
@@ -178,6 +169,15 @@ struct RecipeMetadataView: View {
             Text(knownKey.label, bundle: .module)
         } else if !row.key.isEmpty {
             Text(verbatim: row.label)
+        }
+    }
+
+    /// The scale is the last row, so it is divided from anything the header put above it.
+    @ViewBuilder
+    private var scaleDivider: some View {
+        if !metadata.isEmpty {
+            Divider()
+                .padding(.horizontal, SousSpacing.large)
         }
     }
 }

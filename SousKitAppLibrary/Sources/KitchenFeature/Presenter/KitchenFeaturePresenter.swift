@@ -42,8 +42,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func didChangeScreenPath(_ screenPath: [KitchenScreen]) {
-        // A screen pushed onto the stack gets a feature of its own, even for the recipe it showed
-        // before, so nothing done on the last one, such as scaling it, survives its pop.
+        // A push builds a fresh feature, so nothing done on a popped screen, such as a scale, comes back.
         let isPush = screenPath.count > viewModel.screenPath.count
 
         viewModel.screenPath = screenPath

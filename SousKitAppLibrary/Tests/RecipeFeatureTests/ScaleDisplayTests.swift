@@ -7,7 +7,11 @@ struct ScaleDisplayTests {
     private let parser = SousParser()
 
     private func scaled(_ source: String, scale: RecipeScale) -> ScaledRecipe {
-        ScaledRecipe(asWritten: parser.parseRecipe(source).value, scale: scale)
+        ScaledRecipe(
+            asWritten: parser.parseRecipe(source).value,
+            parser: parser,
+            scale: scale
+        )
     }
 
     private let crepes = """

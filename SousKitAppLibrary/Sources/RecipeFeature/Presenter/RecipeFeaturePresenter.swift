@@ -4,15 +4,18 @@ import SousKit
 
 struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     private let handler: RecipeFeatureHandler
+    private let parser: SousParser
     private let recipeRepository: RecipeRepository
     private let viewModel: RecipeFeatureViewModel
 
     init(
         handler: RecipeFeatureHandler,
+        parser: SousParser,
         recipeRepository: RecipeRepository,
         viewModel: RecipeFeatureViewModel
     ) {
         self.handler = handler
+        self.parser = parser
         self.recipeRepository = recipeRepository
         self.viewModel = viewModel
     }
@@ -84,13 +87,14 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         guard
             case .recipe(let recipe) = viewModel.recipeContent,
             target != recipe.scale.target,
-            let value = recipe.value(of: target)
+            let counted = recipe.counted(by: target)
         else {
             return
         }
 
-        // The same amount of food, counted the other way.
-        apply(RecipeScale(target: target, value: value))
+        // The same amount of food, counted the other way, so switching back lands where it started.
+        viewModel.recipeContent = .recipe(counted)
+        writeField()
     }
 
     func didTapReset() {
@@ -109,14 +113,19 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         handler.recipeFeatureDidStartCooking(recipe: recipe.scaled)
     }
 
-    /// The recipe as read, at the scale the screen already stands at where it holds one.
+    /// The recipe as read, at the scale a cook already chose where they chose one.
     @MainActor
     private func read(_ recipe: Recipe) -> ScaledRecipe {
-        guard case .recipe(let current) = viewModel.recipeContent else {
-            return ScaledRecipe(asWritten: recipe)
+        // A default is the file's, so a file that now declares another opens on that one.
+        guard case .recipe(let current) = viewModel.recipeContent, !current.isDefault else {
+            return ScaledRecipe(asWritten: recipe, parser: parser)
         }
 
-        return ScaledRecipe(asWritten: recipe, scale: current.scale)
+        return ScaledRecipe(
+            asWritten: recipe,
+            parser: parser,
+            scale: current.scale
+        )
     }
 
     /// Takes the recipe to the scale and writes that back into the field.
@@ -144,14 +153,11 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             return true
         }
 
-        let scaled = ScaledRecipe(asWritten: recipe.asWritten, scale: scale)
-
-        // A recipe that does not scale that way falls back to its default.
-        guard scaled.scale == scale else {
+        guard let rescaled = recipe.rescaled(to: scale) else {
             return false
         }
 
-        viewModel.recipeContent = .recipe(scaled)
+        viewModel.recipeContent = .recipe(rescaled)
 
         return true
     }

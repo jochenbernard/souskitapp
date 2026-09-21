@@ -2,6 +2,7 @@ import FileRecipeLibrary
 import KitchenFeature
 import OnboardingFeature
 import RecipeLibrary
+import SousKit
 
 /// Builds ``AppFeature`` and everything under it.
 struct AppFeatureFactory {
@@ -10,8 +11,10 @@ struct AppFeatureFactory {
     private let recipeRepositoryStore: RecipeRepositoryStore
 
     init() {
-        let store = FileRecipeRepositoryStore()
-        self.kitchenFeatureFactory = KitchenFeatureFactory()
+        // One parser for the whole app, handed down to everything that reads Sous.
+        let parser = SousParser()
+        let store = FileRecipeRepositoryStore(parser: parser)
+        self.kitchenFeatureFactory = KitchenFeatureFactory(parser: parser)
         self.onboardingFeatureFactory = OnboardingFeatureFactory(recipeRepositoryStore: store)
         self.recipeRepositoryStore = store
     }

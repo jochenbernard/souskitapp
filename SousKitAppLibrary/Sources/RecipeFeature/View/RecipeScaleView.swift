@@ -12,8 +12,7 @@ struct RecipeScaleView: View {
     // What the sheet holds, measured as it is laid out, so a row of chips that wraps still fits.
     @State private var contentHeight: Double?
 
-    // What the toolbar and the home indicator take of the sheet, growing with Dynamic Type. The sheet
-    // cannot read it: its content is laid out once at its own size before the detent applies.
+    // The toolbar and home indicator, which the sheet cannot measure before its detent applies.
     @ScaledMetric(relativeTo: .body) private var barHeight = 70.0
 
     // About as tall as the content comes out, for the one layout before it is measured.
@@ -162,8 +161,12 @@ private func previewScaleView(
 
             Whisk @{1 tsp} dijon mustard@ into @{2 tbsp} red wine vinegar@.
             """
-    let recipe = SousParser().parseRecipe(source).value
-    let scaled = ScaledRecipe(asWritten: recipe, scale: scale)
+    let parser = SousParser()
+    let scaled = ScaledRecipe(
+        asWritten: parser.parseRecipe(source).value,
+        parser: parser,
+        scale: scale
+    )
 
     return RecipeScaleView(
         presenter: RecipeFeaturePresenterStub(),

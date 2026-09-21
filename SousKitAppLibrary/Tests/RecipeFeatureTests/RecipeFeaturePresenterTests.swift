@@ -5,6 +5,8 @@ import Testing
 
 @Suite("Recipe feature presenter", .timeLimit(.minutes(1)))
 struct RecipeFeaturePresenterTests {
+    private let parser = SousParser()
+
     private let crepes = RecipeEntry(
         id: "crepes",
         name: "crepes",
@@ -27,6 +29,7 @@ struct RecipeFeaturePresenterTests {
     ) -> RecipeFeaturePresenter {
         RecipeFeaturePresenter(
             handler: handler,
+            parser: parser,
             recipeRepository: RecipeRepositoryStub(text: recipeText),
             viewModel: viewModel
         )
@@ -88,6 +91,51 @@ struct RecipeFeaturePresenterTests {
         await makePresenter(viewModel: viewModel, recipeText: "").viewDidAppear()
 
         #expect(scaledRecipe(of: viewModel)?.scaled.steps.isEmpty == true)
+    }
+
+    @MainActor
+    @Test("reading the recipe again keeps the scale it is at")
+    func readingAgainKeepsTheScale() async {
+        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
+        let presenter = makePresenter(viewModel: viewModel, recipeText: crepesText)
+
+        await presenter.viewDidAppear()
+        presenter.didChangeScaleText("8")
+        await presenter.viewDidAppear()
+
+        guard let recipe = scaledRecipe(of: viewModel) else {
+            return
+        }
+
+        #expect(recipe.scale == RecipeScale(target: .servings, value: 8.0))
+        #expect(recipe.scaled.ingredients.map(\.amount?.text) == ["8", "500 g"])
+    }
+
+    @MainActor
+    @Test("a recipe no cook has scaled opens on what its file declares when read again")
+    func readingAChangedFileAgain() async {
+        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
+
+        await makePresenter(viewModel: viewModel, recipeText: crepesText).viewDidAppear()
+        await makePresenter(
+            viewModel: viewModel,
+            recipeText: """
+                ---
+                title: Crepes
+                servings: 6
+                ---
+
+                Whisk @{6} eggs@ into @{375 g} flour@.
+                """
+        ).viewDidAppear()
+
+        guard let recipe = scaledRecipe(of: viewModel) else {
+            return
+        }
+
+        #expect(recipe.isDefault)
+        #expect(recipe.scale == RecipeScale(target: .servings, value: 6.0))
+        #expect(viewModel.scaleText == "6")
     }
 
     @MainActor

@@ -13,11 +13,14 @@ struct ScaleValueText: View {
         case .multiplier:
             Text("\(ScaleNumber.text(scale.value))×", bundle: .module)
 
-        case .servings where scale.value == 1.0:
+        case .servings where ScaleNumber.text(scale.value) == "1":
             Text("1 serving", bundle: .module)
 
         case .servings:
             Text("\(ScaleNumber.text(scale.value)) servings", bundle: .module)
+
+        case .yield(let unit) where unit.isEmpty:
+            Text(verbatim: ScaleNumber.text(scale.value))
 
         case .yield(let unit):
             Text(verbatim: "\(ScaleNumber.text(scale.value)) \(unit)")

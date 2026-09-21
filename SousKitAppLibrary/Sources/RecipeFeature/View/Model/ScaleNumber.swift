@@ -20,7 +20,7 @@ enum ScaleNumber {
     static func value(of text: String) -> Double? {
         let value = Double(
             text
-                .trimmingCharacters(in: .whitespaces)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
                 .replacingOccurrences(of: ",", with: ".")
         )
 

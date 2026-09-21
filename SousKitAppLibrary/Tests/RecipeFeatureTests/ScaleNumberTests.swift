@@ -27,6 +27,7 @@ struct ScaleNumberTests {
         #expect(ScaleNumber.value(of: "1,5") == 1.5)
         #expect(ScaleNumber.value(of: "1.5") == 1.5)
         #expect(ScaleNumber.value(of: " 3 ") == 3.0)
+        #expect(ScaleNumber.value(of: "3\n") == 3.0)
     }
 
     @Test("a field holds no number until one is typed out", arguments: ["", " ", "-", ".", "half", "1x"])

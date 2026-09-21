@@ -30,7 +30,7 @@ struct KitchenFeatureStackTests {
         return KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(idleTimer: IdleTimerStub()),
             handler: KitchenFeatureHandlerStub(),
-            recipeFeatureFactory: RecipeFeatureFactory(recipeRepository: recipeRepository),
+            recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
             recipeRepository: recipeRepository,
             viewModel: viewModel
         )

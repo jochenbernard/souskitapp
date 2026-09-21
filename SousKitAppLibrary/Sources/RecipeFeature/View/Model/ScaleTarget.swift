@@ -8,21 +8,23 @@ enum ScaleTarget: Hashable {
     /// The servings the header declares.
     case servings
 
-    /// A yield the header declares, such as `1.8 kg` or `12 crepes`, in the unit it is written in.
+    /// A yield the header declares, such as `1.8 kg` or `12 crepes`, in the unit it is written in,
+    /// which is empty for a yield of a bare number.
     case yield(unit: String)
 
-    /// What names the target among the others, which is the unit as written for a yield.
+    /// What names the target among the others, which is the unit as written for a yield that has one.
     var name: Text {
         switch self {
         case .multiplier: Text("Multiplier", bundle: .module)
         case .servings: Text("Servings", bundle: .module)
+        case .yield(let unit) where unit.isEmpty: Text("Yield", bundle: .module)
         case .yield(let unit): Text(verbatim: unit)
         }
     }
 
-    /// What the number is labelled, which carries the unit for a yield.
+    /// What the number is labelled, which carries the unit for a yield that has one.
     var label: Text {
-        guard case .yield(let unit) = self else {
+        guard case .yield(let unit) = self, !unit.isEmpty else {
             return name
         }
 

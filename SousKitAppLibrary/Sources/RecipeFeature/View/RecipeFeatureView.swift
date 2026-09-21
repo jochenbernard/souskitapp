@@ -157,7 +157,8 @@ private func previewViewModel(_ recipeContent: RecipeContent) -> RecipeFeatureVi
 }
 
 private func previewRecipe(scale: RecipeScale? = nil) -> ScaledRecipe {
-    let recipe = SousParser().parseRecipe(
+    let parser = SousParser()
+    let recipe = parser.parseRecipe(
         """
         ---
         title: Boeuf Bourguignon
@@ -177,7 +178,11 @@ private func previewRecipe(scale: RecipeScale? = nil) -> ScaledRecipe {
     )
     .value
 
-    return ScaledRecipe(asWritten: recipe, scale: scale)
+    return ScaledRecipe(
+        asWritten: recipe,
+        parser: parser,
+        scale: scale
+    )
 }
 
 #Preview("Recipe") {

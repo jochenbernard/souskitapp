@@ -2,8 +2,7 @@ import SwiftUI
 
 /// A chip a cook taps to choose it from a set, such as what a recipe is scaled by.
 ///
-/// The chosen chip reads in the accent on ``SwiftUI/ShapeStyle/quaternaryAccentFill``, which is
-/// Here on a chip. The rest read as ``SwiftUI/View/sousChip()`` does.
+/// A chip not chosen reads as ``SwiftUI/View/sousChip()`` does.
 public struct SousChipButtonStyle: ButtonStyle {
     private let isSelected: Bool
 

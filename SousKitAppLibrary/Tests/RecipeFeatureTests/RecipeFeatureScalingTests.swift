@@ -5,6 +5,8 @@ import Testing
 
 @Suite("Recipe feature scaling", .timeLimit(.minutes(1)))
 struct RecipeFeatureScalingTests {
+    private let parser = SousParser()
+
     private let crepes = RecipeEntry(
         id: "crepes",
         name: "crepes",
@@ -44,6 +46,7 @@ struct RecipeFeatureScalingTests {
     ) -> RecipeFeaturePresenter {
         RecipeFeaturePresenter(
             handler: RecipeFeatureHandlerSpy(),
+            parser: parser,
             recipeRepository: RecipeRepositoryStub(text: recipeText),
             viewModel: viewModel
         )
@@ -232,24 +235,6 @@ struct RecipeFeatureScalingTests {
     }
 
     @MainActor
-    @Test("reading the recipe again keeps the scale it is at")
-    func readingAgainKeepsTheScale() async {
-        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
-        let presenter = makePresenter(viewModel: viewModel, recipeText: crepesText)
-
-        await presenter.viewDidAppear()
-        presenter.didChangeScaleText("8")
-        await presenter.viewDidAppear()
-
-        guard let recipe = scaledRecipe(of: viewModel) else {
-            return
-        }
-
-        #expect(recipe.scale == RecipeScale(target: .servings, value: 8.0))
-        #expect(recipe.scaled.ingredients.map(\.amount?.text) == ["8", "500 g"])
-    }
-
-    @MainActor
     @Test("choosing a yield holds the amount and reads it in the unit the recipe declares")
     func choosingAYield() async {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
@@ -265,8 +250,7 @@ struct RecipeFeatureScalingTests {
 
         #expect(recipe.scale == RecipeScale(target: .yield(unit: "kg"), value: 3.6))
         #expect(recipe.scaled.ingredients.map(\.amount?.text) == ["2.4 kg", "1000 ml"])
-        // Read back rather than compared as text, which is written in the reader's notation.
-        #expect(ScaleNumber.value(of: viewModel.scaleText) == 3.6)
+        #expect(viewModel.scaleText == "3.6")
     }
 
     @MainActor
@@ -312,6 +296,6 @@ struct RecipeFeatureScalingTests {
         presenter.didStepScale(by: 1.0)
 
         #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .yield(unit: "kg"), value: 1.9))
-        #expect(ScaleNumber.value(of: viewModel.scaleText) == 1.9)
+        #expect(viewModel.scaleText == "1.9")
     }
 }

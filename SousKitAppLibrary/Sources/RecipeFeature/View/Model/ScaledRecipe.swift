@@ -7,13 +7,18 @@ struct ScaledRecipe {
     let asWritten: Recipe
 
     /// How much of it to make.
-    let scale: RecipeScale
+    private(set) var scale: RecipeScale
 
-    /// The recipe at that scale, which is ``asWritten`` itself where nothing moves.
-    let scaled: Recipe
+    /// The recipe at that scale with its numbers to three decimals, or ``asWritten`` itself at the ``defaultScale``.
+    private(set) var scaled: Recipe
 
     /// Each of the ``targets``, at what the header declares of it.
     private let declaredScales: [RecipeScale]
+
+    /// What ``scaled`` multiplies the recipe as written by, kept apart from the rounded ``scale``.
+    private var factor: Double
+
+    private let parser: SousParser
 
     /// The targets this recipe can be scaled by, in the order a cook reaches for them: the servings,
     /// then the yields, then the multiplier, which every recipe has.
@@ -31,18 +36,10 @@ struct ScaledRecipe {
         scale == defaultScale
     }
 
-    /// What the scale in force multiplies every amount by.
-    private var factor: Double {
-        guard let declared = declared(of: scale.target), declared > 0.0 else {
-            return 1.0
-        }
-
-        return scale.value / declared
-    }
-
     /// How SousKit reads a number, in its own notation rather than the reader's.
     private static let sousNumberStyle = FloatingPointFormatStyle<Double>()
-        .precision(.fractionLength(0...6))
+        // A point on a whole number keeps `3 1/2-litre jars` from reading as three and a half.
+        .precision(.fractionLength(1...6))
         .grouping(.never)
         .locale(Locale(identifier: "en_US_POSIX"))
 
@@ -51,18 +48,33 @@ struct ScaledRecipe {
     ///
     /// - Parameters:
     ///   - asWritten: The recipe as it was read.
+    ///   - parser: What the scaled amounts are read back with.
     ///   - scale: How much of it to make.
-    init(asWritten: Recipe, scale: RecipeScale? = nil) {
-        self.asWritten = asWritten
-        self.declaredScales = Self.declaredScales(of: asWritten)
+    init(
+        asWritten: Recipe,
+        parser: SousParser,
+        scale: RecipeScale? = nil
+    ) {
+        let atDefault = Self(
+            asWritten: asWritten,
+            declaredScales: Self.declaredScales(of: asWritten, parser: parser),
+            parser: parser
+        )
 
-        if let scale, let recipe = Self.scaled(asWritten, to: scale) {
-            self.scale = scale
-            self.scaled = recipe
-        } else {
-            self.scale = self.declaredScales[0]
-            self.scaled = asWritten
-        }
+        self = scale.flatMap(atDefault.rescaled(to:)) ?? atDefault
+    }
+
+    private init(
+        asWritten: Recipe,
+        declaredScales: [RecipeScale],
+        parser: SousParser
+    ) {
+        self.asWritten = asWritten
+        self.declaredScales = declaredScales
+        self.scale = declaredScales[0]
+        self.scaled = asWritten
+        self.factor = 1.0
+        self.parser = parser
     }
 
     /// What the header declares of a target, or `nil` where it declares none to scale toward.
@@ -96,59 +108,89 @@ struct ScaledRecipe {
         )
     }
 
-    private static func declaredScales(of recipe: Recipe) -> [RecipeScale] {
-        let servings = declaredServings(of: recipe).map({ [RecipeScale(target: .servings, value: $0)] }) ?? []
-        let yields = declaredYields(of: recipe).map({ RecipeScale(target: .yield(unit: $0.unit), value: $0.value) })
+    /// The recipe taken to another scale, or `nil` where it does not scale that way.
+    ///
+    /// - Parameter scale: How much of it to make.
+    /// - Returns: The recipe at that scale.
+    func rescaled(to scale: RecipeScale) -> Self? {
+        guard scale != defaultScale else {
+            return Self(
+                asWritten: asWritten,
+                declaredScales: declaredScales,
+                parser: parser
+            )
+        }
 
-        return servings + yields + [RecipeScale(target: .multiplier, value: 1.0)]
-    }
-
-    /// The servings the header declares, or `nil` where it declares none to scale toward.
-    private static func declaredServings(of recipe: Recipe) -> Double? {
-        guard let servings = recipe.metadata.servings, servings > 0.0 else {
+        guard
+            let declared = declared(of: scale.target),
+            let moved = Self.scaled(asWritten, to: scale, parser: parser)
+        else {
             return nil
         }
 
-        return servings
+        var rescaled = self
+        rescaled.scale = scale
+        rescaled.scaled = AmountRounding(parser: parser).rounded(moved)
+        rescaled.factor = scale.value / declared
+
+        return rescaled
     }
 
-    /// The yields a cook can scale toward, in the order the header writes them.
+    /// The same food counted on another target, or `nil` where the recipe has no such target.
     ///
-    /// SousKit scales to a yield of a single number in a unit the header does not contradict, so a
-    /// range, an amount with no number, and a unit declared twice over are left out. So is a yield in
-    /// servings where the header declares servings already.
-    private static func declaredYields(of recipe: Recipe) -> [(unit: String, value: Double)] {
-        var yields: [(unit: String, value: Double)] = []
-        var contradicted: Set<String> = []
+    /// - Parameter target: The target to count by.
+    /// - Returns: The recipe, unmoved, at what the scale in force comes to on that target.
+    func counted(by target: ScaleTarget) -> Self? {
+        guard let value = value(of: target) else {
+            return nil
+        }
+
+        var counted = self
+        counted.scale = RecipeScale(target: target, value: value)
+
+        return counted
+    }
+
+    /// Each target SousKit scales the recipe toward, at what the header declares of it, then the multiplier.
+    private static func declaredScales(of recipe: Recipe, parser: SousParser) -> [RecipeScale] {
+        let servings = recipe.metadata.servings.map({ [RecipeScale(target: .servings, value: $0)] }) ?? []
+        let yields = declaredYields(of: recipe, besideServings: !servings.isEmpty)
+
+        // A trial at what the header declares finds a range, a zero, and a unit declared twice over.
+        let scalable = (servings + yields).filter({ scaled(recipe, to: $0, parser: parser) != nil })
+
+        return scalable + [RecipeScale(target: .multiplier, value: 1.0)]
+    }
+
+    /// The first yield in each unit with a single number to count from, in the order the header writes them.
+    private static func declaredYields(of recipe: Recipe, besideServings: Bool) -> [RecipeScale] {
+        var yields: [RecipeScale] = []
 
         for amount in recipe.metadata.yields {
+            // A yield with no unit, such as `12`, is declared under the empty one.
+            let unit = amount.unit ?? ""
+
             guard
-                let unit = amount.unit,
-                !unit.isEmpty,
+                // A yield in servings is the servings target where the header declares one.
+                !besideServings || unit != "servings",
                 case .precise(let quantity) = amount.kind,
-                quantity.value > 0.0
+                !yields.contains(where: { $0.target == .yield(unit: unit) })
             else {
                 continue
             }
 
-            if let known = yields.first(where: { $0.unit == unit }) {
-                if known.value != quantity.value {
-                    contradicted.insert(unit)
-                }
-            } else {
-                yields.append((unit, quantity.value))
-            }
+            yields.append(RecipeScale(target: .yield(unit: unit), value: quantity.value))
         }
 
-        let servings = declaredServings(of: recipe)
-
-        return yields.filter { yield in
-            !contradicted.contains(yield.unit) && (servings == nil || yield.unit != "servings")
-        }
+        return yields
     }
 
     /// The recipe at the scale, or `nil` where the scale is unusable or the header cannot carry it.
-    private static func scaled(_ recipe: Recipe, to scale: RecipeScale) -> Recipe? {
+    private static func scaled(
+        _ recipe: Recipe,
+        to scale: RecipeScale,
+        parser: SousParser
+    ) -> Recipe? {
         // Zero is a factor SousKit takes, and a recipe of nothing is not one to cook from.
         guard scale.value > 0.0, scale.value.isFinite else {
             return nil
@@ -162,7 +204,7 @@ struct ScaledRecipe {
             return try? recipe.scaled(toServings: scale.value)
 
         case .yield(let unit):
-            let target = SousParser().parseAmount("\(scale.value.formatted(sousNumberStyle)) \(unit)")
+            let target = parser.parseAmount("\(scale.value.formatted(sousNumberStyle)) \(unit)")
 
             return try? recipe.scaled(to: target)
         }
