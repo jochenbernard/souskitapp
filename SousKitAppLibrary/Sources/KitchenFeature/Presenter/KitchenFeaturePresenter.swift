@@ -42,16 +42,20 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func didChangeScreenPath(_ screenPath: [KitchenScreen]) {
+        // A screen pushed onto the stack gets a feature of its own, even for the recipe it showed
+        // before, so nothing done on the last one, such as scaling it, survives its pop.
+        let isPush = screenPath.count > viewModel.screenPath.count
+
         viewModel.screenPath = screenPath
 
         // A pop leaves the screen it popped in place: clearing it empties that screen while it
         // is still animating away. The next push replaces it.
         switch screenPath.last {
         case .recipe(let recipeEntry):
-            openRecipe(recipeEntry)
+            openRecipe(recipeEntry, isPush: isPush)
 
         case .cooking(let recipe):
-            openCooking(recipe)
+            openCooking(recipe, isPush: isPush)
 
         case nil:
             break
@@ -87,9 +91,11 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         didChangeScreenPath(Array(viewModel.screenPath.dropLast()))
     }
 
+    /// Builds the feature for a recipe pushed on the stack, or keeps the one a recipe already on it has,
+    /// such as the recipe a popped cooking screen uncovers.
     @MainActor
-    private func openRecipe(_ recipeEntry: RecipeEntry) {
-        guard viewModel.openRecipe?.recipeEntry != recipeEntry else {
+    private func openRecipe(_ recipeEntry: RecipeEntry, isPush: Bool) {
+        guard isPush || viewModel.openRecipe?.recipeEntry != recipeEntry else {
             return
         }
 
@@ -102,9 +108,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         )
     }
 
+    /// Builds the feature for a recipe pushed on the stack to cook from, or keeps the one already on it.
     @MainActor
-    private func openCooking(_ recipe: Recipe) {
-        guard viewModel.openCooking?.recipe != recipe else {
+    private func openCooking(_ recipe: Recipe, isPush: Bool) {
+        guard isPush || viewModel.openCooking?.recipe != recipe else {
             return
         }
 
