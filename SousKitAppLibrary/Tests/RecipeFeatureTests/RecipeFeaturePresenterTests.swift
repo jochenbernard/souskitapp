@@ -11,6 +11,23 @@ struct RecipeFeaturePresenterTests {
         availability: .downloaded
     )
 
+    private let crepesText = """
+        ---
+        title: Crepes
+        servings: 4
+        ---
+
+        Whisk @{4} eggs@ into @{250 g} flour@.
+        """
+
+    private let vinaigretteText = """
+        ---
+        title: Vinaigrette
+        ---
+
+        Whisk @{1 tsp} dijon mustard@ into @{2 tbsp} red wine vinegar@.
+        """
+
     private func makePresenter(
         viewModel: RecipeFeatureViewModel,
         handler: RecipeFeatureHandler = RecipeFeatureHandlerSpy(),
@@ -21,6 +38,16 @@ struct RecipeFeaturePresenterTests {
             recipeRepository: RecipeRepositoryStub(text: recipeText),
             viewModel: viewModel
         )
+    }
+
+    @MainActor
+    private func scaledRecipe(of viewModel: RecipeFeatureViewModel) -> ScaledRecipe? {
+        guard case .recipe(let recipe) = viewModel.recipeContent else {
+            Issue.record("The recipe did not reach the view model.")
+            return nil
+        }
+
+        return recipe
     }
 
     @MainActor
@@ -50,16 +77,15 @@ struct RecipeFeaturePresenterTests {
 
         await presenter.viewDidAppear()
 
-        guard case .recipe(let recipe) = viewModel.recipeContent else {
-            Issue.record("The recipe did not reach the view model.")
+        guard let recipe = scaledRecipe(of: viewModel) else {
             return
         }
 
-        #expect(recipe.metadata.title == "Crepes")
-        #expect(recipe.metadata.servings == 4.0)
-        #expect(recipe.ingredients.map(\.name) == ["eggs"])
-        #expect(recipe.cookware.map(\.name) == ["mixing bowl"])
-        #expect(recipe.steps.count == 1)
+        #expect(recipe.scaled.metadata.title == "Crepes")
+        #expect(recipe.scaled.metadata.servings == 4.0)
+        #expect(recipe.scaled.ingredients.map(\.name) == ["eggs"])
+        #expect(recipe.scaled.cookware.map(\.name) == ["mixing bowl"])
+        #expect(recipe.scaled.steps.count == 1)
     }
 
     @MainActor
@@ -69,12 +95,7 @@ struct RecipeFeaturePresenterTests {
 
         await makePresenter(viewModel: viewModel, recipeText: "").viewDidAppear()
 
-        guard case .recipe(let recipe) = viewModel.recipeContent else {
-            Issue.record("The recipe did not reach the view model.")
-            return
-        }
-
-        #expect(recipe.steps.isEmpty)
+        #expect(scaledRecipe(of: viewModel)?.scaled.steps.isEmpty == true)
     }
 
     @MainActor
@@ -116,26 +137,22 @@ struct RecipeFeaturePresenterTests {
     }
 
     @MainActor
-    @Test("tapping cook reports the recipe that was read")
-    func cookingReportsTheRecipe() async {
+    @Test("tapping cook reports the recipe at the scale it is on screen at")
+    func cookingReportsTheScaledRecipe() async {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
         let handler = RecipeFeatureHandlerSpy()
         let presenter = makePresenter(
             viewModel: viewModel,
             handler: handler,
-            recipeText: """
-                ---
-                title: Crepes
-                ---
-
-                Whisk it.
-                """
+            recipeText: crepesText
         )
 
         await presenter.viewDidAppear()
+        presenter.didChangeScaleText("8")
         presenter.didTapCook()
 
-        #expect(handler.cookedRecipes.map(\.metadata.title) == ["Crepes"])
+        #expect(handler.cookedRecipes.map(\.metadata.servings) == [8.0])
+        #expect(handler.cookedRecipes.flatMap({ $0.ingredients.map(\.amount?.text) }) == ["8", "500 g"])
     }
 
     @MainActor
