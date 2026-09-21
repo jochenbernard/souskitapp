@@ -1,8 +1,8 @@
 import Foundation
 
-/// How the scale sheet writes and reads the numbers a cook types.
+/// How the recipe screen writes the numbers it works out, and reads the ones a cook types.
 enum ScaleNumber {
-    /// The value as the sheet writes it: no trailing zeros, no grouping, in the recipe's notation
+    /// The value as the screen writes it: no trailing zeros, no grouping, in the recipe's notation
     /// rather than the reader's, since it stands beside amounts the file wrote.
     ///
     /// - Parameter value: The number to write.

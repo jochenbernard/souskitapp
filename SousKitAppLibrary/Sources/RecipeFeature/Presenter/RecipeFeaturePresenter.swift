@@ -128,38 +128,26 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         )
     }
 
-    /// Takes the recipe to the scale and writes that back into the field.
+    /// Takes the recipe to the scale and writes the scale in force back into the field.
     @MainActor
     private func apply(_ scale: RecipeScale) {
-        guard rescale(to: scale) else {
-            return
-        }
-
+        rescale(to: scale)
         writeField()
     }
 
     /// Takes the recipe on screen to the scale, or leaves it where it is.
-    ///
-    /// - Returns: Whether the recipe stands at the scale.
     @MainActor
-    @discardableResult
-    private func rescale(to scale: RecipeScale) -> Bool {
-        guard case .recipe(let recipe) = viewModel.recipeContent else {
-            return false
-        }
-
-        // A plus held at the top of its range asks for the scale in force on every repeat.
-        guard scale != recipe.scale else {
-            return true
-        }
-
-        guard let rescaled = recipe.rescaled(to: scale) else {
-            return false
+    private func rescale(to scale: RecipeScale) {
+        guard
+            case .recipe(let recipe) = viewModel.recipeContent,
+            // A plus held at the top of its range asks for the scale in force on every repeat.
+            scale != recipe.scale,
+            let rescaled = recipe.rescaled(to: scale)
+        else {
+            return
         }
 
         viewModel.recipeContent = .recipe(rescaled)
-
-        return true
     }
 
     @MainActor

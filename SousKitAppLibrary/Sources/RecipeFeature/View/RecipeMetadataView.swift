@@ -69,11 +69,12 @@ struct RecipeMetadataView: View {
     @ViewBuilder
     private func factTile(_ fact: MetadataFact) -> some View {
         if fact.kind == .servings {
-            factContent(fact)
-                // A cook reaching for the servings to change them finds the scale sheet there too.
-                .contentShape(.rect)
-                .onTapGesture(perform: presenter.didTapScale)
-                .accessibilityAddTraits(.isButton)
+            // A cook reaching for the servings to change them finds the scale sheet there too.
+            Button(action: presenter.didTapScale) {
+                factContent(fact)
+                    .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
         } else {
             factContent(fact)
         }

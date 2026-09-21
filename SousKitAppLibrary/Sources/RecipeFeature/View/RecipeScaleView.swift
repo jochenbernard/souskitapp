@@ -122,7 +122,7 @@ struct RecipeScaleView: View {
                         Text(verbatim: "·")
                     }
 
-                    ScaleValueText(scale: follow)
+                    follow.text
                 }
             }
             .font(.subheadline)

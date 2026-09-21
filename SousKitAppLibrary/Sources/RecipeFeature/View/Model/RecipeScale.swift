@@ -1,3 +1,5 @@
+import SwiftUI
+
 /// How much of a recipe to make: a number, and what that number counts.
 struct RecipeScale: Hashable {
     /// What the number counts.
@@ -5,6 +7,28 @@ struct RecipeScale: Hashable {
 
     /// The number, which multiplies the recipe where the target is the multiplier.
     let value: Double
+
+    /// The scale read out, such as `12 servings` or `2×`.
+    var text: Text {
+        let number = ScaleNumber.text(value)
+
+        switch target {
+        case .multiplier:
+            return Text("\(number)×", bundle: .module)
+
+        case .servings where number == "1":
+            return Text("1 serving", bundle: .module)
+
+        case .servings:
+            return Text("\(number) servings", bundle: .module)
+
+        case .yield(let unit) where unit.isEmpty:
+            return Text(verbatim: number)
+
+        case .yield(let unit):
+            return Text(verbatim: "\(number) \(unit)")
+        }
+    }
 
     init(target: ScaleTarget, value: Double) {
         self.target = target

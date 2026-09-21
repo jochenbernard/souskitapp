@@ -90,13 +90,18 @@ struct ScaledRecipeTests {
         #expect(scaled.isDefault)
     }
 
-    @Test("a yield takes the recipe to it, and the servings along with it")
-    func scalingToAYield() {
-        let scale = RecipeScale(target: .yield(unit: "crepes"), value: 18.0)
+    @Test(
+        "servings or a yield take the recipe to them, and restate the other",
+        arguments: [
+            RecipeScale(target: .servings, value: 6.0),
+            RecipeScale(target: .yield(unit: "crepes"), value: 18.0)
+        ]
+    )
+    func scalingToADeclaredTarget(_ scale: RecipeScale) {
         let scaled = scaledRecipe(crepes, scale: scale)
 
-        #expect(scaled.scaled.metadata.yields.map(\.text) == ["18 crepes"])
         #expect(scaled.scaled.metadata.servings == 6.0)
+        #expect(scaled.scaled.metadata.yields.map(\.text) == ["18 crepes"])
         #expect(amounts(of: scaled.scaled) == ["6", "375 g", "0.75 tsp", "10 g"])
     }
 
@@ -159,16 +164,6 @@ struct ScaledRecipeTests {
         #expect(!scaled.isDefault)
     }
 
-    @Test("servings take the recipe to them, and restate what it yields")
-    func scalingToServings() {
-        let scale = RecipeScale(target: .servings, value: 6.0)
-        let scaled = scaledRecipe(crepes, scale: scale)
-
-        #expect(scaled.scaled.metadata.servings == 6.0)
-        #expect(scaled.scaled.metadata.yields.map(\.text) == ["18 crepes"])
-        #expect(amounts(of: scaled.scaled) == ["6", "375 g", "0.75 tsp", "10 g"])
-    }
-
     @Test("the servings a recipe declares are what a scale counts from")
     func declared() {
         let scaled = scaledRecipe(crepes)
@@ -213,16 +208,13 @@ struct ScaledRecipeTests {
         #expect(scaledRecipe(vinaigrette, scale: scale).isDefault)
     }
 
-    @Test("a recipe of nothing is not one to cook from", arguments: [0.0, -1.0, .infinity, .nan])
-    func unusableMultipliers(_ value: Double) {
-        let scale = RecipeScale(target: .multiplier, value: value)
-
-        #expect(scaledRecipe(crepes, scale: scale).isDefault)
-    }
-
-    @Test("servings of nothing are none to cook for", arguments: [0.0, -1.0, .infinity, .nan])
-    func unusableServings(_ value: Double) {
-        let scale = RecipeScale(target: .servings, value: value)
+    @Test(
+        "a recipe of nothing is not one to cook from",
+        arguments: [ScaleTarget.multiplier, .servings],
+        [0.0, -1.0, .infinity, .nan]
+    )
+    func unusableScales(_ target: ScaleTarget, _ value: Double) {
+        let scale = RecipeScale(target: target, value: value)
 
         #expect(scaledRecipe(crepes, scale: scale).isDefault)
     }

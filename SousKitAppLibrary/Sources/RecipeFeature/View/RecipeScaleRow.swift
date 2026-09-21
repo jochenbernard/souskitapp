@@ -32,7 +32,7 @@ struct RecipeScaleRow: View {
 
     private var value: some View {
         HStack(spacing: SousSpacing.xSmall) {
-            ScaleValueText(scale: scale)
+            scale.text
                 .multilineTextAlignment(.trailing)
 
             Image(systemName: "chevron.up.chevron.down")
