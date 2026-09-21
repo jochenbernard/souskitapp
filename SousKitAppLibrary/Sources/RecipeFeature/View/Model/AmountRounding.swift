@@ -13,7 +13,8 @@ struct AmountRounding {
 
     /// The recipe with every number past three decimals rounded to three, in its steps and its header.
     ///
-    /// A step's text keeps what scaling wrote, since only its segments are read.
+    /// A step's text keeps what scaling wrote, since only its segments are read. An amount in a step
+    /// rounds its text and keeps its exact values, so amounts summed into a total do not drift.
     ///
     /// - Parameter recipe: A recipe as SousKit scaled it.
     /// - Returns: The recipe as a cook reads it.
@@ -101,7 +102,32 @@ struct AmountRounding {
             return amount
         }
 
-        return read
+        // Only the text is rounded, so amounts summed into one total come to what scaling wrote.
+        var rounded = read
+        rounded.kind = Self.kind(amount.kind, writtenAs: read.kind)
+
+        return rounded
+    }
+
+    /// The exact quantities of one kind under the text of the other, or the other where they differ in form.
+    private static func kind(_ exact: Amount.Kind, writtenAs written: Amount.Kind) -> Amount.Kind {
+        switch (exact, written) {
+        case let (.precise(quantity), .precise(text)):
+            .precise(Self.quantity(quantity, writtenAs: text))
+
+        case let (.range(low, high), .range(lowText, highText)):
+            .range(Self.quantity(low, writtenAs: lowText), Self.quantity(high, writtenAs: highText))
+
+        default:
+            written
+        }
+    }
+
+    private static func quantity(_ exact: Quantity, writtenAs written: Quantity) -> Quantity {
+        var quantity = written
+        quantity.value = exact.value
+
+        return quantity
     }
 
     private static func quantities(of kind: Amount.Kind) -> [Quantity] {

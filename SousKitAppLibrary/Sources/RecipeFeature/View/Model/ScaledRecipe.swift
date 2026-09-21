@@ -123,7 +123,11 @@ struct ScaledRecipe {
 
         guard
             let declared = declared(of: scale.target),
-            let moved = Self.scaled(asWritten, to: scale, parser: parser)
+            let moved = Self.scaled(
+                asWritten,
+                to: scale,
+                parser: parser
+            )
         else {
             return nil
         }
@@ -157,7 +161,13 @@ struct ScaledRecipe {
         let yields = declaredYields(of: recipe, besideServings: !servings.isEmpty)
 
         // A trial at what the header declares finds a range, a zero, and a unit declared twice over.
-        let scalable = (servings + yields).filter({ scaled(recipe, to: $0, parser: parser) != nil })
+        let scalable = (servings + yields).filter { scale in
+            scaled(
+                recipe,
+                to: scale,
+                parser: parser
+            ) != nil
+        }
 
         return scalable + [RecipeScale(target: .multiplier, value: 1.0)]
     }

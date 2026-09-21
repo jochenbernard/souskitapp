@@ -235,6 +235,21 @@ struct RecipeFeatureScalingTests {
     }
 
     @MainActor
+    @Test("reading the recipe again while the sheet is open leaves the field as typed")
+    func readingAgainWhileTyping() async {
+        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
+        let presenter = makePresenter(viewModel: viewModel, recipeText: crepesText)
+
+        await presenter.viewDidAppear()
+        presenter.didTapScale()
+        presenter.didChangeScaleText("1.")
+        await presenter.viewDidAppear()
+
+        #expect(viewModel.scaleText == "1.")
+        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .servings, value: 1.0))
+    }
+
+    @MainActor
     @Test("choosing a yield holds the amount and reads it in the unit the recipe declares")
     func choosingAYield() async {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)

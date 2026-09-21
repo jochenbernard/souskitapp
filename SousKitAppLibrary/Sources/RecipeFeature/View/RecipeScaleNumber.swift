@@ -27,11 +27,19 @@ struct RecipeScaleNumber: View {
 
     var body: some View {
         HStack(spacing: SousSpacing.large) {
-            stepButton(-1.0, systemImage: "minus", label: "Less")
+            stepButton(
+                -1.0,
+                systemImage: "minus",
+                label: "Less"
+            )
 
             field
 
-            stepButton(1.0, systemImage: "plus", label: "More")
+            stepButton(
+                1.0,
+                systemImage: "plus",
+                label: "More"
+            )
         }
     }
 

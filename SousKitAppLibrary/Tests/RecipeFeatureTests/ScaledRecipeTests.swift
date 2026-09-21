@@ -141,6 +141,22 @@ struct ScaledRecipeTests {
         #expect(amounts(of: scaled.scaled) == ["1 kg", "416.667 ml"])
     }
 
+    @Test("amounts written to three decimals still sum to the exact total")
+    func summingRoundedAmounts() {
+        let source = """
+            ---
+            title: Brioche
+            servings: 6
+            ---
+
+            Rub @{100 g} butter@ into the flour, fold in @{100 g} butter@, and brush with @{100 g} butter@.
+            """
+        let scaled = scaledRecipe(source, scale: RecipeScale(target: .servings, value: 2.0))
+
+        #expect(amounts(of: scaled.scaled) == ["33.333 g", "33.333 g", "33.333 g"])
+        #expect(RecipeDisplay.ingredientList(of: scaled.scaled).rows.map(\.amount) == ["100 g"])
+    }
+
     @Test("the header's other numbers are written to three decimals")
     func headerToThreeDecimals() {
         let scale = RecipeScale(target: .yield(unit: "kg"), value: 1.0)

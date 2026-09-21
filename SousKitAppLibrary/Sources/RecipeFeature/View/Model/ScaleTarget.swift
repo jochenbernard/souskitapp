@@ -75,7 +75,11 @@ enum ScaleTarget: Hashable {
     ///   - steps: How many steps to take, which is -1 for the minus and 1 for the plus.
     ///   - declared: What the recipe declares of this target.
     /// - Returns: The number stepped to.
-    func stepped(_ value: Double, by steps: Double, declared: Double) -> Double {
+    func stepped(
+        _ value: Double,
+        by steps: Double,
+        declared: Double
+    ) -> Double {
         let range = stepRange(declared: declared)
         let clamped = min(
             max(value + steps * step(declared: declared), range.lowerBound),

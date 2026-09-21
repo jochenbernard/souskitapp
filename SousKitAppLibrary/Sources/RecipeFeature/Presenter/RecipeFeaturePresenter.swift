@@ -37,7 +37,11 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         }
 
         viewModel.recipeContent = recipeContent
-        writeField()
+
+        // A read landing while the sheet is open leaves the field to what the cook is typing.
+        if !viewModel.isScaling {
+            writeField()
+        }
     }
 
     func didChangeIsExpanded(_ isExpanded: Bool, of section: RecipeSection) {

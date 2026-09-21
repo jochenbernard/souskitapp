@@ -29,9 +29,9 @@ struct ScaleDisplay {
         self.targets = declared.count > 1 ? declared : []
         self.follows = declared
             .filter({ $0 != recipe.scale.target })
-            .compactMap({ target in
+            .compactMap { target in
                 recipe.value(of: target).map({ RecipeScale(target: target, value: $0) })
-            })
+            }
         self.isDefault = recipe.isDefault
     }
 }
