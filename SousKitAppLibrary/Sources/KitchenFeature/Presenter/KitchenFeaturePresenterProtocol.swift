@@ -1,3 +1,5 @@
+import RecipeLibrary
+
 /// What ``KitchenFeatureView`` reports to.
 protocol KitchenFeaturePresenterProtocol {
     /// The view is on screen, and the call is cancelled when it leaves.
@@ -10,6 +12,9 @@ protocol KitchenFeaturePresenterProtocol {
 
     @MainActor
     func didChangeScreenPath(_ screenPath: [KitchenScreen])
+
+    @MainActor
+    func didSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind)
 
     @MainActor
     func didTapReset()

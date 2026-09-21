@@ -7,4 +7,10 @@ public protocol OnboardingFeatureHandler {
     /// - Parameter recipeRepository: The repository reading the directory.
     @MainActor
     func onboardingFeatureDidFinish(recipeRepository: RecipeRepository)
+
+    /// Another kind of recipe repository was picked to read from, in place of the folder.
+    ///
+    /// - Parameter recipeRepositoryKind: The kind picked.
+    @MainActor
+    func onboardingFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind)
 }

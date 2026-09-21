@@ -17,6 +17,74 @@
         }
       }
     },
+    "Debug" : {
+      "comment" : "The debug menu, which only a debug build shows.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Debug"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Debug"
+          }
+        }
+      }
+    },
+    "Folder" : {
+      "comment" : "In the debug menu, reading recipes from the folder the user picked.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folder"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map"
+          }
+        }
+      }
+    },
+    "Mock recipes" : {
+      "comment" : "In the debug menu, reading the recipes kept in the app for trying it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mock recipes"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testrecepten"
+          }
+        }
+      }
+    },
+    "Recipes" : {
+      "comment" : "The debug menu's choice of where recipes are read from.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recipes"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recepten"
+          }
+        }
+      }
+    },
     "Setup" : {
       "comment" : "The eyebrow above the onboarding headline.",
       "localizations" : {

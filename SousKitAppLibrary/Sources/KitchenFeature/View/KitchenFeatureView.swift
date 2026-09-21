@@ -139,7 +139,11 @@ struct KitchenFeatureView: View {
     private var debugMenu: some View {
         #if DEBUG
         Menu(
-            content: { resetButton },
+            content: {
+                recipeRepositoryKindPicker
+
+                resetButton
+            },
             label: {
                 Label(
                     title: { Text("Debug", bundle: .module) },
@@ -158,6 +162,26 @@ struct KitchenFeatureView: View {
     }
 
     #if DEBUG
+    private var recipeRepositoryKindPicker: some View {
+        Picker(
+            selection: recipeRepositoryKind,
+            content: {
+                Label(
+                    title: { Text("Folder", bundle: .module) },
+                    icon: { Image(systemName: "folder") }
+                )
+                .tag(RecipeRepositoryKind.files)
+
+                Label(
+                    title: { Text("Mock recipes", bundle: .module) },
+                    icon: { Image(systemName: "testtube.2") }
+                )
+                .tag(RecipeRepositoryKind.mock)
+            },
+            label: { Text("Recipes", bundle: .module) }
+        )
+    }
+
     private var resetButton: some View {
         Button(role: .destructive, action: presenter.didTapReset) {
             Label(
@@ -206,6 +230,13 @@ struct KitchenFeatureView: View {
         }
     }
 
+    private var recipeRepositoryKind: Binding<RecipeRepositoryKind> {
+        Binding(
+            get: { viewModel.recipeRepositoryKind },
+            set: { presenter.didSelectRecipeRepositoryKind($0) }
+        )
+    }
+
     private var isConfirmingReset: Binding<Bool> {
         Binding(
             get: { viewModel.isConfirmingReset },
@@ -223,7 +254,10 @@ struct KitchenFeatureView: View {
 
 @MainActor
 private func previewViewModel(_ recipeList: KitchenRecipeList) -> KitchenFeatureViewModel {
-    let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+    let viewModel = KitchenFeatureViewModel(
+        recipeRepositoryName: "Recipes",
+        recipeRepositoryKind: .files
+    )
     viewModel.recipeList = recipeList
 
     return viewModel

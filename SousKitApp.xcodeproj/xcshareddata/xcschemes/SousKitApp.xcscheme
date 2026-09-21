@@ -73,6 +73,16 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "MockRecipeLibraryTests"
+               BuildableName = "MockRecipeLibraryTests"
+               BlueprintName = "MockRecipeLibraryTests"
+               ReferencedContainer = "container:SousKitAppLibrary">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "RecipeFeatureTests"
                BuildableName = "RecipeFeatureTests"
                BlueprintName = "RecipeFeatureTests"

@@ -1,4 +1,5 @@
 import Foundation
+import RecipeLibrary
 
 struct OnboardingFeaturePresenterStub: OnboardingFeaturePresenterProtocol {
     func didTapChooseDirectory() {}
@@ -6,4 +7,6 @@ struct OnboardingFeaturePresenterStub: OnboardingFeaturePresenterProtocol {
     func didChangeIsChoosingDirectory(_: Bool) {}
 
     func didChooseDirectory(_: Result<URL, Error>) {}
+
+    func didSelectRecipeRepositoryKind(_: RecipeRepositoryKind) {}
 }

@@ -19,7 +19,10 @@ struct KitchenFeaturePresenterTests {
     }
 
     private func makeViewModel() -> KitchenFeatureViewModel {
-        KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        KitchenFeatureViewModel(
+            recipeRepositoryName: "Recipes",
+            recipeRepositoryKind: .files
+        )
     }
 
     @MainActor
@@ -261,6 +264,16 @@ struct KitchenFeaturePresenterTests {
         presenter.cookingFeatureDidExit()
 
         #expect(viewModel.screenPath == [.recipe(crepes)])
+    }
+
+    @MainActor
+    @Test("picking a kind of repository reports it")
+    func pickingAKindReports() {
+        let handler = KitchenFeatureHandlerStub()
+
+        makePresenter(viewModel: makeViewModel(), handler: handler).didSelectRecipeRepositoryKind(.mock)
+
+        #expect(handler.selectedRecipeRepositoryKinds == [.mock])
     }
 
     @MainActor

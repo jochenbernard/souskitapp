@@ -37,4 +37,8 @@ struct OnboardingFeaturePresenter: OnboardingFeaturePresenterProtocol {
             viewModel.failureMessage = error.localizedDescription
         }
     }
+
+    func didSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
+        handler.onboardingFeatureDidSelectRecipeRepositoryKind(recipeRepositoryKind)
+    }
 }

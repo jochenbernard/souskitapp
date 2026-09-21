@@ -1,4 +1,5 @@
 import Foundation
+import RecipeLibrary
 
 /// What ``OnboardingFeatureView`` reports to.
 protocol OnboardingFeaturePresenterProtocol {
@@ -10,4 +11,7 @@ protocol OnboardingFeaturePresenterProtocol {
 
     @MainActor
     func didChooseDirectory(_ result: Result<URL, Error>)
+
+    @MainActor
+    func didSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind)
 }
