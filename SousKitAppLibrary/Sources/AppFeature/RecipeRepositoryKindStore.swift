@@ -2,8 +2,8 @@ import Foundation
 import RecipeLibrary
 
 /// Where the app reads recipes from, remembered across launches.
-struct RecipeRepositoryKindStore: Sendable {
-    nonisolated(unsafe) private let userDefaults: UserDefaults
+struct RecipeRepositoryKindStore {
+    private let userDefaults: UserDefaults
 
     /// The kind picked last, or the files in the folder before any was picked.
     var recipeRepositoryKind: RecipeRepositoryKind {
