@@ -5,9 +5,14 @@ import RecipeLibrary
 struct RecipeRepositoryKindStore {
     private let userDefaults: UserDefaults
 
-    /// The kind picked last, or the files in the folder before any was picked.
+    /// The kind picked last, or the files in the folder before any was picked and in a release build.
     var recipeRepositoryKind: RecipeRepositoryKind {
+        #if DEBUG
         userDefaults.bool(forKey: Keys.readsMockRecipes) ? .mock : .files
+        #else
+        // A release build offers no way back from the mock recipes a debug build left picked.
+        .files
+        #endif
     }
 
     /// Creates a store.
