@@ -1,5 +1,4 @@
 import DesignSystem
-import RecipeLibrary
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -33,9 +32,6 @@ struct OnboardingFeatureView: View {
                 maxHeight: .infinity,
                 alignment: isOneBlock ? .center : .topLeading
             )
-            .overlay(alignment: .topTrailing) {
-                debugMenu
-            }
             .sousPage()
             .fileImporter(
                 isPresented: isChoosingDirectory,
@@ -95,6 +91,8 @@ struct OnboardingFeatureView: View {
             failureNote
 
             chooseButton
+
+            mockRecipesButton
         }
     }
 
@@ -115,59 +113,20 @@ struct OnboardingFeatureView: View {
     }
 
     @ViewBuilder
-    private var debugMenu: some View {
+    private var mockRecipesButton: some View {
         #if DEBUG
-        Menu(
-            content: { recipeRepositoryKindPicker },
-            label: {
-                Label(
-                    title: { Text("Debug", bundle: .module) },
-                    icon: { Image(systemName: "ladybug") }
-                )
-                .labelStyle(.iconOnly)
-                .imageScale(.large)
-            }
-        )
-        .buttonStyle(.glass)
-        .buttonBorderShape(.circle)
-        .padding(.horizontal, SousSpacing.large)
+        Button(action: presenter.didTapUseMockRecipes) {
+            Text("Use mock recipes", bundle: .module)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.sousQuiet)
         #endif
     }
-
-    #if DEBUG
-    private var recipeRepositoryKindPicker: some View {
-        Picker(
-            selection: recipeRepositoryKind,
-            content: {
-                Label(
-                    title: { Text("Folder", bundle: .module) },
-                    icon: { Image(systemName: "folder") }
-                )
-                .tag(RecipeRepositoryKind.files)
-
-                Label(
-                    title: { Text("Mock recipes", bundle: .module) },
-                    icon: { Image(systemName: "testtube.2") }
-                )
-                .tag(RecipeRepositoryKind.mock)
-            },
-            label: { Text("Recipes", bundle: .module) }
-        )
-    }
-    #endif
 
     private var isChoosingDirectory: Binding<Bool> {
         Binding(
             get: { viewModel.isChoosingDirectory },
             set: { presenter.didChangeIsChoosingDirectory($0) }
-        )
-    }
-
-    // Onboarding shows while the app reads from the folder, which is yet to be picked.
-    private var recipeRepositoryKind: Binding<RecipeRepositoryKind> {
-        Binding(
-            get: { .files },
-            set: { presenter.didSelectRecipeRepositoryKind($0) }
         )
     }
 }

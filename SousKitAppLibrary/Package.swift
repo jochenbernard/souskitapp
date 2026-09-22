@@ -27,6 +27,10 @@ let package = Package(
             name: "AppFeature",
             dependencies: ["FileRecipeLibrary", "KitchenFeature", "MockRecipeLibrary", "OnboardingFeature"]
         ),
+        .standardTestTarget(
+            name: "AppFeatureTests",
+            dependencies: ["AppFeature"]
+        ),
         .standardTarget(
             name: "CookingFeature",
             dependencies: ["DesignSystem", "RecipeLibrary"],

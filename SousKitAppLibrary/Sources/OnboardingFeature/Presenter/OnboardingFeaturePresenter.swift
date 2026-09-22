@@ -38,7 +38,7 @@ struct OnboardingFeaturePresenter: OnboardingFeaturePresenterProtocol {
         }
     }
 
-    func didSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
-        handler.onboardingFeatureDidSelectRecipeRepositoryKind(recipeRepositoryKind)
+    func didTapUseMockRecipes() {
+        handler.onboardingFeatureDidChooseMockRecipes()
     }
 }

@@ -45,8 +45,8 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
         viewModel?.screen = makeScreen(recipeRepository: recipeRepository, kind: .files)
     }
 
-    func onboardingFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
-        selectRecipeRepositoryKind(recipeRepositoryKind)
+    func onboardingFeatureDidChooseMockRecipes() {
+        selectRecipeRepositoryKind(.mock)
     }
 
     func kitchenFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {

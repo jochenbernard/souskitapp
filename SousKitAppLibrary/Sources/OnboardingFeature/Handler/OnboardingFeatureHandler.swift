@@ -8,9 +8,8 @@ public protocol OnboardingFeatureHandler {
     @MainActor
     func onboardingFeatureDidFinish(recipeRepository: RecipeRepository)
 
-    /// Another kind of recipe repository was picked to read from, in place of the folder.
-    ///
-    /// - Parameter recipeRepositoryKind: The kind picked.
+    /// The mock recipes were chosen in place of a folder, which a debug build offers where no folder can be picked,
+    /// such as on a simulator.
     @MainActor
-    func onboardingFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind)
+    func onboardingFeatureDidChooseMockRecipes()
 }
