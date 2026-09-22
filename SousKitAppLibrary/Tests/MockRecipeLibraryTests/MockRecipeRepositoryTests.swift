@@ -81,7 +81,7 @@ struct MockRecipeRepositoryTests {
         }
 
         // Releasing the repository ends the stream, which would end the wait for nothing.
-        withExtendedLifetime(repository) {}
+        withExtendedLifetime(repository, {})
         #expect(hasLanded)
     }
 

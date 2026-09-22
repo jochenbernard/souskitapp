@@ -32,7 +32,13 @@ struct MockRecipe: Sendable {
     /// - Returns: The recipe's text.
     /// - Throws: Whatever reading the file throws.
     func text() throws -> String {
-        guard let url = Bundle.module.url(forResource: id, withExtension: "sous", subdirectory: "Recipes") else {
+        guard
+            let url = Bundle.module.url(
+                forResource: id,
+                withExtension: "sous",
+                subdirectory: "Recipes"
+            )
+        else {
             throw CocoaError(.fileReadNoSuchFile)
         }
 
