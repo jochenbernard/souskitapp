@@ -26,14 +26,17 @@ final class AppFeaturePresenterTests {
 
     /// A store remembering the folder in this suite's defaults.
     private func makeRecipeRepositoryStore() -> FileRecipeRepositoryStore {
-        FileRecipeRepositoryStore(userDefaults: userDefaults)
+        FileRecipeRepositoryStore(
+            parser: parser,
+            userDefaults: userDefaults
+        )
     }
 
     /// A presenter opened on the screen the defaults call for, as a launch opens one.
     private func launch() -> AppFeaturePresenter {
         let recipeRepositoryStore = makeRecipeRepositoryStore()
         let presenter = AppFeaturePresenter(
-            kitchenFeatureFactory: KitchenFeatureFactory(),
+            kitchenFeatureFactory: KitchenFeatureFactory(parser: parser),
             mockRecipeRepository: MockRecipeRepository(parser: parser),
             onboardingFeatureFactory: OnboardingFeatureFactory(recipeRepositoryStore: recipeRepositoryStore),
             recipeRepositoryKindStore: RecipeRepositoryKindStore(userDefaults: userDefaults),

@@ -14,9 +14,11 @@ struct AppFeatureFactory {
     private let recipeRepositoryStore: RecipeRepositoryStore
 
     init() {
-        let store = FileRecipeRepositoryStore()
-        self.kitchenFeatureFactory = KitchenFeatureFactory()
-        self.mockRecipeRepository = MockRecipeRepository(parser: SousParser())
+        // One parser for the whole app, handed down to everything that reads Sous.
+        let parser = SousParser()
+        let store = FileRecipeRepositoryStore(parser: parser)
+        self.kitchenFeatureFactory = KitchenFeatureFactory(parser: parser)
+        self.mockRecipeRepository = MockRecipeRepository(parser: parser)
         self.onboardingFeatureFactory = OnboardingFeatureFactory(recipeRepositoryStore: store)
         self.recipeRepositoryKindStore = RecipeRepositoryKindStore()
         self.recipeRepositoryStore = store

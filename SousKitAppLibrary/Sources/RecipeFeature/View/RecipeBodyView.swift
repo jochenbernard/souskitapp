@@ -6,7 +6,7 @@ import SwiftUI
 /// A parsed recipe: the header and what it takes, then what to do, side by side where the width allows.
 struct RecipeBodyView: View {
     private let presenter: RecipeFeaturePresenterProtocol
-    private let recipe: Recipe
+    private let recipe: ScaledRecipe
     private let metadata: MetadataDisplay
     private let expandedSections: Set<RecipeSection>
 
@@ -20,7 +20,7 @@ struct RecipeBodyView: View {
 
     init(
         presenter: RecipeFeaturePresenterProtocol,
-        recipe: Recipe,
+        recipe: ScaledRecipe,
         metadata: MetadataDisplay,
         expandedSections: Set<RecipeSection>
     ) {
@@ -51,37 +51,37 @@ struct RecipeBodyView: View {
 
     @ViewBuilder
     private var overview: some View {
-        let ingredientList = RecipeDisplay.ingredientList(of: recipe)
-        let cookwareNames = RecipeDisplay.cookwareNames(of: recipe)
+        let ingredientList = RecipeDisplay.ingredientList(of: recipe.scaled)
+        let cookwareNames = RecipeDisplay.cookwareNames(of: recipe.scaled)
 
-        if !metadata.isEmpty || !ingredientList.rows.isEmpty || !cookwareNames.isEmpty {
-            VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
-                metadataView
+        // The header card carries the scale, so it stands even where the file writes no header.
+        VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
+            metadataView
 
-                ingredientSection(ingredientList)
+            ingredientSection(ingredientList)
 
-                cookwareSection(cookwareNames)
-            }
-            .frame(maxWidth: isSideBySide ? overviewWidth : .infinity)
+            cookwareSection(cookwareNames)
         }
+        .frame(maxWidth: isSideBySide ? overviewWidth : .infinity)
     }
 
     @ViewBuilder
     private var stepSection: some View {
-        if !recipe.steps.isEmpty {
+        if !recipe.scaled.steps.isEmpty {
             VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
-                ForEach(StepNumbering.numberedGroups(of: recipe)) { numbered in
+                ForEach(StepNumbering.numberedGroups(of: recipe.scaled)) { numbered in
                     groupView(numbered)
                 }
             }
         }
     }
 
-    @ViewBuilder
     private var metadataView: some View {
-        if !metadata.isEmpty {
-            RecipeMetadataView(metadata: metadata)
-        }
+        RecipeMetadataView(
+            presenter: presenter,
+            metadata: metadata,
+            scale: recipe.scale
+        )
     }
 
     @ViewBuilder
@@ -228,8 +228,9 @@ struct RecipeBodyView: View {
     }
 }
 
-private func previewRecipe() -> Recipe {
-    SousParser().parseRecipe(
+private func previewRecipe(scale: RecipeScale? = nil) -> ScaledRecipe {
+    let parser = SousParser()
+    let recipe = parser.parseRecipe(
         """
         ---
         title: Brioche
@@ -254,36 +255,47 @@ private func previewRecipe() -> Recipe {
         """
     )
     .value
+
+    return ScaledRecipe(
+        asWritten: recipe,
+        parser: parser,
+        scale: scale
+    )
+}
+
+@MainActor
+private func previewBodyView(_ recipe: ScaledRecipe) -> RecipeBodyView {
+    RecipeBodyView(
+        presenter: RecipeFeaturePresenterStub(),
+        recipe: recipe,
+        metadata: RecipeDisplay.metadata(of: recipe.scaled.metadata),
+        expandedSections: RecipeSection.openByDefault
+    )
 }
 
 #Preview("Recipe body") {
-    let recipe = previewRecipe()
+    ScrollView {
+        previewBodyView(previewRecipe())
+            .sousPagePadding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    .sousPage()
+}
 
-    return ScrollView {
-        RecipeBodyView(
-            presenter: RecipeFeaturePresenterStub(),
-            recipe: recipe,
-            metadata: RecipeDisplay.metadata(of: recipe.metadata),
-            expandedSections: RecipeSection.openByDefault
-        )
-        .sousPagePadding()
-        .frame(maxWidth: .infinity, alignment: .leading)
+#Preview("Recipe body, scaled") {
+    ScrollView {
+        previewBodyView(previewRecipe(scale: RecipeScale(target: .servings, value: 4.0)))
+            .sousPagePadding()
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
     .sousPage()
 }
 
 #Preview("Recipe body, side by side", traits: .fixedLayout(width: 1_210.0, height: 834.0)) {
-    let recipe = previewRecipe()
-
-    return ScrollView {
-        RecipeBodyView(
-            presenter: RecipeFeaturePresenterStub(),
-            recipe: recipe,
-            metadata: RecipeDisplay.metadata(of: recipe.metadata),
-            expandedSections: RecipeSection.openByDefault
-        )
-        .sousPagePadding()
-        .frame(maxWidth: .infinity, alignment: .leading)
+    ScrollView {
+        previewBodyView(previewRecipe())
+            .sousPagePadding()
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
     .environment(\.horizontalSizeClass, .regular)
     .sousPage()

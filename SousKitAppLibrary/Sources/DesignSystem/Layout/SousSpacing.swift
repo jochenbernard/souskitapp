@@ -1,4 +1,4 @@
-import CoreGraphics
+import CoreFoundation
 
 /// The spacing scale, in points.
 public enum SousSpacing {

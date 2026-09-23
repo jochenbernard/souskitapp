@@ -1,14 +1,22 @@
 import Foundation
 import RecipeLibrary
+import SousKit
 
 /// The recipe directory the user picked, remembered across launches.
 public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
+    private let parser: SousParser
     nonisolated(unsafe) private let userDefaults: UserDefaults
 
     /// Creates a store.
     ///
-    /// - Parameter userDefaults: Where the directory is remembered.
-    public init(userDefaults: UserDefaults = .standard) {
+    /// - Parameters:
+    ///   - parser: What the recipes in the directory are read with.
+    ///   - userDefaults: Where the directory is remembered.
+    public init(
+        parser: SousParser,
+        userDefaults: UserDefaults = .standard
+    ) {
+        self.parser = parser
         self.userDefaults = userDefaults
     }
 
@@ -35,13 +43,13 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     }
 
     public func makeRecipeRepository() -> RecipeRepository? {
-        recipeDirectory.map({ FileRecipeRepository(recipeDirectory: $0) })
+        recipeDirectory.map({ FileRecipeRepository(parser: parser, recipeDirectory: $0) })
     }
 
     public func connectRecipeDirectory(at url: URL) throws -> RecipeRepository {
         try rememberRecipeDirectory(at: url)
 
-        return FileRecipeRepository(recipeDirectory: RecipeDirectory(url: url))
+        return FileRecipeRepository(parser: parser, recipeDirectory: RecipeDirectory(url: url))
     }
 
     public func clear() {

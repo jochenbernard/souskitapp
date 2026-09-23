@@ -1,11 +1,18 @@
 import CookingFeature
 import RecipeFeature
 import RecipeLibrary
+import SousKit
 
 /// Builds ``KitchenFeature`` with what it reads.
 public struct KitchenFeatureFactory: Sendable {
+    private let parser: SousParser
+
     /// Creates a factory.
-    public init() {}
+    ///
+    /// - Parameter parser: What the kitchen reads Sous with.
+    public init(parser: SousParser) {
+        self.parser = parser
+    }
 
     /// Builds the feature.
     ///
@@ -26,7 +33,10 @@ public struct KitchenFeatureFactory: Sendable {
         let presenter = KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(idleTimer: ApplicationIdleTimer()),
             handler: handler,
-            recipeFeatureFactory: RecipeFeatureFactory(recipeRepository: recipeRepository),
+            recipeFeatureFactory: RecipeFeatureFactory(
+                parser: parser,
+                recipeRepository: recipeRepository
+            ),
             recipeRepository: recipeRepository,
             viewModel: viewModel
         )

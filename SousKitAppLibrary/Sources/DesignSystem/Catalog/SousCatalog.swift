@@ -133,6 +133,17 @@ public struct SousCatalog: View {
 
                 Button(action: {}, label: { Text(verbatim: "Vinaigrette") })
                     .buttonStyle(.sousQuiet)
+
+                chipButtons
+            }
+        }
+    }
+
+    private var chipButtons: some View {
+        SousFlowLayout(spacing: SousSpacing.small) {
+            ForEach(["servings", "kg", "crepes"], id: \.self) { name in
+                Button(action: {}, label: { Text(verbatim: name) })
+                    .buttonStyle(.sousChip(isSelected: name == "servings"))
             }
         }
     }
@@ -152,7 +163,7 @@ public struct SousCatalog: View {
         CatalogSwatch(
             fill: .quaternaryAccentFill,
             name: "quaternaryAccentFill",
-            role: "callouts"
+            role: "callouts, a chosen chip"
         )
     ]
 

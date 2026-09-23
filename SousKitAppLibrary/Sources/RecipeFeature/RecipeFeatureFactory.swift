@@ -1,13 +1,21 @@
 import RecipeLibrary
+import SousKit
 
 /// Builds ``RecipeFeature`` with what it reads.
 public struct RecipeFeatureFactory: Sendable {
+    private let parser: SousParser
     private let recipeRepository: RecipeRepository
 
     /// Creates a factory.
     ///
-    /// - Parameter recipeRepository: The repository the recipes are read from.
-    public init(recipeRepository: RecipeRepository) {
+    /// - Parameters:
+    ///   - parser: What a scaled recipe's amounts are read back with.
+    ///   - recipeRepository: The repository the recipes are read from.
+    public init(
+        parser: SousParser,
+        recipeRepository: RecipeRepository
+    ) {
+        self.parser = parser
         self.recipeRepository = recipeRepository
     }
 
@@ -24,6 +32,7 @@ public struct RecipeFeatureFactory: Sendable {
         let viewModel = RecipeFeatureViewModel(recipeEntry: recipeEntry)
         let presenter = RecipeFeaturePresenter(
             handler: handler,
+            parser: parser,
             recipeRepository: recipeRepository,
             viewModel: viewModel
         )

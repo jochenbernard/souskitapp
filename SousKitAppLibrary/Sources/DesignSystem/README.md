@@ -12,7 +12,7 @@ disagrees with this package, this package is right.
 | Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.body`, `.subheadline`, `.caption2`. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
-| Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sous` | The three button styles, and the disclosure group style. |
+| Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sousChip(isSelected:)`, `.sous` | The three button styles, the chip a cook chooses from a set, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
 | Containers | `.sousSurface(_:)`, `.sousRow()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row, the rows that share one card, the wash, the chip, the spinner. |
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
@@ -37,7 +37,8 @@ disagrees with this package, this package is right.
   two drift apart.
 - A lighter accent is the accent at a named opacity, never a value of its own, so one role takes
   one opacity everywhere. The names follow the system fills: `.quaternaryAccentFill` fills a
-  large area that holds content, as `quaternarySystemFill` does.
+  large area that holds content, as `quaternarySystemFill` does, and washes the one chip chosen
+  from a set.
 - A screen takes `.sousPage()`, and a container sets the color its content is read in. Only text
   stepping away from what it sits in, a caption in `.secondary`, names a color itself.
 - A container of one line reads as a capsule, and holds that radius as a rounded rectangle
@@ -60,7 +61,8 @@ disagrees with this package, this package is right.
   an eyebrow.
 - A screen's title is its `.navigationTitle(_:)`, large by default, and is not drawn again in
   the content. Cooking is the one screen that takes `.inline`, where the step in front of the
-  cook outranks the recipe's name.
+  cook outranks the recipe's name. A sheet takes `.inline` too, in a toolbar of its own that holds
+  its actions: Done is a `.confirm` button, not a style from here.
 - A fixed size, `.system(size:weight:)`, is for the wordmark and nothing else. It does not
   scale, which is right for a lockup and wrong for anything a reader reads.
 - Semibold is limited to the wordmark.
@@ -98,7 +100,9 @@ color, and the 4.6 figure holds where the tint sits over the page ground.
 
 The three styles are separate types rather than one carrying an emphasis: no call site picks an
 emphasis at run time, and the primary differs in kind, not degree. What they share is in
-`ButtonPress`, `ButtonPressBody`, and `sousButtonLabel(_:)`.
+`ButtonPress`, `ButtonPressBody`, and `sousButtonLabel(_:)`. `.sousChip(isSelected:)` is the one
+style that takes a value, since whether a chip is chosen is state rather than emphasis; it draws
+the same chip as `.sousChip()` and presses as the others do.
 
 A press scales the control and changes no color. `.sousPrimary` is the exception: its
 `interactive()` glass flexes under the finger, and a scale on top would be a second reaction
