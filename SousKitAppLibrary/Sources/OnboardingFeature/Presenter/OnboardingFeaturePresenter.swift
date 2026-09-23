@@ -37,4 +37,8 @@ struct OnboardingFeaturePresenter: OnboardingFeaturePresenterProtocol {
             viewModel.failureMessage = error.localizedDescription
         }
     }
+
+    func didTapUseMockRecipes() {
+        handler.onboardingFeatureDidChooseMockRecipes()
+    }
 }

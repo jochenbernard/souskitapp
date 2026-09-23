@@ -19,7 +19,10 @@ struct KitchenFeaturePresenterTests {
     }
 
     private func makeViewModel() -> KitchenFeatureViewModel {
-        KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        KitchenFeatureViewModel(
+            recipeRepositoryName: "Recipes",
+            recipeRepositoryKind: .files
+        )
     }
 
     @MainActor
@@ -130,6 +133,16 @@ struct KitchenFeaturePresenterTests {
         await makePresenter(viewModel: makeViewModel(), recipeRepository: recipeRepository).didBecomeActive()
 
         #expect(recipeRepository.refreshCount == 1)
+    }
+
+    @MainActor
+    @Test("picking a kind of repository reports it")
+    func pickingAKindReports() {
+        let handler = KitchenFeatureHandlerStub()
+
+        makePresenter(viewModel: makeViewModel(), handler: handler).didSelectRecipeRepositoryKind(.mock)
+
+        #expect(handler.selectedRecipeRepositoryKinds == [.mock])
     }
 
     @MainActor

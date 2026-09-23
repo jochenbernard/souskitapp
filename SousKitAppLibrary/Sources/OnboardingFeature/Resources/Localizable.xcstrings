@@ -50,6 +50,23 @@
         }
       }
     },
+    "Use mock recipes" : {
+      "comment" : "The button a debug build shows for reading the recipes kept in the app instead of picking a folder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use mock recipes"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testrecepten gebruiken"
+          }
+        }
+      }
+    },
     "Where your recipes live" : {
       "localizations" : {
         "en" : {

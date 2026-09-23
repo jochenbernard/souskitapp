@@ -20,7 +20,10 @@ struct KitchenFeatureStackTests {
     }
 
     private func makeViewModel() -> KitchenFeatureViewModel {
-        KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        KitchenFeatureViewModel(
+            recipeRepositoryName: "Recipes",
+            recipeRepositoryKind: .files
+        )
     }
 
     @MainActor

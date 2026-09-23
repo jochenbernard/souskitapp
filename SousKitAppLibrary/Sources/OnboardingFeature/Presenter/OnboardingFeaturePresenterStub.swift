@@ -6,4 +6,6 @@ struct OnboardingFeaturePresenterStub: OnboardingFeaturePresenterProtocol {
     func didChangeIsChoosingDirectory(_: Bool) {}
 
     func didChooseDirectory(_: Result<URL, Error>) {}
+
+    func didTapUseMockRecipes() {}
 }

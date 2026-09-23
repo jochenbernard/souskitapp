@@ -25,7 +25,11 @@ let package = Package(
     targets: [
         .standardTarget(
             name: "AppFeature",
-            dependencies: ["FileRecipeLibrary", "KitchenFeature", "OnboardingFeature"]
+            dependencies: ["FileRecipeLibrary", "KitchenFeature", "MockRecipeLibrary", "OnboardingFeature"]
+        ),
+        .standardTestTarget(
+            name: "AppFeatureTests",
+            dependencies: ["AppFeature"]
         ),
         .standardTarget(
             name: "CookingFeature",
@@ -63,6 +67,15 @@ let package = Package(
             dependencies: ["LocalizationTestSupport", "KitchenFeature"]
         ),
         .standardTarget(name: "LocalizationTestSupport"),
+        .standardTarget(
+            name: "MockRecipeLibrary",
+            dependencies: ["RecipeLibrary"],
+            resources: [.process("Resources/Localizable.xcstrings")]
+        ),
+        .standardTestTarget(
+            name: "MockRecipeLibraryTests",
+            dependencies: ["LocalizationTestSupport", "MockRecipeLibrary"]
+        ),
         .standardTarget(
             name: "OnboardingFeature",
             dependencies: ["DesignSystem", "RecipeLibrary"],

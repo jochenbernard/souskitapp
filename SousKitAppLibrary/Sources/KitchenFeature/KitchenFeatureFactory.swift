@@ -18,13 +18,18 @@ public struct KitchenFeatureFactory: Sendable {
     ///
     /// - Parameters:
     ///   - recipeRepository: The repository recipes are read from.
+    ///   - recipeRepositoryKind: The kind of repository `recipeRepository` is.
     ///   - handler: What the feature reports out of the kitchen to.
     /// - Returns: The feature.
     public func makeKitchenFeature(
         recipeRepository: RecipeRepository,
+        recipeRepositoryKind: RecipeRepositoryKind,
         handler: KitchenFeatureHandler
     ) -> KitchenFeature {
-        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: recipeRepository.name)
+        let viewModel = KitchenFeatureViewModel(
+            recipeRepositoryName: recipeRepository.name,
+            recipeRepositoryKind: recipeRepositoryKind
+        )
         let presenter = KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(idleTimer: ApplicationIdleTimer()),
             handler: handler,

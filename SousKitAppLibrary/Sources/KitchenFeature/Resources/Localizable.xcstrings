@@ -53,6 +53,23 @@
         }
       }
     },
+    "Folder" : {
+      "comment" : "In the debug menu, reading recipes from the folder the user picked.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Folder"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map"
+          }
+        }
+      }
+    },
     "In iCloud, not downloaded" : {
       "comment" : "What VoiceOver reads for the symbol on a recipe that is still in iCloud.",
       "localizations" : {
@@ -66,6 +83,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "In iCloud, niet gedownload"
+          }
+        }
+      }
+    },
+    "Mock recipes" : {
+      "comment" : "In the debug menu, reading the recipes kept in the app for trying it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mock recipes"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testrecepten"
           }
         }
       }
@@ -114,6 +148,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "De map wordt gelezen."
+          }
+        }
+      }
+    },
+    "Recipes" : {
+      "comment" : "The debug menu's choice of where recipes are read from.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recipes"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recepten"
           }
         }
       }

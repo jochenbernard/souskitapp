@@ -10,4 +10,7 @@ protocol OnboardingFeaturePresenterProtocol {
 
     @MainActor
     func didChooseDirectory(_ result: Result<URL, Error>)
+
+    @MainActor
+    func didTapUseMockRecipes()
 }

@@ -1,0 +1,23 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Mock recipes" : {
+      "comment" : "The name of the recipes kept in the app for trying it, which a debug build offers in place of a folder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mock recipes"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testrecepten"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

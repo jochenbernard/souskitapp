@@ -90,6 +90,8 @@ struct OnboardingFeatureView: View {
         VStack(alignment: .leading, spacing: SousSpacing.large) {
             failureNote
 
+            mockRecipesButton
+
             chooseButton
         }
     }
@@ -100,6 +102,17 @@ struct OnboardingFeatureView: View {
             Text(failureMessage)
                 .sousCallout()
         }
+    }
+
+    @ViewBuilder
+    private var mockRecipesButton: some View {
+        #if DEBUG
+        Button(action: presenter.didTapUseMockRecipes) {
+            Text("Use mock recipes", bundle: .module)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.sousQuiet)
+        #endif
     }
 
     private var chooseButton: some View {

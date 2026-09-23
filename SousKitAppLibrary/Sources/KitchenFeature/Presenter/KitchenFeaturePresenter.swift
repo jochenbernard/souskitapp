@@ -61,6 +61,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         }
     }
 
+    func didSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
+        handler.kitchenFeatureDidSelectRecipeRepositoryKind(recipeRepositoryKind)
+    }
+
     func didTapReset() {
         viewModel.isConfirmingReset = true
     }

@@ -33,6 +33,16 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AppFeatureTests"
+               BuildableName = "AppFeatureTests"
+               BlueprintName = "AppFeatureTests"
+               ReferencedContainer = "container:SousKitAppLibrary">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "CookingFeatureTests"
                BuildableName = "CookingFeatureTests"
                BlueprintName = "CookingFeatureTests"
@@ -66,6 +76,16 @@
                BlueprintIdentifier = "KitchenFeatureTests"
                BuildableName = "KitchenFeatureTests"
                BlueprintName = "KitchenFeatureTests"
+               ReferencedContainer = "container:SousKitAppLibrary">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "MockRecipeLibraryTests"
+               BuildableName = "MockRecipeLibraryTests"
+               BlueprintName = "MockRecipeLibraryTests"
                ReferencedContainer = "container:SousKitAppLibrary">
             </BuildableReference>
          </TestableReference>
