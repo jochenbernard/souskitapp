@@ -70,10 +70,7 @@ let package = Package(
         .standardTarget(
             name: "MockRecipeLibrary",
             dependencies: ["RecipeLibrary"],
-            resources: [
-                .copy("Resources/Recipes"),
-                .process("Resources/Localizable.xcstrings")
-            ]
+            resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
             name: "MockRecipeLibraryTests",

@@ -61,15 +61,15 @@ public final class MockRecipeRepository: RecipeRepository {
 
         if availability(of: recipe) != .downloaded {
             try await Task.sleep(for: fetchDuration)
-
-            if recipe.isUnreachable {
-                throw CocoaError(.ubiquitousFileUbiquityServerNotAvailable)
-            }
-
-            markFetched([recipe])
         }
 
-        return parser.parseRecipe(try recipe.text())
+        guard let text = recipe.text else {
+            throw CocoaError(.ubiquitousFileUbiquityServerNotAvailable)
+        }
+
+        markFetched([recipe])
+
+        return parser.parseRecipe(text)
     }
 
     private var entries: [RecipeEntry] {
@@ -98,8 +98,15 @@ public final class MockRecipeRepository: RecipeRepository {
         }
     }
 
+    /// Marks recipes as come down from iCloud, telling the stream where that changes what it lists.
     private func markFetched(_ recipes: [MockRecipe]) {
-        fetchedIDs.formUnion(recipes.map(\.id))
+        let ids = Set(recipes.filter({ $0.availability != .downloaded }).map(\.id))
+
+        guard !ids.isSubset(of: fetchedIDs) else {
+            return
+        }
+
+        fetchedIDs.formUnion(ids)
         continuation?.yield(.success(entries))
     }
 }

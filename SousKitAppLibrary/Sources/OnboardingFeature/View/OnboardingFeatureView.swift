@@ -90,9 +90,9 @@ struct OnboardingFeatureView: View {
         VStack(alignment: .leading, spacing: SousSpacing.large) {
             failureNote
 
-            chooseButton
-
             mockRecipesButton
+
+            chooseButton
         }
     }
 
@@ -104,14 +104,6 @@ struct OnboardingFeatureView: View {
         }
     }
 
-    private var chooseButton: some View {
-        Button(action: presenter.didTapChooseDirectory) {
-            Text("Choose folder", bundle: .module)
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.sousPrimary)
-    }
-
     @ViewBuilder
     private var mockRecipesButton: some View {
         #if DEBUG
@@ -121,6 +113,14 @@ struct OnboardingFeatureView: View {
         }
         .buttonStyle(.sousQuiet)
         #endif
+    }
+
+    private var chooseButton: some View {
+        Button(action: presenter.didTapChooseDirectory) {
+            Text("Choose folder", bundle: .module)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.sousPrimary)
     }
 
     private var isChoosingDirectory: Binding<Bool> {

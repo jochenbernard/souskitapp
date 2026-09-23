@@ -29,12 +29,9 @@ struct MockRecipeRepositoryTests {
         try #require(try await currentRecipeEntries(of: repository).first(where: { $0.id == id }))
     }
 
-    @Test("every recipe file is listed, and every listed recipe has a file but the unreachable one")
-    func filesMatchTheList() throws {
-        let directory = try #require(Bundle.module.url(forResource: "Recipes", withExtension: nil))
-        let fileNames = try FileManager.default.contentsOfDirectory(atPath: directory.path(percentEncoded: false))
-
-        #expect(Set(fileNames) == Set(MockRecipe.all.filter({ !$0.isUnreachable }).map({ "\($0.id).sous" })))
+    @Test("every recipe has a text to read but the unreachable one")
+    func onlyTheUnreachableRecipeHasNoText() {
+        #expect(MockRecipe.all.filter({ $0.text == nil }).map(\.id) == ["unreachable"])
     }
 
     @MainActor
