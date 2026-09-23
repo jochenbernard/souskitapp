@@ -36,3 +36,7 @@ no_empty_block:
 
 opening_brace:
   ignore_multiline_statement_conditions: true
+
+unused_import:
+  always_keep_imports:
+    - SousKit

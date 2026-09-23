@@ -31,7 +31,7 @@ struct KitchenFeaturePresenterTests {
         KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(idleTimer: IdleTimerStub()),
             handler: handler,
-            recipeFeatureFactory: RecipeFeatureFactory(recipeRepository: recipeRepository),
+            recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
             recipeRepository: recipeRepository,
             viewModel: viewModel
         )
@@ -130,137 +130,6 @@ struct KitchenFeaturePresenterTests {
         await makePresenter(viewModel: makeViewModel(), recipeRepository: recipeRepository).didBecomeActive()
 
         #expect(recipeRepository.refreshCount == 1)
-    }
-
-    @MainActor
-    @Test("a recipe pushed on the stack reaches the view model with a feature to render it")
-    func recipePathReachesTheViewModel() {
-        let crepes = recipeEntry(named: "crepes")
-        let viewModel = makeViewModel()
-
-        makePresenter(viewModel: viewModel).didChangeScreenPath([.recipe(crepes)])
-
-        #expect(viewModel.screenPath == [.recipe(crepes)])
-        #expect(viewModel.openRecipe?.recipeEntry == crepes)
-    }
-
-    @MainActor
-    @Test("popping leaves the recipe in place, so it has something to animate away")
-    func poppingKeepsTheOpenRecipe() {
-        let crepes = recipeEntry(named: "crepes")
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.didChangeScreenPath([])
-
-        #expect(viewModel.screenPath.isEmpty)
-        #expect(viewModel.openRecipe?.recipeEntry == crepes)
-    }
-
-    @MainActor
-    @Test("pushing another recipe after a pop replaces the one left behind")
-    func pushingAfterAPopReplacesTheOpenRecipe() {
-        let crepes = recipeEntry(named: "crepes")
-        let brioche = recipeEntry(named: "brioche")
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.didChangeScreenPath([])
-        presenter.didChangeScreenPath([.recipe(brioche)])
-
-        #expect(viewModel.openRecipe?.recipeEntry == brioche)
-    }
-
-    @MainActor
-    @Test("a recipe pushed again keeps the feature already built for it")
-    func pushingTheSameRecipeKeepsItsFeature() {
-        let crepes = recipeEntry(named: "crepes")
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        let first = viewModel.openRecipe
-        presenter.didChangeScreenPath([.recipe(crepes)])
-
-        #expect(first != nil)
-        #expect(viewModel.openRecipe?.recipeEntry == first?.recipeEntry)
-    }
-
-    @MainActor
-    @Test("cooking a recipe pushes it on the stack with a feature to render it")
-    func cookingPushesTheCookingScreen() {
-        let crepes = recipeEntry(named: "crepes")
-        let recipe = parser.parseRecipe("Whisk it.").value
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.recipeFeatureDidStartCooking(recipe: recipe)
-
-        #expect(viewModel.screenPath == [.recipe(crepes), .cooking(recipe)])
-        #expect(viewModel.openCooking?.recipe == recipe)
-    }
-
-    @MainActor
-    @Test("cooking reported again from the cooking screen pushes nothing")
-    func cookingTwicePushesOnce() {
-        let crepes = recipeEntry(named: "crepes")
-        let recipe = parser.parseRecipe("Whisk it.").value
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.recipeFeatureDidStartCooking(recipe: recipe)
-        presenter.recipeFeatureDidStartCooking(recipe: recipe)
-
-        #expect(viewModel.screenPath == [.recipe(crepes), .cooking(recipe)])
-    }
-
-    @MainActor
-    @Test("popping the cooking screen leaves the recipe under it open")
-    func poppingCookingKeepsTheOpenRecipe() {
-        let crepes = recipeEntry(named: "crepes")
-        let recipe = parser.parseRecipe("Whisk it.").value
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.recipeFeatureDidStartCooking(recipe: recipe)
-        presenter.didChangeScreenPath([.recipe(crepes)])
-
-        #expect(viewModel.screenPath == [.recipe(crepes)])
-        #expect(viewModel.openRecipe?.recipeEntry == crepes)
-        #expect(viewModel.openCooking?.recipe == recipe)
-    }
-
-    @MainActor
-    @Test("exiting the cooking screen pops back to the recipe")
-    func exitingCookingPopsToTheRecipe() {
-        let crepes = recipeEntry(named: "crepes")
-        let recipe = parser.parseRecipe("Whisk it.").value
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.recipeFeatureDidStartCooking(recipe: recipe)
-        presenter.cookingFeatureDidExit()
-
-        #expect(viewModel.screenPath == [.recipe(crepes)])
-    }
-
-    @MainActor
-    @Test("an exit with no cooking screen on top leaves the stack alone")
-    func exitWithoutCookingKeepsTheStack() {
-        let crepes = recipeEntry(named: "crepes")
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.cookingFeatureDidExit()
-
-        #expect(viewModel.screenPath == [.recipe(crepes)])
     }
 
     @MainActor

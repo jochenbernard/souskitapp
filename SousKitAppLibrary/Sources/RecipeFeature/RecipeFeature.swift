@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// One recipe, rendered as it is written.
+/// One recipe, rendered at the scale a cook chose.
 public struct RecipeFeature {
     private let presenter: RecipeFeaturePresenterProtocol
     private let viewModel: RecipeFeatureViewModel

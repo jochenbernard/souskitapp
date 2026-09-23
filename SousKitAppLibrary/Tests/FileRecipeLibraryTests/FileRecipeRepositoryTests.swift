@@ -6,6 +6,8 @@ import Testing
 
 @Suite("File recipe repository", .timeLimit(.minutes(1)))
 final class FileRecipeRepositoryTests: Sendable {
+    private let parser = SousParser()
+
     private let directory: TemporaryDirectory
 
     init() throws {
@@ -13,7 +15,7 @@ final class FileRecipeRepositoryTests: Sendable {
     }
 
     private func makeRepository() -> FileRecipeRepository {
-        FileRecipeRepository(recipeDirectory: directory.recipeDirectory)
+        FileRecipeRepository(parser: parser, recipeDirectory: directory.recipeDirectory)
     }
 
     private func readRecipe(of recipeEntry: RecipeEntry) async throws -> Recipe {

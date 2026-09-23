@@ -2,12 +2,21 @@ import DesignSystem
 import SousKit
 import SwiftUI
 
-/// A recipe's header on a surface: its facts, its tags and allergens, and the lines left over.
+/// A recipe's header on a surface: its facts, its tags and allergens, the lines left over, and
+/// what the recipe is scaled to.
 struct RecipeMetadataView: View {
+    private let presenter: RecipeFeaturePresenterProtocol
     private let metadata: MetadataDisplay
+    private let scale: RecipeScale
 
-    init(metadata: MetadataDisplay) {
+    init(
+        presenter: RecipeFeaturePresenterProtocol,
+        metadata: MetadataDisplay,
+        scale: RecipeScale
+    ) {
+        self.presenter = presenter
         self.metadata = metadata
+        self.scale = scale
     }
 
     var body: some View {
@@ -23,6 +32,10 @@ struct RecipeMetadataView: View {
 
                 metadataRow(row)
             }
+
+            scaleDivider
+
+            RecipeScaleRow(presenter: presenter, scale: scale)
         }
         .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
     }
@@ -53,7 +66,21 @@ struct RecipeMetadataView: View {
         }
     }
 
+    @ViewBuilder
     private func factTile(_ fact: MetadataFact) -> some View {
+        if fact.kind == .servings {
+            // A cook reaching for the servings to change them finds the scale sheet there too.
+            Button(action: presenter.didTapScale) {
+                factContent(fact)
+                    .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+        } else {
+            factContent(fact)
+        }
+    }
+
+    private func factContent(_ fact: MetadataFact) -> some View {
         VStack(spacing: SousSpacing.xSmall) {
             Image(systemName: fact.kind.systemImage)
                 .foregroundStyle(.secondary)
@@ -145,27 +172,43 @@ struct RecipeMetadataView: View {
             Text(verbatim: row.label)
         }
     }
+
+    /// The scale is the last row, so it is divided from anything the header put above it.
+    @ViewBuilder
+    private var scaleDivider: some View {
+        if !metadata.isEmpty {
+            Divider()
+                .padding(.horizontal, SousSpacing.large)
+        }
+    }
 }
 
-private func previewMetadata(_ header: String) -> MetadataDisplay {
-    RecipeDisplay.metadata(of: SousParser().parseRecipe(header).value.metadata)
+@MainActor
+private func previewMetadataView(
+    _ header: String,
+    scale: RecipeScale
+) -> RecipeMetadataView {
+    RecipeMetadataView(
+        presenter: RecipeFeaturePresenterStub(),
+        metadata: RecipeDisplay.metadata(of: SousParser().parseRecipe(header).value.metadata),
+        scale: scale
+    )
 }
 
 #Preview("Recipe metadata") {
     ScrollView {
-        RecipeMetadataView(
-            metadata: previewMetadata(
-                """
-                ---
-                title: Boeuf Bourguignon
-                servings: 6
-                prep-time: 30 min
-                cook-time: 3 h
-                tags: [dinner, classic, french]
-                allergens: [gluten, dairy]
-                ---
-                """
-            )
+        previewMetadataView(
+            """
+            ---
+            title: Boeuf Bourguignon
+            servings: 6
+            prep-time: 30 min
+            cook-time: 3 h
+            tags: [dinner, classic, french]
+            allergens: [gluten, dairy]
+            ---
+            """,
+            scale: RecipeScale(target: .servings, value: 12.0)
         )
         .sousPagePadding()
     }
@@ -174,31 +217,45 @@ private func previewMetadata(_ header: String) -> MetadataDisplay {
 
 #Preview("Recipe metadata, with lines left over") {
     ScrollView {
-        RecipeMetadataView(
-            metadata: previewMetadata(
-                """
-                ---
-                title: Gratin Dauphinois
-                language: en
-                version: 1.0
-                servings: 6
-                yield: [1.8 kg]
-                tags: [comfort food, french, make-ahead]
-                diet: [vegetarian]
-                allergens: [dairy]
-                source: https://example.com/gratin-dauphinois
-                author: Jean Dupont
-                license: CC-BY-4.0
-                image: images/gratin-dauphinois.jpg
-                prep-time: 30 min
-                cook-time: 1 h 30 min
-                make-ahead: best assembled a day ahead and baked from cold
-                nutrition:
-                  calories: 3300 kcal
-                  protein: 44 g
-                ---
-                """
-            )
+        previewMetadataView(
+            """
+            ---
+            title: Gratin Dauphinois
+            language: en
+            version: 1.0
+            servings: 6
+            yield: [1.8 kg]
+            tags: [comfort food, french, make-ahead]
+            diet: [vegetarian]
+            allergens: [dairy]
+            source: https://example.com/gratin-dauphinois
+            author: Jean Dupont
+            license: CC-BY-4.0
+            image: images/gratin-dauphinois.jpg
+            prep-time: 30 min
+            cook-time: 1 h 30 min
+            make-ahead: best assembled a day ahead and baked from cold
+            nutrition:
+              calories: 3300 kcal
+              protein: 44 g
+            ---
+            """,
+            scale: RecipeScale(target: .servings, value: 6.0)
+        )
+        .sousPagePadding()
+    }
+    .sousPage()
+}
+
+#Preview("Recipe metadata, header of nothing but a title") {
+    ScrollView {
+        previewMetadataView(
+            """
+            ---
+            title: Vinaigrette
+            ---
+            """,
+            scale: RecipeScale(target: .multiplier, value: 1.0)
         )
         .sousPagePadding()
     }

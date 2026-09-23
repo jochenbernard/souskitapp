@@ -3,9 +3,8 @@ import SousKit
 
 /// The recipes sitting directly in a directory, fetched from iCloud where they are not on the device.
 struct FileRecipeRepository: RecipeRepository {
-    private let parser = SousParser()
-
     private let monitor: RecipeDirectoryMonitor
+    private let parser: SousParser
     private let recipeDirectory: RecipeDirectory
     private let textReader: RecipeTextReader
 
@@ -13,8 +12,12 @@ struct FileRecipeRepository: RecipeRepository {
         recipeDirectory.name
     }
 
-    init(recipeDirectory: RecipeDirectory) {
+    init(
+        parser: SousParser,
+        recipeDirectory: RecipeDirectory
+    ) {
         self.monitor = RecipeDirectoryMonitor(recipeDirectory: recipeDirectory)
+        self.parser = parser
         self.recipeDirectory = recipeDirectory
         self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory)
     }

@@ -32,6 +32,9 @@ struct RecipeFeatureView: View {
         }
         .sousPage()
         .navigationTitle(navigationTitle)
+        .sheet(isPresented: isScaling) {
+            scaleSheet
+        }
         .task {
             await presenter.viewDidAppear()
         }
@@ -40,7 +43,7 @@ struct RecipeFeatureView: View {
     private var navigationTitle: String {
         guard
             case .recipe(let recipe) = viewModel.recipeContent,
-            let title = recipe.metadata.title,
+            let title = recipe.scaled.metadata.title,
             !title.isEmpty
         else {
             return viewModel.recipeEntry.name
@@ -70,10 +73,10 @@ struct RecipeFeatureView: View {
     }
 
     @ViewBuilder
-    private func recipeBody(_ recipe: Recipe) -> some View {
-        let metadata = RecipeDisplay.metadata(of: recipe.metadata)
+    private func recipeBody(_ recipe: ScaledRecipe) -> some View {
+        let metadata = RecipeDisplay.metadata(of: recipe.scaled.metadata)
 
-        if recipe.steps.isEmpty, metadata.isEmpty {
+        if recipe.scaled.steps.isEmpty, metadata.isEmpty {
             emptyNote
         } else {
             RecipeBodyView(
@@ -105,7 +108,7 @@ struct RecipeFeatureView: View {
 
     @ViewBuilder
     private var cookBar: some View {
-        if case .recipe(let recipe) = viewModel.recipeContent, !recipe.steps.isEmpty {
+        if case .recipe(let recipe) = viewModel.recipeContent, !recipe.scaled.steps.isEmpty {
             cookButton
         }
     }
@@ -118,6 +121,22 @@ struct RecipeFeatureView: View {
         .buttonStyle(.sousPrimary)
         .frame(maxWidth: horizontalSizeClass == .regular ? wideCookButtonWidth : .infinity)
         .sousPagePadding()
+    }
+
+    @ViewBuilder
+    private var scaleSheet: some View {
+        if case .recipe(let recipe) = viewModel.recipeContent {
+            let scale = ScaleDisplay(recipe: recipe, text: viewModel.scaleText)
+
+            RecipeScaleView(presenter: presenter, scale: scale)
+        }
+    }
+
+    private var isScaling: Binding<Bool> {
+        Binding(
+            get: { viewModel.isScaling },
+            set: { presenter.didChangeIsScaling($0) }
+        )
     }
 }
 
@@ -137,8 +156,9 @@ private func previewViewModel(_ recipeContent: RecipeContent) -> RecipeFeatureVi
     return viewModel
 }
 
-private func previewRecipe() -> Recipe {
-    SousParser().parseRecipe(
+private func previewRecipe(scale: RecipeScale? = nil) -> ScaledRecipe {
+    let parser = SousParser()
+    let recipe = parser.parseRecipe(
         """
         ---
         title: Boeuf Bourguignon
@@ -157,6 +177,12 @@ private func previewRecipe() -> Recipe {
         """
     )
     .value
+
+    return ScaledRecipe(
+        asWritten: recipe,
+        parser: parser,
+        scale: scale
+    )
 }
 
 #Preview("Recipe") {
@@ -164,6 +190,15 @@ private func previewRecipe() -> Recipe {
         RecipeFeatureView(
             presenter: RecipeFeaturePresenterStub(),
             viewModel: previewViewModel(.recipe(previewRecipe()))
+        )
+    }
+}
+
+#Preview("Recipe, scaled to 12 servings") {
+    NavigationStack {
+        RecipeFeatureView(
+            presenter: RecipeFeaturePresenterStub(),
+            viewModel: previewViewModel(.recipe(previewRecipe(scale: RecipeScale(target: .servings, value: 12.0))))
         )
     }
 }

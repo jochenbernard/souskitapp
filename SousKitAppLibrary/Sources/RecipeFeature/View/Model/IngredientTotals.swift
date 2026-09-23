@@ -1,4 +1,3 @@
-import Foundation
 import SousKit
 
 /// Gathers a recipe's ingredient annotations into the rows an ingredients list shows.
@@ -67,14 +66,6 @@ enum IngredientTotals {
     /// What joins the amounts of a row that could not be summed into one.
     private static let separator = " + "
 
-    /// How a summed number is written: to three decimals, in the recipe's notation rather than
-    /// the reader's, since it stands beside amounts the file wrote.
-    private static let numberStyle = FloatingPointFormatStyle<Double>()
-        .precision(.fractionLength(0...3))
-        .rounded(rule: .toNearestOrAwayFromZero)
-        .grouping(.never)
-        .locale(Locale(identifier: "en_US_POSIX"))
-
     /// What a row shows for these amounts, or `nil` where there are none.
     private static func total(of amounts: [Amount]) -> String? {
         guard !amounts.isEmpty else {
@@ -116,17 +107,13 @@ enum IngredientTotals {
         }
 
         let total = bounds.low == bounds.high
-            ? number(bounds.low)
-            : "\(number(bounds.low))-\(number(bounds.high))"
+            ? ScaleNumber.text(bounds.low)
+            : "\(ScaleNumber.text(bounds.low))-\(ScaleNumber.text(bounds.high))"
 
         guard let unit = term.unit else {
             return total
         }
 
         return "\(total) \(unit)"
-    }
-
-    private static func number(_ value: Double) -> String {
-        value.formatted(numberStyle)
     }
 }
