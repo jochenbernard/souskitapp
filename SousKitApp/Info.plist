@@ -7,8 +7,6 @@
 		<string>en</string>
 		<string>nl-BE</string>
 	</array>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
