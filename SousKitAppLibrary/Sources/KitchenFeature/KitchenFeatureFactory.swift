@@ -31,7 +31,10 @@ public struct KitchenFeatureFactory: Sendable {
             recipeRepositoryKind: recipeRepositoryKind
         )
         let presenter = KitchenFeaturePresenter(
-            cookingFeatureFactory: CookingFeatureFactory(idleTimer: ApplicationIdleTimer()),
+            cookingFeatureFactory: CookingFeatureFactory(
+                idleTimer: ApplicationIdleTimer(),
+                timerScheduler: AlarmTimerScheduler()
+            ),
             handler: handler,
             recipeFeatureFactory: RecipeFeatureFactory(
                 parser: parser,

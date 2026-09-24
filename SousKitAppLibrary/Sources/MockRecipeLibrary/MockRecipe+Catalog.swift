@@ -5,7 +5,7 @@ extension MockRecipe {
     /// Every recipe the repository lists, ordered by name as a folder lists them.
     ///
     /// The ten examples of the specification sit among recipes that are empty, malformed, annotated in every way the
-    /// format allows, or all ten examples in one.
+    /// format allows, timed in seconds, or all ten examples in one.
     static let all: [MockRecipe] = [
         MockRecipe(id: "boeuf-bourguignon", text: MockRecipes.boeufBourguignon),
         MockRecipe(
@@ -34,6 +34,7 @@ extension MockRecipe {
         MockRecipe(id: "malformed", text: MockRecipes.malformed),
         MockRecipe(id: "moules-marinieres", text: MockRecipes.moulesMarinieres),
         MockRecipe(id: "quiche-lorraine", text: MockRecipes.quicheLorraine),
+        MockRecipe(id: "short-timers", text: MockRecipes.shortTimers),
         MockRecipe(id: "steps-only", text: MockRecipes.stepsOnly),
         MockRecipe(
             id: "unreachable",

@@ -4,10 +4,10 @@ import SousKit
 import SwiftUI
 
 struct RecipeFeatureView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private let presenter: RecipeFeaturePresenterProtocol
     private let viewModel: RecipeFeatureViewModel
-
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     // The cook button's width where the screen is wide, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var wideCookButtonWidth = 360.0

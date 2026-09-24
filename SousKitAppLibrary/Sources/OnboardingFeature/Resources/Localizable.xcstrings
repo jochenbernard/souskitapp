@@ -52,6 +52,7 @@
     },
     "Use mock recipes" : {
       "comment" : "The button a debug build shows for reading the recipes kept in the app instead of picking a folder.",
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {

@@ -229,6 +229,23 @@ extension MockRecipes {
     Beat in @{6 tbsp} olive oil@ a little at a time until it thickens, then season
     with @black pepper@:staple.
     """
+
+    /// The vinaigrette with timers a few seconds long, for watching a timer run out and go off.
+    static let shortTimers = """
+    ---
+    title: Vinaigrette
+    yield: [125 ml]
+    prep-time: 5 min
+    tags: [sauce, classic, french]
+    allergens: [mustard]
+    ---
+
+    Whisk @{1 tsp} dijon mustard@ into @{2 tbsp} red wine vinegar@ with
+    @{1/4 tsp} salt@:staple for ~5 s~ until the salt dissolves.
+
+    Beat in @{6 tbsp} olive oil@ a little at a time for ~10 sec~ until it thickens,
+    then let it stand ~1 min 5 s~ and season with @black pepper@:staple.
+    """
 }
 
 #endif

@@ -4,6 +4,9 @@ import SousKit
 import SwiftUI
 
 struct CookingFeatureView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.openURL) private var openURL
+
     private let presenter: CookingFeaturePresenterProtocol
     private let viewModel: CookingFeatureViewModel
 
@@ -12,6 +15,12 @@ struct CookingFeatureView: View {
 
     // A `.body` number with room around it, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var stepNumberDiameter = 32.0
+
+    // Room for a `.title2` countdown beside its step, growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .title2) private var sideTimersWidth = 340.0
+
+    // Two and a half `.title2` rows: the half row shows there are more to scroll to.
+    @ScaledMetric(relativeTo: .title2) private var bottomTimersMaxHeight = 160.0
 
     init(
         presenter: CookingFeaturePresenterProtocol,
@@ -28,6 +37,14 @@ struct CookingFeatureView: View {
                 .sousPagePadding()
                 .frame(maxWidth: .infinity)
         }
+        .environment(\.openURL, OpenURLAction(handler: openTimer))
+        .safeAreaInset(edge: .bottom) {
+            bottomTimers
+        }
+        .safeAreaInset(edge: .trailing) {
+            sideTimers
+        }
+        .animation(RunningTimersTray.animation, value: viewModel.runningTimers)
         .sousPage()
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
@@ -38,7 +55,15 @@ struct CookingFeatureView: View {
                 exitButton
             }
         }
-        .onAppear(perform: presenter.viewDidAppear)
+        .alert(
+            Text("Allow timers", bundle: .module),
+            isPresented: isAskingToAllowTimers,
+            actions: { allowTimersButtons },
+            message: { allowTimersMessage }
+        )
+        .task {
+            await presenter.viewDidAppear()
+        }
         .onDisappear(perform: presenter.viewDidDisappear)
     }
 
@@ -83,7 +108,7 @@ struct CookingFeatureView: View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.large) {
             stepNumber(number)
 
-            stepProse(step)
+            stepProse(step, number: number)
                 .font(.title3)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -98,8 +123,45 @@ struct CookingFeatureView: View {
             .background(.tertiaryFill, in: Circle())
     }
 
-    private func stepProse(_ step: Step) -> Text {
-        Text(StepProse.attributedProse(of: step, annotationColor: .accent))
+    private func stepProse(_ step: Step, number: Int) -> Text {
+        Text(
+            StepProse.attributedProse(
+                of: step,
+                annotationColor: .accent,
+                timerLink: { StepTimer($0, stepNumber: number)?.link }
+            )
+        )
+    }
+
+    @ViewBuilder
+    private var bottomTimers: some View {
+        if horizontalSizeClass != .regular, !viewModel.runningTimers.isEmpty {
+            timersTray(maxHeight: bottomTimersMaxHeight)
+                .padding(.horizontal, SousSpacing.large)
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+        }
+    }
+
+    // A wide screen has room beside the steps, so the timers cover none of them there.
+    @ViewBuilder
+    private var sideTimers: some View {
+        if horizontalSizeClass == .regular, !viewModel.runningTimers.isEmpty {
+            timersTray(maxHeight: .infinity)
+                .frame(width: sideTimersWidth)
+                .padding(.vertical, SousSpacing.small)
+                .padding(.trailing, SousSpacing.large)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .transition(.opacity.combined(with: .move(edge: .trailing)))
+        }
+    }
+
+    private func timersTray(maxHeight: CGFloat) -> some View {
+        RunningTimersTray(
+            presenter: presenter,
+            timers: viewModel.runningTimers,
+            timerConfirmingCancel: viewModel.timerConfirmingCancel,
+            maxHeight: maxHeight
+        )
     }
 
     private var exitButton: some View {
@@ -118,11 +180,53 @@ struct CookingFeatureView: View {
         }
     }
 
+    private var allowTimersMessage: Text {
+        Text(
+            "Allow timers in Settings, so a timer keeps running and goes off, even with the app closed.",
+            bundle: .module
+        )
+    }
+
+    @ViewBuilder
+    private var allowTimersButtons: some View {
+        Button(action: openSettings) {
+            Text("Open Settings", bundle: .module)
+        }
+
+        Button(role: .cancel, action: {})
+    }
+
+    private var isAskingToAllowTimers: Binding<Bool> {
+        Binding(
+            get: { viewModel.isAskingToAllowTimers },
+            set: { presenter.didChangeIsAskingToAllowTimers($0) }
+        )
+    }
+
     private var isConfirmingExit: Binding<Bool> {
         Binding(
             get: { viewModel.isConfirmingExit },
             set: { presenter.didChangeIsConfirmingExit($0) }
         )
+    }
+
+    private func openTimer(_ link: URL) -> OpenURLAction.Result {
+        guard let timer = StepTimer(link: link) else {
+            return .systemAction
+        }
+
+        Task {
+            await presenter.didTapTimer(timer)
+        }
+        return .handled
+    }
+
+    private func openSettings() {
+        guard let settings = URL(string: UIApplication.openSettingsURLString) else {
+            return
+        }
+
+        openURL(settings)
     }
 }
 
@@ -172,6 +276,44 @@ private func previewRecipe() -> Recipe {
 #Preview("Cooking, confirming the exit") {
     let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
     viewModel.isConfirmingExit = true
+
+    return NavigationStack {
+        CookingFeatureView(
+            presenter: CookingFeaturePresenterStub(),
+            viewModel: viewModel
+        )
+    }
+}
+
+#Preview("Cooking, with timers running") {
+    let date = Date.now
+    let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
+    viewModel.runningTimers = [
+        RunningTimer(
+            id: UUID(),
+            stepTimer: StepTimer(stepNumber: 2, text: "5-6 min", duration: .seconds(300)),
+            endDate: date,
+            isRinging: true
+        ),
+        RunningTimer(
+            id: UUID(),
+            stepTimer: StepTimer(stepNumber: 3, text: "15 min", duration: .seconds(900)),
+            endDate: date.addingTimeInterval(260),
+            isRinging: false
+        )
+    ]
+
+    return NavigationStack {
+        CookingFeatureView(
+            presenter: CookingFeaturePresenterStub(),
+            viewModel: viewModel
+        )
+    }
+}
+
+#Preview("Cooking, asking to allow timers") {
+    let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
+    viewModel.isAskingToAllowTimers = true
 
     return NavigationStack {
         CookingFeatureView(

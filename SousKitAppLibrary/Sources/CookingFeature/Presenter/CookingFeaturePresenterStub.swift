@@ -3,6 +3,16 @@ struct CookingFeaturePresenterStub: CookingFeaturePresenterProtocol {
 
     func viewDidDisappear() {}
 
+    func didTapTimer(_: StepTimer) {}
+
+    func didTapCancelTimer(_: RunningTimer) {}
+
+    func didChangeIsConfirmingCancelTimer(_: Bool) {}
+
+    func didConfirmCancelTimer() {}
+
+    func didChangeIsAskingToAllowTimers(_: Bool) {}
+
     func didTapExit() {}
 
     func didChangeIsConfirmingExit(_: Bool) {}

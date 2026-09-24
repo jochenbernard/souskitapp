@@ -1,4 +1,5 @@
 @testable import CookingFeature
+import Foundation
 import SousKit
 import Testing
 
@@ -14,32 +15,51 @@ struct CookingFeaturePresenterTests {
     private func makePresenter(
         viewModel: CookingFeatureViewModel,
         handler: CookingFeatureHandler = CookingFeatureHandlerSpy(),
-        idleTimer: IdleTimer = IdleTimerSpy()
+        idleTimer: IdleTimer = IdleTimerSpy(),
+        timerScheduler: TimerScheduler = TimerSchedulerSpy()
     ) -> CookingFeaturePresenter {
         CookingFeaturePresenter(
             handler: handler,
             idleTimer: idleTimer,
+            timerScheduler: timerScheduler,
             viewModel: viewModel
+        )
+    }
+
+    private func makeStepTimer() -> StepTimer {
+        StepTimer(
+            stepNumber: 3,
+            text: "15 min",
+            duration: .seconds(900)
+        )
+    }
+
+    private func makeRunningTimer(isRinging: Bool = false) -> RunningTimer {
+        RunningTimer(
+            id: UUID(),
+            stepTimer: makeStepTimer(),
+            endDate: .now.addingTimeInterval(900),
+            isRinging: isRinging
         )
     }
 
     @MainActor
     @Test("the screen stays on while the view is on screen")
-    func screenStaysOn() {
+    func screenStaysOn() async {
         let idleTimer = IdleTimerSpy()
 
-        makePresenter(viewModel: makeViewModel(), idleTimer: idleTimer).viewDidAppear()
+        await makePresenter(viewModel: makeViewModel(), idleTimer: idleTimer).viewDidAppear()
 
         #expect(idleTimer.settings == [true])
     }
 
     @MainActor
     @Test("the screen dims again once the view leaves")
-    func screenDimsAgain() {
+    func screenDimsAgain() async {
         let idleTimer = IdleTimerSpy()
         let presenter = makePresenter(viewModel: makeViewModel(), idleTimer: idleTimer)
 
-        presenter.viewDidAppear()
+        await presenter.viewDidAppear()
         presenter.viewDidDisappear()
 
         #expect(idleTimer.settings == [true, false])
@@ -89,5 +109,123 @@ struct CookingFeaturePresenterTests {
 
         #expect(!viewModel.isConfirmingExit)
         #expect(handler.exitCount == 0)
+    }
+
+    @MainActor
+    @Test("the running timers arrive while the view is on screen")
+    func runningTimersArrive() async {
+        let viewModel = makeViewModel()
+        let runningTimer = makeRunningTimer()
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[], [runningTimer]])
+
+        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
+
+        #expect(viewModel.runningTimers == [runningTimer])
+    }
+
+    @MainActor
+    @Test("tapping a timer starts it")
+    func tappingATimerStartsIt() async {
+        let timerScheduler = TimerSchedulerSpy()
+
+        await makePresenter(viewModel: makeViewModel(), timerScheduler: timerScheduler).didTapTimer(makeStepTimer())
+
+        #expect(timerScheduler.startedTimers == [makeStepTimer()])
+    }
+
+    @MainActor
+    @Test("tapping a timer without timers allowed asks to allow them")
+    func tappingATimerAsksToAllowTimers() async {
+        let viewModel = makeViewModel()
+        let timerScheduler = TimerSchedulerSpy(startError: TimerSchedulerError.notAuthorized)
+
+        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).didTapTimer(makeStepTimer())
+
+        #expect(viewModel.isAskingToAllowTimers)
+    }
+
+    @MainActor
+    @Test("dismissing the request to allow timers closes it")
+    func dismissingTheTimersRequest() {
+        let viewModel = makeViewModel()
+        viewModel.isAskingToAllowTimers = true
+
+        makePresenter(viewModel: viewModel).didChangeIsAskingToAllowTimers(false)
+
+        #expect(!viewModel.isAskingToAllowTimers)
+    }
+
+    @MainActor
+    @Test("tapping cancel on a running timer asks to confirm and cancels nothing yet")
+    func tappingCancelAsksToConfirm() {
+        let viewModel = makeViewModel()
+        let timerScheduler = TimerSchedulerSpy()
+        let runningTimer = makeRunningTimer()
+
+        makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).didTapCancelTimer(runningTimer)
+
+        #expect(viewModel.timerConfirmingCancel == runningTimer)
+        #expect(timerScheduler.cancelledTimers.isEmpty)
+    }
+
+    @MainActor
+    @Test("confirming the cancel closes the confirmation and cancels the timer")
+    func confirmingTheCancel() {
+        let viewModel = makeViewModel()
+        let timerScheduler = TimerSchedulerSpy()
+        let presenter = makePresenter(viewModel: viewModel, timerScheduler: timerScheduler)
+        let runningTimer = makeRunningTimer()
+
+        presenter.didTapCancelTimer(runningTimer)
+        presenter.didConfirmCancelTimer()
+
+        #expect(viewModel.timerConfirmingCancel == nil)
+        #expect(timerScheduler.cancelledTimers == [runningTimer])
+    }
+
+    @MainActor
+    @Test("dismissing the cancel confirmation cancels nothing")
+    func dismissingTheCancel() {
+        let viewModel = makeViewModel()
+        let timerScheduler = TimerSchedulerSpy()
+        let presenter = makePresenter(viewModel: viewModel, timerScheduler: timerScheduler)
+
+        presenter.didTapCancelTimer(makeRunningTimer())
+        presenter.didChangeIsConfirmingCancelTimer(false)
+
+        #expect(viewModel.timerConfirmingCancel == nil)
+        #expect(timerScheduler.cancelledTimers.isEmpty)
+    }
+
+    @MainActor
+    @Test("tapping stop on a ringing timer silences it without asking")
+    func stoppingARingingTimer() {
+        let viewModel = makeViewModel()
+        let timerScheduler = TimerSchedulerSpy()
+        let runningTimer = makeRunningTimer(isRinging: true)
+
+        makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).didTapCancelTimer(runningTimer)
+
+        #expect(viewModel.timerConfirmingCancel == nil)
+        #expect(timerScheduler.cancelledTimers == [runningTimer])
+    }
+
+    @MainActor
+    @Test("a timer that goes off while its cancel is being confirmed closes the confirmation")
+    func timerGoingOffClosesTheConfirmation() async {
+        let viewModel = makeViewModel()
+        let runningTimer = makeRunningTimer()
+        let ringingTimer = RunningTimer(
+            id: runningTimer.id,
+            stepTimer: runningTimer.stepTimer,
+            endDate: runningTimer.endDate,
+            isRinging: true
+        )
+        viewModel.timerConfirmingCancel = runningTimer
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[ringingTimer]])
+
+        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
+
+        #expect(viewModel.timerConfirmingCancel == nil)
     }
 }

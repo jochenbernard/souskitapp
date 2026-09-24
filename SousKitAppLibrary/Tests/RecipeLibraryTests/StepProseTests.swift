@@ -1,5 +1,6 @@
 @testable import RecipeLibrary
 import SousKit
+import SwiftUI
 import Testing
 
 @Suite("Step prose")
@@ -118,5 +119,14 @@ struct StepProseTests {
             """
 
         #expect(annotations(source) == ["750 ml red wine"])
+    }
+
+    @Test("a timer links to what the link gives it, and nothing else does")
+    func timerLink() throws {
+        let link = try #require(URL(string: "sous-timer://start"))
+        let step = try #require(parser.parseRecipe("Brown @{150 g} lardons@ for ~5 min~.").value.steps.first)
+        let prose = StepProse.attributedProse(of: step, annotationColor: .red, timerLink: { _ in link })
+
+        #expect(prose.runs.compactMap(\AttributedString.Runs.Run.link) == [link])
     }
 }

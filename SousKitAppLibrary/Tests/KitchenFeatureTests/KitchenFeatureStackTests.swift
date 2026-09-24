@@ -31,7 +31,10 @@ struct KitchenFeatureStackTests {
         let recipeRepository = RecipeRepositorySpy()
 
         return KitchenFeaturePresenter(
-            cookingFeatureFactory: CookingFeatureFactory(idleTimer: IdleTimerStub()),
+            cookingFeatureFactory: CookingFeatureFactory(
+                idleTimer: IdleTimerStub(),
+                timerScheduler: TimerSchedulerStub()
+            ),
             handler: KitchenFeatureHandlerStub(),
             recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
             recipeRepository: recipeRepository,
