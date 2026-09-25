@@ -24,6 +24,7 @@ struct RunningTimerRow: View {
             Spacer(minLength: 0.0)
 
             countdown
+                .font(.title2.weight(.semibold))
 
             cancelButton
         }
@@ -48,11 +49,9 @@ struct RunningTimerRow: View {
     private var countdown: some View {
         if timer.isRinging {
             Text("Done", bundle: .module)
-                .font(.title2.weight(.semibold))
                 .foregroundStyle(.accent)
         } else {
             Text(timerInterval: timer.startDate...timer.endDate, countsDown: true)
-                .font(.title2.weight(.semibold))
                 .monospacedDigit()
         }
     }

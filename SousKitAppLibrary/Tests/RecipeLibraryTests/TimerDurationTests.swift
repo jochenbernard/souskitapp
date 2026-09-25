@@ -7,14 +7,7 @@ struct TimerDurationTests {
     private let parser = SousParser()
 
     private func duration(_ source: String) -> Duration? {
-        let timer = parser.parseRecipe(source).value.steps.first?.segments.compactMap { segment in
-            if case .timer(let timer) = segment {
-                return timer
-            }
-            return nil
-        }.first
-
-        return timer.flatMap(TimerDuration.duration(of:))
+        parser.parseRecipe(source).value.steps.first?.timers.first.flatMap(TimerDuration.duration(of:))
     }
 
     @Test("a precise timer runs for its quantity")

@@ -14,25 +14,6 @@ public struct RunningTimer: Identifiable, Hashable, Sendable {
     /// Whether the timer is over and sounding its alarm.
     public let isRinging: Bool
 
-    /// Creates a running timer.
-    ///
-    /// - Parameters:
-    ///   - id: Identifies the timer.
-    ///   - stepTimer: The step's timer this one was started from.
-    ///   - endDate: When the timer is over.
-    ///   - isRinging: Whether the timer is over and sounding its alarm.
-    public init(
-        id: UUID,
-        stepTimer: StepTimer,
-        endDate: Date,
-        isRinging: Bool
-    ) {
-        self.id = id
-        self.stepTimer = stepTimer
-        self.endDate = endDate
-        self.isRinging = isRinging
-    }
-
     /// When the timer started.
     var startDate: Date {
         endDate.addingTimeInterval(-(stepTimer.duration / .seconds(1)))

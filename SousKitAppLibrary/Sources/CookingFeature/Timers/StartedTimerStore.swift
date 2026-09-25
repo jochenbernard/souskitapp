@@ -34,8 +34,17 @@ struct StartedTimerStore: Sendable {
     }
 
     /// Forgets the timers over whose alarm is gone.
-    func removeFinished(keeping ids: Set<UUID>, now: Date) {
-        save(startedTimers().filter({ ids.contains($0.key) || $0.value.endDate > now }))
+    ///
+    /// - Returns: The timers kept.
+    func removeFinished(keeping ids: Set<UUID>) -> [UUID: StartedTimer] {
+        let startedTimers = startedTimers()
+        let kept = startedTimers.filter({ ids.contains($0.key) || $0.value.endDate > .now })
+
+        if kept.count != startedTimers.count {
+            save(kept)
+        }
+
+        return kept
     }
 
     private func save(_ startedTimers: [UUID: StartedTimer]) {

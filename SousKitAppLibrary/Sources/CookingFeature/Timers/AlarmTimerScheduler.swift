@@ -65,8 +65,7 @@ public struct AlarmTimerScheduler: TimerScheduler {
     }
 
     private func runningTimers(of alarms: [Alarm]) -> [RunningTimer] {
-        startedTimerStore.removeFinished(keeping: Set(alarms.map(\.id)), now: .now)
-        let startedTimers = startedTimerStore.startedTimers()
+        let startedTimers = startedTimerStore.removeFinished(keeping: Set(alarms.map(\.id)))
 
         return alarms
             .compactMap { alarm in
