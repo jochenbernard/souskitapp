@@ -8,4 +8,9 @@ public struct StepTimer: Hashable, Codable, Sendable {
 
     /// How long the timer runs.
     public let duration: Duration
+
+    /// How long the timer runs, in seconds.
+    var seconds: Double {
+        duration / .seconds(1)
+    }
 }

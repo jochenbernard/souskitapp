@@ -38,15 +38,14 @@ public struct AlarmTimerScheduler: TimerScheduler {
         }
 
         let id = UUID()
-        let seconds = timer.duration / .seconds(1)
 
         // Kept before scheduling, so the first update carrying the alarm finds it.
-        startedTimerStore.add(StartedTimer(stepTimer: timer, endDate: .now.addingTimeInterval(seconds)), id: id)
+        startedTimerStore.add(StartedTimer(stepTimer: timer, endDate: .now.addingTimeInterval(timer.seconds)), id: id)
 
         do {
             _ = try await manager.schedule(
                 id: id,
-                configuration: .timer(duration: seconds, attributes: attributes(of: timer))
+                configuration: .timer(duration: timer.seconds, attributes: attributes(of: timer))
             )
         } catch {
             startedTimerStore.remove(id: id)

@@ -180,13 +180,6 @@ struct CookingFeatureView: View {
         }
     }
 
-    private var allowTimersMessage: Text {
-        Text(
-            "Allow timers in Settings, so a timer keeps running and goes off, even with the app closed.",
-            bundle: .module
-        )
-    }
-
     @ViewBuilder
     private var allowTimersButtons: some View {
         Button(action: openSettings) {
@@ -194,6 +187,13 @@ struct CookingFeatureView: View {
         }
 
         Button(role: .cancel, action: {})
+    }
+
+    private var allowTimersMessage: Text {
+        Text(
+            "Allow timers in Settings, so a timer keeps running and goes off, even with the app closed.",
+            bundle: .module
+        )
     }
 
     private var isAskingToAllowTimers: Binding<Bool> {

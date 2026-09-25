@@ -16,7 +16,7 @@ public struct RunningTimer: Identifiable, Hashable, Sendable {
 
     /// When the timer started.
     var startDate: Date {
-        endDate.addingTimeInterval(-(stepTimer.duration / .seconds(1)))
+        endDate.addingTimeInterval(-stepTimer.seconds)
     }
 
     /// How much of the timer's time has run out by a date, from 0 when it starts to 1 once it is over.
@@ -25,12 +25,11 @@ public struct RunningTimer: Identifiable, Hashable, Sendable {
             return 1.0
         }
 
-        let seconds = stepTimer.duration / .seconds(1)
-        guard seconds > 0.0 else {
+        guard stepTimer.seconds > 0.0 else {
             return 1.0
         }
 
         let secondsLeft = endDate.timeIntervalSince(date)
-        return min(1.0, max(0.0, 1.0 - secondsLeft / seconds))
+        return min(1.0, max(0.0, 1.0 - secondsLeft / stepTimer.seconds))
     }
 }
