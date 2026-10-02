@@ -52,9 +52,9 @@ disagrees with this package, this package is right.
   up.
 - The accent means live, here, or do. Not decoration, category, or mood. Past roughly 5% of a
   layout it has become decoration, and on a dark ground it reads a third brighter still.
-- The accent is `oklch(0.67 0.20 40)`, which sRGB holds as `#F45C18`. A new accent is picked in
+- The accent is `oklch(0.64 0.20 40)`, which sRGB holds as `#EA5202`. A new accent is picked in
   OKLCH, then written to `Color+Accent`, `AccentColor`, and the app icon's `icon.json`, which takes
-  it as 0.95686, 0.36078, 0.09412. It carries white text, at APCA Lc 65.
+  it as 0.91765, 0.32157, 0.00784. It carries white text, at APCA Lc 69.
 - Set text with `.font(_:)` and a system text style. Six of them are in use: `.largeTitle` for
   a hero line, `.title` for a landing headline, `.title3` for the step in front of the cook,
   `.body` for copy and controls, `.subheadline` for quantities and metadata, `.caption2` for
@@ -90,13 +90,13 @@ Dark is not light inverted, and two things change beyond the system colors:
 The `SousSpacing` steps and the `SousRadius` values are read off the mark's grid, where 8 is
 the stroke, 12 the curl pitch, and 64 the grid.
 
-Color fixes the primary button at rest and no more: white on the accent at Lc 65, one primary action
+Color fixes the primary button at rest and no more: white on the accent at Lc 69, one primary action
 per view. `.sousSecondary` and `.sousQuiet`, the capsule outline, every padding, and all press
 behavior are decided in this package. A button is one `.body` line inside 12pt of vertical
 padding, which clears the 44pt minimum target and grows from there with Dynamic Type.
 
 `.sousPrimary` draws that accent as a Liquid Glass tint, not a flat fill. White stays the label
-color, and the Lc 65 figure holds where the tint sits over the page ground.
+color, and the Lc 69 figure holds where the tint sits over the page ground.
 
 The three styles are separate types rather than one carrying an emphasis: no call site picks an
 emphasis at run time, and the primary differs in kind, not degree. What they share is in
@@ -106,7 +106,7 @@ the same chip as `.sousChip()` and presses as the others do.
 
 A press scales the control and changes no color. `.sousPrimary` is the exception: its
 `interactive()` glass flexes under the finger, and a scale on top would be a second reaction
-to one touch. Nothing defines a fill for a pressed button: dimming the accent past 0.89 opacity
+to one touch. Nothing defines a fill for a pressed button: dimming the accent past 0.8 opacity
 over a light ground drops its white label under Lc 60, which reads as no feedback at all. The
 pressed state also outlives the finger by up to `ButtonPress.minimumDown`, since a tap can end
 within a frame of starting and would otherwise show nothing. On `.sousPrimary` that hold keeps
