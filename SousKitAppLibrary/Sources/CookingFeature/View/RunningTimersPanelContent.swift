@@ -72,7 +72,9 @@ struct RunningTimersPanelContent: View {
                 await arrival.takeToItsPlace(isInteracting: isInteracting, isRunning: viewModel.isRunning)
             }
             .onChange(of: stackHeight, initial: true) { _, height in
-                motion.stackHeight = height
+                if let height {
+                    motion.stackHeight = height
+                }
             }
             .accessibilityElement(children: .contain)
             .accessibilityAddTraits(isListOpen ? .isModal : [])
@@ -209,12 +211,16 @@ struct RunningTimersPanelContent: View {
         kind == .folding && viewModel.isTimerListOpen
     }
 
-    private var stackHeight: CGFloat {
-        guard kind == .folding else {
+    // None until the front timer is measured, or `onChange` can keep the too short height of a timer swooping in.
+    private var stackHeight: CGFloat? {
+        guard kind == .folding, let front = shownTimers.first else {
             return 0.0
         }
 
-        let frontHeight = shownTimers.first.flatMap({ rowHeights[$0.id] }) ?? 0.0
+        guard let frontHeight = rowHeights[front.id] else {
+            return nil
+        }
+
         return RunningTimersLayout.stackHeight(frontHeight: frontHeight, count: viewModel.runningTimers.count)
     }
 
