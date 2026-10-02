@@ -9,9 +9,6 @@ extension RunningTimersPanel {
         // swipe folds a tall list before letting go closes it.
         private static let projection = 0.2
         private static let closeDistance = 120.0
-
-        // How far a finger moves before a scroll view takes it as a swipe, which moves nothing.
-        private static let swipeThreshold = 10.0
         let scrollView = RunningTimersScrollView()
 
         // The scroll view takes no swipes while the list is closed, so the stack has one of its own to open it.
@@ -182,7 +179,7 @@ extension RunningTimersPanel {
             case .began:
                 // A scrolled list scrolls the swipe's start; at its top, the start goes into the fold.
                 canOpen = true
-                let start = scrollView.contentOffset.y > 0.0 ? 0.0 : distanceMoved(by: pan)
+                let start = scrollView.contentOffset.y > 0.0 ? 0.0 : scrollView.distanceMoved(by: pan, along: \.y)
                 fold = presentedFold() + (fits ? start : max(0.0, start))
                 foldBase = travel - fold
                 setFold(fold)
@@ -207,7 +204,7 @@ extension RunningTimersPanel {
             switch pan.state {
             case .began:
                 canOpen = viewModel.runningTimers.count > 1
-                fold = presentedFold() + distanceMoved(by: pan)
+                fold = presentedFold() + scrollView.distanceMoved(by: pan, along: \.y)
                 foldBase = travel - fold
                 setFold(fold)
             case .changed:
@@ -227,18 +224,6 @@ extension RunningTimersPanel {
 
             // By how far the finger went rather than how fast, which a slow start leaves at nothing either way.
             return kind == .folding && !viewModel.isTimerListOpen && !scrollView.isSideways(openingPan)
-        }
-
-        // How far the finger has gone from where it came down, past the distance it takes to be a swipe, as a scroll
-        // view moves its content by once a swipe begins. Measured from the touch, since the list's swipe and the
-        // stack's each start counting somewhere else.
-        private func distanceMoved(by pan: UIPanGestureRecognizer) -> CGFloat {
-            guard let touchDown = scrollView.touchDownLocation else {
-                return 0.0
-            }
-
-            let moved = pan.location(in: nil).y - touchDown.y
-            return moved - min(Self.swipeThreshold, max(-Self.swipeThreshold, moved))
         }
 
         // The fold the finger takes the timers up at, from where they are laid out: how far they are folded, and the

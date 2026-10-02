@@ -46,7 +46,7 @@ struct RunningTimerSwipeReveal: View {
 
     // Always the same, cut off by the action's edges while it is narrow and fading in as it makes room for it.
     private var label: some View {
-        title
+        RunningTimerRow.cancelTitle(isRinging: isRinging)
             .font(.callout.weight(.semibold))
             .foregroundStyle(.white)
             .fixedSize()
@@ -55,10 +55,6 @@ struct RunningTimerSwipeReveal: View {
                 labelWidth = measured
             }
             .opacity(labelWidth > 0.0 ? min(1.0, max(0.0, (width - Self.gap) / labelWidth)) : 0.0)
-    }
-
-    private var title: Text {
-        isRinging ? Text("Stop timer", bundle: .module) : Text("Cancel timer", bundle: .module)
     }
 
     private var isArmed: Bool {

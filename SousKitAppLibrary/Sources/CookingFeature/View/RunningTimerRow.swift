@@ -3,11 +3,16 @@ import SwiftUI
 
 /// A running timer in a box, filling as its time runs out.
 struct RunningTimerRow: View {
-    @Environment(\.runningTimerLeaving) private var leaving
-    @Environment(\.runningTimerSwoop) private var swoop
-
     /// The box each timer sits in, which the timers stacked behind one take as well.
     static let shape = RoundedRectangle(cornerRadius: SousRadius.large)
+
+    /// What taking a timer away does: stopping one that rings, or cancelling it.
+    ///
+    /// - Parameter isRinging: Whether the timer rings.
+    /// - Returns: The action's name.
+    static func cancelTitle(isRinging: Bool) -> Text {
+        isRinging ? Text("Stop timer", bundle: .module) : Text("Cancel timer", bundle: .module)
+    }
 
     // How many steps the fill grows in, about a pixel each across the widest timer.
     private static let progressSteps = 1_200.0
@@ -16,7 +21,7 @@ struct RunningTimerRow: View {
     private let timer: RunningTimer
     private let isConfirmingCancel: Bool
     private let contentWidth: CGFloat?
-    private let contentFade: RunningTimersFade
+    private let contentFade: RunningTimersMotionFade
 
     /// - Parameters:
     ///   - contentWidth: The width the timer lays what it shows out at, whatever the width of its box, or `nil` to
@@ -28,7 +33,7 @@ struct RunningTimerRow: View {
         timer: RunningTimer,
         isConfirmingCancel: Bool,
         contentWidth: CGFloat? = nil,
-        contentFade: RunningTimersFade = .disabled
+        contentFade: RunningTimersMotionFade = .disabled
     ) {
         self.presenter = presenter
         self.timer = timer
@@ -41,10 +46,7 @@ struct RunningTimerRow: View {
         framedContent
             .compositingGroup()
             .modifier(contentFade)
-            .opacity(RunningTimerLeaving.contentShare(leaving: leaving))
-            .opacity(swoop.map({ RunningTimerStacking.contentShare(swooping: $0) }) ?? 1.0)
-            // Gone by the swoop's end, the content passes from the swoop's fade to its place's at once, unseen.
-            .animation(nil, value: swoop == nil)
+            .runningTimerContentShare()
             .clipShape(Self.shape)
             .glassEffect(.regular, in: Self.shape)
     }
@@ -106,17 +108,13 @@ struct RunningTimerRow: View {
         }
         .buttonStyle(.glass)
         .buttonBorderShape(.circle)
-        .accessibilityLabel(cancelLabel)
+        .accessibilityLabel(Self.cancelTitle(isRinging: timer.isRinging))
         .confirmationDialog(
             Text("Cancel the \(timer.stepTimer.text) timer from step \(timer.stepTimer.stepNumber)?", bundle: .module),
             isPresented: isConfirmingCancelBinding,
             titleVisibility: .visible,
             actions: { confirmCancelButtons }
         )
-    }
-
-    private var cancelLabel: Text {
-        timer.isRinging ? Text("Stop timer", bundle: .module) : Text("Cancel timer", bundle: .module)
     }
 
     @ViewBuilder
@@ -147,7 +145,7 @@ struct RunningTimerRow: View {
     }
 
     private var isProgressPaused: Bool {
-        timer.isRinging || contentFade.isHidden || leaving > 0.0
+        timer.isRinging || contentFade.isHidden
     }
 
     private var isConfirmingCancelBinding: Binding<Bool> {
@@ -162,34 +160,9 @@ struct RunningTimerRow: View {
     }
 }
 
-private func previewTimers(endingAround date: Date) -> [RunningTimer] {
-    [
-        RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(stepNumber: 1, text: "30 min", duration: .seconds(1_800)),
-            endDate: date.addingTimeInterval(1_500),
-            isRinging: false
-        ),
-        RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(stepNumber: 3, text: "15 min", duration: .seconds(900)),
-            endDate: date.addingTimeInterval(260),
-            isRinging: false
-        ),
-        RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(stepNumber: 2, text: "5-6 min", duration: .seconds(300)),
-            endDate: date,
-            isRinging: true
-        )
-    ]
-}
-
 #Preview("Running timer rows") {
-    let date = Date.now
-
     VStack(spacing: SousSpacing.medium) {
-        ForEach(previewTimers(endingAround: date)) { timer in
+        ForEach(RunningTimersPreview.timers()) { timer in
             RunningTimerRow(
                 presenter: CookingFeaturePresenterStub(),
                 timer: timer,

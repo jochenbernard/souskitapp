@@ -1,17 +1,14 @@
 import Foundation
 import SousKit
 
-/// The timers the previews of the panel run, on a view model of a one-step recipe.
+/// The timers the previews of the panel run.
 enum RunningTimersPreview {
-    /// A view model with three timers running, one of them ringing.
+    /// Three timers, soonest first, the first of them ringing.
     ///
-    /// - Parameter isTimerListOpen: Whether the list of them is open.
-    /// - Returns: The view model.
-    @MainActor
-    static func viewModel(isTimerListOpen: Bool) -> CookingFeatureViewModel {
-        let date = Date.now
-        let viewModel = CookingFeatureViewModel(recipe: SousParser().parseRecipe("Whisk it.").value)
-        viewModel.runningTimers = [
+    /// - Parameter date: When the ringing timer was over.
+    /// - Returns: The timers.
+    static func timers(endingAround date: Date = .now) -> [RunningTimer] {
+        [
             RunningTimer(
                 id: UUID(),
                 stepTimer: StepTimer(stepNumber: 2, text: "5-6 min", duration: .seconds(300)),
@@ -31,6 +28,21 @@ enum RunningTimersPreview {
                 isRinging: false
             )
         ]
+    }
+
+    /// A view model with the three timers running.
+    ///
+    /// - Parameters:
+    ///   - isTimerListOpen: Whether the list of them is open.
+    ///   - recipe: The recipe being cooked, a one-step one unless given.
+    /// - Returns: The view model.
+    @MainActor
+    static func viewModel(
+        isTimerListOpen: Bool,
+        recipe: Recipe = SousParser().parseRecipe("Whisk it.").value
+    ) -> CookingFeatureViewModel {
+        let viewModel = CookingFeatureViewModel(recipe: recipe)
+        viewModel.runningTimers = timers()
         viewModel.isTimerListOpen = isTimerListOpen
         return viewModel
     }

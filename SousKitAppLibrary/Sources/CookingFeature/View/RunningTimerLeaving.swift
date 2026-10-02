@@ -52,12 +52,7 @@ extension AnyTransition {
         if isShown {
             RunningTimerRow(
                 presenter: CookingFeaturePresenterStub(),
-                timer: RunningTimer(
-                    id: UUID(),
-                    stepTimer: StepTimer(stepNumber: 3, text: "15 min", duration: .seconds(900)),
-                    endDate: .now.addingTimeInterval(260),
-                    isRinging: false
-                ),
+                timer: RunningTimersPreview.timers()[1],
                 isConfirmingCancel: false
             )
             .transition(.runningTimerLeaving)

@@ -35,10 +35,8 @@ struct RunningTimersPanelRow: View {
     private let isSwooping: Bool
     private let fadeTop: CGFloat
     private let fadeHeight: CGFloat
-    private let openness: Double
 
     /// - Parameters:
-    ///   - openness: How far the timers are open, from 0 stacked to 1 listed.
     ///   - depth: How many timers lie before this one.
     ///   - width: How wide the timer is once listed, which it lays what it shows out at all along.
     ///   - isListed: Whether the timers are listed, when every one takes taps and is read out, rather than stacked
@@ -50,7 +48,6 @@ struct RunningTimersPanelRow: View {
     init(
         presenter: CookingFeaturePresenterProtocol,
         motion: RunningTimersMotion,
-        openness: Double,
         timer: RunningTimer,
         depth: Int,
         width: CGFloat,
@@ -63,7 +60,6 @@ struct RunningTimersPanelRow: View {
     ) {
         self.presenter = presenter
         self.motion = motion
-        self.openness = openness
         self.timer = timer
         self.depth = depth
         self.width = width
@@ -81,8 +77,8 @@ struct RunningTimersPanelRow: View {
             timer: timer,
             isConfirmingCancel: isConfirmingCancel,
             contentWidth: width,
-            contentFade: RunningTimersFade(
-                openness: openness,
+            contentFade: RunningTimersMotionFade(
+                motion: motion,
                 over: Self.contentFadeStart...Self.contentFadeEnd,
                 isEnabled: depth > 0 && !isSwooping
             )
@@ -91,7 +87,7 @@ struct RunningTimersPanelRow: View {
             scrollFade
         }
         .runningTimersFade(
-            openness: openness,
+            openness: motion.openness,
             over: 0.0...Self.hiddenFadeEnd,
             isEnabled: depth > RunningTimersLayout.shownDepth && !isSwooping
         )
@@ -152,13 +148,7 @@ struct RunningTimersPanelRow: View {
     RunningTimersPanelRow(
         presenter: CookingFeaturePresenterStub(),
         motion: RunningTimersMotion(),
-        openness: 0.0,
-        timer: RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(stepNumber: 3, text: "15 min", duration: .seconds(900)),
-            endDate: .now.addingTimeInterval(260),
-            isRinging: false
-        ),
+        timer: RunningTimersPreview.timers()[1],
         depth: 0,
         width: 370.0,
         isConfirmingCancel: false,

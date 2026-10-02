@@ -9,9 +9,6 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
     /// How far a timer slides, as a share of its width, before letting go takes it away.
     static let threshold = 0.5
 
-    // How far a finger moves before it counts as a swipe, as a scroll view takes it.
-    private static let swipeThreshold = 10.0
-
     // How long a timer flown off waits to be gone before it comes back, as one that failed to cancel.
     private static let cancelTimeout = Duration.seconds(1)
 
@@ -95,12 +92,12 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
         switch pan.state {
         case .began:
             // Forgets the timers taken away, which are gone from the screen by now.
-            motion.swipeOffsets = motion.swipeOffsets.filter({ isRunning($0.key) })
+            motion.swipeOffsets = motion.swipeOffsets.filter({ viewModel.isRunning($0.key) })
             feedback.prepare()
             motion.swipedTimer = timer.id
-            move(timer, to: offset(for: distanceMoved(by: pan)))
+            move(timer, to: offset(for: scrollView.distanceMoved(by: pan, along: \.x)))
         case .changed:
-            move(timer, to: offset(for: distanceMoved(by: pan)))
+            move(timer, to: offset(for: scrollView.distanceMoved(by: pan, along: \.x)))
         case .ended:
             release(timer, velocity: pan.velocity(in: scrollView).x)
         case .cancelled, .failed:
@@ -120,16 +117,6 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
             isArmed = isPastThreshold
             feedback.impactOccurred()
         }
-    }
-
-    // From where the finger came down, past the distance it takes to be a swipe.
-    private func distanceMoved(by pan: UIPanGestureRecognizer) -> CGFloat {
-        guard let touchDown = scrollView.touchDownLocation else {
-            return 0.0
-        }
-
-        let moved = pan.location(in: nil).x - touchDown.x
-        return moved - min(Self.swipeThreshold, max(-Self.swipeThreshold, moved))
     }
 
     // Left as far as the finger goes; right less and less the further, as a scroll view gives past its end.
@@ -183,15 +170,11 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
         Task {
             try? await Task.sleep(for: Self.cancelTimeout)
 
-            if isRunning(timer.id) {
+            if viewModel.isRunning(timer.id) {
                 withAnimation(.runningTimers) {
                     motion.swipeOffsets[timer.id] = 0.0
                 }
             }
         }
-    }
-
-    private func isRunning(_ id: RunningTimer.ID) -> Bool {
-        viewModel.runningTimers.contains(where: { $0.id == id })
     }
 }

@@ -5,12 +5,14 @@ import SwiftUI
 ///
 /// The button's label shows as its icon alone, and keeps its title for VoiceOver.
 struct GlassCircleButtonStyle: ButtonStyle {
+    /// How wide and tall the button stands, a toolbar button's size.
+    nonisolated static let diameter = 44.0
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .labelStyle(.iconOnly)
             .fontWeight(.medium)
-            // A toolbar button's size.
-            .frame(width: 44.0, height: 44.0)
+            .frame(width: Self.diameter, height: Self.diameter)
             .contentShape(.circle)
             .glassEffect(.regular.interactive(), in: .circle)
     }

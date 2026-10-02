@@ -2,6 +2,9 @@ import UIKit
 
 /// The scroll view the running timers scroll in, which lets touches beside the folded stack through to the steps.
 final class RunningTimersScrollView: UIScrollView {
+    // How far a finger moves before a scroll view takes it as a swipe, which moves nothing.
+    private static let swipeThreshold = 10.0
+
     /// Where touches count, in the scroll view's bounds, or nil for everywhere in them.
     var hittableRect: (() -> CGRect?)?
 
@@ -50,6 +53,24 @@ final class RunningTimersScrollView: UIScrollView {
 
         let location = gestureRecognizer.location(in: nil)
         return abs(location.x - touchDownLocation.x) > abs(location.y - touchDownLocation.y)
+    }
+
+    /// How far a swipe has gone along an axis since the finger came down, past the distance it takes to be a swipe,
+    /// as a scroll view moves its content by once a swipe begins.
+    ///
+    /// Measured from the touch, since each swipe starts counting its own translation somewhere else.
+    ///
+    /// - Parameters:
+    ///   - gestureRecognizer: The swipe.
+    ///   - axis: The coordinate of the axis to measure along.
+    /// - Returns: How far it has gone.
+    func distanceMoved(by gestureRecognizer: UIGestureRecognizer, along axis: KeyPath<CGPoint, CGFloat>) -> CGFloat {
+        guard let touchDownLocation else {
+            return 0.0
+        }
+
+        let moved = gestureRecognizer.location(in: nil)[keyPath: axis] - touchDownLocation[keyPath: axis]
+        return moved - min(Self.swipeThreshold, max(-Self.swipeThreshold, moved))
     }
 
     // The timers scroll up and down only; a swipe sideways is a timer's, to take it away.

@@ -5,9 +5,6 @@ import SwiftUI
 ///
 /// Animates how far open the timers are on its own, so a frame of their movement updates the view's opacity alone.
 struct RunningTimersFade: ViewModifier, Animatable {
-    /// Leaves the view as it is.
-    static let disabled = RunningTimersFade(openness: 1.0, over: 0.0...1.0, isEnabled: false)
-
     var animatableData: Double
 
     private let range: ClosedRange<Double>

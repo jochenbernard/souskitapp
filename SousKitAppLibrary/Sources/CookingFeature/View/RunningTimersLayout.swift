@@ -350,7 +350,7 @@ private func previewStack(openness: Double) -> some View {
         Circle()
             .fill(.background)
             .stroke(.separator)
-            .frame(width: 44.0, height: 44.0)
+            .frame(width: GlassCircleButtonStyle.diameter, height: GlassCircleButtonStyle.diameter)
             .layoutValue(key: RunningTimersLayout.RoleKey.self, value: .collapseButton)
     }
 }

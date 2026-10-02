@@ -42,7 +42,7 @@ struct RunningTimersCollapseButton: View, Animatable {
                 )
             }
             .buttonStyle(.glassCircle)
-            .opacity(min(1.0, max(0.0, (openness - Self.fadeStart) / (Self.fadeEnd - Self.fadeStart))))
+            .runningTimersFade(openness: openness, over: Self.fadeStart...Self.fadeEnd)
             .allowsHitTesting(isOpen)
         }
     }

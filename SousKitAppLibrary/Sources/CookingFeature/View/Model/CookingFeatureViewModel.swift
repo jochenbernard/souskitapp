@@ -15,4 +15,8 @@ final class CookingFeatureViewModel {
     nonisolated init(recipe: Recipe) {
         self.recipe = recipe
     }
+
+    func isRunning(_ id: RunningTimer.ID) -> Bool {
+        runningTimers.contains(where: { $0.id == id })
+    }
 }

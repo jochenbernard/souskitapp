@@ -1,5 +1,4 @@
 import DesignSystem
-import RecipeLibrary
 import SousKit
 import SwiftUI
 
@@ -9,12 +8,6 @@ struct CookingFeatureView: View {
 
     private let presenter: CookingFeaturePresenterProtocol
     private let viewModel: CookingFeatureViewModel
-
-    // A comfortable line length for the `.title3` steps, growing with Dynamic Type.
-    @ScaledMetric(relativeTo: .title3) private var stepsWidth = 720.0
-
-    // A `.body` number with room around it, growing with Dynamic Type.
-    @ScaledMetric(relativeTo: .body) private var stepNumberDiameter = 32.0
 
     // Room for a `.title2` countdown beside its step, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title2) private var sideTimersWidth = 340.0
@@ -34,12 +27,10 @@ struct CookingFeatureView: View {
 
     var body: some View {
         ScrollView {
-            steps
-                .frame(maxWidth: stepsWidth)
+            CookingSteps(presenter: presenter, recipe: viewModel.recipe)
                 .sousPagePadding()
                 .frame(maxWidth: .infinity)
         }
-        .environment(\.openURL, OpenURLAction(handler: openTimer))
         // A bar of the screen's own rather than the navigation bar, so the blur behind the open list covers it.
         .safeAreaBar(edge: .top) {
             topBar
@@ -72,68 +63,6 @@ struct CookingFeatureView: View {
             await presenter.viewDidAppear()
         }
         .onDisappear(perform: presenter.viewDidDisappear)
-    }
-
-    private var steps: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
-            ForEach(StepNumbering.numberedGroups(of: viewModel.recipe)) { numbered in
-                groupView(numbered)
-            }
-        }
-    }
-
-    private func groupView(_ numbered: NumberedGroup) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.small) {
-            groupName(numbered.group)
-
-            stepRows(numbered)
-        }
-    }
-
-    @ViewBuilder
-    private func groupName(_ group: StepGroup) -> some View {
-        if let name = group.name {
-            Text(verbatim: name)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, SousSpacing.xLarge)
-        }
-    }
-
-    private func stepRows(_ numbered: NumberedGroup) -> some View {
-        SousRowGroup(dividerInset: SousSpacing.xLarge) {
-            ForEach(numbered.numberedSteps, id: \.number) { number, step in
-                stepView(step, number: number)
-            }
-        }
-    }
-
-    private func stepView(_ step: Step, number: Int) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.large) {
-            stepNumber(number)
-
-            stepProse(step, number: number)
-                .font(.title3)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        // The number is the row's tallest line, so padding it evenly sets it as far from the top as from the side.
-        .padding(SousSpacing.xLarge)
-    }
-
-    private func stepNumber(_ number: Int) -> some View {
-        Text(verbatim: String(number))
-            .monospacedDigit()
-            .frame(width: stepNumberDiameter, height: stepNumberDiameter)
-            .background(.tertiaryFill, in: Circle())
-    }
-
-    private func stepProse(_ step: Step, number: Int) -> Text {
-        Text(
-            StepProse.attributedProse(
-                of: step,
-                annotationColor: .accent,
-                timerLink: { StepTimer($0, stepNumber: number)?.link }
-            )
-        )
     }
 
     private var topBar: some View {
@@ -217,17 +146,6 @@ struct CookingFeatureView: View {
         )
     }
 
-    private func openTimer(_ link: URL) -> OpenURLAction.Result {
-        guard let timer = StepTimer(link: link) else {
-            return .systemAction
-        }
-
-        Task {
-            await presenter.didTapTimer(timer)
-        }
-        return .handled
-    }
-
     private func openSettings() {
         guard let settings = URL(string: UIApplication.openSettingsURLString) else {
             return
@@ -289,57 +207,16 @@ private func previewRecipe() -> Recipe {
 }
 
 #Preview("Cooking, with timers running") {
-    let date = Date.now
-    let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
-    viewModel.runningTimers = [
-        RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(stepNumber: 2, text: "5-6 min", duration: .seconds(300)),
-            endDate: date,
-            isRinging: true
-        ),
-        RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(stepNumber: 3, text: "15 min", duration: .seconds(900)),
-            endDate: date.addingTimeInterval(260),
-            isRinging: false
-        )
-    ]
-
-    return CookingFeatureView(
+    CookingFeatureView(
         presenter: CookingFeaturePresenterStub(),
-        viewModel: viewModel
+        viewModel: RunningTimersPreview.viewModel(isTimerListOpen: false, recipe: previewRecipe())
     )
 }
 
 #Preview("Cooking, with the timers open") {
-    let date = Date.now
-    let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
-    viewModel.runningTimers = [
-        RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(stepNumber: 2, text: "5-6 min", duration: .seconds(300)),
-            endDate: date,
-            isRinging: true
-        ),
-        RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(stepNumber: 3, text: "15 min", duration: .seconds(900)),
-            endDate: date.addingTimeInterval(260),
-            isRinging: false
-        ),
-        RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(stepNumber: 1, text: "30 min", duration: .seconds(1_800)),
-            endDate: date.addingTimeInterval(1_500),
-            isRinging: false
-        )
-    ]
-    viewModel.isTimerListOpen = true
-
-    return CookingFeatureView(
+    CookingFeatureView(
         presenter: CookingFeaturePresenterStub(),
-        viewModel: viewModel
+        viewModel: RunningTimersPreview.viewModel(isTimerListOpen: true, recipe: previewRecipe())
     )
 }
 

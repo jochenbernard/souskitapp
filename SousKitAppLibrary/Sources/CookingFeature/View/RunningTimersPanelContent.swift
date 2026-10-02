@@ -11,7 +11,7 @@ struct RunningTimersPanelContent: View {
 
     // The room kept above the listed timers: a toolbar button's size and the gap under it where the list folds, or
     // the run the timers fade out over where it is always open.
-    private static let collapseRoomHeight = 44.0 + SousSpacing.small
+    private static let collapseRoomHeight = GlassCircleButtonStyle.diameter + SousSpacing.small
     private static let fadeRoomHeight = SousSpacing.large
 
     private let presenter: CookingFeaturePresenterProtocol
@@ -69,7 +69,7 @@ struct RunningTimersPanelContent: View {
             .onChange(of: viewModel.runningTimers, runningTimersDidChange)
             .onChange(of: viewModel.isTimerListOpen, initial: true, listOpenDidChange)
             .task(id: arrival.id) {
-                await arrival.takeToItsPlace(isInteracting: isInteracting, isRunning: isRunning)
+                await arrival.takeToItsPlace(isInteracting: isInteracting, isRunning: viewModel.isRunning)
             }
             .onChange(of: stackHeight, initial: true) { _, height in
                 motion.stackHeight = height
@@ -117,7 +117,6 @@ struct RunningTimersPanelContent: View {
         return RunningTimersPanelRow(
             presenter: presenter,
             motion: motion,
-            openness: motion.openness,
             timer: timer,
             depth: depth,
             width: rowWidth,
@@ -165,13 +164,18 @@ struct RunningTimersPanelContent: View {
     @ViewBuilder
     private var roomCover: some View {
         if isListOpen {
-            Color.clear
-                .contentShape(.rect)
-                .onTapGesture(perform: close)
-                .accessibilityHidden(true)
+            closeTapTarget
                 .layoutValue(key: RunningTimersLayout.RoleKey.self, value: .cover)
                 .zIndex(1.0)
         }
+    }
+
+    // VoiceOver closes the list with its escape gesture instead.
+    private var closeTapTarget: some View {
+        Color.clear
+            .contentShape(.rect)
+            .onTapGesture(perform: close)
+            .accessibilityHidden(true)
     }
 
     @ViewBuilder
@@ -186,11 +190,7 @@ struct RunningTimersPanelContent: View {
     @ViewBuilder
     private var outsideTapTarget: some View {
         if isListOpen {
-            Color.clear
-                .contentShape(.rect)
-                // VoiceOver closes the list with its escape gesture instead.
-                .onTapGesture(perform: close)
-                .accessibilityHidden(true)
+            closeTapTarget
         }
     }
 
@@ -235,10 +235,6 @@ struct RunningTimersPanelContent: View {
 
     private func isInteracting(with id: RunningTimer.ID) -> Bool {
         motion.swipedTimer == id || viewModel.timerConfirmingCancel?.id == id
-    }
-
-    private func isRunning(_ id: RunningTimer.ID) -> Bool {
-        viewModel.runningTimers.contains(where: { $0.id == id })
     }
 
     // The column is always open. The stack opens and folds on the timers' spring, unless a swipe already set them

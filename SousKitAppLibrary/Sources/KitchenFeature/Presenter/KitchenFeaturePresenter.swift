@@ -49,12 +49,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
         // A pop leaves the screen it popped in place: clearing it empties that screen while it
         // is still animating away. The next push replaces it.
-        switch screenPath.last {
-        case .recipe(let recipeEntry):
+        if case .recipe(let recipeEntry) = screenPath.last {
             openRecipe(recipeEntry, isPush: isPush)
-
-        case nil:
-            break
         }
     }
 
@@ -97,8 +93,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         viewModel.openCooking = nil
     }
 
-    /// Builds the feature for a recipe pushed on the stack, or keeps the one a recipe already on it has,
-    /// such as the recipe a popped cooking screen uncovers.
+    /// Builds the feature for a recipe pushed on the stack, or keeps the one a recipe already on it has.
     @MainActor
     private func openRecipe(_ recipeEntry: RecipeEntry, isPush: Bool) {
         guard isPush || viewModel.openRecipe?.recipeEntry != recipeEntry else {
