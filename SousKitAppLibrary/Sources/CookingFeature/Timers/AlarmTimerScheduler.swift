@@ -13,7 +13,8 @@ public struct AlarmTimerScheduler: TimerScheduler {
 
     public func runningTimers() -> AsyncStream<[RunningTimer]> {
         AsyncStream { continuation in
-            let task = Task {
+            // On the main actor, where starting and cancelling also write the started timers, so no write is lost.
+            let task = Task { @MainActor in
                 continuation.yield(runningTimers(of: (try? AlarmManager.shared.alarms) ?? []))
 
                 for await alarms in AlarmManager.shared.alarmUpdates {

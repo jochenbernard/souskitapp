@@ -24,8 +24,8 @@ struct RunningTimersPanelContent: View {
     private let onContentHeightChange: (CGFloat) -> Void
     private let onListOpenChange: (Bool) -> CGFloat
 
-    // How tall the soonest timer is, which sets how tall the stack stands.
-    @State private var frontHeight = 0.0
+    // How tall each timer was last laid out, by timer, since the front one changes without changing its own height.
+    @State private var rowHeights: [RunningTimer.ID: CGFloat] = [:]
 
     // A timer that joined the stack behind the front one, on its way to its place.
     @State private var arrival = RunningTimerArrival()
@@ -128,9 +128,7 @@ struct RunningTimersPanelContent: View {
             fadeHeight: roomHeight
         )
         .onGeometryChange(for: CGFloat.self, of: \.size.height) { height in
-            if depth == 0 {
-                frontHeight = height
-            }
+            rowHeights[timer.id] = height
         }
         .offset(x: swipeOffset)
         // Behind the timer and where it was laid out, so it fills the room the timer leaves.
@@ -216,6 +214,7 @@ struct RunningTimersPanelContent: View {
             return 0.0
         }
 
+        let frontHeight = shownTimers.first.flatMap({ rowHeights[$0.id] }) ?? 0.0
         return RunningTimersLayout.stackHeight(frontHeight: frontHeight, count: viewModel.runningTimers.count)
     }
 
@@ -228,6 +227,8 @@ struct RunningTimersPanelContent: View {
         from oldTimers: [RunningTimer],
         to newTimers: [RunningTimer]
     ) {
+        rowHeights = rowHeights.filter({ id, _ in newTimers.contains(where: { $0.id == id }) })
+
         if kind == .folding, !isListOpen {
             arrival.timersDidChange(from: oldTimers, to: newTimers)
         }

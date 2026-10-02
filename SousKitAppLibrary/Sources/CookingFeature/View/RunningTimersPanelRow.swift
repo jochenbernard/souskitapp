@@ -103,13 +103,6 @@ struct RunningTimersPanelRow: View {
         }
     }
 
-    @ViewBuilder
-    private var showAllAction: some View {
-        if opensOnTap {
-            Button(action: open, label: { Text("Show all timers", bundle: .module) })
-        }
-    }
-
     // The timers are glass, which the system's scroll edge effect leaves as it is, so a timer fades by a mask of its
     // own as it scrolls into the room above the list, which stays where it is on the screen as the timer scrolls.
     private var scrollFade: some View {
@@ -132,6 +125,13 @@ struct RunningTimersPanelRow: View {
                 height: max(0.0, proxy.size.height + Self.overhang - bandTop)
             )
             .offset(x: -Self.overhang, y: bandTop)
+        }
+    }
+
+    @ViewBuilder
+    private var showAllAction: some View {
+        if opensOnTap {
+            Button(action: open, label: { Text("Show all timers", bundle: .module) })
         }
     }
 
