@@ -10,15 +10,15 @@ extension RunningTimersPanel {
         private static let projection = 0.2
         private static let closeDistance = 120.0
 
-        // How stiffly the timers resist being pulled past where they open or fold to, as a scroll view resists.
-        private static let rubberBandStiffness = 0.55
-
         // How far a finger moves before a scroll view takes it as a swipe, which moves nothing.
         private static let swipeThreshold = 10.0
         let scrollView = RunningTimersScrollView()
 
         // The scroll view takes no swipes while the list is closed, so the stack has one of its own to open it.
         private let openingPan = UIPanGestureRecognizer()
+
+        // A timer has a swipe of its own too, sideways, to take it away.
+        private var swipe: RunningTimersSwipe?
 
         private let presenter: CookingFeaturePresenterProtocol
         private let viewModel: CookingFeatureViewModel
@@ -71,6 +71,14 @@ extension RunningTimersPanel {
             openingPan.addTarget(self, action: #selector(handleOpeningPan))
             openingPan.delegate = self
             scrollView.addGestureRecognizer(openingPan)
+            swipe = RunningTimersSwipe(
+                scrollView: scrollView,
+                presenter: presenter,
+                viewModel: viewModel,
+                motion: motion,
+                metrics: metrics,
+                kind: kind
+            )
             scrollView.hittableRect = { [weak self] in self?.hittableRect() }
             scrollView.onSizeChange = { [weak self] size in self?.regionDidChange(size) }
             scrollView.onWindowChange = { [weak self] in self?.attachHostingController() }
@@ -218,8 +226,7 @@ extension RunningTimersPanel {
             }
 
             // By how far the finger went rather than how fast, which a slow start leaves at nothing either way.
-            let translation = openingPan.translation(in: scrollView)
-            return kind == .folding && !viewModel.isTimerListOpen && abs(translation.y) > abs(translation.x)
+            return kind == .folding && !viewModel.isTimerListOpen && !scrollView.isSideways(openingPan)
         }
 
         // How far the finger has gone from where it came down, past the distance it takes to be a swipe, as a scroll
@@ -238,37 +245,25 @@ extension RunningTimersPanel {
         // pull past it of whatever is left of a pull, which a spring settling back from one overshoots either way.
         private func presentedFold() -> CGFloat {
             let rubberBand = metrics.presentedRubberBand
-            let pull = rubberBand < 0.0 ? -stretch(of: -rubberBand) : stretch(of: rubberBand)
+            let pull = RubberBand.pull(forOffset: abs(rubberBand), dimension: scrollView.bounds.height)
 
-            return (1.0 - metrics.presentedOpenness) * metrics.foldDistance + pull
+            return (1.0 - metrics.presentedOpenness) * metrics.foldDistance + (rubberBand < 0.0 ? -pull : pull)
         }
 
         // Within the timers' two ends the finger moves them as far as it goes; past either, less and less the further.
         private func setFold(_ amount: CGFloat) {
             let distance = metrics.foldDistance
             let open = canOpen ? 0.0 : distance
+            let height = scrollView.bounds.height
             fold = amount
             motion.openness = 1.0 - min(1.0, max(open, amount) / distance)
             motion.rubberBand = if amount < open {
-                -band(open - amount)
+                -RubberBand.offset(forPull: open - amount, dimension: height)
             } else if amount > distance {
-                band(amount - distance)
+                RubberBand.offset(forPull: amount - distance, dimension: height)
             } else {
                 0.0
             }
-        }
-
-        // How far the timers go for a pull past an end, as a scroll view gives.
-        private func band(_ pull: CGFloat) -> CGFloat {
-            let dimension = max(1.0, scrollView.bounds.height)
-            return (1.0 - 1.0 / (pull * Self.rubberBandStiffness / dimension + 1.0)) * dimension
-        }
-
-        // How far a finger pulls for the timers to have gone a distance past an end, the other way around from band.
-        private func stretch(of distance: CGFloat) -> CGFloat {
-            let dimension = max(1.0, scrollView.bounds.height)
-            let gone = min(distance, dimension - 1.0)
-            return gone * dimension / (Self.rubberBandStiffness * (dimension - gone))
         }
 
         // Settles the timers open or folded on the timers' spring, carrying on at the finger's speed.

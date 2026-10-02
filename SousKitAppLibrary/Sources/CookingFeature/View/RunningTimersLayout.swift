@@ -36,6 +36,11 @@ struct RunningTimersLayout: Layout {
         static let defaultValue = false
     }
 
+    /// Marks which timer a subview shows, so a swipe can tell which one it lands on.
+    struct TimerIDKey: LayoutValueKey {
+        static let defaultValue: RunningTimer.ID? = nil
+    }
+
     private struct Measurement {
         let timers: [LayoutSubview]
         let button: LayoutSubview?
@@ -159,16 +164,25 @@ struct RunningTimersLayout: Layout {
             presentedRubberBand: rubberBand
         )
 
+        var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
+
         for (depth, timer) in measured.timers.enumerated() {
             let stacked = timer[SwoopingKey.self] ? swoopRect(depth, in: measured) : stackRect(depth, in: measured)
             let rect = between(stacked, and: listRect(depth, in: measured))
+            let origin = CGPoint(x: bounds.minX + rect.minX, y: bounds.minY + rubberBand + rect.minY)
 
             timer.place(
-                at: CGPoint(x: bounds.minX + rect.minX, y: bounds.minY + rubberBand + rect.minY),
+                at: origin,
                 anchor: .topLeading,
                 proposal: ProposedViewSize(rect.size)
             )
+
+            if let id = timer[TimerIDKey.self] {
+                timerFrames.append((id: id, frame: CGRect(origin: origin, size: rect.size)))
+            }
         }
+
+        metrics.update(timerFrames: timerFrames)
 
         if let countBadge = measured.countBadge, !measured.timers.isEmpty {
             let front = between(stackRect(0, in: measured), and: listRect(0, in: measured))

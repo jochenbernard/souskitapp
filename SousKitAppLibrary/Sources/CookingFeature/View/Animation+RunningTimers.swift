@@ -1,7 +1,8 @@
 import SwiftUI
 
 extension Animation {
-    private static let runningTimersDuration = 0.4
+    /// How long the running timers take to move, which a timer swiped away is given to fly off.
+    static let runningTimersDuration = 0.4
     private static let runningTimersBounce = 0.2
 
     /// How long a timer takes to swoop from the front of the stack to its place behind the others, slower than the

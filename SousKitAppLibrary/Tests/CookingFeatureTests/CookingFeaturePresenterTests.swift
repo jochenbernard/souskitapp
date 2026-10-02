@@ -214,6 +214,17 @@ struct CookingFeaturePresenterTests {
     }
 
     @MainActor
+    @Test("swiping a running timer away cancels it without asking")
+    func swipingATimerAway() {
+        let timerScheduler = TimerSchedulerSpy()
+        let runningTimer = makeRunningTimer()
+
+        makePresenter(viewModel: makeViewModel(), timerScheduler: timerScheduler).didSwipeAwayTimer(runningTimer)
+
+        #expect(timerScheduler.cancelledTimers == [runningTimer])
+    }
+
+    @MainActor
     @Test("a timer that goes off while its cancel is being confirmed closes the confirmation")
     func timerGoingOffClosesTheConfirmation() async {
         let viewModel = makeViewModel()

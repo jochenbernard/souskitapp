@@ -19,6 +19,9 @@ protocol CookingFeaturePresenterProtocol {
     func didTapCancelTimer(_ timer: RunningTimer)
 
     @MainActor
+    func didSwipeAwayTimer(_ timer: RunningTimer)
+
+    @MainActor
     func didChangeIsConfirmingCancelTimer(_ isConfirming: Bool)
 
     @MainActor

@@ -6,15 +6,6 @@ import SwiftUI
 ///
 /// The view is as tall as the panel's region at least, and taller once the list outgrows it; the panel scrolls it.
 struct RunningTimersPanelContent: View {
-    // Where a timer that joins the folded stack behind the front one is on its way to its place.
-    private struct Arrival: Equatable {
-        let id: RunningTimer.ID
-
-        /// How far it is on its swoop from the front to its place, from 0 shown in front to 1 in its place, or `nil`
-        /// while it is shown in front for a moment, so its start is seen.
-        var swoop: Double?
-    }
-
     /// The coordinate space of the whole content, which a timer reads its place in as it scrolls.
     static let coordinateSpace = "runningTimersPanel"
 
@@ -22,11 +13,6 @@ struct RunningTimersPanelContent: View {
     // the run the timers fade out over where it is always open.
     private static let collapseRoomHeight = 44.0 + SousSpacing.small
     private static let fadeRoomHeight = SousSpacing.large
-
-    // How long a timer that joins the stack behind the front one shows in front before it swoops to its place, and how
-    // long the swoop takes.
-    private static let inFrontDuration = Duration.seconds(1.2)
-    private static let swoopDuration = Duration.seconds(Animation.runningTimerSwoopDuration)
 
     private let presenter: CookingFeaturePresenterProtocol
     private let viewModel: CookingFeatureViewModel
@@ -42,7 +28,7 @@ struct RunningTimersPanelContent: View {
     @State private var frontHeight = 0.0
 
     // A timer that joined the stack behind the front one, on its way to its place.
-    @State private var arrival: Arrival?
+    @State private var arrival = RunningTimerArrival()
 
     /// - Parameters:
     ///   - region: The room the panel shows the timers in.
@@ -82,7 +68,9 @@ struct RunningTimersPanelContent: View {
             .animation(.runningTimers, value: viewModel.runningTimers)
             .onChange(of: viewModel.runningTimers, runningTimersDidChange)
             .onChange(of: viewModel.isTimerListOpen, initial: true, listOpenDidChange)
-            .task(id: arrival?.id, takeArrivalToItsPlace)
+            .task(id: arrival.id) {
+                await arrival.takeToItsPlace(isInteracting: isInteracting, isRunning: isRunning)
+            }
             .onChange(of: stackHeight, initial: true) { _, height in
                 motion.stackHeight = height
             }
@@ -99,7 +87,7 @@ struct RunningTimersPanelContent: View {
     private var timers: some View {
         RunningTimersLayout(
             openness: motion.openness,
-            swoop: arrival?.swoop ?? 0.0,
+            swoop: arrival.swoopProgress,
             rubberBand: motion.rubberBand,
             region: region,
             topInset: topInset,
@@ -123,7 +111,8 @@ struct RunningTimersPanelContent: View {
     }
 
     private func row(_ timer: RunningTimer, depth: Int) -> some View {
-        let swoop = arrival?.id == timer.id ? arrival?.swoop : nil
+        let swoop = arrival.swoop(of: timer.id)
+        let swipeOffset = motion.swipeOffsets[timer.id] ?? 0.0
 
         return RunningTimersPanelRow(
             presenter: presenter,
@@ -131,7 +120,7 @@ struct RunningTimersPanelContent: View {
             openness: motion.openness,
             timer: timer,
             depth: depth,
-            width: max(0.0, region.width - 2.0 * horizontalInset),
+            width: rowWidth,
             isConfirmingCancel: timer.id == viewModel.timerConfirmingCancel?.id,
             isListed: kind == .column || isListOpen,
             opensOnTap: kind == .folding && depth == 0 && !isListOpen && viewModel.runningTimers.count > 1,
@@ -144,8 +133,18 @@ struct RunningTimersPanelContent: View {
                 frontHeight = height
             }
         }
+        .offset(x: swipeOffset)
+        // Behind the timer and where it was laid out, so it fills the room the timer leaves.
+        .background(alignment: .trailing) {
+            RunningTimerSwipeReveal(
+                width: min(-swipeOffset, rowWidth),
+                threshold: rowWidth * RunningTimersSwipe.threshold,
+                isRinging: timer.isRinging
+            )
+        }
         .runningTimerStacking(depth: depth, swoop: swoop)
         .layoutValue(key: RunningTimersLayout.SwoopingKey.self, value: swoop != nil)
+        .layoutValue(key: RunningTimersLayout.TimerIDKey.self, value: timer.id)
         // Outermost, or SwiftUI fades the timer in and out instead.
         .transition(RunningTimersPanelRow.transition)
     }
@@ -199,6 +198,11 @@ struct RunningTimersPanelContent: View {
         kind == .folding ? SousSpacing.large : 0.0
     }
 
+    // How wide a listed timer stands, and the soonest one stacked.
+    private var rowWidth: CGFloat {
+        max(0.0, region.width - 2.0 * horizontalInset)
+    }
+
     private var roomHeight: CGFloat {
         kind == .folding ? Self.collapseRoomHeight : Self.fadeRoomHeight
     }
@@ -215,65 +219,26 @@ struct RunningTimersPanelContent: View {
         return RunningTimersLayout.stackHeight(frontHeight: frontHeight, count: viewModel.runningTimers.count)
     }
 
-    // Soonest first, but for a timer shown in front for a moment.
     private var shownTimers: [RunningTimer] {
-        var shown = viewModel.runningTimers
-
-        guard
-            let arrival,
-            arrival.swoop == nil,
-            let index = shown.firstIndex(where: { $0.id == arrival.id })
-        else {
-            return shown
-        }
-
-        shown.insert(shown.remove(at: index), at: 0)
-        return shown
+        arrival.shown(viewModel.runningTimers)
     }
 
-    // A timer that joins the folded stack behind the front one comes in front instead. The timers on screen as the
-    // view appears arrive all at once, so only timers joining others count.
+    // Only into the folded stack does a timer arrive in front.
     private func runningTimersDidChange(
         from oldTimers: [RunningTimer],
         to newTimers: [RunningTimer]
     ) {
-        guard kind == .folding, !isListOpen, !oldTimers.isEmpty else {
-            return
-        }
-
-        let joining = newTimers.enumerated().last { depth, timer in
-            depth > 0 && !oldTimers.contains(where: { $0.id == timer.id })
-        }
-
-        if let joining {
-            withAnimation(.runningTimers) {
-                arrival = Arrival(id: joining.element.id)
-            }
+        if kind == .folding, !isListOpen {
+            arrival.timersDidChange(from: oldTimers, to: newTimers)
         }
     }
 
-    private func takeArrivalToItsPlace() async {
-        guard arrival != nil, await pause(for: Self.inFrontDuration) else {
-            return
-        }
-
-        // From 0, where the swoop starts in front, the same as where the timer is shown.
-        withAnimation(.runningTimerSwoop) {
-            arrival?.swoop = 1.0
-        }
-
-        guard await pause(for: Self.swoopDuration) else {
-            return
-        }
-
-        withAnimation(.runningTimers) {
-            arrival = nil
-        }
+    private func isInteracting(with id: RunningTimer.ID) -> Bool {
+        motion.swipedTimer == id || viewModel.timerConfirmingCancel?.id == id
     }
 
-    // Whether the pause ran its course, rather than a new arrival or the list opening cutting it short.
-    private func pause(for duration: Duration) async -> Bool {
-        (try? await Task.sleep(for: duration)) != nil
+    private func isRunning(_ id: RunningTimer.ID) -> Bool {
+        viewModel.runningTimers.contains(where: { $0.id == id })
     }
 
     // The column is always open. The stack opens and folds on the timers' spring, unless a swipe already set them
@@ -289,7 +254,7 @@ struct RunningTimersPanelContent: View {
 
         // The list shows every timer in its place.
         if isOpen {
-            arrival = nil
+            arrival.settle()
         }
 
         motion.scrollShift = onListOpenChange(isOpen)

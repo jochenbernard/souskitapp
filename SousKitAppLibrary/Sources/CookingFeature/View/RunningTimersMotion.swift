@@ -18,6 +18,12 @@ final class RunningTimersMotion {
     /// back from once let go.
     var rubberBand: CGFloat = 0.0
 
+    /// How far each timer is swiped sideways, left for negative values, or flown off the screen once swiped away.
+    var swipeOffsets: [RunningTimer.ID: CGFloat] = [:]
+
+    /// The timer a finger is swiping.
+    var swipedTimer: RunningTimer.ID?
+
     /// How tall the stack stands, which the steps keep clear of.
     var stackHeight: CGFloat = 0.0
 

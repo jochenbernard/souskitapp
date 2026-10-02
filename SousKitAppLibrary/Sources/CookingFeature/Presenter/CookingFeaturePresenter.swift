@@ -61,6 +61,11 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         }
     }
 
+    // The swipe itself is the deliberate act, so it asks nothing.
+    func didSwipeAwayTimer(_ timer: RunningTimer) {
+        cancel(timer)
+    }
+
     func didChangeIsConfirmingCancelTimer(_ isConfirming: Bool) {
         if !isConfirming {
             viewModel.timerConfirmingCancel = nil

@@ -37,6 +37,30 @@ final class RunningTimersScrollView: UIScrollView {
         return super.hitTest(point, with: event)
     }
 
+    /// Whether a swipe has gone more sideways than up or down since the finger came down.
+    ///
+    /// Read as the swipe begins, which is when its own translation starts again from nothing.
+    ///
+    /// - Parameter gestureRecognizer: The swipe.
+    /// - Returns: Whether it has gone more sideways.
+    func isSideways(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        guard let touchDownLocation else {
+            return false
+        }
+
+        let location = gestureRecognizer.location(in: nil)
+        return abs(location.x - touchDownLocation.x) > abs(location.y - touchDownLocation.y)
+    }
+
+    // The timers scroll up and down only; a swipe sideways is a timer's, to take it away.
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if gestureRecognizer === panGestureRecognizer, isSideways(gestureRecognizer) {
+            return false
+        }
+
+        return super.gestureRecognizerShouldBegin(gestureRecognizer)
+    }
+
     override func didMoveToWindow() {
         super.didMoveToWindow()
         onWindowChange?()
