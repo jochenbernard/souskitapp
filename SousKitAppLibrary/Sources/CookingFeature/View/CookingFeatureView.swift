@@ -19,8 +19,10 @@ struct CookingFeatureView: View {
     // Room for a `.title2` countdown beside its step, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title2) private var sideTimersWidth = 340.0
 
-    // Two and a half `.title2` rows: the half row shows there are more to scroll to.
-    @ScaledMetric(relativeTo: .title2) private var bottomTimersMaxHeight = 160.0
+    // Where the timers stand between their stack and their list, which the blur behind them and the room the steps
+    // keep clear of them follow.
+    @State private var motion = RunningTimersMotion()
+    @State private var topBarHeight = 0.0
 
     init(
         presenter: CookingFeaturePresenterProtocol,
@@ -38,23 +40,28 @@ struct CookingFeatureView: View {
                 .frame(maxWidth: .infinity)
         }
         .environment(\.openURL, OpenURLAction(handler: openTimer))
+        // A bar of the screen's own rather than the navigation bar, so the blur behind the open list covers it.
+        .safeAreaBar(edge: .top) {
+            topBar
+                .onGeometryChange(for: CGFloat.self, of: \.size.height) { height in
+                    topBarHeight = height
+                }
+        }
         .safeAreaInset(edge: .bottom) {
-            bottomTimers
+            stackRoom
         }
         .safeAreaInset(edge: .trailing) {
             sideTimers
         }
-        .animation(RunningTimersTray.animation, value: viewModel.runningTimers)
+        .runningTimersBlur(motion: motion, isEnabled: isNarrow)
+        .accessibilityHidden(isTimerListOpen)
         .sousPage()
-        .navigationTitle(navigationTitle)
-        .navigationBarTitleDisplayMode(.inline)
-        // Hiding it also turns off the swipe back, which leaves the confirmation as the only way out.
-        .navigationBarBackButtonHidden()
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                exitButton
-            }
+        .overlay {
+            foldingTimers
         }
+        .animation(.runningTimers, value: viewModel.runningTimers)
+        // Every start is felt, since a timer that joins the stack out of sight shows little of itself.
+        .sensoryFeedback(.impact(weight: .light), trigger: viewModel.startedTimerCount)
         .alert(
             Text("Allow timers", bundle: .module),
             isPresented: isAskingToAllowTimers,
@@ -65,10 +72,6 @@ struct CookingFeatureView: View {
             await presenter.viewDidAppear()
         }
         .onDisappear(perform: presenter.viewDidDisappear)
-    }
-
-    private var navigationTitle: String {
-        viewModel.recipe.metadata.title ?? ""
     }
 
     private var steps: some View {
@@ -133,51 +136,62 @@ struct CookingFeatureView: View {
         )
     }
 
-    @ViewBuilder
-    private var bottomTimers: some View {
-        if horizontalSizeClass != .regular, !viewModel.runningTimers.isEmpty {
-            timersTray(maxHeight: bottomTimersMaxHeight)
-                .padding(.horizontal, SousSpacing.large)
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
-        }
-    }
-
-    // A wide screen has room beside the steps, so the timers cover none of them there.
-    @ViewBuilder
-    private var sideTimers: some View {
-        if horizontalSizeClass == .regular, !viewModel.runningTimers.isEmpty {
-            timersTray(maxHeight: .infinity)
-                .frame(width: sideTimersWidth)
-                .padding(.vertical, SousSpacing.small)
-                .padding(.trailing, SousSpacing.large)
-                .frame(maxHeight: .infinity, alignment: .top)
-                .transition(.opacity.combined(with: .move(edge: .trailing)))
-        }
-    }
-
-    private func timersTray(maxHeight: CGFloat) -> some View {
-        RunningTimersTray(
+    private var topBar: some View {
+        CookingTopBar(
             presenter: presenter,
-            timers: viewModel.runningTimers,
-            timerConfirmingCancel: viewModel.timerConfirmingCancel,
-            maxHeight: maxHeight
+            title: viewModel.recipe.metadata.title ?? "",
+            isConfirmingExit: viewModel.isConfirmingExit
         )
     }
 
-    private var exitButton: some View {
-        Button(role: .close, action: presenter.didTapExit)
-            .confirmationDialog(
-                Text("Are you sure you want to stop cooking?", bundle: .module),
-                isPresented: isConfirmingExit,
-                titleVisibility: .visible,
-                actions: { confirmExitButton }
-            )
+    // The steps keep clear of the folded stack, which lies over them rather than among them.
+    @ViewBuilder
+    private var stackRoom: some View {
+        if isNarrow {
+            Color.clear
+                .frame(height: motion.stackHeight)
+        }
     }
 
-    private var confirmExitButton: some View {
-        Button(role: .destructive, action: presenter.didConfirmExit) {
-            Text("Stop cooking", bundle: .module)
+    // A wide screen has room beside the steps, so the timers stay open there and cover none of them.
+    @ViewBuilder
+    private var sideTimers: some View {
+        if !isNarrow, !viewModel.runningTimers.isEmpty {
+            RunningTimersPanel(
+                presenter: presenter,
+                viewModel: viewModel,
+                motion: motion,
+                kind: .column,
+                topInset: 0.0
+            )
+            .frame(width: sideTimersWidth)
+            .padding(.bottom, SousSpacing.small)
+            .padding(.trailing, SousSpacing.large)
+            .transition(.opacity.combined(with: .move(edge: .trailing)))
         }
+    }
+
+    // The stack and the list lie over the steps and the top bar alike, below the bar, so a tap anywhere beside the
+    // open list closes it.
+    @ViewBuilder
+    private var foldingTimers: some View {
+        if isNarrow {
+            RunningTimersPanel(
+                presenter: presenter,
+                viewModel: viewModel,
+                motion: motion,
+                kind: .folding,
+                topInset: topBarHeight
+            )
+        }
+    }
+
+    private var isNarrow: Bool {
+        horizontalSizeClass != .regular
+    }
+
+    private var isTimerListOpen: Bool {
+        isNarrow && viewModel.isTimerListOpen
     }
 
     @ViewBuilder
@@ -200,13 +214,6 @@ struct CookingFeatureView: View {
         Binding(
             get: { viewModel.isAskingToAllowTimers },
             set: { presenter.didChangeIsAskingToAllowTimers($0) }
-        )
-    }
-
-    private var isConfirmingExit: Binding<Bool> {
-        Binding(
-            get: { viewModel.isConfirmingExit },
-            set: { presenter.didChangeIsConfirmingExit($0) }
         )
     }
 
@@ -265,24 +272,20 @@ private func previewRecipe() -> Recipe {
 }
 
 #Preview("Cooking") {
-    NavigationStack {
-        CookingFeatureView(
-            presenter: CookingFeaturePresenterStub(),
-            viewModel: CookingFeatureViewModel(recipe: previewRecipe())
-        )
-    }
+    CookingFeatureView(
+        presenter: CookingFeaturePresenterStub(),
+        viewModel: CookingFeatureViewModel(recipe: previewRecipe())
+    )
 }
 
 #Preview("Cooking, confirming the exit") {
     let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
     viewModel.isConfirmingExit = true
 
-    return NavigationStack {
-        CookingFeatureView(
-            presenter: CookingFeaturePresenterStub(),
-            viewModel: viewModel
-        )
-    }
+    return CookingFeatureView(
+        presenter: CookingFeaturePresenterStub(),
+        viewModel: viewModel
+    )
 }
 
 #Preview("Cooking, with timers running") {
@@ -303,22 +306,49 @@ private func previewRecipe() -> Recipe {
         )
     ]
 
-    return NavigationStack {
-        CookingFeatureView(
-            presenter: CookingFeaturePresenterStub(),
-            viewModel: viewModel
+    return CookingFeatureView(
+        presenter: CookingFeaturePresenterStub(),
+        viewModel: viewModel
+    )
+}
+
+#Preview("Cooking, with the timers open") {
+    let date = Date.now
+    let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
+    viewModel.runningTimers = [
+        RunningTimer(
+            id: UUID(),
+            stepTimer: StepTimer(stepNumber: 2, text: "5-6 min", duration: .seconds(300)),
+            endDate: date,
+            isRinging: true
+        ),
+        RunningTimer(
+            id: UUID(),
+            stepTimer: StepTimer(stepNumber: 3, text: "15 min", duration: .seconds(900)),
+            endDate: date.addingTimeInterval(260),
+            isRinging: false
+        ),
+        RunningTimer(
+            id: UUID(),
+            stepTimer: StepTimer(stepNumber: 1, text: "30 min", duration: .seconds(1_800)),
+            endDate: date.addingTimeInterval(1_500),
+            isRinging: false
         )
-    }
+    ]
+    viewModel.isTimerListOpen = true
+
+    return CookingFeatureView(
+        presenter: CookingFeaturePresenterStub(),
+        viewModel: viewModel
+    )
 }
 
 #Preview("Cooking, asking to allow timers") {
     let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
     viewModel.isAskingToAllowTimers = true
 
-    return NavigationStack {
-        CookingFeatureView(
-            presenter: CookingFeaturePresenterStub(),
-            viewModel: viewModel
-        )
-    }
+    return CookingFeatureView(
+        presenter: CookingFeaturePresenterStub(),
+        viewModel: viewModel
+    )
 }

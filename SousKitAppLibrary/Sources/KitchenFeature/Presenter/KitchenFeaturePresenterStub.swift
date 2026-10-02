@@ -7,6 +7,8 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didChangeScreenPath(_: [KitchenScreen]) {}
 
+    func didDismissCooking() {}
+
     func didSelectRecipeRepositoryKind(_: RecipeRepositoryKind) {}
 
     func didTapReset() {}

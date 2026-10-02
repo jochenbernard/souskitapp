@@ -134,8 +134,8 @@ struct KitchenFeatureStackTests {
     }
 
     @MainActor
-    @Test("cooking a recipe pushes it on the stack with a feature to render it")
-    func cookingPushesTheCookingScreen() {
+    @Test("cooking a recipe opens it over the kitchen with a feature to render it, leaving the stack as it was")
+    func cookingOpensTheCookingScreen() {
         let crepes = recipeEntry(named: "crepes")
         let recipe = parser.parseRecipe("Whisk it.").value
         let viewModel = makeViewModel()
@@ -143,46 +143,42 @@ struct KitchenFeatureStackTests {
 
         presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
-
-        #expect(viewModel.screenPath == [.recipe(crepes), .cooking(recipe)])
-        #expect(viewModel.openCooking?.recipe == recipe)
-    }
-
-    @MainActor
-    @Test("cooking reported again from the cooking screen pushes nothing")
-    func cookingTwicePushesOnce() {
-        let crepes = recipeEntry(named: "crepes")
-        let recipe = parser.parseRecipe("Whisk it.").value
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.recipeFeatureDidStartCooking(recipe: recipe)
-        presenter.recipeFeatureDidStartCooking(recipe: recipe)
-
-        #expect(viewModel.screenPath == [.recipe(crepes), .cooking(recipe)])
-    }
-
-    @MainActor
-    @Test("popping the cooking screen leaves the recipe under it open")
-    func poppingCookingKeepsTheOpenRecipe() {
-        let crepes = recipeEntry(named: "crepes")
-        let recipe = parser.parseRecipe("Whisk it.").value
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.recipeFeatureDidStartCooking(recipe: recipe)
-        presenter.didChangeScreenPath([.recipe(crepes)])
 
         #expect(viewModel.screenPath == [.recipe(crepes)])
-        #expect(viewModel.openRecipe?.recipeEntry == crepes)
         #expect(viewModel.openCooking?.recipe == recipe)
     }
 
     @MainActor
-    @Test("the recipe a popped cooking screen uncovers keeps its feature")
-    func poppingCookingKeepsTheRecipeFeature() {
+    @Test("cooking reported again while cooking opens nothing new")
+    func cookingTwiceOpensOnce() {
+        let crepes = recipeEntry(named: "crepes")
+        let recipe = parser.parseRecipe("Whisk it.").value
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+
+        #expect(!replaces(\.openCooking, in: viewModel) {
+            presenter.recipeFeatureDidStartCooking(recipe: recipe)
+        })
+    }
+
+    @MainActor
+    @Test("cooking reported with no recipe on top of the stack opens nothing")
+    func cookingWithoutARecipeOpensNothing() {
+        let recipe = parser.parseRecipe("Whisk it.").value
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+
+        #expect(viewModel.openCooking == nil)
+    }
+
+    @MainActor
+    @Test("exiting the cooking screen closes it and uncovers the recipe with its feature")
+    func exitingCookingUncoversTheRecipe() {
         let crepes = recipeEntry(named: "crepes")
         let recipe = parser.parseRecipe("Whisk it.").value
         let viewModel = makeViewModel()
@@ -192,8 +188,25 @@ struct KitchenFeatureStackTests {
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
         #expect(!replaces(\.openRecipe, in: viewModel) {
-            presenter.didChangeScreenPath([.recipe(crepes)])
+            presenter.cookingFeatureDidExit()
         })
+        #expect(viewModel.openCooking == nil)
+        #expect(viewModel.screenPath == [.recipe(crepes)])
+    }
+
+    @MainActor
+    @Test("the cooking screen dismissed closes it")
+    func dismissingCookingClosesIt() {
+        let crepes = recipeEntry(named: "crepes")
+        let recipe = parser.parseRecipe("Whisk it.").value
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+        presenter.didDismissCooking()
+
+        #expect(viewModel.openCooking == nil)
     }
 
     @MainActor
@@ -206,38 +219,11 @@ struct KitchenFeatureStackTests {
 
         presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
+        let firstVisit = viewModel.openCooking?.id
         presenter.cookingFeatureDidExit()
-
-        #expect(replaces(\.openCooking, in: viewModel) {
-            presenter.recipeFeatureDidStartCooking(recipe: recipe)
-        })
-    }
-
-    @MainActor
-    @Test("exiting the cooking screen pops back to the recipe")
-    func exitingCookingPopsToTheRecipe() {
-        let crepes = recipeEntry(named: "crepes")
-        let recipe = parser.parseRecipe("Whisk it.").value
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
-        presenter.cookingFeatureDidExit()
 
-        #expect(viewModel.screenPath == [.recipe(crepes)])
-    }
-
-    @MainActor
-    @Test("an exit with no cooking screen on top leaves the stack alone")
-    func exitWithoutCookingKeepsTheStack() {
-        let crepes = recipeEntry(named: "crepes")
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.cookingFeatureDidExit()
-
-        #expect(viewModel.screenPath == [.recipe(crepes)])
+        #expect(viewModel.openCooking != nil)
+        #expect(viewModel.openCooking?.id != firstVisit)
     }
 }

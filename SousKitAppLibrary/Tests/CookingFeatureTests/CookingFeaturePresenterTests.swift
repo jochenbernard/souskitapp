@@ -124,13 +124,15 @@ struct CookingFeaturePresenterTests {
     }
 
     @MainActor
-    @Test("tapping a timer starts it")
+    @Test("tapping a timer starts it and counts it, for the view to confirm")
     func tappingATimerStartsIt() async {
+        let viewModel = makeViewModel()
         let timerScheduler = TimerSchedulerSpy()
 
-        await makePresenter(viewModel: makeViewModel(), timerScheduler: timerScheduler).didTapTimer(makeStepTimer())
+        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).didTapTimer(makeStepTimer())
 
         #expect(timerScheduler.startedTimers == [makeStepTimer()])
+        #expect(viewModel.startedTimerCount == 1)
     }
 
     @MainActor
@@ -142,6 +144,7 @@ struct CookingFeaturePresenterTests {
         await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).didTapTimer(makeStepTimer())
 
         #expect(viewModel.isAskingToAllowTimers)
+        #expect(viewModel.startedTimerCount == 0)
     }
 
     @MainActor
@@ -227,5 +230,87 @@ struct CookingFeaturePresenterTests {
         await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
 
         #expect(viewModel.timerConfirmingCancel == nil)
+    }
+
+    @MainActor
+    @Test("the list of timers starts out closed")
+    func timerListStartsClosed() {
+        #expect(!makeViewModel().isTimerListOpen)
+    }
+
+    @MainActor
+    @Test("opening the stack of timers opens the list")
+    func openingTheStackOpensTheList() {
+        let viewModel = makeViewModel()
+
+        makePresenter(viewModel: viewModel).didOpenTimerList()
+
+        #expect(viewModel.isTimerListOpen)
+    }
+
+    @MainActor
+    @Test("closing the list folds it back into the stack")
+    func closingTheList() {
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didOpenTimerList()
+        presenter.didCloseTimerList()
+
+        #expect(!viewModel.isTimerListOpen)
+    }
+
+    @MainActor
+    @Test("the list closes once no timer is left in it")
+    func listClosesOnceEmpty() async {
+        let viewModel = makeViewModel()
+        viewModel.isTimerListOpen = true
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[makeRunningTimer()], []])
+
+        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
+
+        #expect(!viewModel.isTimerListOpen)
+    }
+
+    @MainActor
+    @Test("the list stays open while a timer is left in it")
+    func listStaysOpenWithATimer() async {
+        let viewModel = makeViewModel()
+        viewModel.isTimerListOpen = true
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[makeRunningTimer()]])
+
+        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
+
+        #expect(viewModel.isTimerListOpen)
+    }
+
+    @MainActor
+    @Test("confirming the exit cancels every running timer")
+    func confirmingTheExitCancelsTheTimers() async {
+        let viewModel = makeViewModel()
+        let runningTimer = makeRunningTimer()
+        let ringingTimer = makeRunningTimer(isRinging: true)
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[runningTimer, ringingTimer]])
+        let presenter = makePresenter(viewModel: viewModel, timerScheduler: timerScheduler)
+
+        await presenter.viewDidAppear()
+        presenter.didTapExit()
+        presenter.didConfirmExit()
+
+        #expect(timerScheduler.cancelledTimers == [runningTimer, ringingTimer])
+    }
+
+    @MainActor
+    @Test("dismissing the exit leaves the timers running")
+    func dismissingTheExitKeepsTheTimers() async {
+        let viewModel = makeViewModel()
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[makeRunningTimer()]])
+        let presenter = makePresenter(viewModel: viewModel, timerScheduler: timerScheduler)
+
+        await presenter.viewDidAppear()
+        presenter.didTapExit()
+        presenter.didChangeIsConfirmingExit(false)
+
+        #expect(timerScheduler.cancelledTimers.isEmpty)
     }
 }

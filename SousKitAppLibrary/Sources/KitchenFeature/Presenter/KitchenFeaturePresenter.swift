@@ -53,9 +53,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         case .recipe(let recipeEntry):
             openRecipe(recipeEntry, isPush: isPush)
 
-        case .cooking(let recipe):
-            openCooking(recipe, isPush: isPush)
-
         case nil:
             break
         }
@@ -78,20 +75,26 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         handler.kitchenFeatureDidConfirmReset()
     }
 
+    func didDismissCooking() {
+        viewModel.openCooking = nil
+    }
+
     func recipeFeatureDidStartCooking(recipe: Recipe) {
-        guard case .recipe = viewModel.screenPath.last else {
+        guard case .recipe = viewModel.screenPath.last, viewModel.openCooking == nil else {
             return
         }
 
-        didChangeScreenPath(viewModel.screenPath + [.cooking(recipe)])
+        viewModel.openCooking = OpenCooking(
+            recipe: recipe,
+            feature: cookingFeatureFactory.makeCookingFeature(
+                recipe: recipe,
+                handler: self
+            )
+        )
     }
 
     func cookingFeatureDidExit() {
-        guard case .cooking = viewModel.screenPath.last else {
-            return
-        }
-
-        didChangeScreenPath(Array(viewModel.screenPath.dropLast()))
+        viewModel.openCooking = nil
     }
 
     /// Builds the feature for a recipe pushed on the stack, or keeps the one a recipe already on it has,
@@ -106,22 +109,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             recipeEntry: recipeEntry,
             feature: recipeFeatureFactory.makeRecipeFeature(
                 recipeEntry: recipeEntry,
-                handler: self
-            )
-        )
-    }
-
-    /// Builds the feature for a recipe pushed on the stack to cook from, or keeps the one already on it.
-    @MainActor
-    private func openCooking(_ recipe: Recipe, isPush: Bool) {
-        guard isPush || viewModel.openCooking?.recipe != recipe else {
-            return
-        }
-
-        viewModel.openCooking = OpenCooking(
-            recipe: recipe,
-            feature: cookingFeatureFactory.makeCookingFeature(
-                recipe: recipe,
                 handler: self
             )
         )

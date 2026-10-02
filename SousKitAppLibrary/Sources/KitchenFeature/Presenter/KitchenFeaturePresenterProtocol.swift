@@ -14,6 +14,9 @@ protocol KitchenFeaturePresenterProtocol {
     func didChangeScreenPath(_ screenPath: [KitchenScreen])
 
     @MainActor
+    func didDismissCooking()
+
+    @MainActor
     func didSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind)
 
     @MainActor

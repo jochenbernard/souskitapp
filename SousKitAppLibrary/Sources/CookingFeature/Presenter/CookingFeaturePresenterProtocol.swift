@@ -10,6 +10,12 @@ protocol CookingFeaturePresenterProtocol {
     func didTapTimer(_ timer: StepTimer) async
 
     @MainActor
+    func didOpenTimerList()
+
+    @MainActor
+    func didCloseTimerList()
+
+    @MainActor
     func didTapCancelTimer(_ timer: RunningTimer)
 
     @MainActor

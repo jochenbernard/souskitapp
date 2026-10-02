@@ -1,23 +1,66 @@
 import DesignSystem
 import SwiftUI
 
-/// A running timer as a row whose background fills as its time runs out.
+/// A running timer in a box, filling as its time runs out.
 struct RunningTimerRow: View {
+    @Environment(\.runningTimerLeaving) private var leaving
+    @Environment(\.runningTimerSwoop) private var swoop
+
+    /// The box each timer sits in, which the timers stacked behind one take as well.
+    static let shape = RoundedRectangle(cornerRadius: SousRadius.large)
+
+    // How many steps the fill grows in, about a pixel each across the widest timer.
+    private static let progressSteps = 1_200.0
+
     private let presenter: CookingFeaturePresenterProtocol
     private let timer: RunningTimer
     private let isConfirmingCancel: Bool
+    private let contentWidth: CGFloat?
+    private let contentFade: RunningTimersFade
 
+    /// - Parameters:
+    ///   - contentWidth: The width the timer lays what it shows out at, whatever the width of its box, or `nil` to
+    ///     fill the box.
+    ///   - contentFade: How the timer shows what it is and its time, down to only its box, as it shows stacked
+    ///     behind another.
     init(
         presenter: CookingFeaturePresenterProtocol,
         timer: RunningTimer,
-        isConfirmingCancel: Bool
+        isConfirmingCancel: Bool,
+        contentWidth: CGFloat? = nil,
+        contentFade: RunningTimersFade = .disabled
     ) {
         self.presenter = presenter
         self.timer = timer
         self.isConfirmingCancel = isConfirmingCancel
+        self.contentWidth = contentWidth
+        self.contentFade = contentFade
     }
 
     var body: some View {
+        framedContent
+            .compositingGroup()
+            .modifier(contentFade)
+            .opacity(RunningTimerLeaving.contentShare(leaving: leaving))
+            .opacity(swoop.map({ RunningTimerStacking.contentShare(swooping: $0) }) ?? 1.0)
+            // Gone by the swoop's end, the content passes from the swoop's fade to its place's at once, unseen.
+            .animation(nil, value: swoop == nil)
+            .clipShape(Self.shape)
+            .glassEffect(.regular, in: Self.shape)
+    }
+
+    @ViewBuilder
+    private var framedContent: some View {
+        if let contentWidth {
+            RunningTimerContentFrame(width: contentWidth) {
+                content
+            }
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         HStack(spacing: SousSpacing.medium) {
             label
 
@@ -85,15 +128,26 @@ struct RunningTimerRow: View {
         Button(role: .cancel, action: {}, label: { Text("Keep timer", bundle: .module) })
     }
 
-    // Redrawn every frame from the clock, so the fill keeps time with the countdown beside it.
+    // Redrawn from the clock about as often as the fill grows by a pixel, so it keeps time with the countdown beside
+    // it. Scaled rather than sized, so a redraw lays nothing out.
     private var progress: some View {
-        TimelineView(.animation(paused: timer.isRinging)) { context in
-            GeometryReader { proxy in
-                Rectangle()
-                    .fill(.accent.opacity(timer.isRinging ? 0.32 : 0.2))
-                    .frame(width: proxy.size.width * timer.fractionElapsed(at: context.date))
-            }
+        TimelineView(.animation(minimumInterval: progressInterval, paused: isProgressPaused)) { context in
+            let fraction = timer.fractionElapsed(at: context.date)
+
+            Rectangle()
+                .fill(.accent.opacity(timer.isRinging ? 0.32 : 0.2))
+                .scaleEffect(x: fraction, y: 1.0, anchor: .leading)
+                // A fill paused out of sight catches up at once, not on the spring that brings its timer forward.
+                .animation(nil, value: fraction)
         }
+    }
+
+    private var progressInterval: Double {
+        timer.stepTimer.seconds / Self.progressSteps
+    }
+
+    private var isProgressPaused: Bool {
+        timer.isRinging || contentFade.isHidden || leaving > 0.0
     }
 
     private var isConfirmingCancelBinding: Binding<Bool> {
@@ -141,8 +195,6 @@ private func previewTimers(endingAround date: Date) -> [RunningTimer] {
                 timer: timer,
                 isConfirmingCancel: false
             )
-            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
-            .clipShape(RoundedRectangle(cornerRadius: SousRadius.large))
         }
     }
     .sousPagePadding()

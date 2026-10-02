@@ -22,6 +22,10 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         for await runningTimers in timerScheduler.runningTimers() {
             viewModel.runningTimers = runningTimers
             closeCancelConfirmationIfOver()
+
+            if runningTimers.isEmpty {
+                viewModel.isTimerListOpen = false
+            }
         }
     }
 
@@ -32,11 +36,20 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
     func didTapTimer(_ timer: StepTimer) async {
         do {
             try await timerScheduler.start(timer)
+            viewModel.startedTimerCount += 1
         } catch TimerSchedulerError.notAuthorized {
             viewModel.isAskingToAllowTimers = true
         } catch {
             // Nothing starts, which the timers on screen already show.
         }
+    }
+
+    func didOpenTimerList() {
+        viewModel.isTimerListOpen = true
+    }
+
+    func didCloseTimerList() {
+        viewModel.isTimerListOpen = false
     }
 
     func didTapCancelTimer(_ timer: RunningTimer) {
@@ -77,6 +90,12 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
 
     func didConfirmExit() {
         viewModel.isConfirmingExit = false
+
+        // A timer belongs to the recipe being cooked, so leaving it stops them all.
+        for timer in viewModel.runningTimers {
+            cancel(timer)
+        }
+
         handler.cookingFeatureDidExit()
     }
 

@@ -5,6 +5,10 @@ struct CookingFeaturePresenterStub: CookingFeaturePresenterProtocol {
 
     func didTapTimer(_: StepTimer) {}
 
+    func didOpenTimerList() {}
+
+    func didCloseTimerList() {}
+
     func didTapCancelTimer(_: RunningTimer) {}
 
     func didChangeIsConfirmingCancelTimer(_: Bool) {}
