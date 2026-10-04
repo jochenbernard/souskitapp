@@ -118,10 +118,7 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
 
     @MainActor
     private func cancel(_ timer: RunningTimer) {
-        // The latest update tells whether the timer has started ringing since the cook reached for it.
-        let latestTimer = viewModel.runningTimers.first(where: { $0.id == timer.id }) ?? timer
-
         // A timer that fails to cancel stays on screen, which shows the failure.
-        try? timerScheduler.cancel(latestTimer)
+        try? timerScheduler.cancel(timer)
     }
 }

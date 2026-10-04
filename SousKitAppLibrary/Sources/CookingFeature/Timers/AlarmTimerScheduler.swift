@@ -55,10 +55,15 @@ public struct AlarmTimerScheduler: TimerScheduler {
     }
 
     public func cancel(_ timer: RunningTimer) throws {
-        if timer.isRinging {
-            try AlarmManager.shared.stop(id: timer.id)
+        let manager = AlarmManager.shared
+
+        // The alarm itself, since the timer may have started ringing after it was handed over.
+        let alarm = try manager.alarms.first(where: { $0.id == timer.id })
+
+        if alarm?.state == .alerting {
+            try manager.stop(id: timer.id)
         } else {
-            try AlarmManager.shared.cancel(id: timer.id)
+            try manager.cancel(id: timer.id)
         }
 
         startedTimerStore.remove(id: timer.id)
