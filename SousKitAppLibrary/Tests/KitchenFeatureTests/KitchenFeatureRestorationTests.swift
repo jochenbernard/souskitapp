@@ -51,7 +51,9 @@ struct KitchenFeatureRestorationTests {
             handler: KitchenFeatureHandlerStub(),
             recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
             recipeRepository: recipeRepository,
+            restorationSettleTime: .zero,
             restorationStore: restorationStore,
+            timerScheduler: TimerSchedulerStub(),
             viewModel: viewModel
         )
     }

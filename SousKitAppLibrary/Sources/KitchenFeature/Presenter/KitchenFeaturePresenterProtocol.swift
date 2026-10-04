@@ -10,6 +10,10 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didBecomeActive() async
 
+    /// The app left the foreground.
+    @MainActor
+    func didEnterBackground()
+
     @MainActor
     func didChangeScreenPath(_ screenPath: [KitchenScreen])
 

@@ -44,7 +44,9 @@ struct KitchenFeatureStackTests {
             handler: KitchenFeatureHandlerStub(),
             recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
             recipeRepository: recipeRepository,
+            restorationSettleTime: .zero,
             restorationStore: KitchenRestorationStore(userDefaults: defaults.userDefaults),
+            timerScheduler: TimerSchedulerStub(),
             viewModel: viewModel
         )
     }

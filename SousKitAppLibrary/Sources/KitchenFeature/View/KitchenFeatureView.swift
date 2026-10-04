@@ -68,10 +68,20 @@ struct KitchenFeatureView: View {
             await presenter.viewDidAppear()
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
+            switch phase {
+            case .active:
                 Task {
                     await presenter.didBecomeActive()
                 }
+
+            case .background:
+                presenter.didEnterBackground()
+
+            case .inactive:
+                break
+
+            @unknown default:
+                break
             }
         }
     }

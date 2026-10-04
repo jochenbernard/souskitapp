@@ -1,9 +1,14 @@
 import CookingFeature
 
-/// A timer scheduler with no timers running, which starts none.
+/// A timer scheduler whose running timers never change, which starts none.
 struct TimerSchedulerStub: TimerScheduler {
+    var timers: [RunningTimer] = []
+
     func runningTimers() -> AsyncStream<[RunningTimer]> {
-        AsyncStream(unfolding: { nil })
+        AsyncStream { continuation in
+            continuation.yield(timers)
+            continuation.finish()
+        }
     }
 
     func start(_: StepTimer) {}

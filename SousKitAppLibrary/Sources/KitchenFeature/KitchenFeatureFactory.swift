@@ -39,10 +39,11 @@ public struct KitchenFeatureFactory: Sendable {
             recipeRepositoryKind: recipeRepositoryKind
         )
         viewModel.isRestoring = restorationStore.restoration() != nil
+        let timerScheduler = AlarmTimerScheduler()
         let presenter = KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(
                 idleTimer: ApplicationIdleTimer(),
-                timerScheduler: AlarmTimerScheduler()
+                timerScheduler: timerScheduler
             ),
             handler: handler,
             recipeFeatureFactory: RecipeFeatureFactory(
@@ -50,7 +51,9 @@ public struct KitchenFeatureFactory: Sendable {
                 recipeRepository: recipeRepository
             ),
             recipeRepository: recipeRepository,
+            restorationSettleTime: .seconds(5),
             restorationStore: restorationStore,
+            timerScheduler: timerScheduler,
             viewModel: viewModel
         )
 
