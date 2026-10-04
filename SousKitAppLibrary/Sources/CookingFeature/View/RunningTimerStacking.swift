@@ -28,7 +28,7 @@ struct RunningTimerStacking: ViewModifier, Animatable {
     /// - Parameter swoop: How far the timer is on its swoop, from 0 in front to 1 in its place.
     /// - Returns: The share of its content that shows, from 1 down to 0.
     static func contentShare(swooping swoop: Double) -> Double {
-        min(1.0, max(0.0, (1.0 - swoop) / (1.0 - halfway)))
+        ((1.0 - swoop) / (1.0 - halfway)).clamped(to: 0.0...1.0)
     }
 
     func body(content: Content) -> some View {

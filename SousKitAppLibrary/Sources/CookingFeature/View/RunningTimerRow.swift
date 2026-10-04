@@ -14,9 +14,6 @@ struct RunningTimerRow: View {
         isRinging ? Text("Stop timer", bundle: .module) : Text("Cancel timer", bundle: .module)
     }
 
-    // How many steps the fill grows in, about a pixel each across the widest timer.
-    private static let progressSteps = 1_200.0
-
     private let presenter: CookingFeaturePresenterProtocol
     private let timer: RunningTimer
     private let isConfirmingCancel: Bool
@@ -76,7 +73,7 @@ struct RunningTimerRow: View {
         .padding(.horizontal, SousSpacing.large)
         .padding(.vertical, SousSpacing.medium)
         .background(alignment: .leading) {
-            progress
+            RunningTimerProgress(timer: timer, contentFade: contentFade)
         }
     }
 
@@ -128,32 +125,6 @@ struct RunningTimerRow: View {
             action: {},
             label: { Text("Keep timer", bundle: .module) }
         )
-    }
-
-    // Redrawn from the clock about as often as the fill grows by a pixel, so it keeps time with the countdown beside
-    // it. Scaled rather than sized, so a redraw lays nothing out.
-    private var progress: some View {
-        TimelineView(.animation(minimumInterval: progressInterval, paused: isProgressPaused)) { context in
-            let fraction = timer.fractionElapsed(at: context.date)
-
-            Rectangle()
-                .fill(.accent.opacity(timer.isRinging ? 0.32 : 0.2))
-                .scaleEffect(
-                    x: fraction,
-                    y: 1.0,
-                    anchor: .leading
-                )
-                // A fill paused out of sight catches up at once, not on the spring that brings its timer forward.
-                .animation(nil, value: fraction)
-        }
-    }
-
-    private var progressInterval: Double {
-        timer.stepTimer.seconds / Self.progressSteps
-    }
-
-    private var isProgressPaused: Bool {
-        timer.isRinging || contentFade.isHidden
     }
 
     private var isConfirmingCancelBinding: Binding<Bool> {

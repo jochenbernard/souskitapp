@@ -46,6 +46,11 @@ final class RunningTimerArrival {
         timerID == id ? swoop : nil
     }
 
+    /// The timer on its way once it swoops to its place, rather than showing in front.
+    var swoopingTimer: RunningTimer.ID? {
+        swoop == nil ? nil : id
+    }
+
     /// How far the timer on its way is on its swoop, which is where the stack lays it out.
     var swoopProgress: Double {
         swoop ?? 0.0

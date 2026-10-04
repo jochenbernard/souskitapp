@@ -44,23 +44,17 @@ final class RunningTimersLayoutMetrics: Sendable {
     ///   - foldDistance: How far the soonest timer travels from the list to the stack.
     ///   - presentedOpenness: How far open the timers were laid out.
     ///   - presentedRubberBand: How far past where they open or fold to the timers were laid out.
+    ///   - timerFrames: Each timer and its frame in the panel's content, the soonest first.
     func update(
         foldDistance: CGFloat,
         presentedOpenness: Double,
-        presentedRubberBand: CGFloat
+        presentedRubberBand: CGFloat,
+        timerFrames: [(id: RunningTimer.ID, frame: CGRect)]
     ) {
         values.withLock { values in
             values.foldDistance = foldDistance
             values.presentedOpenness = presentedOpenness
             values.presentedRubberBand = presentedRubberBand
-        }
-    }
-
-    /// Records where a layout pass laid each timer out.
-    ///
-    /// - Parameter timerFrames: Each timer and its frame in the panel's content, the soonest first.
-    func update(timerFrames: [(id: RunningTimer.ID, frame: CGRect)]) {
-        values.withLock { values in
             values.timerFrames = timerFrames
         }
     }

@@ -87,7 +87,7 @@ struct RunningTimersPanelRow: View {
             scrollFade
         }
         .runningTimersFade(
-            openness: motion.openness,
+            motion: motion,
             over: 0.0...Self.hiddenFadeEnd,
             isEnabled: depth > RunningTimersLayout.shownDepth && !isSwooping
         )

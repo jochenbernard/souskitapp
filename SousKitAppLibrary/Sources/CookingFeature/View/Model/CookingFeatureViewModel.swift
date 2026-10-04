@@ -21,6 +21,10 @@ final class CookingFeatureViewModel {
         self.title = title
     }
 
+    var canOpenTimerList: Bool {
+        runningTimers.count > 1
+    }
+
     func isRunning(_ id: RunningTimer.ID) -> Bool {
         runningTimers.contains(where: { $0.id == id })
     }

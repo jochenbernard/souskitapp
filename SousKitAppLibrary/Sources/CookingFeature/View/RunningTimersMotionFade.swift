@@ -11,9 +11,6 @@ struct RunningTimersMotionFade: ViewModifier {
         isEnabled: false
     )
 
-    /// Whether the view is out of sight once the timers are as far open as they are headed.
-    let isHidden: Bool
-
     private let motion: RunningTimersMotion
     private let range: ClosedRange<Double>
     private let isEnabled: Bool
@@ -30,7 +27,13 @@ struct RunningTimersMotionFade: ViewModifier {
         self.motion = motion
         self.range = range
         self.isEnabled = isEnabled
-        self.isHidden = RunningTimersFade(
+    }
+
+    /// Whether the view is out of sight once the timers are as far open as they are headed.
+    ///
+    /// Read where it is used, so only that view updates as the timers open.
+    var isHidden: Bool {
+        RunningTimersFade(
             openness: motion.openness,
             over: range,
             isEnabled: isEnabled

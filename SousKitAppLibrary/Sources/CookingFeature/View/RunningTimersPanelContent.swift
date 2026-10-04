@@ -98,6 +98,7 @@ struct RunningTimersPanelContent: View {
         RunningTimersLayout(
             openness: motion.openness,
             swoop: arrival.swoopProgress,
+            swoopingTimer: arrival.swoopingTimer,
             rubberBand: motion.rubberBand,
             region: region,
             topInset: topInset,
@@ -132,7 +133,7 @@ struct RunningTimersPanelContent: View {
             width: rowWidth,
             isConfirmingCancel: timer.id == viewModel.timerConfirmingCancel?.id,
             isListed: kind == .column || isListOpen,
-            opensOnTap: kind == .folding && depth == 0 && !isListOpen && viewModel.runningTimers.count > 1,
+            opensOnTap: kind == .folding && depth == 0 && !isListOpen && viewModel.canOpenTimerList,
             isSwooping: swoop != nil,
             fadeTop: topInset,
             fadeHeight: roomHeight
@@ -150,7 +151,6 @@ struct RunningTimersPanelContent: View {
             )
         }
         .runningTimerStacking(depth: depth, swoop: swoop)
-        .layoutValue(key: RunningTimersLayout.SwoopingKey.self, value: swoop != nil)
         .layoutValue(key: RunningTimersLayout.TimerIDKey.self, value: timer.id)
         // Outermost, or SwiftUI fades the timer in and out instead.
         .transition(RunningTimersPanelRow.transition)

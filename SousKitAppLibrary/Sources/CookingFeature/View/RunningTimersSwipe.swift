@@ -133,7 +133,7 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
     private func release(_ timer: RunningTimer, velocity: CGFloat) {
         let offset = motion.swipeOffsets[timer.id] ?? 0.0
         // Only where the finger let go counts, not where its speed would have carried the timer.
-        let takesAway = -offset >= frame.width * Self.threshold
+        let takesAway = isArmed
         // Off the screen by as much as the timer keeps from its edge.
         let target = takesAway ? -(frame.maxX + frame.minX) : 0.0
         let delta = target - offset
@@ -157,17 +157,7 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
         // there instead. Timed, so it does not hang on the animation reporting its end.
         Task {
             try? await Task.sleep(for: .seconds(Animation.runningTimersDuration))
-            takeAway(timer)
-        }
-    }
-
-    private func takeAway(_ timer: RunningTimer) {
-        presenter.didSwipeAwayTimer(timer)
-        bringBackIfStillRunning(timer)
-    }
-
-    private func bringBackIfStillRunning(_ timer: RunningTimer) {
-        Task {
+            presenter.didSwipeAwayTimer(timer)
             try? await Task.sleep(for: Self.cancelTimeout)
 
             if viewModel.isRunning(timer.id) {

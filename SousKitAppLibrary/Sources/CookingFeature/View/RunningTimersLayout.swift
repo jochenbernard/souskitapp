@@ -31,12 +31,7 @@ struct RunningTimersLayout: Layout {
         static let defaultValue = Role.timer
     }
 
-    /// Marks the timer swooping from the front of the stack to its place behind the others.
-    struct SwoopingKey: LayoutValueKey {
-        static let defaultValue = false
-    }
-
-    /// Marks which timer a subview shows, so a swipe can tell which one it lands on.
+    /// Marks which timer a subview shows, so a swipe and the swoop can tell which one it is.
     struct TimerIDKey: LayoutValueKey {
         static let defaultValue: RunningTimer.ID? = nil
     }
@@ -77,6 +72,7 @@ struct RunningTimersLayout: Layout {
     private let scrollOffset: CGFloat
     private let scrollShift: CGFloat
     private let metrics: RunningTimersLayoutMetrics
+    private let swoopingTimer: RunningTimer.ID?
     private var openness: Double
     private var swoop: Double
     private var rubberBand: CGFloat
@@ -84,6 +80,7 @@ struct RunningTimersLayout: Layout {
     /// - Parameters:
     ///   - openness: How far the timers are open, from 0 stacked to 1 listed.
     ///   - swoop: How far the swooping timer is on its way, from 0 in front to 1 in its place.
+    ///   - swoopingTimer: The timer swooping from the front of the stack to its place behind the others, if any.
     ///   - rubberBand: How far the timers are pulled past where they open or fold to, down for positive values.
     ///   - region: The room the panel shows the timers in.
     ///   - topInset: How far into the region the list may rise.
@@ -96,6 +93,7 @@ struct RunningTimersLayout: Layout {
     init(
         openness: Double,
         swoop: Double,
+        swoopingTimer: RunningTimer.ID?,
         rubberBand: CGFloat,
         region: CGSize,
         topInset: CGFloat,
@@ -108,6 +106,7 @@ struct RunningTimersLayout: Layout {
     ) {
         self.openness = openness
         self.swoop = swoop
+        self.swoopingTimer = swoopingTimer
         self.rubberBand = rubberBand
         self.region = region
         self.topInset = topInset
@@ -157,17 +156,12 @@ struct RunningTimersLayout: Layout {
         cache _: inout ()
     ) {
         let measured = measure(subviews)
-
-        metrics.update(
-            foldDistance: max(1.0, measured.stackTop - measured.listRowsTop),
-            presentedOpenness: clampedOpenness,
-            presentedRubberBand: rubberBand
-        )
-
         var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
 
         for (depth, timer) in measured.timers.enumerated() {
-            let stacked = timer[SwoopingKey.self] ? swoopRect(depth, in: measured) : stackRect(depth, in: measured)
+            let id = timer[TimerIDKey.self]
+            let isSwooping = id != nil && id == swoopingTimer
+            let stacked = isSwooping ? swoopRect(depth, in: measured) : stackRect(depth, in: measured)
             let rect = between(stacked, and: listRect(depth, in: measured))
             let origin = CGPoint(x: bounds.minX + rect.minX, y: bounds.minY + rubberBand + rect.minY)
 
@@ -177,12 +171,17 @@ struct RunningTimersLayout: Layout {
                 proposal: ProposedViewSize(rect.size)
             )
 
-            if let id = timer[TimerIDKey.self] {
+            if let id {
                 timerFrames.append((id: id, frame: CGRect(origin: origin, size: rect.size)))
             }
         }
 
-        metrics.update(timerFrames: timerFrames)
+        metrics.update(
+            foldDistance: max(1.0, measured.stackTop - measured.listRowsTop),
+            presentedOpenness: openness.clamped(to: 0.0...1.0),
+            presentedRubberBand: rubberBand,
+            timerFrames: timerFrames
+        )
 
         if let countBadge = measured.countBadge, !measured.timers.isEmpty {
             let front = between(stackRect(0, in: measured), and: listRect(0, in: measured))
@@ -210,10 +209,6 @@ struct RunningTimersLayout: Layout {
             anchor: .topLeading,
             proposal: ProposedViewSize(width: region.width, height: topInset + roomHeight)
         )
-    }
-
-    private var clampedOpenness: Double {
-        min(1.0, max(0.0, openness))
     }
 
     private var rowWidth: CGFloat {
@@ -334,6 +329,7 @@ private func previewStack(openness: Double) -> some View {
     RunningTimersLayout(
         openness: openness,
         swoop: 0.0,
+        swoopingTimer: nil,
         rubberBand: 0.0,
         region: CGSize(width: 360.0, height: 500.0),
         topInset: 0.0,

@@ -20,14 +20,14 @@ struct RunningTimerLeaving: ViewModifier, Animatable {
     /// - Parameter amount: How far the timer is gone, from 0 in its place to 1 away.
     /// - Returns: The share of its content that shows, from 1 down to 0.
     static func contentShare(leaving amount: Double) -> Double {
-        min(1.0, max(0.0, 1.0 - amount / contentGone))
+        (1.0 - amount / contentGone).clamped(to: 0.0...1.0)
     }
 
     func body(content: Content) -> some View {
         content
             .opacity(1.0 - animatableData)
             .scaleEffect(1.0 - Self.shrink * animatableData)
-            .environment(\.runningTimerLeaving, min(1.0, max(0.0, animatableData)))
+            .environment(\.runningTimerLeaving, animatableData)
     }
 }
 

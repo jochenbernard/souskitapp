@@ -153,10 +153,6 @@ extension RunningTimersPanel {
         // The list scrolls only while it is open. Closing it undoes its scrolling, which the content keeps in its
         // rows' places so they fold from where they were.
         private func listOpenDidChange(_ isOpen: Bool) -> CGFloat {
-            guard kind == .folding else {
-                return 0.0
-            }
-
             scrollView.isScrollEnabled = isOpen
             fold = 0.0
 
@@ -210,7 +206,7 @@ extension RunningTimersPanel {
 
             switch pan.state {
             case .began:
-                canOpen = viewModel.runningTimers.count > 1
+                canOpen = viewModel.canOpenTimerList
                 fold = presentedFold() + scrollView.distanceMoved(by: pan, along: \.y)
                 foldBase = travel - fold
                 setFold(fold)

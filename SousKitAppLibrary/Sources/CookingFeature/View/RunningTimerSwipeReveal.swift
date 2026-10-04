@@ -54,7 +54,7 @@ struct RunningTimerSwipeReveal: View {
             .onGeometryChange(for: CGFloat.self, of: \.size.width) { measured in
                 labelWidth = measured
             }
-            .opacity(labelWidth > 0.0 ? min(1.0, max(0.0, (width - Self.gap) / labelWidth)) : 0.0)
+            .opacity(labelWidth > 0.0 ? ((width - Self.gap) / labelWidth).clamped(to: 0.0...1.0) : 0.0)
     }
 
     private var isArmed: Bool {
@@ -66,7 +66,7 @@ struct RunningTimerSwipeReveal: View {
             return 1.0
         }
 
-        return Self.unarmedOpacity * min(1.0, max(0.0, width / max(1.0, threshold)))
+        return Self.unarmedOpacity * (width / max(1.0, threshold)).clamped(to: 0.0...1.0)
     }
 }
 

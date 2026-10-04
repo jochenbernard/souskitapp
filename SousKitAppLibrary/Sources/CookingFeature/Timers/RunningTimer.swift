@@ -21,15 +21,11 @@ public struct RunningTimer: Identifiable, Hashable, Sendable {
 
     /// How much of the timer's time has run out by a date, from 0 when it starts to 1 once it is over.
     func fractionElapsed(at date: Date) -> Double {
-        guard !isRinging else {
-            return 1.0
-        }
-
-        guard stepTimer.seconds > 0.0 else {
+        guard !isRinging, stepTimer.seconds > 0.0 else {
             return 1.0
         }
 
         let secondsLeft = endDate.timeIntervalSince(date)
-        return min(1.0, max(0.0, 1.0 - secondsLeft / stepTimer.seconds))
+        return (1.0 - secondsLeft / stepTimer.seconds).clamped(to: 0.0...1.0)
     }
 }

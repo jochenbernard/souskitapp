@@ -43,7 +43,8 @@ struct RunningTimersFade: ViewModifier, Animatable {
             return 1.0
         }
 
-        let amount = min(1.0, max(0.0, (animatableData - range.lowerBound) / (range.upperBound - range.lowerBound)))
+        let progress = (animatableData - range.lowerBound) / (range.upperBound - range.lowerBound)
+        let amount = progress.clamped(to: 0.0...1.0)
         return fadesOut ? 1.0 - amount : amount
     }
 }
