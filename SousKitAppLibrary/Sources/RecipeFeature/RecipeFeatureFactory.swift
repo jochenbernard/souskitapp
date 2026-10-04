@@ -23,10 +23,14 @@ public struct RecipeFeatureFactory: Sendable {
     ///
     /// - Parameters:
     ///   - recipeEntry: The recipe to render.
+    ///   - restoration: What the screen is to open once the recipe is read, or `nil` for a screen just pushed.
+    ///   - resumesCooking: Whether cooking opens again once the recipe is read.
     ///   - handler: What the feature reports to.
     /// - Returns: The feature.
     public func makeRecipeFeature(
         recipeEntry: RecipeEntry,
+        restoration: RecipeFeatureRestoration?,
+        resumesCooking: Bool,
         handler: RecipeFeatureHandler
     ) -> RecipeFeature {
         let viewModel = RecipeFeatureViewModel(recipeEntry: recipeEntry)
@@ -34,6 +38,8 @@ public struct RecipeFeatureFactory: Sendable {
             handler: handler,
             parser: parser,
             recipeRepository: recipeRepository,
+            restoration: restoration,
+            resumesCooking: resumesCooking,
             viewModel: viewModel
         )
         return RecipeFeature(

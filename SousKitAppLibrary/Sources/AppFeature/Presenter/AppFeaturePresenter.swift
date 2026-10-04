@@ -8,6 +8,7 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
     var viewModel: AppFeatureViewModel?
 
     private let kitchenFeatureFactory: KitchenFeatureFactory
+    private let kitchenRestorationStore: KitchenRestorationStore
     private let mockRecipeRepository: RecipeRepository
     private let onboardingFeatureFactory: OnboardingFeatureFactory
     private let recipeRepositoryKindStore: RecipeRepositoryKindStore
@@ -15,12 +16,14 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
 
     init(
         kitchenFeatureFactory: KitchenFeatureFactory,
+        kitchenRestorationStore: KitchenRestorationStore,
         mockRecipeRepository: RecipeRepository,
         onboardingFeatureFactory: OnboardingFeatureFactory,
         recipeRepositoryKindStore: RecipeRepositoryKindStore,
         recipeRepositoryStore: RecipeRepositoryStore
     ) {
         self.kitchenFeatureFactory = kitchenFeatureFactory
+        self.kitchenRestorationStore = kitchenRestorationStore
         self.mockRecipeRepository = mockRecipeRepository
         self.onboardingFeatureFactory = onboardingFeatureFactory
         self.recipeRepositoryKindStore = recipeRepositoryKindStore
@@ -31,6 +34,7 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
     /// is to be picked.
     ///
     /// - Returns: The screen, reporting to this presenter.
+    @MainActor
     func makeScreen() -> AppScreen {
         switch recipeRepositoryKindStore.recipeRepositoryKind {
         case .files:
@@ -59,11 +63,15 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
         viewModel?.screen = makeScreen()
     }
 
+    @MainActor
     private func makeScreen(
         recipeRepository: RecipeRepository?,
         kind: RecipeRepositoryKind
     ) -> AppScreen {
         guard let recipeRepository else {
+            // What the last kitchen had open belongs to recipes the next one may not read.
+            kitchenRestorationStore.clear()
+
             return .onboarding(onboardingFeatureFactory.makeOnboardingFeature(handler: self))
         }
 

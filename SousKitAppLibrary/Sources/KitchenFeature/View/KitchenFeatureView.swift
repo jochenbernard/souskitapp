@@ -35,6 +35,12 @@ struct KitchenFeatureView: View {
                 .navigationTransition(.zoom(sourceID: RecipeFeature.cookingTransitionID, in: cookingTransition))
                 .interactiveDismissDisabled()
         }
+        // Cooking a cold start opens again is there at once, rather than zooming out of a button it never left.
+        .transaction(value: viewModel.openCooking?.id) { transaction in
+            if viewModel.openCooking?.isResumed == true {
+                transaction.disablesAnimations = true
+            }
+        }
     }
 
     private var recipeListScreen: some View {

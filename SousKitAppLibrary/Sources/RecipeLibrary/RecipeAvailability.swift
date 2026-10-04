@@ -1,5 +1,5 @@
 /// Whether a recipe's contents are on the device.
-public enum RecipeAvailability: Sendable, Hashable {
+public enum RecipeAvailability: Sendable, Hashable, Codable {
     /// The contents are on the device, and reading the recipe returns them at once.
     case downloaded
 

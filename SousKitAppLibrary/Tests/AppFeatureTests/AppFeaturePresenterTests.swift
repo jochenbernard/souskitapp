@@ -35,8 +35,13 @@ final class AppFeaturePresenterTests {
     /// A presenter opened on the screen the defaults call for, as a launch opens one.
     private func launch() -> AppFeaturePresenter {
         let recipeRepositoryStore = makeRecipeRepositoryStore()
+        let kitchenRestorationStore = KitchenRestorationStore(userDefaults: userDefaults)
         let presenter = AppFeaturePresenter(
-            kitchenFeatureFactory: KitchenFeatureFactory(parser: parser),
+            kitchenFeatureFactory: KitchenFeatureFactory(
+                parser: parser,
+                restorationStore: kitchenRestorationStore
+            ),
+            kitchenRestorationStore: kitchenRestorationStore,
             mockRecipeRepository: MockRecipeRepository(parser: parser),
             onboardingFeatureFactory: OnboardingFeatureFactory(recipeRepositoryStore: recipeRepositoryStore),
             recipeRepositoryKindStore: RecipeRepositoryKindStore(userDefaults: userDefaults),
@@ -104,5 +109,22 @@ final class AppFeaturePresenterTests {
 
         #expect(presenter.viewModel?.screen.identity == .onboarding)
         #expect(launch().viewModel?.screen.identity == .onboarding)
+    }
+
+    @Test("onboarding forgets what the last kitchen had open, which belongs to recipes the next may not read")
+    func onboardingForgetsTheKitchen() {
+        userDefaults.set(Data(), forKey: "KitchenRestorationStore.restoration")
+
+        #expect(launch().viewModel?.screen.identity == .onboarding)
+        #expect(userDefaults.object(forKey: "KitchenRestorationStore.restoration") == nil)
+    }
+
+    @Test("the kitchen keeps what it had open across a launch")
+    func kitchenKeepsWhatItHadOpen() {
+        launch().onboardingFeatureDidChooseMockRecipes()
+        userDefaults.set(Data(), forKey: "KitchenRestorationStore.restoration")
+
+        #expect(launch().viewModel?.screen.identity == .kitchen(.mock))
+        #expect(userDefaults.object(forKey: "KitchenRestorationStore.restoration") != nil)
     }
 }

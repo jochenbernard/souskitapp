@@ -1,5 +1,5 @@
 /// One recipe as a repository lists it, before its contents are read.
-public struct RecipeEntry: Sendable, Hashable, Identifiable {
+public struct RecipeEntry: Sendable, Hashable, Identifiable, Codable {
     /// What the repository finds the recipe by, which no two of its recipes share.
     public let id: String
 

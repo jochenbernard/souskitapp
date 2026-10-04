@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// What a recipe is scaled by: the recipe itself, or a quantity its header declares.
-enum ScaleTarget: Hashable {
+enum ScaleTarget: Hashable, Codable {
     /// The recipe itself, multiplied.
     case multiplier
 
