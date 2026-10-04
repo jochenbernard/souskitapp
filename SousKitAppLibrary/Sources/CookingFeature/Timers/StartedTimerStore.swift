@@ -1,18 +1,13 @@
 import Foundation
 
 /// The timers started, by the alarm each sounds, kept across launches since an alarm outlives the app.
-struct StartedTimerStore: Sendable {
+@MainActor
+struct StartedTimerStore {
     private static let key = "startedTimers"
-
-    nonisolated(unsafe) private let userDefaults: UserDefaults
-
-    init(userDefaults: UserDefaults = .standard) {
-        self.userDefaults = userDefaults
-    }
 
     func startedTimers() -> [UUID: StartedTimer] {
         guard
-            let data = userDefaults.data(forKey: Self.key),
+            let data = UserDefaults.standard.data(forKey: Self.key),
             let startedTimers = try? JSONDecoder().decode([UUID: StartedTimer].self, from: data)
         else {
             return [:]
@@ -48,6 +43,6 @@ struct StartedTimerStore: Sendable {
     }
 
     private func save(_ startedTimers: [UUID: StartedTimer]) {
-        userDefaults.set(try? JSONEncoder().encode(startedTimers), forKey: Self.key)
+        UserDefaults.standard.set(try? JSONEncoder().encode(startedTimers), forKey: Self.key)
     }
 }
