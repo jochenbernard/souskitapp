@@ -43,9 +43,28 @@ public struct KitchenRestorationStore {
             KitchenRestorationRecord(
                 restoration: restoration,
                 lastUse: .now,
-                isRestoring: record()?.isRestoring ?? false
+                isSettling: record()?.isSettling ?? false
             )
         )
+    }
+
+    /// Changes what the kitchen has open for a recipe, in use now, or keeps nothing where it has another open.
+    ///
+    /// - Parameters:
+    ///   - recipeID: The id of the recipe the change is for.
+    ///   - change: The change.
+    func update(recipeID: String, _ change: (inout KitchenRestoration) -> Void) {
+        guard
+            var record = record(),
+            record.restoration.recipeID == recipeID
+        else {
+            return
+        }
+
+        change(&record.restoration)
+        record.lastUse = .now
+        record.isTerminated = false
+        write(record)
     }
 
     /// Records that the kitchen is in use now.
@@ -59,16 +78,16 @@ public struct KitchenRestorationStore {
     }
 
     /// Records that a cold start is opening what the kitchen had open, in use now.
-    func beginRestoring() {
+    func beginSettling() {
         update { record in
-            record.isRestoring = true
+            record.isSettling = true
             record.lastUse = .now
         }
     }
 
     /// Records that the cold start opening what the kitchen had open settled.
-    func finishRestoring() {
-        update({ $0.isRestoring = false })
+    func finishSettling() {
+        update({ $0.isSettling = false })
     }
 
     private func update(_ change: (inout KitchenRestorationRecord) -> Void) {
@@ -81,11 +100,6 @@ public struct KitchenRestorationStore {
     }
 
     private func write(_ record: KitchenRestorationRecord) {
-        guard let data = try? JSONEncoder().encode(record) else {
-            clear()
-            return
-        }
-
-        userDefaults.set(data, forKey: Self.key)
+        userDefaults.set(try? JSONEncoder().encode(record), forKey: Self.key)
     }
 }

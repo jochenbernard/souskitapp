@@ -141,7 +141,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     private func read(_ recipe: Recipe) -> ScaledRecipe {
         let scale = switch viewModel.recipeContent {
         // A default is the file's, so a file that now declares another opens on that one.
-        case .recipe(let current): current.isDefault ? nil : current.scale
+        case .recipe(let current): chosenScale(of: current)
         case .reading, .failure: restoration?.scale
         }
 
@@ -175,10 +175,15 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
 
         handler.recipeFeatureDidChangeRestoration(
             RecipeFeatureRestoration(
-                scale: recipe.isDefault ? nil : recipe.scale,
+                scale: chosenScale(of: recipe),
                 isScaling: viewModel.isScaling
             )
         )
+    }
+
+    /// The scale a cook chose, or `nil` at the recipe's default scale.
+    private func chosenScale(of recipe: ScaledRecipe) -> RecipeScale? {
+        recipe.isDefault ? nil : recipe.scale
     }
 
     /// Takes the recipe to the scale and writes the scale in force back into the field.
