@@ -129,6 +129,22 @@
         }
       }
     },
+    "In progress" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In progress"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezig"
+          }
+        }
+      }
+    },
     "Keep timer" : {
       "localizations" : {
         "en" : {

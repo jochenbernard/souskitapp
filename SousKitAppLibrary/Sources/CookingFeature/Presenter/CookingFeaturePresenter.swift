@@ -33,6 +33,14 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         idleTimer.setDisabled(false)
     }
 
+    func didToggleStep(_ number: Int) {
+        if viewModel.completedStepNumbers.contains(number) {
+            viewModel.completedStepNumbers.remove(number)
+        } else {
+            viewModel.completedStepNumbers.insert(number)
+        }
+    }
+
     func didTapTimer(_ timer: StepTimer) async {
         do {
             try await timerScheduler.start(timer)

@@ -7,6 +7,9 @@ protocol CookingFeaturePresenterProtocol {
     func viewDidDisappear()
 
     @MainActor
+    func didToggleStep(_ number: Int)
+
+    @MainActor
     func didTapTimer(_ timer: StepTimer) async
 
     @MainActor
