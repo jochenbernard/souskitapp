@@ -10,9 +10,9 @@ struct RunningTimersPanelContent: View {
     static let coordinateSpace = "runningTimersPanel"
 
     // The room kept above the listed timers: a toolbar button's size and the gap under it where the list folds, or
-    // the run the timers fade out over where it is always open.
+    // the gap under the bar, level with the steps, where it is always open.
     private static let collapseRoomHeight = GlassCircleButtonStyle.diameter + SousSpacing.small
-    private static let fadeRoomHeight = SousSpacing.large
+    private static let columnRoomHeight = SousSpacing.small
 
     private let presenter: CookingFeaturePresenterProtocol
     private let viewModel: CookingFeatureViewModel
@@ -135,7 +135,7 @@ struct RunningTimersPanelContent: View {
             isListed: kind == .column || isListOpen,
             opensOnTap: kind == .folding && depth == 0 && !isListOpen && viewModel.canOpenTimerList,
             isSwooping: swoop != nil,
-            fadeTop: topInset,
+            fadeTop: kind == .folding ? topInset : nil,
             fadeHeight: roomHeight
         )
         .onGeometryChange(for: CGFloat.self, of: \.size.height) { height in
@@ -216,7 +216,7 @@ struct RunningTimersPanelContent: View {
     }
 
     private var roomHeight: CGFloat {
-        kind == .folding ? Self.collapseRoomHeight : Self.fadeRoomHeight
+        kind == .folding ? Self.collapseRoomHeight : Self.columnRoomHeight
     }
 
     private var isListOpen: Bool {

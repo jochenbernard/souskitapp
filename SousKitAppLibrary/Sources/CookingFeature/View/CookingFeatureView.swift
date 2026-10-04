@@ -16,6 +16,7 @@ struct CookingFeatureView: View {
     // keep clear of them follow.
     @State private var motion = RunningTimersMotion()
     @State private var topBarHeight = 0.0
+    @State private var areStepsScrolled = false
 
     init(
         presenter: CookingFeaturePresenterProtocol,
@@ -31,18 +32,26 @@ struct CookingFeatureView: View {
                 .sousPagePadding()
                 .frame(maxWidth: .infinity)
         }
+        .onScrollGeometryChange(for: Bool.self, of: isScrolled) { _, isScrolled in
+            areStepsScrolled = isScrolled
+        }
+        // The bar's background is drawn here instead, for the timers scrolling beside the steps too.
+        .scrollEdgeEffectHidden(!isNarrow, for: .top)
+        .safeAreaInset(edge: .bottom) {
+            stackRoom
+        }
+        .safeAreaInset(edge: .trailing) {
+            sideTimers
+        }
         // A bar of the screen's own rather than the navigation bar, so the blur behind the open list covers it.
         .safeAreaBar(edge: .top) {
             topBar
                 .onGeometryChange(for: CGFloat.self, of: \.size.height) { height in
                     topBarHeight = height
                 }
-        }
-        .safeAreaInset(edge: .bottom) {
-            stackRoom
-        }
-        .safeAreaInset(edge: .trailing) {
-            sideTimers
+                .background {
+                    topBarBackground
+                }
         }
         .runningTimersBlur(motion: motion, isEnabled: isNarrow)
         .accessibilityHidden(isTimerListOpen)
@@ -65,14 +74,6 @@ struct CookingFeatureView: View {
         .onDisappear(perform: presenter.viewDidDisappear)
     }
 
-    private var topBar: some View {
-        CookingTopBar(
-            presenter: presenter,
-            title: viewModel.title,
-            isConfirmingExit: viewModel.isConfirmingExit
-        )
-    }
-
     // The steps keep clear of the folded stack, which lies over them rather than among them.
     @ViewBuilder
     private var stackRoom: some View {
@@ -82,7 +83,7 @@ struct CookingFeatureView: View {
         }
     }
 
-    // A wide screen has room beside the steps, so the timers stay open there, scrolling away below the bar.
+    // A wide screen has room beside the steps, so the timers stay open there, scrolling on under the bar.
     @ViewBuilder
     private var sideTimers: some View {
         if !isNarrow, !viewModel.runningTimers.isEmpty {
@@ -91,12 +92,27 @@ struct CookingFeatureView: View {
                 viewModel: viewModel,
                 motion: motion,
                 kind: .column,
-                topInset: topBarHeight
+                topInset: 0.0
             )
             .frame(width: sideTimersWidth)
             .padding(.bottom, SousSpacing.small)
             .padding(.trailing, SousSpacing.large)
             .transition(.opacity.combined(with: .move(edge: .trailing)))
+        }
+    }
+
+    private var topBar: some View {
+        CookingTopBar(
+            presenter: presenter,
+            title: viewModel.title,
+            isConfirmingExit: viewModel.isConfirmingExit
+        )
+    }
+
+    @ViewBuilder
+    private var topBarBackground: some View {
+        if !isNarrow {
+            CookingTopBarBackground(motion: motion, areStepsScrolled: areStepsScrolled)
         }
     }
 
@@ -113,6 +129,10 @@ struct CookingFeatureView: View {
                 topInset: topBarHeight
             )
         }
+    }
+
+    private func isScrolled(_ geometry: ScrollGeometry) -> Bool {
+        geometry.contentOffset.y + geometry.contentInsets.top > 0.0
     }
 
     private var isNarrow: Bool {

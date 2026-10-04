@@ -33,7 +33,7 @@ struct RunningTimersPanelRow: View {
     private let isListed: Bool
     private let opensOnTap: Bool
     private let isSwooping: Bool
-    private let fadeTop: CGFloat
+    private let fadeTop: CGFloat?
     private let fadeHeight: CGFloat
 
     /// - Parameters:
@@ -43,7 +43,7 @@ struct RunningTimersPanelRow: View {
     ///     behind the front one.
     ///   - opensOnTap: Whether tapping the timer opens the list, which the front of a stack does.
     ///   - isSwooping: Whether the timer is on its swoop from the front to its place, showing itself on its way.
-    ///   - fadeTop: Where in the region the timers start fading as they scroll up.
+    ///   - fadeTop: Where in the region the timers start fading as they scroll up, or nil where they scroll on unfaded.
     ///   - fadeHeight: How far below that the fade runs.
     init(
         presenter: CookingFeaturePresenterProtocol,
@@ -55,7 +55,7 @@ struct RunningTimersPanelRow: View {
         isListed: Bool,
         opensOnTap: Bool,
         isSwooping: Bool,
-        fadeTop: CGFloat,
+        fadeTop: CGFloat?,
         fadeHeight: CGFloat
     ) {
         self.presenter = presenter
@@ -104,8 +104,19 @@ struct RunningTimersPanelRow: View {
     }
 
     // The timers are glass, which the system's scroll edge effect leaves as it is, so a timer fades by a mask of its
-    // own as it scrolls into the room above the list, which stays where it is on the screen as the timer scrolls.
+    // own as it scrolls into the room above the list, which stays where it is on the screen as the timer scrolls. The
+    // column's timers scroll under the bar instead, which lies over them.
+    @ViewBuilder
     private var scrollFade: some View {
+        if let fadeTop {
+            fadeMask(fadeTop: fadeTop)
+        } else {
+            Color.black
+                .padding(-Self.overhang)
+        }
+    }
+
+    private func fadeMask(fadeTop: CGFloat) -> some View {
         GeometryReader { proxy in
             let bandTop = motion.scrollOffset + fadeTop
                 - proxy.frame(in: .named(RunningTimersPanelContent.coordinateSpace)).minY
