@@ -18,16 +18,13 @@ struct CookingTopBar: View {
     }
 
     var body: some View {
-        HStack {
-            exitButton
-
-            Spacer(minLength: 0.0)
-        }
-        .overlay {
-            titleText
-        }
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.bottom, SousSpacing.small)
+        exitButton
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay {
+                titleText
+            }
+            .padding(.horizontal, SousSpacing.large)
+            .padding(.bottom, SousSpacing.small)
     }
 
     private var exitButton: some View {
@@ -66,14 +63,11 @@ struct CookingTopBar: View {
 }
 
 #Preview("Cooking top bar") {
-    VStack {
-        CookingTopBar(
-            presenter: CookingFeaturePresenterStub(),
-            title: "Quiche Lorraine",
-            isConfirmingExit: false
-        )
-
-        Spacer()
-    }
+    CookingTopBar(
+        presenter: CookingFeaturePresenterStub(),
+        title: "Quiche Lorraine",
+        isConfirmingExit: false
+    )
+    .frame(maxHeight: .infinity, alignment: .top)
     .sousPage()
 }
