@@ -11,19 +11,31 @@ enum RunningTimersPreview {
         [
             RunningTimer(
                 id: UUID(),
-                stepTimer: StepTimer(stepNumber: 2, text: "5-6 min", duration: .seconds(300)),
+                stepTimer: StepTimer(
+                    stepNumber: 2,
+                    text: "5-6 min",
+                    duration: .seconds(300)
+                ),
                 endDate: date,
                 isRinging: true
             ),
             RunningTimer(
                 id: UUID(),
-                stepTimer: StepTimer(stepNumber: 3, text: "15 min", duration: .seconds(900)),
+                stepTimer: StepTimer(
+                    stepNumber: 3,
+                    text: "15 min",
+                    duration: .seconds(900)
+                ),
                 endDate: date.addingTimeInterval(260),
                 isRinging: false
             ),
             RunningTimer(
                 id: UUID(),
-                stepTimer: StepTimer(stepNumber: 1, text: "30 min", duration: .seconds(1_800)),
+                stepTimer: StepTimer(
+                    stepNumber: 1,
+                    text: "30 min",
+                    duration: .seconds(1_800)
+                ),
                 endDate: date.addingTimeInterval(1_500),
                 isRinging: false
             )

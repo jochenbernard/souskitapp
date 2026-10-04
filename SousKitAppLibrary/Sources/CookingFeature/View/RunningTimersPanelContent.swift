@@ -64,10 +64,18 @@ struct RunningTimersPanelContent: View {
                 outsideTapTarget
             }
             .coordinateSpace(.named(Self.coordinateSpace))
-            .onGeometryChange(for: CGFloat.self, of: \.size.height, action: onContentHeightChange)
+            .onGeometryChange(
+                for: CGFloat.self,
+                of: \.size.height,
+                action: onContentHeightChange
+            )
             .animation(.runningTimers, value: viewModel.runningTimers)
             .onChange(of: viewModel.runningTimers, runningTimersDidChange)
-            .onChange(of: viewModel.isTimerListOpen, initial: true, listOpenDidChange)
+            .onChange(
+                of: viewModel.isTimerListOpen,
+                initial: true,
+                listOpenDidChange
+            )
             .task(id: arrival.id) {
                 await arrival.takeToItsPlace(isInteracting: isInteracting, isRunning: viewModel.isRunning)
             }
@@ -181,9 +189,13 @@ struct RunningTimersPanelContent: View {
     @ViewBuilder
     private var collapseButton: some View {
         if kind == .folding {
-            RunningTimersCollapseButton(openness: motion.openness, isOpen: isListOpen, action: close)
-                .layoutValue(key: RunningTimersLayout.RoleKey.self, value: .collapseButton)
-                .zIndex(2.0)
+            RunningTimersCollapseButton(
+                openness: motion.openness,
+                isOpen: isListOpen,
+                action: close
+            )
+            .layoutValue(key: RunningTimersLayout.RoleKey.self, value: .collapseButton)
+            .zIndex(2.0)
         }
     }
 

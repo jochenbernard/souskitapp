@@ -125,7 +125,11 @@ struct StepProseTests {
     func timerLink() throws {
         let link = try #require(URL(string: "sous-timer://start"))
         let step = try #require(parser.parseRecipe("Brown @{150 g} lardons@ for ~5 min~.").value.steps.first)
-        let prose = StepProse.attributedProse(of: step, annotationColor: .red, timerLink: { _ in link })
+        let prose = StepProse.attributedProse(
+            of: step,
+            annotationColor: .red,
+            timerLink: { _ in link }
+        )
 
         #expect(prose.runs.compactMap(\AttributedString.Runs.Run.link) == [link])
     }

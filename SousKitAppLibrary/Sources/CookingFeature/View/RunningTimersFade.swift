@@ -63,7 +63,14 @@ extension View {
         fadesOut: Bool = false,
         isEnabled: Bool = true
     ) -> some View {
-        modifier(RunningTimersFade(openness: openness, over: range, fadesOut: fadesOut, isEnabled: isEnabled))
+        modifier(
+            RunningTimersFade(
+                openness: openness,
+                over: range,
+                fadesOut: fadesOut,
+                isEnabled: isEnabled
+            )
+        )
     }
 }
 
@@ -77,7 +84,11 @@ extension View {
             .runningTimersFade(openness: isOpen ? 1.0 : 0.0, over: 0.65...1.0)
 
         Text(verbatim: "Fades out")
-            .runningTimersFade(openness: isOpen ? 1.0 : 0.0, over: 0.0...0.3, fadesOut: true)
+            .runningTimersFade(
+                openness: isOpen ? 1.0 : 0.0,
+                over: 0.0...0.3,
+                fadesOut: true
+            )
     }
     .padding()
     .animation(.runningTimers, value: isOpen)

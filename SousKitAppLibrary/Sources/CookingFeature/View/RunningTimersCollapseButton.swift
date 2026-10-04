@@ -54,7 +54,11 @@ struct RunningTimersCollapseButton: View, Animatable {
     VStack(spacing: SousSpacing.large) {
         Toggle(isOn: $isOpen, label: { Text(verbatim: "Open") })
 
-        RunningTimersCollapseButton(openness: isOpen ? 1.0 : 0.0, isOpen: isOpen, action: {})
+        RunningTimersCollapseButton(
+            openness: isOpen ? 1.0 : 0.0,
+            isOpen: isOpen,
+            action: {}
+        )
     }
     .padding()
     .animation(.runningTimers, value: isOpen)

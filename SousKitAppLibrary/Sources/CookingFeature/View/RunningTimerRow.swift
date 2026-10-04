@@ -123,7 +123,11 @@ struct RunningTimerRow: View {
             Text("Cancel timer", bundle: .module)
         }
 
-        Button(role: .cancel, action: {}, label: { Text("Keep timer", bundle: .module) })
+        Button(
+            role: .cancel,
+            action: {},
+            label: { Text("Keep timer", bundle: .module) }
+        )
     }
 
     // Redrawn from the clock about as often as the fill grows by a pixel, so it keeps time with the countdown beside
@@ -134,7 +138,11 @@ struct RunningTimerRow: View {
 
             Rectangle()
                 .fill(.accent.opacity(timer.isRinging ? 0.32 : 0.2))
-                .scaleEffect(x: fraction, y: 1.0, anchor: .leading)
+                .scaleEffect(
+                    x: fraction,
+                    y: 1.0,
+                    anchor: .leading
+                )
                 // A fill paused out of sight catches up at once, not on the spring that brings its timer forward.
                 .animation(nil, value: fraction)
         }

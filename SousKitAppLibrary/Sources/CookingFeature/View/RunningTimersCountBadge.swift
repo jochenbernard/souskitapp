@@ -31,7 +31,11 @@ struct RunningTimersCountBadge: View {
             .padding(.vertical, SousSpacing.hairline)
             .background(.accent, in: Capsule())
             .offset(x: SousSpacing.xSmall, y: -SousSpacing.small)
-            .runningTimersFade(openness: openness, over: 0.0...Self.fadeEnd, fadesOut: true)
+            .runningTimersFade(
+                openness: openness,
+                over: 0.0...Self.fadeEnd,
+                fadesOut: true
+            )
             .accessibilityHidden(true)
     }
 }
@@ -40,7 +44,11 @@ struct RunningTimersCountBadge: View {
     @Previewable @State var count = 2
 
     VStack(spacing: SousSpacing.large) {
-        Stepper(value: $count, in: 1...12, label: { Text(verbatim: "Behind") })
+        Stepper(
+            value: $count,
+            in: 1...12,
+            label: { Text(verbatim: "Behind") }
+        )
 
         RunningTimersCountBadge(count: count, openness: 0.0)
     }

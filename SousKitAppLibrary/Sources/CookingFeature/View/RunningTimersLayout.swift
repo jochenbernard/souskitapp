@@ -268,7 +268,12 @@ struct RunningTimersLayout: Layout {
             return remaining * remaining * value(start) + 2.0 * remaining * swoop * control + swoop * swoop * value(end)
         }
 
-        return CGRect(x: along(\.minX), y: along(\.minY), width: along(\.width), height: along(\.height))
+        return CGRect(
+            x: along(\.minX),
+            y: along(\.minY),
+            width: along(\.width),
+            height: along(\.height)
+        )
     }
 
     private func listRect(_ depth: Int, in measured: Measurement) -> CGRect {

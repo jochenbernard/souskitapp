@@ -76,9 +76,13 @@ struct RunningTimerSwipeReveal: View {
     VStack(spacing: SousSpacing.large) {
         Slider(value: $width, in: 0.0...360.0)
 
-        RunningTimerSwipeReveal(width: width, threshold: 180.0, isRinging: false)
-            .frame(height: 64.0)
-            .frame(maxWidth: .infinity, alignment: .trailing)
+        RunningTimerSwipeReveal(
+            width: width,
+            threshold: 180.0,
+            isRinging: false
+        )
+        .frame(height: 64.0)
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
     .padding()
 }

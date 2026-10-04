@@ -5,7 +5,11 @@ import SwiftUI
 /// updates the fade alone rather than the view it fades.
 struct RunningTimersMotionFade: ViewModifier {
     /// Leaves the view as it is.
-    static let disabled = RunningTimersMotionFade(motion: RunningTimersMotion(), over: 0.0...1.0, isEnabled: false)
+    static let disabled = RunningTimersMotionFade(
+        motion: RunningTimersMotion(),
+        over: 0.0...1.0,
+        isEnabled: false
+    )
 
     /// Whether the view is out of sight once the timers are as far open as they are headed.
     let isHidden: Bool
@@ -26,12 +30,20 @@ struct RunningTimersMotionFade: ViewModifier {
         self.motion = motion
         self.range = range
         self.isEnabled = isEnabled
-        self.isHidden = RunningTimersFade(openness: motion.openness, over: range, isEnabled: isEnabled).isHidden
+        self.isHidden = RunningTimersFade(
+            openness: motion.openness,
+            over: range,
+            isEnabled: isEnabled
+        ).isHidden
     }
 
     func body(content: Content) -> some View {
         content
-            .runningTimersFade(openness: motion.openness, over: range, isEnabled: isEnabled)
+            .runningTimersFade(
+                openness: motion.openness,
+                over: range,
+                isEnabled: isEnabled
+            )
     }
 }
 
@@ -48,7 +60,13 @@ extension View {
         over range: ClosedRange<Double>,
         isEnabled: Bool = true
     ) -> some View {
-        modifier(RunningTimersMotionFade(motion: motion, over: range, isEnabled: isEnabled))
+        modifier(
+            RunningTimersMotionFade(
+                motion: motion,
+                over: range,
+                isEnabled: isEnabled
+            )
+        )
     }
 }
 

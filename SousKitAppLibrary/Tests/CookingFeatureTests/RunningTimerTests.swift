@@ -9,7 +9,11 @@ struct RunningTimerTests {
     private func makeTimer(secondsLeft: TimeInterval, isRinging: Bool = false) -> RunningTimer {
         RunningTimer(
             id: UUID(),
-            stepTimer: StepTimer(stepNumber: 3, text: "15 min", duration: .seconds(900)),
+            stepTimer: StepTimer(
+                stepNumber: 3,
+                text: "15 min",
+                duration: .seconds(900)
+            ),
             endDate: date.addingTimeInterval(secondsLeft),
             isRinging: isRinging
         )
