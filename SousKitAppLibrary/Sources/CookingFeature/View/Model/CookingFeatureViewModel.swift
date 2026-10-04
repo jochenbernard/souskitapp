@@ -6,7 +6,6 @@ import SousKit
 final class CookingFeatureViewModel {
     let recipe: Recipe
     let title: String
-    private let stepNumbers: Range<Int>
     var completedStepNumbers: Set<Int> = []
     var isConfirmingExit = false
     var runningTimers: [RunningTimer] = []
@@ -21,15 +20,15 @@ final class CookingFeatureViewModel {
     ) {
         self.recipe = recipe
         self.title = title
-        self.stepNumbers = 1..<(recipe.groups.map(\.steps.count).reduce(0, +) + 1)
     }
 
     var canOpenTimerList: Bool {
         runningTimers.count > 1
     }
 
+    // Past the last step once every step is done, so no step is current then.
     private var currentStepNumber: Int? {
-        stepNumbers.first(where: { !completedStepNumbers.contains($0) })
+        (1...).first(where: { !completedStepNumbers.contains($0) })
     }
 
     func progress(ofStep number: Int) -> StepProgress {
