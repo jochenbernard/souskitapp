@@ -35,13 +35,18 @@ enum RunningTimersPreview {
     /// - Parameters:
     ///   - isTimerListOpen: Whether the list of them is open.
     ///   - recipe: The recipe being cooked, a one-step one unless given.
+    ///   - title: The recipe's title.
     /// - Returns: The view model.
     @MainActor
     static func viewModel(
         isTimerListOpen: Bool,
-        recipe: Recipe = SousParser().parseRecipe("Whisk it.").value
+        recipe: Recipe = SousParser().parseRecipe("Whisk it.").value,
+        title: String = "Vinaigrette"
     ) -> CookingFeatureViewModel {
-        let viewModel = CookingFeatureViewModel(recipe: recipe)
+        let viewModel = CookingFeatureViewModel(
+            recipe: recipe,
+            title: title
+        )
         viewModel.runningTimers = timers()
         viewModel.isTimerListOpen = isTimerListOpen
         return viewModel

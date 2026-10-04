@@ -44,15 +44,11 @@ struct RecipeFeatureView: View {
     }
 
     private var navigationTitle: String {
-        guard
-            case .recipe(let recipe) = viewModel.recipeContent,
-            let title = recipe.scaled.metadata.title,
-            !title.isEmpty
-        else {
+        guard case .recipe(let recipe) = viewModel.recipeContent else {
             return viewModel.recipeEntry.name
         }
 
-        return title
+        return viewModel.recipeEntry.title(of: recipe.scaled)
     }
 
     @ViewBuilder

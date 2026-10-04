@@ -68,7 +68,7 @@ struct CookingFeatureView: View {
     private var topBar: some View {
         CookingTopBar(
             presenter: presenter,
-            title: viewModel.recipe.metadata.title ?? "",
+            title: viewModel.title,
             isConfirmingExit: viewModel.isConfirmingExit
         )
     }
@@ -192,12 +192,18 @@ private func previewRecipe() -> Recipe {
 #Preview("Cooking") {
     CookingFeatureView(
         presenter: CookingFeaturePresenterStub(),
-        viewModel: CookingFeatureViewModel(recipe: previewRecipe())
+        viewModel: CookingFeatureViewModel(
+            recipe: previewRecipe(),
+            title: "Quiche Lorraine"
+        )
     )
 }
 
 #Preview("Cooking, confirming the exit") {
-    let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
+    let viewModel = CookingFeatureViewModel(
+        recipe: previewRecipe(),
+        title: "Quiche Lorraine"
+    )
     viewModel.isConfirmingExit = true
 
     return CookingFeatureView(
@@ -209,19 +215,30 @@ private func previewRecipe() -> Recipe {
 #Preview("Cooking, with timers running") {
     CookingFeatureView(
         presenter: CookingFeaturePresenterStub(),
-        viewModel: RunningTimersPreview.viewModel(isTimerListOpen: false, recipe: previewRecipe())
+        viewModel: RunningTimersPreview.viewModel(
+            isTimerListOpen: false,
+            recipe: previewRecipe(),
+            title: "Quiche Lorraine"
+        )
     )
 }
 
 #Preview("Cooking, with the timers open") {
     CookingFeatureView(
         presenter: CookingFeaturePresenterStub(),
-        viewModel: RunningTimersPreview.viewModel(isTimerListOpen: true, recipe: previewRecipe())
+        viewModel: RunningTimersPreview.viewModel(
+            isTimerListOpen: true,
+            recipe: previewRecipe(),
+            title: "Quiche Lorraine"
+        )
     )
 }
 
 #Preview("Cooking, asking to allow timers") {
-    let viewModel = CookingFeatureViewModel(recipe: previewRecipe())
+    let viewModel = CookingFeatureViewModel(
+        recipe: previewRecipe(),
+        title: "Quiche Lorraine"
+    )
     viewModel.isAskingToAllowTimers = true
 
     return CookingFeatureView(

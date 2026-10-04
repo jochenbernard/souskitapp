@@ -5,6 +5,7 @@ import SousKit
 @MainActor
 final class CookingFeatureViewModel {
     let recipe: Recipe
+    let title: String
     var isConfirmingExit = false
     var runningTimers: [RunningTimer] = []
     var startedTimerCount = 0
@@ -12,8 +13,12 @@ final class CookingFeatureViewModel {
     var timerConfirmingCancel: RunningTimer?
     var isAskingToAllowTimers = false
 
-    nonisolated init(recipe: Recipe) {
+    nonisolated init(
+        recipe: Recipe,
+        title: String
+    ) {
         self.recipe = recipe
+        self.title = title
     }
 
     func isRunning(_ id: RunningTimer.ID) -> Bool {

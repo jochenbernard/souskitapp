@@ -76,7 +76,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func recipeFeatureDidStartCooking(recipe: Recipe) {
-        guard case .recipe = viewModel.screenPath.last, viewModel.openCooking == nil else {
+        guard case .recipe(let recipeEntry) = viewModel.screenPath.last, viewModel.openCooking == nil else {
             return
         }
 
@@ -84,6 +84,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             recipe: recipe,
             feature: cookingFeatureFactory.makeCookingFeature(
                 recipe: recipe,
+                title: recipeEntry.title(of: recipe),
                 handler: self
             )
         )
