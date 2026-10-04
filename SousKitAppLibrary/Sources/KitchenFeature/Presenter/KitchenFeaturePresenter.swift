@@ -49,8 +49,12 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
         // A pop leaves the screen it popped in place: clearing it empties that screen while it
         // is still animating away. The next push replaces it.
-        if case .recipe(let recipeEntry) = screenPath.last {
+        switch screenPath.last {
+        case .recipe(let recipeEntry):
             openRecipe(recipeEntry, isPush: isPush)
+
+        case nil:
+            break
         }
     }
 
