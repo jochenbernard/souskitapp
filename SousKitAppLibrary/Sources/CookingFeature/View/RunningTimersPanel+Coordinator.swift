@@ -128,6 +128,8 @@ extension RunningTimersPanel {
         private func regionDidChange(_ size: CGSize) {
             region = size
             hostingController.rootView = makeContent()
+            // The content reports only its height, so a new width alone would leave it at the old one.
+            contentHeightDidChange(hostingController.view.frame.height)
         }
 
         private func contentHeightDidChange(_ height: CGFloat) {

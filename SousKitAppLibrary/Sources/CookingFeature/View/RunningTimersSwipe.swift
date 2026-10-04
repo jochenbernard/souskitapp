@@ -101,6 +101,8 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
         case .ended:
             release(timer, velocity: pan.velocity(in: scrollView).x)
         case .cancelled, .failed:
+            // The finger never let go, so the timer springs back even past the threshold.
+            isArmed = false
             release(timer, velocity: 0.0)
         default:
             break
