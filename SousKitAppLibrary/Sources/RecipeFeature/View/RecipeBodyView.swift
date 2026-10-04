@@ -5,12 +5,12 @@ import SwiftUI
 
 /// A parsed recipe: the header and what it takes, then what to do, side by side where the width allows.
 struct RecipeBodyView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private let presenter: RecipeFeaturePresenterProtocol
     private let recipe: ScaledRecipe
     private let metadata: MetadataDisplay
     private let expandedSections: Set<RecipeSection>
-
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     // The overview's width beside the steps, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var overviewWidth = 360.0

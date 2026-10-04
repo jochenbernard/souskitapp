@@ -23,9 +23,8 @@ struct CatalogSwatch: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-
-            Spacer(minLength: 0.0)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

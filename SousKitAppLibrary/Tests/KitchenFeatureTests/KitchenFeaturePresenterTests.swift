@@ -32,7 +32,10 @@ struct KitchenFeaturePresenterTests {
         recipeRepository: RecipeRepository = RecipeRepositorySpy()
     ) -> KitchenFeaturePresenter {
         KitchenFeaturePresenter(
-            cookingFeatureFactory: CookingFeatureFactory(idleTimer: IdleTimerStub()),
+            cookingFeatureFactory: CookingFeatureFactory(
+                idleTimer: IdleTimerStub(),
+                timerScheduler: TimerSchedulerStub()
+            ),
             handler: handler,
             recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
             recipeRepository: recipeRepository,

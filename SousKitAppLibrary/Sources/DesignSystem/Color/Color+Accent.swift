@@ -5,7 +5,7 @@ extension Color {
     ///
     /// Draw it from here rather than from `Color.accentColor` or `.tint`, which a package preview
     /// resolves to blue.
-    public static let accent = Color(hex: 0xCD4805)
+    public static let accent = Color(hex: 0xEA5202)
 
     /// The accent as a fill for a large area that holds content, such as a callout.
     public static let quaternaryAccentFill = accent.opacity(0.125)

@@ -19,13 +19,21 @@ public enum StepProse {
     /// - Parameters:
     ///   - step: The step to read.
     ///   - annotationColor: The color an annotation is marked in.
+    ///   - timerLink: The link a timer opens when tapped, or `nil` where it opens none.
     /// - Returns: The prose, ready to set as a `Text`.
     public static func attributedProse(
         of step: Step,
-        annotationColor: Color
+        annotationColor: Color,
+        timerLink: (SousKit.Timer) -> URL? = { _ in nil }
     ) -> AttributedString {
-        runs(of: step).reduce(into: AttributedString()) { prose, run in
-            prose.append(attributed(run, annotationColor: annotationColor))
+        step.segments.reduce(into: AttributedString()) { prose, segment in
+            var text = attributed(run(of: segment), annotationColor: annotationColor)
+
+            if case .timer(let timer) = segment {
+                text.link = timerLink(timer)
+            }
+
+            prose.append(text)
         }
     }
 

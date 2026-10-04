@@ -8,6 +8,8 @@ import SwiftUI
 struct KitchenFeatureView: View {
     @Environment(\.scenePhase) private var scenePhase
 
+    @Namespace private var cookingTransition
+
     private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
 
@@ -25,6 +27,13 @@ struct KitchenFeatureView: View {
                 .navigationDestination(for: KitchenScreen.self) { screen in
                     screenView(for: screen)
                 }
+        }
+        // Over the whole kitchen rather than pushed on it, zooming out of the button that starts it, and never swiped
+        // or pinched away: its own exit is the only way out.
+        .fullScreenCover(item: openCooking) { openCooking in
+            openCooking.feature.makeView()
+                .navigationTransition(.zoom(sourceID: RecipeFeature.cookingTransitionID, in: cookingTransition))
+                .interactiveDismissDisabled()
         }
     }
 
@@ -210,23 +219,13 @@ struct KitchenFeatureView: View {
         switch screen {
         case .recipe(let recipeEntry):
             recipeScreen(for: recipeEntry)
-
-        case .cooking(let recipe):
-            cookingScreen(for: recipe)
         }
     }
 
     @ViewBuilder
     private func recipeScreen(for recipeEntry: RecipeEntry) -> some View {
         if let openRecipe = viewModel.openRecipe, openRecipe.recipeEntry == recipeEntry {
-            openRecipe.feature.makeView()
-        }
-    }
-
-    @ViewBuilder
-    private func cookingScreen(for recipe: Recipe) -> some View {
-        if let openCooking = viewModel.openCooking, openCooking.recipe == recipe {
-            openCooking.feature.makeView()
+            openRecipe.feature.makeView(cookingTransition: cookingTransition)
         }
     }
 
@@ -241,6 +240,17 @@ struct KitchenFeatureView: View {
         Binding(
             get: { viewModel.isConfirmingReset },
             set: { presenter.didChangeIsConfirmingReset($0) }
+        )
+    }
+
+    private var openCooking: Binding<OpenCooking?> {
+        Binding(
+            get: { viewModel.openCooking },
+            set: { openCooking in
+                if openCooking == nil {
+                    presenter.didDismissCooking()
+                }
+            }
         )
     }
 

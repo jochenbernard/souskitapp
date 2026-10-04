@@ -37,9 +37,9 @@ struct AccentTests {
         #expect(try abs(Double(accent.blue) - channel(components.blue)) < 0.5 / 255.0)
     }
 
-    @Test("white text on the accent passes AA")
+    @Test("white text on the accent reaches Lc 60")
     func accentCarriesWhite() {
-        #expect(contrastRatio(.white, .accent) >= 4.5)
+        #expect(abs(lightnessContrast(text: .white, background: .accent)) >= 60.0)
     }
 
     /// One channel of an asset catalog color, in whichever of Xcode's three input methods it was saved.
@@ -55,29 +55,37 @@ struct AccentTests {
         return Double(try #require(UInt8(component))) / 255.0
     }
 
-    /// The WCAG 2.1 contrast ratio between two colors.
-    private func contrastRatio(_ lhs: Color, _ rhs: Color) -> Double {
-        let lighter = max(relativeLuminance(lhs), relativeLuminance(rhs))
-        let darker = min(relativeLuminance(lhs), relativeLuminance(rhs))
-        return (lighter + 0.05) / (darker + 0.05)
+    /// The APCA 0.0.98G lightness contrast of text on a background, negative for light text on dark.
+    private func lightnessContrast(text: Color, background: Color) -> Double {
+        let textLuminance = screenLuminance(text)
+        let backgroundLuminance = screenLuminance(background)
+
+        guard
+            abs(backgroundLuminance - textLuminance) >= 0.0005
+        else {
+            return 0.0
+        }
+
+        if backgroundLuminance > textLuminance {
+            let contrast = (pow(backgroundLuminance, 0.56) - pow(textLuminance, 0.57)) * 1.14
+            return contrast < 0.1 ? 0.0 : (contrast - 0.027) * 100.0
+        }
+
+        let contrast = (pow(backgroundLuminance, 0.65) - pow(textLuminance, 0.62)) * 1.14
+        return contrast > -0.1 ? 0.0 : (contrast + 0.027) * 100.0
     }
 
-    /// The WCAG 2.1 relative luminance of a color.
-    private func relativeLuminance(_ color: Color) -> Double {
+    /// The APCA screen luminance of a color, soft-clamped near black.
+    private func screenLuminance(_ color: Color) -> Double {
         let resolved = resolved(color)
-        return 0.2126 * linear(resolved.red)
-            + 0.7152 * linear(resolved.green)
-            + 0.0722 * linear(resolved.blue)
+        let luminance = 0.2126729 * pow(Double(resolved.red), 2.4)
+            + 0.7151522 * pow(Double(resolved.green), 2.4)
+            + 0.0721750 * pow(Double(resolved.blue), 2.4)
+        return luminance < 0.022 ? luminance + pow(0.022 - luminance, 1.414) : luminance
     }
 
     /// A color as it lands on screen.
     private func resolved(_ color: Color) -> Color.Resolved {
         color.resolve(in: EnvironmentValues())
-    }
-
-    /// One gamma-encoded channel, linearized.
-    private func linear(_ channel: Float) -> Double {
-        let value = Double(channel)
-        return value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
     }
 }

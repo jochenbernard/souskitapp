@@ -4,20 +4,23 @@ import SousKit
 import SwiftUI
 
 struct RecipeFeatureView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private let presenter: RecipeFeaturePresenterProtocol
     private let viewModel: RecipeFeatureViewModel
-
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private let cookingTransition: Namespace.ID
 
     // The cook button's width where the screen is wide, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var wideCookButtonWidth = 360.0
 
     init(
         presenter: RecipeFeaturePresenterProtocol,
-        viewModel: RecipeFeatureViewModel
+        viewModel: RecipeFeatureViewModel,
+        cookingTransition: Namespace.ID
     ) {
         self.presenter = presenter
         self.viewModel = viewModel
+        self.cookingTransition = cookingTransition
     }
 
     var body: some View {
@@ -41,15 +44,11 @@ struct RecipeFeatureView: View {
     }
 
     private var navigationTitle: String {
-        guard
-            case .recipe(let recipe) = viewModel.recipeContent,
-            let title = recipe.scaled.metadata.title,
-            !title.isEmpty
-        else {
+        guard case .recipe(let recipe) = viewModel.recipeContent else {
             return viewModel.recipeEntry.name
         }
 
-        return title
+        return viewModel.recipeEntry.title(of: recipe.scaled)
     }
 
     @ViewBuilder
@@ -119,6 +118,7 @@ struct RecipeFeatureView: View {
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.sousPrimary)
+        .matchedTransitionSource(id: RecipeFeature.cookingTransitionID, in: cookingTransition)
         .frame(maxWidth: horizontalSizeClass == .regular ? wideCookButtonWidth : .infinity)
         .sousPagePadding()
     }
@@ -186,37 +186,49 @@ private func previewRecipe(scale: RecipeScale? = nil) -> ScaledRecipe {
 }
 
 #Preview("Recipe") {
+    @Previewable @Namespace var cookingTransition
+
     NavigationStack {
         RecipeFeatureView(
             presenter: RecipeFeaturePresenterStub(),
-            viewModel: previewViewModel(.recipe(previewRecipe()))
+            viewModel: previewViewModel(.recipe(previewRecipe())),
+            cookingTransition: cookingTransition
         )
     }
 }
 
 #Preview("Recipe, scaled to 12 servings") {
+    @Previewable @Namespace var cookingTransition
+
     NavigationStack {
         RecipeFeatureView(
             presenter: RecipeFeaturePresenterStub(),
-            viewModel: previewViewModel(.recipe(previewRecipe(scale: RecipeScale(target: .servings, value: 12.0))))
+            viewModel: previewViewModel(.recipe(previewRecipe(scale: RecipeScale(target: .servings, value: 12.0)))),
+            cookingTransition: cookingTransition
         )
     }
 }
 
 #Preview("Recipe, fetching from iCloud") {
+    @Previewable @Namespace var cookingTransition
+
     NavigationStack {
         RecipeFeatureView(
             presenter: RecipeFeaturePresenterStub(),
-            viewModel: RecipeFeatureViewModel(recipeEntry: previewRecipeEntry(.notDownloaded))
+            viewModel: RecipeFeatureViewModel(recipeEntry: previewRecipeEntry(.notDownloaded)),
+            cookingTransition: cookingTransition
         )
     }
 }
 
 #Preview("Recipe, after a failure") {
+    @Previewable @Namespace var cookingTransition
+
     NavigationStack {
         RecipeFeatureView(
             presenter: RecipeFeaturePresenterStub(),
-            viewModel: previewViewModel(.failure("The recipe no longer exists."))
+            viewModel: previewViewModel(.failure("The recipe no longer exists.")),
+            cookingTransition: cookingTransition
         )
     }
 }

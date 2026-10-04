@@ -3,10 +3,10 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct OnboardingFeatureView: View {
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private let presenter: OnboardingFeaturePresenterProtocol
     private let viewModel: OnboardingFeatureViewModel
-
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     // A comfortable line length for the introduction, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var columnWidth = 480.0

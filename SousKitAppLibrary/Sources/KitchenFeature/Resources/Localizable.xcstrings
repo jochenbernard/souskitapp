@@ -2,7 +2,7 @@
   "sourceLanguage" : "en",
   "strings" : {
     "Are you sure you want to reset the app?" : {
-      "extractionState" : "stale",
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -20,7 +20,7 @@
     },
     "Debug" : {
       "comment" : "The debug menu, which only a debug build shows.",
-      "extractionState" : "stale",
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -55,6 +55,7 @@
     },
     "Folder" : {
       "comment" : "In the debug menu, reading recipes from the folder the user picked.",
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -89,6 +90,7 @@
     },
     "Mock recipes" : {
       "comment" : "In the debug menu, reading the recipes kept in the app for trying it.",
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -170,7 +172,7 @@
       }
     },
     "Reset the app" : {
-      "extractionState" : "stale",
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -187,7 +189,7 @@
       }
     },
     "The folder is forgotten and setup starts over. Recipes on disk are left alone." : {
-      "extractionState" : "stale",
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
