@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// Reads how far open the timers are on its own, so a swipe that folds them redraws the blur but leaves the view it
 /// blurs as it is.
-struct RunningTimersBlur: ViewModifier {
+private struct RunningTimersBlur: ViewModifier {
     private static let radius = 12.0
 
     private let motion: RunningTimersMotion

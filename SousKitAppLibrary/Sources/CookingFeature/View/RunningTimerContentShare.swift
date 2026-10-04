@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// Read here rather than in the row, since the leaving and the swoop change every frame of theirs: a frame then
 /// updates the content's opacity alone.
-struct RunningTimerContentShare: ViewModifier {
+private struct RunningTimerContentShare: ViewModifier {
     @Environment(\.runningTimerLeaving) private var leaving
     @Environment(\.runningTimerSwoop) private var swoop
 
