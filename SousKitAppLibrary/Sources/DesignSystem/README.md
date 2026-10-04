@@ -12,7 +12,7 @@ disagrees with this package, this package is right.
 | Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.body`, `.subheadline`, `.caption2`. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
-| Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sousChip(isSelected:)`, `.sous` | The three button styles, the chip a cook chooses from a set, and the disclosure group style. |
+| Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sousBare`, `.sousChip(isSelected:)`, `.sous` | The three button styles, the button its label draws, the chip a cook chooses from a set, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
 | Containers | `.sousSurface(_:)`, `.sousRow()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row, the rows that share one card, the wash, the chip, the spinner. |
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
@@ -102,7 +102,9 @@ The three styles are separate types rather than one carrying an emphasis: no cal
 emphasis at run time, and the primary differs in kind, not degree. What they share is in
 `ButtonPress`, `ButtonPressBody`, and `sousButtonLabel(_:)`. `.sousChip(isSelected:)` is the one
 style that takes a value, since whether a chip is chosen is state rather than emphasis; it draws
-the same chip as `.sousChip()` and presses as the others do.
+the same chip as `.sousChip()` and presses as the others do. `.sousBare` draws nothing of its own,
+for a control its label draws in full, such as the mark a cook ticks a step off with. It presses
+as the others do and taps as `.sousPrimary` does.
 
 A press scales the control and changes no color. `.sousPrimary` is the exception: its
 `interactive()` glass flexes under the finger, and a scale on top would be a second reaction
