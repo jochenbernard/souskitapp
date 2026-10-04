@@ -21,7 +21,7 @@ public struct KitchenFeatureFactory: Sendable {
         self.restorationStore = restorationStore
     }
 
-    /// Builds the feature, opening what the kitchen had open when the app last ran.
+    /// Builds the feature, which opens what the kitchen had open when the app last ran once its recipe is listed.
     ///
     /// - Parameters:
     ///   - recipeRepository: The repository recipes are read from.
@@ -38,6 +38,7 @@ public struct KitchenFeatureFactory: Sendable {
             recipeRepositoryName: recipeRepository.name,
             recipeRepositoryKind: recipeRepositoryKind
         )
+        viewModel.isRestoring = restorationStore.restoration() != nil
         let presenter = KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(
                 idleTimer: ApplicationIdleTimer(),
@@ -52,7 +53,6 @@ public struct KitchenFeatureFactory: Sendable {
             restorationStore: restorationStore,
             viewModel: viewModel
         )
-        presenter.restore()
 
         return KitchenFeature(
             presenter: presenter,

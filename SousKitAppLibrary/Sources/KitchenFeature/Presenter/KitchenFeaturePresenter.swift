@@ -28,29 +28,16 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         self.viewModel = viewModel
     }
 
-    /// Opens what the kitchen had open when the app last ran: the recipe on the stack, and what its screen had open.
-    @MainActor
-    func restore() {
-        guard let restoration = restorationStore.restoration() else {
-            return
-        }
-
-        viewModel.screenPath = [.recipe(restoration.recipeEntry)]
-        viewModel.openRecipe = makeOpenRecipe(
-            restoration.recipeEntry,
-            restoration: restoration.recipe,
-            resumesCooking: restoration.isCooking
-        )
-    }
-
     func viewDidAppear() async {
         for await result in await recipeRepository.recipeEntries() {
             switch result {
             case .success(let recipeEntries):
                 viewModel.recipeList = .recipes(recipeEntries)
+                restore(from: recipeEntries)
 
             case .failure(let error):
                 viewModel.recipeList = .failure(error.localizedDescription)
+                restore(from: [])
             }
         }
     }
@@ -121,7 +108,33 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         }
 
         viewModel.openRecipe = makeOpenRecipe(recipeEntry)
-        restorationStore.save(KitchenRestoration(recipeEntry: recipeEntry, isCooking: false))
+        restorationStore.save(KitchenRestoration(recipeID: recipeEntry.id, isCooking: false))
+    }
+
+    /// Opens what the kitchen had open when the app last ran, or forgets it where its recipe is no longer listed.
+    @MainActor
+    private func restore(from recipeEntries: [RecipeEntry]) {
+        guard viewModel.isRestoring else {
+            return
+        }
+
+        viewModel.isRestoring = false
+
+        guard let restoration = restorationStore.restoration() else {
+            return
+        }
+
+        guard let recipeEntry = recipeEntries.first(where: { $0.id == restoration.recipeID }) else {
+            restorationStore.clear()
+            return
+        }
+
+        viewModel.screenPath = [.recipe(recipeEntry)]
+        viewModel.openRecipe = makeOpenRecipe(
+            recipeEntry,
+            restoration: restoration.recipe,
+            resumesCooking: restoration.isCooking
+        )
     }
 
     @MainActor
@@ -171,7 +184,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         guard
             case .recipe(let recipeEntry) = viewModel.screenPath.last,
             var restoration = restorationStore.restoration(),
-            restoration.recipeEntry == recipeEntry
+            restoration.recipeID == recipeEntry.id
         else {
             return
         }

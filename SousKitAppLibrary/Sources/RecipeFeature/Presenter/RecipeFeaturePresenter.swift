@@ -159,7 +159,8 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             return
         }
 
-        if resumesCooking {
+        // A file edited down to no steps since has nothing to cook, as its screen offers no button to start.
+        if resumesCooking, !recipe.scaled.steps.isEmpty {
             handler.recipeFeatureDidResumeCooking(recipe: recipe.scaled)
         } else if restoration?.isScaling == true {
             viewModel.isScaling = true

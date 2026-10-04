@@ -152,6 +152,27 @@ struct RecipeFeatureRestorationTests {
     }
 
     @MainActor
+    @Test("a recipe with no steps left resumes nothing")
+    func recipeWithoutStepsResumesNothing() async {
+        let handler = RecipeFeatureHandlerSpy()
+        let presenter = makePresenter(
+            viewModel: RecipeFeatureViewModel(recipeEntry: crepes),
+            handler: handler,
+            resumesCooking: true,
+            text: """
+                ---
+                title: Crepes
+                servings: 4
+                ---
+                """
+        )
+
+        await presenter.viewDidAppear()
+
+        #expect(handler.resumedRecipes.isEmpty)
+    }
+
+    @MainActor
     @Test("a new screen reports nothing until a cook changes something")
     func newScreenReportsNothing() async {
         let handler = RecipeFeatureHandlerSpy()
