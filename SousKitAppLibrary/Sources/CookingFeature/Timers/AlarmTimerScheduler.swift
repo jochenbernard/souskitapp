@@ -1,6 +1,5 @@
 import AlarmKit
 import DesignSystem
-import SwiftUI
 
 /// Timers sounded as system alarms, which ring even while the app is closed.
 public struct AlarmTimerScheduler: TimerScheduler {

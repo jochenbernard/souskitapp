@@ -1,4 +1,3 @@
-import Foundation
 import RecipeLibrary
 
 /// One recipe ``MockRecipeRepository`` lists: what it holds, and where it starts out.
