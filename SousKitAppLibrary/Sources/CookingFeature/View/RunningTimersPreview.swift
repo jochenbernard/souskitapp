@@ -26,7 +26,7 @@ enum RunningTimersPreview {
                     text: "15 min",
                     duration: .seconds(900)
                 ),
-                endDate: date.addingTimeInterval(260),
+                endDate: date.addingTimeInterval(260.0),
                 isRinging: false
             ),
             RunningTimer(
@@ -36,7 +36,7 @@ enum RunningTimersPreview {
                     text: "30 min",
                     duration: .seconds(1_800)
                 ),
-                endDate: date.addingTimeInterval(1_500),
+                endDate: date.addingTimeInterval(1_500.0),
                 isRinging: false
             )
         ]

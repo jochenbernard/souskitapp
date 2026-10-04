@@ -38,7 +38,7 @@ struct CookingFeaturePresenterTests {
         RunningTimer(
             id: UUID(),
             stepTimer: makeStepTimer(),
-            endDate: .now.addingTimeInterval(900),
+            endDate: .now.addingTimeInterval(900.0),
             isRinging: isRinging
         )
     }

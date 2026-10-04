@@ -3,10 +3,11 @@ import SousKit
 /// How long a step's timers run, read from the units they are written in.
 public enum TimerDuration {
     private static let secondsPerUnit: [String: Double] = [
-        "s": 1, "sec": 1, "secs": 1, "second": 1, "seconds": 1, "seconde": 1, "seconden": 1,
-        "min": 60, "mins": 60, "minute": 60, "minutes": 60, "minuut": 60, "minuten": 60,
-        "h": 3_600, "hr": 3_600, "hrs": 3_600, "hour": 3_600, "hours": 3_600, "u": 3_600, "uur": 3_600, "uren": 3_600,
-        "d": 86_400, "day": 86_400, "days": 86_400, "dag": 86_400, "dagen": 86_400
+        "s": 1.0, "sec": 1.0, "secs": 1.0, "second": 1.0, "seconds": 1.0, "seconde": 1.0, "seconden": 1.0,
+        "min": 60.0, "mins": 60.0, "minute": 60.0, "minutes": 60.0, "minuut": 60.0, "minuten": 60.0,
+        "h": 3_600.0, "hr": 3_600.0, "hrs": 3_600.0, "hour": 3_600.0, "hours": 3_600.0,
+        "u": 3_600.0, "uur": 3_600.0, "uren": 3_600.0,
+        "d": 86_400.0, "day": 86_400.0, "days": 86_400.0, "dag": 86_400.0, "dagen": 86_400.0
     ]
 
     /// How long a timer runs, or `nil` where it names no length of time, such as `overnight`.
@@ -27,7 +28,7 @@ public enum TimerDuration {
             seconds += componentSeconds
         }
 
-        guard seconds > 0 else {
+        guard seconds > 0.0 else {
             return nil
         }
 
