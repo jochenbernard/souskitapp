@@ -82,7 +82,7 @@ struct CookingFeatureView: View {
         }
     }
 
-    // A wide screen has room beside the steps, so the timers stay open there and cover none of them.
+    // A wide screen has room beside the steps, so the timers stay open there, scrolling away below the bar.
     @ViewBuilder
     private var sideTimers: some View {
         if !isNarrow, !viewModel.runningTimers.isEmpty {
@@ -91,7 +91,7 @@ struct CookingFeatureView: View {
                 viewModel: viewModel,
                 motion: motion,
                 kind: .column,
-                topInset: 0.0
+                topInset: topBarHeight
             )
             .frame(width: sideTimersWidth)
             .padding(.bottom, SousSpacing.small)
