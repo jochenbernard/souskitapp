@@ -5,6 +5,8 @@ import Foundation
 /// Written on every change rather than when the app leaves the foreground, so a crash or a force quit loses nothing.
 @MainActor
 public struct KitchenRestorationStore {
+    private static let key = "KitchenRestorationStore.restoration"
+
     private let userDefaults: UserDefaults
 
     /// Creates a store.
@@ -16,12 +18,12 @@ public struct KitchenRestorationStore {
 
     /// Forgets what the kitchen has open, so the next kitchen opens on its recipe list.
     public func clear() {
-        userDefaults.removeObject(forKey: Keys.restoration)
+        userDefaults.removeObject(forKey: Self.key)
     }
 
     /// What the kitchen had open, or `nil` where it stood on its recipe list.
     func restoration() -> KitchenRestoration? {
-        guard let data = userDefaults.data(forKey: Keys.restoration) else {
+        guard let data = userDefaults.data(forKey: Self.key) else {
             return nil
         }
 
@@ -30,20 +32,13 @@ public struct KitchenRestorationStore {
 
     /// Records what the kitchen has open.
     ///
-    /// - Parameter restoration: What the kitchen has open, or `nil` where it stands on its recipe list.
-    func save(_ restoration: KitchenRestoration?) {
-        guard
-            let restoration,
-            let data = try? JSONEncoder().encode(restoration)
-        else {
+    /// - Parameter restoration: What the kitchen has open.
+    func save(_ restoration: KitchenRestoration) {
+        guard let data = try? JSONEncoder().encode(restoration) else {
             clear()
             return
         }
 
-        userDefaults.set(data, forKey: Keys.restoration)
-    }
-
-    private enum Keys {
-        static let restoration = "KitchenRestorationStore.restoration"
+        userDefaults.set(data, forKey: Self.key)
     }
 }

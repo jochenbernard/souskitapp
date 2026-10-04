@@ -3,7 +3,7 @@ import Foundation
 /// The timers started, by the alarm each sounds, kept across launches since an alarm outlives the app.
 @MainActor
 struct StartedTimerStore {
-    private static let key = "startedTimers"
+    private static let key = "StartedTimerStore.startedTimers"
 
     func startedTimers() -> [UUID: StartedTimer] {
         guard

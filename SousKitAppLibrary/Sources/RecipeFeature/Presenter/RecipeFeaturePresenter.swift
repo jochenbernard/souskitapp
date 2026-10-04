@@ -28,7 +28,10 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
 
     func viewDidAppear() async {
         // A restoration applies when the recipe first reaches the screen, not to a read coming back from cooking.
-        let restores = !hasReadRecipe
+        let restores = switch viewModel.recipeContent {
+        case .recipe: false
+        case .reading, .failure: true
+        }
         let recipeContent: RecipeContent
 
         do {
@@ -133,35 +136,19 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         handler.recipeFeatureDidStartCooking(recipe: recipe.scaled)
     }
 
-    /// Whether the recipe has reached the screen.
-    @MainActor
-    private var hasReadRecipe: Bool {
-        switch viewModel.recipeContent {
-        case .recipe: true
-        case .reading, .failure: false
-        }
-    }
-
     /// The recipe as read, at the scale a cook already chose where they chose one.
     @MainActor
     private func read(_ recipe: Recipe) -> ScaledRecipe {
-        guard case .recipe(let current) = viewModel.recipeContent else {
-            return ScaledRecipe(
-                asWritten: recipe,
-                parser: parser,
-                scale: restoration?.scale
-            )
-        }
-
+        let scale = switch viewModel.recipeContent {
         // A default is the file's, so a file that now declares another opens on that one.
-        guard !current.isDefault else {
-            return ScaledRecipe(asWritten: recipe, parser: parser)
+        case .recipe(let current): current.isDefault ? nil : current.scale
+        case .reading, .failure: restoration?.scale
         }
 
         return ScaledRecipe(
             asWritten: recipe,
             parser: parser,
-            scale: current.scale
+            scale: scale
         )
     }
 

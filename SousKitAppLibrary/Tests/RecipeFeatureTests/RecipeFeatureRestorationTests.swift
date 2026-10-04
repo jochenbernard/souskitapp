@@ -11,7 +11,7 @@ struct RecipeFeatureRestorationTests {
         availability: .downloaded
     )
 
-    private let crepesText = """
+    private static let crepesText = """
         ---
         title: Crepes
         servings: 4
@@ -26,12 +26,13 @@ struct RecipeFeatureRestorationTests {
         viewModel: RecipeFeatureViewModel,
         handler: RecipeFeatureHandler,
         restoration: RecipeFeatureRestoration? = nil,
-        resumesCooking: Bool = false
+        resumesCooking: Bool = false,
+        text: String? = Self.crepesText
     ) -> RecipeFeaturePresenter {
         RecipeFeaturePresenter(
             handler: handler,
             parser: SousParser(),
-            recipeRepository: RecipeRepositoryStub(text: crepesText),
+            recipeRepository: RecipeRepositoryStub(text: text),
             restoration: restoration,
             resumesCooking: resumesCooking,
             viewModel: viewModel
@@ -39,12 +40,13 @@ struct RecipeFeatureRestorationTests {
     }
 
     @MainActor
-    private func scale(of viewModel: RecipeFeatureViewModel) -> RecipeScale? {
+    private func scaledRecipe(of viewModel: RecipeFeatureViewModel) -> ScaledRecipe? {
         guard case .recipe(let recipe) = viewModel.recipeContent else {
+            Issue.record("The recipe did not reach the view model.")
             return nil
         }
 
-        return recipe.scale
+        return recipe
     }
 
     @MainActor
@@ -59,7 +61,7 @@ struct RecipeFeatureRestorationTests {
 
         await presenter.viewDidAppear()
 
-        #expect(scale(of: viewModel) == eightServings)
+        #expect(scaledRecipe(of: viewModel)?.scale == eightServings)
         #expect(viewModel.scaleText == "8")
     }
 
@@ -77,7 +79,7 @@ struct RecipeFeatureRestorationTests {
         presenter.didTapReset()
         await presenter.viewDidAppear()
 
-        #expect(scale(of: viewModel) == RecipeScale(target: .servings, value: 4.0))
+        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .servings, value: 4.0))
     }
 
     @MainActor
@@ -135,13 +137,12 @@ struct RecipeFeatureRestorationTests {
     func unreadableRecipeResumesNothing() async {
         let handler = RecipeFeatureHandlerSpy()
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
-        let presenter = RecipeFeaturePresenter(
+        let presenter = makePresenter(
+            viewModel: viewModel,
             handler: handler,
-            parser: SousParser(),
-            recipeRepository: RecipeRepositoryStub(text: nil),
             restoration: RecipeFeatureRestoration(scale: nil, isScaling: true),
             resumesCooking: true,
-            viewModel: viewModel
+            text: nil
         )
 
         await presenter.viewDidAppear()

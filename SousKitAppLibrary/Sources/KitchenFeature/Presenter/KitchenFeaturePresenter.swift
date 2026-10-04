@@ -72,7 +72,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             openRecipe(recipeEntry, isPush: isPush)
 
         case nil:
-            restorationStore.save(nil)
+            restorationStore.clear()
         }
     }
 
