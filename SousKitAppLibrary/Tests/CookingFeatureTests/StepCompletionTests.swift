@@ -26,10 +26,15 @@ struct StepCompletionTests {
     }
 
     @MainActor
-    private func makePresenter(viewModel: CookingFeatureViewModel) -> CookingFeaturePresenter {
+    private func makePresenter(
+        viewModel: CookingFeatureViewModel,
+        handler: CookingFeatureHandler = CookingFeatureHandlerSpy(),
+        restoration: CookingFeatureRestoration? = nil
+    ) -> CookingFeaturePresenter {
         CookingFeaturePresenter(
-            handler: CookingFeatureHandlerSpy(),
+            handler: handler,
             idleTimer: IdleTimerSpy(),
+            restoration: restoration,
             timerScheduler: TimerSchedulerSpy(),
             viewModel: viewModel
         )
@@ -106,5 +111,39 @@ struct StepCompletionTests {
         }
 
         #expect((1...3).allSatisfy({ viewModel.progress(ofStep: $0) == .done }))
+    }
+
+    @MainActor
+    @Test("every tick and untick reports the steps done, for a cold start")
+    func tickingReportsTheRestoration() {
+        let handler = CookingFeatureHandlerSpy()
+        let presenter = makePresenter(viewModel: makeStepsViewModel(), handler: handler)
+
+        presenter.didToggleStep(1)
+        presenter.didToggleStep(3)
+        presenter.didToggleStep(1)
+
+        #expect(
+            handler.restorations == [
+                CookingFeatureRestoration(completedStepNumbers: [1]),
+                CookingFeatureRestoration(completedStepNumbers: [1, 3]),
+                CookingFeatureRestoration(completedStepNumbers: [3])
+            ]
+        )
+    }
+
+    @MainActor
+    @Test("a restored screen opens with the steps done that were done when it was left")
+    func restorationTicksOffItsSteps() {
+        let viewModel = makeStepsViewModel()
+
+        _ = makePresenter(
+            viewModel: viewModel,
+            restoration: CookingFeatureRestoration(completedStepNumbers: [1, 2])
+        )
+
+        #expect(viewModel.progress(ofStep: 1) == .done)
+        #expect(viewModel.progress(ofStep: 2) == .done)
+        #expect(viewModel.progress(ofStep: 3) == .current)
     }
 }

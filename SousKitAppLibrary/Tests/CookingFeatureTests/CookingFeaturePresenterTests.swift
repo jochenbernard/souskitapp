@@ -21,6 +21,7 @@ struct CookingFeaturePresenterTests {
         CookingFeaturePresenter(
             handler: handler,
             idleTimer: idleTimer,
+            restoration: nil,
             timerScheduler: timerScheduler,
             viewModel: viewModel
         )

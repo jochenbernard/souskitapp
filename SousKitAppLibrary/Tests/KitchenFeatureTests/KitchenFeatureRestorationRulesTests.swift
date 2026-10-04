@@ -96,7 +96,7 @@ struct KitchenFeatureRestorationRulesTests {
     @MainActor
     @Test("a kitchen quit while it ran stays on its recipe list and forgets the recipe")
     func restoreAfterTermination() async {
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: true))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
         restorationStore.recordTermination()
 
         let viewModel = await restoreListingCrepes()
@@ -109,7 +109,7 @@ struct KitchenFeatureRestorationRulesTests {
     @MainActor
     @Test("a timer still running opens the recipe again, even after the app was quit")
     func runningTimerOutlivesTermination() async {
-        let restoration = KitchenRestoration(recipeID: crepes.id, isCooking: true)
+        let restoration = KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration())
         restorationStore.save(restoration)
         restorationStore.recordTermination()
 
@@ -123,7 +123,7 @@ struct KitchenFeatureRestorationRulesTests {
     @MainActor
     @Test("a restore that never settled is not opened again, even with a timer running")
     func unsettledRestoreIsDropped() async {
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: true))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
         restorationStore.beginRestoring()
 
         let viewModel = await restoreListingCrepes(timerScheduler: TimerSchedulerStub(timers: [runningTimer]))
@@ -135,7 +135,7 @@ struct KitchenFeatureRestorationRulesTests {
     @MainActor
     @Test("a restore marks the kitchen in use now, and unsettled until it has been up for a while")
     func restoreSettlesLater() async throws {
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id))
         let before = Date.now
 
         _ = await restoreListingCrepes(restorationSettleTime: .seconds(60))
@@ -148,7 +148,7 @@ struct KitchenFeatureRestorationRulesTests {
     @MainActor
     @Test("a restore settles once the restored kitchen has been up for a while")
     func restoreSettles() async {
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id))
 
         _ = await restoreListingCrepes()
 
@@ -163,7 +163,7 @@ struct KitchenFeatureRestorationRulesTests {
     @MainActor
     @Test("leaving the foreground marks the kitchen in use now")
     func backgroundMarksUse() throws {
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id))
         let before = Date.now
 
         makePresenter(viewModel: makeViewModel()).didEnterBackground()
@@ -174,11 +174,11 @@ struct KitchenFeatureRestorationRulesTests {
     @MainActor
     @Test("a change keeps a restore unsettled, and forgets that the app was quit")
     func changeKeepsRestoringAndForgetsTermination() throws {
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id))
         restorationStore.beginRestoring()
         restorationStore.recordTermination()
 
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: true))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
 
         let record = try #require(restorationStore.record())
         #expect(record.isRestoring)

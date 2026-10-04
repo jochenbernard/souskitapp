@@ -1,4 +1,4 @@
-import CookingFeature
+@testable import CookingFeature
 import Foundation
 @testable import KitchenFeature
 @testable import RecipeFeature
@@ -63,7 +63,7 @@ struct KitchenFeatureRestorationTests {
     func pushKeepsTheRecipe() {
         makePresenter(viewModel: makeViewModel()).didChangeScreenPath([.recipe(crepes)])
 
-        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: crepes.id))
     }
 
     @MainActor
@@ -111,11 +111,11 @@ struct KitchenFeatureRestorationTests {
         presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
-        #expect(restorationStore.restoration()?.isCooking == true)
+        #expect(restorationStore.restoration()?.cooking == CookingFeatureRestoration())
 
         presenter.cookingFeatureDidExit()
 
-        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: crepes.id))
     }
 
     @MainActor
@@ -128,7 +128,24 @@ struct KitchenFeatureRestorationTests {
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         presenter.didDismissCooking()
 
-        #expect(restorationStore.restoration()?.isCooking == false)
+        #expect(restorationStore.restoration()?.cooking == nil)
+    }
+
+    @MainActor
+    @Test("the steps cooking ticks off are kept, and forgotten once cooking is exited")
+    func tickedStepsAreKeptUntilExited() {
+        let cooking = CookingFeatureRestoration(completedStepNumbers: [1])
+        let presenter = makePresenter(viewModel: makeViewModel())
+
+        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.recipeFeatureDidStartCooking(recipe: parser.parseRecipe("Whisk it.").value)
+        presenter.cookingFeatureDidChangeRestoration(cooking)
+
+        #expect(restorationStore.restoration()?.cooking == cooking)
+
+        presenter.cookingFeatureDidExit()
+
+        #expect(restorationStore.restoration()?.cooking == nil)
     }
 
     @MainActor
@@ -141,7 +158,7 @@ struct KitchenFeatureRestorationTests {
         )
         let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel(isRestoring: true)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: true))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
 
         recipeRepository.send(.success([listedCrepes]))
         recipeRepository.finish()
@@ -151,7 +168,7 @@ struct KitchenFeatureRestorationTests {
         #expect(viewModel.openRecipe?.recipeEntry == listedCrepes)
         #expect(viewModel.openCooking == nil)
         #expect(!viewModel.isRestoring)
-        #expect(restorationStore.restoration()?.isCooking == true)
+        #expect(restorationStore.restoration()?.cooking != nil)
     }
 
     @MainActor
@@ -159,7 +176,7 @@ struct KitchenFeatureRestorationTests {
     func restoreWithoutTheRecipe() async {
         let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel(isRestoring: true)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: true))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
 
         recipeRepository.send(.success([]))
         recipeRepository.send(.success([crepes]))
@@ -177,7 +194,7 @@ struct KitchenFeatureRestorationTests {
     func restoreAfterAFailure() async {
         let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel(isRestoring: true)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id))
 
         recipeRepository.send(.failure(CocoaError(.fileReadNoSuchFile)))
         recipeRepository.send(.success([crepes]))
@@ -212,7 +229,7 @@ struct KitchenFeatureRestorationTests {
         )
         let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel(isRestoring: true)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id))
 
         recipeRepository.send(.success([crepes]))
         recipeRepository.send(.success([renamedCrepes]))
@@ -230,7 +247,7 @@ struct KitchenFeatureRestorationTests {
         let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel(isRestoring: true)
         let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: true))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
 
         recipeRepository.send(.success([crepes]))
         recipeRepository.finish()
@@ -238,7 +255,23 @@ struct KitchenFeatureRestorationTests {
         presenter.recipeFeatureDidResumeCooking(recipe: recipe)
 
         #expect(viewModel.openCooking?.isResumed == true)
-        #expect(restorationStore.restoration()?.isCooking == true)
+        #expect(restorationStore.restoration()?.cooking != nil)
+    }
+
+    @MainActor
+    @Test("cooking resumed keeps the steps it had ticked off")
+    func resumedCookingKeepsItsTickedSteps() async {
+        let cooking = CookingFeatureRestoration(completedStepNumbers: [1])
+        let recipeRepository = RecipeRepositorySpy()
+        let presenter = makePresenter(viewModel: makeViewModel(isRestoring: true), recipeRepository: recipeRepository)
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: cooking))
+
+        recipeRepository.send(.success([crepes]))
+        recipeRepository.finish()
+        await presenter.viewDidAppear()
+        presenter.recipeFeatureDidResumeCooking(recipe: parser.parseRecipe("Whisk it.").value)
+
+        #expect(restorationStore.restoration()?.cooking == cooking)
     }
 
     @MainActor
@@ -262,7 +295,7 @@ struct KitchenFeatureRestorationTests {
                 scale: RecipeScale(target: .yield(unit: "crepes"), value: 24.0),
                 isScaling: false
             ),
-            isCooking: true
+            cooking: CookingFeatureRestoration(completedStepNumbers: [1, 3])
         )
 
         restorationStore.save(restoration)
