@@ -3,9 +3,12 @@ import RecipeLibrary
 import SousKit
 
 /// The recipe directory the user picked, remembered across launches.
+@MainActor
 public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
+    private static let key = "FileRecipeRepositoryStore.bookmark"
+
     private let parser: SousParser
-    nonisolated(unsafe) private let userDefaults: UserDefaults
+    private let userDefaults: UserDefaults
 
     /// Creates a store.
     ///
@@ -24,7 +27,7 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     ///
     /// Reading the directory's contents takes opening the URL's security scope first.
     var recipeDirectory: RecipeDirectory? {
-        guard let data = userDefaults.data(forKey: Keys.bookmark) else {
+        guard let data = userDefaults.data(forKey: Self.key) else {
             return nil
         }
 
@@ -53,15 +56,11 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     }
 
     public func clear() {
-        userDefaults.removeObject(forKey: Keys.bookmark)
+        userDefaults.removeObject(forKey: Self.key)
     }
 
     private func rememberRecipeDirectory(at url: URL) throws {
         let data = try url.withSecurityScope({ try url.bookmarkData() })
-        userDefaults.set(data, forKey: Keys.bookmark)
-    }
-
-    private enum Keys {
-        static let bookmark = "FileRecipeRepositoryStore.bookmark"
+        userDefaults.set(data, forKey: Self.key)
     }
 }

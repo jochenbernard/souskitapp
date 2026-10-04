@@ -5,6 +5,8 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didBecomeActive() {}
 
+    func didEnterBackground() {}
+
     func didChangeScreenPath(_: [KitchenScreen]) {}
 
     func didDismissCooking() {}

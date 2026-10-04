@@ -1,13 +1,14 @@
 import CookingFeature
 import Foundation
-import SousKit
 
-/// The recipe being cooked from, beside the feature rendering it over the kitchen.
+/// The feature cooking from a recipe over the kitchen.
 ///
 /// Built each time cooking starts, so every visit starts afresh, and identified by that visit, so the screen keeps
 /// what it shows while it slides away.
 struct OpenCooking: Identifiable {
     let id = UUID()
-    let recipe: Recipe
     let feature: CookingFeature
+
+    /// Whether cooking opens again as a cold start found it, rather than from the button that starts it.
+    let isResumed: Bool
 }

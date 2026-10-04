@@ -10,6 +10,12 @@ import Testing
 @Suite("Kitchen feature stack", .timeLimit(.minutes(1)))
 struct KitchenFeatureStackTests {
     private let parser = SousParser()
+    private let defaults: ThrowawayDefaults
+
+    @MainActor
+    init() throws {
+        self.defaults = try ThrowawayDefaults()
+    }
 
     private func recipeEntry(named name: String) -> RecipeEntry {
         RecipeEntry(
@@ -38,6 +44,9 @@ struct KitchenFeatureStackTests {
             handler: KitchenFeatureHandlerStub(),
             recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
             recipeRepository: recipeRepository,
+            restorationSettleTime: .zero,
+            restorationStore: KitchenRestorationStore(userDefaults: defaults.userDefaults),
+            timerScheduler: TimerSchedulerStub(),
             viewModel: viewModel
         )
     }
@@ -145,7 +154,7 @@ struct KitchenFeatureStackTests {
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
         #expect(viewModel.screenPath == [.recipe(crepes)])
-        #expect(viewModel.openCooking?.recipe == recipe)
+        #expect(viewModel.openCooking != nil)
     }
 
     @MainActor

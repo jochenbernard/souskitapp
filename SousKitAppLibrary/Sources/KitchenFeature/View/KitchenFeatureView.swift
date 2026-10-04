@@ -28,6 +28,10 @@ struct KitchenFeatureView: View {
                     screenView(for: screen)
                 }
         }
+        // The recipe a cold start opens again is there at once, rather than pushed over a list never shown.
+        .transaction(value: viewModel.isRestoring) { transaction in
+            transaction.disablesAnimations = true
+        }
         // Over the whole kitchen rather than pushed on it, zooming out of the button that starts it, and never swiped
         // or pinched away: its own exit is the only way out.
         .fullScreenCover(item: openCooking) { openCooking in
@@ -35,13 +39,22 @@ struct KitchenFeatureView: View {
                 .navigationTransition(.zoom(sourceID: RecipeFeature.cookingTransitionID, in: cookingTransition))
                 .interactiveDismissDisabled()
         }
+        // Cooking a cold start opens again is there at once, rather than zooming out of a button it never left.
+        .transaction(value: viewModel.openCooking?.id) { transaction in
+            if viewModel.openCooking?.isResumed == true {
+                transaction.disablesAnimations = true
+            }
+        }
     }
 
     private var recipeListScreen: some View {
         ScrollView {
-            recipeList
-                .sousPagePadding()
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // A blank page, rather than a list the restored recipe covers a moment later.
+            if !viewModel.isRestoring {
+                recipeList
+                    .sousPagePadding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .sousPage()
         .navigationTitle(viewModel.recipeRepositoryName)
@@ -50,14 +63,25 @@ struct KitchenFeatureView: View {
                 debugMenu
             }
         }
+        .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
         .task {
             await presenter.viewDidAppear()
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
+            switch phase {
+            case .active:
                 Task {
                     await presenter.didBecomeActive()
                 }
+
+            case .background:
+                presenter.didEnterBackground()
+
+            case .inactive:
+                break
+
+            @unknown default:
+                break
             }
         }
     }
@@ -263,12 +287,16 @@ struct KitchenFeatureView: View {
 }
 
 @MainActor
-private func previewViewModel(_ recipeList: KitchenRecipeList) -> KitchenFeatureViewModel {
+private func previewViewModel(
+    _ recipeList: KitchenRecipeList,
+    isRestoring: Bool = false
+) -> KitchenFeatureViewModel {
     let viewModel = KitchenFeatureViewModel(
         recipeRepositoryName: "Recipes",
         recipeRepositoryKind: .files
     )
     viewModel.recipeList = recipeList
+    viewModel.isRestoring = isRestoring
 
     return viewModel
 }
@@ -303,6 +331,13 @@ private func previewRecipeEntry(
     KitchenFeatureView(
         presenter: KitchenFeaturePresenterStub(),
         viewModel: previewViewModel(.reading)
+    )
+}
+
+#Preview("Kitchen, restoring") {
+    KitchenFeatureView(
+        presenter: KitchenFeaturePresenterStub(),
+        viewModel: previewViewModel(.reading, isRestoring: true)
     )
 }
 

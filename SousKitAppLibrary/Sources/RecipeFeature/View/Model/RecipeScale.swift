@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// How much of a recipe to make: a number, and what that number counts.
-struct RecipeScale: Hashable {
+struct RecipeScale: Hashable, Codable {
     /// What the number counts.
     let target: ScaleTarget
 

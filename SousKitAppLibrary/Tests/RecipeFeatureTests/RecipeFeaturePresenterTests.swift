@@ -31,6 +31,8 @@ struct RecipeFeaturePresenterTests {
             handler: handler,
             parser: parser,
             recipeRepository: RecipeRepositoryStub(text: recipeText),
+            restoration: nil,
+            resumesCooking: false,
             viewModel: viewModel
         )
     }

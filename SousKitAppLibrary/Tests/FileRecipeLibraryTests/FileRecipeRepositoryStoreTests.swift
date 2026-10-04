@@ -4,6 +4,7 @@ import RecipeLibrary
 import SousKit
 import Testing
 
+@MainActor
 @Suite("File recipe repository store")
 final class FileRecipeRepositoryStoreTests {
     private let parser = SousParser()
@@ -18,7 +19,7 @@ final class FileRecipeRepositoryStoreTests {
         self.userDefaults = try #require(UserDefaults(suiteName: suiteName))
     }
 
-    deinit {
+    isolated deinit {
         userDefaults.removePersistentDomain(forName: suiteName)
     }
 

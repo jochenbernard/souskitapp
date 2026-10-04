@@ -48,6 +48,8 @@ struct RecipeFeatureScalingTests {
             handler: RecipeFeatureHandlerSpy(),
             parser: parser,
             recipeRepository: RecipeRepositoryStub(text: recipeText),
+            restoration: nil,
+            resumesCooking: false,
             viewModel: viewModel
         )
     }
