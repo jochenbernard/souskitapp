@@ -5,9 +5,18 @@ import Foundation
 struct StartedTimerStore {
     private static let key = "StartedTimerStore.startedTimers"
 
+    private let userDefaults: UserDefaults
+
+    /// Creates a store.
+    ///
+    /// - Parameter userDefaults: Where the timers are kept.
+    init(userDefaults: UserDefaults = .standard) {
+        self.userDefaults = userDefaults
+    }
+
     func startedTimers() -> [UUID: StartedTimer] {
         guard
-            let data = UserDefaults.standard.data(forKey: Self.key),
+            let data = userDefaults.data(forKey: Self.key),
             let startedTimers = try? JSONDecoder().decode([UUID: StartedTimer].self, from: data)
         else {
             return [:]
@@ -43,6 +52,6 @@ struct StartedTimerStore {
     }
 
     private func save(_ startedTimers: [UUID: StartedTimer]) {
-        UserDefaults.standard.set(try? JSONEncoder().encode(startedTimers), forKey: Self.key)
+        userDefaults.set(try? JSONEncoder().encode(startedTimers), forKey: Self.key)
     }
 }

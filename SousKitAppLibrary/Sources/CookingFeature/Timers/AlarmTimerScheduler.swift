@@ -6,6 +6,7 @@ public struct AlarmTimerScheduler: TimerScheduler {
     private let startedTimerStore: StartedTimerStore
 
     /// Creates a scheduler.
+    @MainActor
     public init() {
         self.startedTimerStore = StartedTimerStore()
     }
