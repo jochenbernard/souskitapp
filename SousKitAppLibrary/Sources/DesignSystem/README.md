@@ -102,7 +102,7 @@ The three styles are separate types rather than one carrying an emphasis: no cal
 emphasis at run time, and the primary differs in kind, not degree. What they share is in
 `ButtonPress`, `ButtonPressBody`, and `sousButtonLabel(_:)`. `.sousChip(isSelected:)` is the one
 style that takes a value, since whether a chip is chosen is state rather than emphasis; it draws
-the same chip as `.sousChip()` and presses as the others do. `.sousBare` draws nothing of its own,
+the same chip as `.sousChip()` and presses as the others do. `.sousBare` draws nothing itself,
 for a control its label draws in full, such as the mark a cook ticks a step off with. It presses
 as the others do and taps as `.sousPrimary` does.
 

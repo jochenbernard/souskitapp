@@ -67,9 +67,13 @@ struct CookingSteps: View {
         return HStack(alignment: .firstTextBaseline, spacing: SousSpacing.large) {
             stepToggle(number, progress: progress)
 
-            stepProse(step, number: number, progress: progress)
-                .font(.title3)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            stepProse(
+                step,
+                number: number,
+                progress: progress
+            )
+            .font(.title3)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         // The number is the row's tallest line, so padding it evenly sets it as far from the top as from the side.
         .padding(SousSpacing.xLarge)
@@ -101,7 +105,9 @@ struct CookingSteps: View {
             .monospacedDigit()
             .foregroundStyle(numberStyle(progress))
             .opacity(isDone ? 0.0 : 1.0)
-            .overlay { checkmark(progress) }
+            .overlay {
+                checkmark(progress)
+            }
     }
 
     private func numberStyle(_ progress: StepProgress) -> Color {
@@ -167,12 +173,20 @@ struct CookingSteps: View {
         switch progress {
         case .done:
             // A done step recedes, its timers included, so the steps ahead stand out.
-            stepText(step, number: number, annotationColor: .secondary)
-                .foregroundStyle(.secondary)
-                .tint(.secondary)
+            stepText(
+                step,
+                number: number,
+                annotationColor: .secondary
+            )
+            .foregroundStyle(.secondary)
+            .tint(.secondary)
 
         case .current, .upcoming:
-            stepText(step, number: number, annotationColor: .accent)
+            stepText(
+                step,
+                number: number,
+                annotationColor: .accent
+            )
         }
     }
 
