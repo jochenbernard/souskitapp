@@ -6,21 +6,32 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     private let handler: RecipeFeatureHandler
     private let parser: SousParser
     private let recipeRepository: RecipeRepository
+    private let restoration: RecipeFeatureRestoration?
+    private let resumesCooking: Bool
     private let viewModel: RecipeFeatureViewModel
 
     init(
         handler: RecipeFeatureHandler,
         parser: SousParser,
         recipeRepository: RecipeRepository,
+        restoration: RecipeFeatureRestoration?,
+        resumesCooking: Bool,
         viewModel: RecipeFeatureViewModel
     ) {
         self.handler = handler
         self.parser = parser
         self.recipeRepository = recipeRepository
+        self.restoration = restoration
+        self.resumesCooking = resumesCooking
         self.viewModel = viewModel
     }
 
     func viewDidAppear() async {
+        // A restoration applies when the recipe first reaches the screen, not to a read coming back from cooking.
+        let restores = switch viewModel.recipeContent {
+        case .recipe: false
+        case .reading, .failure: true
+        }
         let recipeContent: RecipeContent
 
         do {
@@ -42,6 +53,10 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         if !viewModel.isScaling {
             writeField()
         }
+
+        if restores {
+            restore()
+        }
     }
 
     func didChangeIsExpanded(_ isExpanded: Bool, of section: RecipeSection) {
@@ -54,6 +69,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
 
     func didTapScale() {
         viewModel.isScaling = true
+        reportRestoration()
     }
 
     func didChangeIsScaling(_ isScaling: Bool) {
@@ -63,6 +79,8 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         if !isScaling {
             writeField()
         }
+
+        reportRestoration()
     }
 
     func didChangeScaleText(_ text: String) {
@@ -99,6 +117,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         // The same amount of food, counted the other way, so switching back lands where it started.
         viewModel.recipeContent = .recipe(counted)
         writeField()
+        reportRestoration()
     }
 
     func didTapReset() {
@@ -120,15 +139,45 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     /// The recipe as read, at the scale a cook already chose where they chose one.
     @MainActor
     private func read(_ recipe: Recipe) -> ScaledRecipe {
+        let scale = switch viewModel.recipeContent {
         // A default is the file's, so a file that now declares another opens on that one.
-        guard case .recipe(let current) = viewModel.recipeContent, !current.isDefault else {
-            return ScaledRecipe(asWritten: recipe, parser: parser)
+        case .recipe(let current): current.isDefault ? nil : current.scale
+        case .reading, .failure: restoration?.scale
         }
 
         return ScaledRecipe(
             asWritten: recipe,
             parser: parser,
-            scale: current.scale
+            scale: scale
+        )
+    }
+
+    /// Opens again what the screen had open when it was left, now that the recipe it opens over is read.
+    @MainActor
+    private func restore() {
+        guard case .recipe(let recipe) = viewModel.recipeContent else {
+            return
+        }
+
+        // A file edited down to no steps since has nothing to cook, as its screen offers no button to start.
+        if resumesCooking, !recipe.scaled.steps.isEmpty {
+            handler.recipeFeatureDidResumeCooking(recipe: recipe.scaled)
+        } else if restoration?.isScaling == true {
+            viewModel.isScaling = true
+        }
+    }
+
+    @MainActor
+    private func reportRestoration() {
+        guard case .recipe(let recipe) = viewModel.recipeContent else {
+            return
+        }
+
+        handler.recipeFeatureDidChangeRestoration(
+            RecipeFeatureRestoration(
+                scale: recipe.isDefault ? nil : recipe.scale,
+                isScaling: viewModel.isScaling
+            )
         )
     }
 
@@ -152,6 +201,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         }
 
         viewModel.recipeContent = .recipe(rescaled)
+        reportRestoration()
     }
 
     @MainActor

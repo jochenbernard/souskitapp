@@ -1,7 +1,7 @@
 @testable import AppFeature
 import FileRecipeLibrary
 import Foundation
-import KitchenFeature
+@testable import KitchenFeature
 import MockRecipeLibrary
 import OnboardingFeature
 import RecipeLibrary
@@ -15,6 +15,8 @@ final class AppFeaturePresenterTests {
     private let suiteName: String
     private let userDefaults: UserDefaults
 
+    private let crepesRestoration = KitchenRestoration(recipeID: "crepes", isCooking: false)
+
     init() throws {
         self.suiteName = "AppFeaturePresenterTests.\(UUID().uuidString)"
         self.userDefaults = try #require(UserDefaults(suiteName: suiteName))
@@ -22,6 +24,11 @@ final class AppFeaturePresenterTests {
 
     isolated deinit {
         userDefaults.removePersistentDomain(forName: suiteName)
+    }
+
+    /// A store keeping what the kitchen has open in this suite's defaults.
+    private var kitchenRestorationStore: KitchenRestorationStore {
+        KitchenRestorationStore(userDefaults: userDefaults)
     }
 
     /// A store remembering the folder in this suite's defaults.
@@ -36,7 +43,11 @@ final class AppFeaturePresenterTests {
     private func launch() -> AppFeaturePresenter {
         let recipeRepositoryStore = makeRecipeRepositoryStore()
         let presenter = AppFeaturePresenter(
-            kitchenFeatureFactory: KitchenFeatureFactory(parser: parser),
+            kitchenFeatureFactory: KitchenFeatureFactory(
+                parser: parser,
+                restorationStore: kitchenRestorationStore
+            ),
+            kitchenRestorationStore: kitchenRestorationStore,
             mockRecipeRepository: MockRecipeRepository(parser: parser),
             onboardingFeatureFactory: OnboardingFeatureFactory(recipeRepositoryStore: recipeRepositoryStore),
             recipeRepositoryKindStore: RecipeRepositoryKindStore(userDefaults: userDefaults),
@@ -104,5 +115,22 @@ final class AppFeaturePresenterTests {
 
         #expect(presenter.viewModel?.screen.identity == .onboarding)
         #expect(launch().viewModel?.screen.identity == .onboarding)
+    }
+
+    @Test("onboarding forgets what the last kitchen had open, which belongs to recipes the next may not read")
+    func onboardingForgetsTheKitchen() {
+        kitchenRestorationStore.save(crepesRestoration)
+
+        #expect(launch().viewModel?.screen.identity == .onboarding)
+        #expect(kitchenRestorationStore.restoration() == nil)
+    }
+
+    @Test("the kitchen keeps what it had open across a launch")
+    func kitchenKeepsWhatItHadOpen() {
+        launch().onboardingFeatureDidChooseMockRecipes()
+        kitchenRestorationStore.save(crepesRestoration)
+
+        #expect(launch().viewModel?.screen.identity == .kitchen(.mock))
+        #expect(kitchenRestorationStore.restoration() == crepesRestoration)
     }
 }
