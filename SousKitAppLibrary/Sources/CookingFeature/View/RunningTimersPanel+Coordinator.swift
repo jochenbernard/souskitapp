@@ -58,7 +58,7 @@ extension RunningTimersPanel {
 
         private func configureScrollView() {
             scrollView.delegate = self
-            // A swipe is taken up whether the list scrolls or not, since it folds the list either way.
+            // A swipe is taken up whether the timers scroll or not, since it folds the list or bounces the column.
             scrollView.alwaysBounceVertical = true
             scrollView.clipsToBounds = false
             scrollView.contentInsetAdjustmentBehavior = .never
@@ -162,7 +162,8 @@ extension RunningTimersPanel {
                 return 0.0
             }
 
-            let offset = max(0.0, scrollView.contentOffset.y)
+            // A list bouncing past its top keeps its rows that far down too.
+            let offset = scrollView.contentOffset.y
             scrollView.setContentOffset(.zero, animated: false)
             return offset
         }
@@ -185,7 +186,10 @@ extension RunningTimersPanel {
                 // A scrolled list scrolls the swipe's start; at its top, the start goes into the fold.
                 canOpen = true
                 let start = scrollView.contentOffset.y > 0.0 ? 0.0 : scrollView.distanceMoved(by: pan, along: \.y)
-                fold = presentedFold() + (fits ? start : max(0.0, start))
+                // A list caught bouncing past its top is folded as far as it has bounced instead.
+                let bounce = max(0.0, -scrollView.contentOffset.y)
+                scrollView.contentOffset.y += bounce
+                fold = presentedFold() + bounce + (fits ? start : max(0.0, start))
                 foldBase = travel - fold
                 setFold(fold)
             case .changed:
@@ -300,14 +304,19 @@ extension RunningTimersPanel {
             }
         }
 
-        // Never past the top, where the finger's travel folds the list instead, and held at the top while the finger
-        // has the list folded, so its way back up takes the fold back before it scrolls. A list that fits its room
-        // does not scroll at all.
+        // The column scrolls and bounces as any scroll view. The list goes past its top only on a swipe's momentum,
+        // and bounces back from there; under the finger, the travel past the top folds it instead. It is held at the
+        // top while the finger has it folded, so its way back up takes the fold back before it scrolls. A list that
+        // fits its room does not scroll at all.
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
             let offset = scrollView.contentOffset.y
             let fits = scrollView.contentSize.height <= scrollView.bounds.height
+            let isHeld = scrollView.isTracking || fold != 0.0
 
-            if offset < 0.0 || (offset > 0.0 && (fits || (fold > 0.0 && scrollView.isTracking))) {
+            if
+                kind == .folding,
+                (offset < 0.0 && isHeld) || (offset > 0.0 && (fits || (fold > 0.0 && scrollView.isTracking)))
+            {
                 scrollView.contentOffset.y = 0.0
             }
 

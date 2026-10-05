@@ -296,15 +296,15 @@ struct RunningTimersLayout: Layout {
         )
     }
 
-    // Kept above the rows as they scroll under it, so it takes the scrolling back that the rows undergo. It spreads
-    // from the soonest as the rows spread from each other.
+    // Kept above the rows as they scroll under it, so it takes the scrolling back that the rows undergo, but goes
+    // along with them as they bounce past their top. It spreads from the soonest as the rows spread from each other.
     private func listedButtonRect(_ button: LayoutSubview, in measured: Measurement) -> CGRect {
         let size = button.sizeThatFits(.unspecified)
         let spread = stretchGap * CGFloat(measured.timers.count)
 
         return CGRect(
             x: horizontalInset + rowWidth - size.width,
-            y: measured.listRoomTop + scrollOffset - spread,
+            y: measured.listRoomTop + max(0.0, scrollOffset) - spread,
             width: size.width,
             height: size.height
         )
