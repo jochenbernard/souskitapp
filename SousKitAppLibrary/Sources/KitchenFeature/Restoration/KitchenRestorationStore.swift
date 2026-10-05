@@ -48,7 +48,7 @@ public struct KitchenRestorationStore {
         )
     }
 
-    /// Changes what the kitchen has open for a recipe, in use now, or keeps nothing where it has another open.
+    /// Changes what the kitchen has open for a recipe, in use now, or leaves the store as it is where another is open.
     ///
     /// - Parameters:
     ///   - recipeID: The id of the recipe the change is for.

@@ -21,7 +21,7 @@ struct KitchenRestorationRecord: Codable {
     ///
     /// - Parameters:
     ///   - date: When the cold start happens.
-    ///   - hasRunningTimers: Whether a timer is counting down or ringing, asked only where it decides.
+    ///   - hasRunningTimers: Whether a timer is counting down or ringing, evaluated only where it changes the result.
     /// - Returns: Whether the restoration opens.
     func isRestorable(at date: Date, hasRunningTimers: @autoclosure @MainActor () async -> Bool) async -> Bool {
         // A restoration that never settled took the app down with it, and would again.

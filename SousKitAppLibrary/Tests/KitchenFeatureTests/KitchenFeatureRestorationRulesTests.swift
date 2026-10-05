@@ -178,4 +178,30 @@ struct KitchenFeatureRestorationRulesTests {
         #expect(record.isSettling)
         #expect(!record.isTerminated)
     }
+
+    @MainActor
+    @Test("a change to the recipe kept keeps a restore unsettled, and forgets that the app was quit")
+    func updateKeepsSettlingAndForgetsTermination() throws {
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        restorationStore.beginSettling()
+        restorationStore.recordTermination()
+
+        restorationStore.update(recipeID: crepes.id, { $0.isCooking = true })
+
+        let record = try #require(restorationStore.record())
+        #expect(record.restoration.isCooking)
+        #expect(record.isSettling)
+        #expect(!record.isTerminated)
+    }
+
+    @MainActor
+    @Test("a change to another recipe leaves the recipe kept as it is")
+    func updateForAnotherRecipeIsIgnored() {
+        let restoration = KitchenRestoration(recipeID: crepes.id, isCooking: false)
+        restorationStore.save(restoration)
+
+        restorationStore.update(recipeID: "gratin", { $0.isCooking = true })
+
+        #expect(restorationStore.restoration() == restoration)
+    }
 }
