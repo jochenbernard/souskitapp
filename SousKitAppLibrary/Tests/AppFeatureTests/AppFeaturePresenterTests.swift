@@ -15,7 +15,7 @@ final class AppFeaturePresenterTests {
     private let suiteName: String
     private let userDefaults: UserDefaults
 
-    private let crepesRestoration = KitchenRestoration(recipeID: "crepes", isCooking: false)
+    private let crepesRestoration = KitchenRestoration(recipeID: "crepes")
 
     init() throws {
         self.suiteName = "AppFeaturePresenterTests.\(UUID().uuidString)"

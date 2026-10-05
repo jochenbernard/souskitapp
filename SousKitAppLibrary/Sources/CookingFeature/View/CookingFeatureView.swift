@@ -27,7 +27,7 @@ struct CookingFeatureView: View {
 
     var body: some View {
         ScrollView {
-            CookingSteps(presenter: presenter, recipe: viewModel.recipe)
+            CookingSteps(presenter: presenter, viewModel: viewModel)
                 .sousPagePadding()
                 .frame(maxWidth: .infinity)
         }

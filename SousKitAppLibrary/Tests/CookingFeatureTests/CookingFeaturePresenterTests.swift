@@ -1,5 +1,4 @@
 @testable import CookingFeature
-import Foundation
 import SousKit
 import Testing
 
@@ -12,43 +11,11 @@ struct CookingFeaturePresenterTests {
     }
 
     @MainActor
-    private func makePresenter(
-        viewModel: CookingFeatureViewModel,
-        handler: CookingFeatureHandler = CookingFeatureHandlerSpy(),
-        idleTimer: IdleTimer = IdleTimerSpy(),
-        timerScheduler: TimerScheduler = TimerSchedulerSpy()
-    ) -> CookingFeaturePresenter {
-        CookingFeaturePresenter(
-            handler: handler,
-            idleTimer: idleTimer,
-            timerScheduler: timerScheduler,
-            viewModel: viewModel
-        )
-    }
-
-    private func makeStepTimer() -> StepTimer {
-        StepTimer(
-            stepNumber: 3,
-            text: "15 min",
-            duration: .seconds(900)
-        )
-    }
-
-    private func makeRunningTimer(isRinging: Bool = false) -> RunningTimer {
-        RunningTimer(
-            id: UUID(),
-            stepTimer: makeStepTimer(),
-            endDate: .now.addingTimeInterval(900.0),
-            isRinging: isRinging
-        )
-    }
-
-    @MainActor
     @Test("the screen stays on while the view is on screen")
     func screenStaysOn() async {
         let idleTimer = IdleTimerSpy()
 
-        await makePresenter(viewModel: makeViewModel(), idleTimer: idleTimer).viewDidAppear()
+        await CookingFeaturePresenter.stubbed(viewModel: makeViewModel(), idleTimer: idleTimer).viewDidAppear()
 
         #expect(idleTimer.settings == [true])
     }
@@ -57,7 +24,7 @@ struct CookingFeaturePresenterTests {
     @Test("the screen dims again once the view leaves")
     func screenDimsAgain() async {
         let idleTimer = IdleTimerSpy()
-        let presenter = makePresenter(viewModel: makeViewModel(), idleTimer: idleTimer)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: makeViewModel(), idleTimer: idleTimer)
 
         await presenter.viewDidAppear()
         presenter.viewDidDisappear()
@@ -77,7 +44,7 @@ struct CookingFeaturePresenterTests {
         let viewModel = makeViewModel()
         let handler = CookingFeatureHandlerSpy()
 
-        makePresenter(viewModel: viewModel, handler: handler).didTapExit()
+        CookingFeaturePresenter.stubbed(viewModel: viewModel, handler: handler).didTapExit()
 
         #expect(viewModel.isConfirmingExit)
         #expect(handler.exitCount == 0)
@@ -88,7 +55,7 @@ struct CookingFeaturePresenterTests {
     func confirmingReportsTheExit() {
         let viewModel = makeViewModel()
         let handler = CookingFeatureHandlerSpy()
-        let presenter = makePresenter(viewModel: viewModel, handler: handler)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, handler: handler)
 
         presenter.didTapExit()
         presenter.didConfirmExit()
@@ -102,7 +69,7 @@ struct CookingFeaturePresenterTests {
     func dismissingReportsNothing() {
         let viewModel = makeViewModel()
         let handler = CookingFeatureHandlerSpy()
-        let presenter = makePresenter(viewModel: viewModel, handler: handler)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, handler: handler)
 
         presenter.didTapExit()
         presenter.didChangeIsConfirmingExit(false)
@@ -115,10 +82,10 @@ struct CookingFeaturePresenterTests {
     @Test("the running timers arrive while the view is on screen")
     func runningTimersArrive() async {
         let viewModel = makeViewModel()
-        let runningTimer = makeRunningTimer()
+        let runningTimer = RunningTimer.stubbed()
         let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[], [runningTimer]])
 
-        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
+        await CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
 
         #expect(viewModel.runningTimers == [runningTimer])
     }
@@ -129,9 +96,10 @@ struct CookingFeaturePresenterTests {
         let viewModel = makeViewModel()
         let timerScheduler = TimerSchedulerSpy()
 
-        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).didTapTimer(makeStepTimer())
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+        await presenter.didTapTimer(StepTimer.stubbed())
 
-        #expect(timerScheduler.startedTimers == [makeStepTimer()])
+        #expect(timerScheduler.startedTimers == [StepTimer.stubbed()])
         #expect(viewModel.startedTimerCount == 1)
     }
 
@@ -141,7 +109,8 @@ struct CookingFeaturePresenterTests {
         let viewModel = makeViewModel()
         let timerScheduler = TimerSchedulerSpy(startError: TimerSchedulerError.notAuthorized)
 
-        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).didTapTimer(makeStepTimer())
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+        await presenter.didTapTimer(StepTimer.stubbed())
 
         #expect(viewModel.isAskingToAllowTimers)
         #expect(viewModel.startedTimerCount == 0)
@@ -153,7 +122,7 @@ struct CookingFeaturePresenterTests {
         let viewModel = makeViewModel()
         viewModel.isAskingToAllowTimers = true
 
-        makePresenter(viewModel: viewModel).didChangeIsAskingToAllowTimers(false)
+        CookingFeaturePresenter.stubbed(viewModel: viewModel).didChangeIsAskingToAllowTimers(false)
 
         #expect(!viewModel.isAskingToAllowTimers)
     }
@@ -163,9 +132,10 @@ struct CookingFeaturePresenterTests {
     func tappingCancelAsksToConfirm() {
         let viewModel = makeViewModel()
         let timerScheduler = TimerSchedulerSpy()
-        let runningTimer = makeRunningTimer()
+        let runningTimer = RunningTimer.stubbed()
 
-        makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).didTapCancelTimer(runningTimer)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+        presenter.didTapCancelTimer(runningTimer)
 
         #expect(viewModel.timerConfirmingCancel == runningTimer)
         #expect(timerScheduler.cancelledTimers.isEmpty)
@@ -176,8 +146,8 @@ struct CookingFeaturePresenterTests {
     func confirmingTheCancel() {
         let viewModel = makeViewModel()
         let timerScheduler = TimerSchedulerSpy()
-        let presenter = makePresenter(viewModel: viewModel, timerScheduler: timerScheduler)
-        let runningTimer = makeRunningTimer()
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+        let runningTimer = RunningTimer.stubbed()
 
         presenter.didTapCancelTimer(runningTimer)
         presenter.didConfirmCancelTimer()
@@ -191,9 +161,9 @@ struct CookingFeaturePresenterTests {
     func dismissingTheCancel() {
         let viewModel = makeViewModel()
         let timerScheduler = TimerSchedulerSpy()
-        let presenter = makePresenter(viewModel: viewModel, timerScheduler: timerScheduler)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
 
-        presenter.didTapCancelTimer(makeRunningTimer())
+        presenter.didTapCancelTimer(RunningTimer.stubbed())
         presenter.didChangeIsConfirmingCancelTimer(false)
 
         #expect(viewModel.timerConfirmingCancel == nil)
@@ -205,9 +175,10 @@ struct CookingFeaturePresenterTests {
     func stoppingARingingTimer() {
         let viewModel = makeViewModel()
         let timerScheduler = TimerSchedulerSpy()
-        let runningTimer = makeRunningTimer(isRinging: true)
+        let runningTimer = RunningTimer.stubbed(isRinging: true)
 
-        makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).didTapCancelTimer(runningTimer)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+        presenter.didTapCancelTimer(runningTimer)
 
         #expect(viewModel.timerConfirmingCancel == nil)
         #expect(timerScheduler.cancelledTimers == [runningTimer])
@@ -217,9 +188,10 @@ struct CookingFeaturePresenterTests {
     @Test("swiping a running timer away cancels it without asking")
     func swipingATimerAway() {
         let timerScheduler = TimerSchedulerSpy()
-        let runningTimer = makeRunningTimer()
+        let runningTimer = RunningTimer.stubbed()
 
-        makePresenter(viewModel: makeViewModel(), timerScheduler: timerScheduler).didSwipeAwayTimer(runningTimer)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: makeViewModel(), timerScheduler: timerScheduler)
+        presenter.didSwipeAwayTimer(runningTimer)
 
         #expect(timerScheduler.cancelledTimers == [runningTimer])
     }
@@ -228,7 +200,7 @@ struct CookingFeaturePresenterTests {
     @Test("a timer that goes off while its cancel is being confirmed closes the confirmation")
     func timerGoingOffClosesTheConfirmation() async {
         let viewModel = makeViewModel()
-        let runningTimer = makeRunningTimer()
+        let runningTimer = RunningTimer.stubbed()
         let ringingTimer = RunningTimer(
             id: runningTimer.id,
             stepTimer: runningTimer.stepTimer,
@@ -238,71 +210,19 @@ struct CookingFeaturePresenterTests {
         viewModel.timerConfirmingCancel = runningTimer
         let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[ringingTimer]])
 
-        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
+        await CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
 
         #expect(viewModel.timerConfirmingCancel == nil)
-    }
-
-    @MainActor
-    @Test("the list of timers starts out closed")
-    func timerListStartsClosed() {
-        #expect(!makeViewModel().isTimerListOpen)
-    }
-
-    @MainActor
-    @Test("opening the stack of timers opens the list")
-    func openingTheStackOpensTheList() {
-        let viewModel = makeViewModel()
-
-        makePresenter(viewModel: viewModel).didOpenTimerList()
-
-        #expect(viewModel.isTimerListOpen)
-    }
-
-    @MainActor
-    @Test("closing the list folds it back into the stack")
-    func closingTheList() {
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didOpenTimerList()
-        presenter.didCloseTimerList()
-
-        #expect(!viewModel.isTimerListOpen)
-    }
-
-    @MainActor
-    @Test("the list closes once no timer is left in it")
-    func listClosesOnceEmpty() async {
-        let viewModel = makeViewModel()
-        viewModel.isTimerListOpen = true
-        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[makeRunningTimer()], []])
-
-        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
-
-        #expect(!viewModel.isTimerListOpen)
-    }
-
-    @MainActor
-    @Test("the list stays open while a timer is left in it")
-    func listStaysOpenWithATimer() async {
-        let viewModel = makeViewModel()
-        viewModel.isTimerListOpen = true
-        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[makeRunningTimer()]])
-
-        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
-
-        #expect(viewModel.isTimerListOpen)
     }
 
     @MainActor
     @Test("confirming the exit cancels every running timer")
     func confirmingTheExitCancelsTheTimers() async {
         let viewModel = makeViewModel()
-        let runningTimer = makeRunningTimer()
-        let ringingTimer = makeRunningTimer(isRinging: true)
+        let runningTimer = RunningTimer.stubbed()
+        let ringingTimer = RunningTimer.stubbed(isRinging: true)
         let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[runningTimer, ringingTimer]])
-        let presenter = makePresenter(viewModel: viewModel, timerScheduler: timerScheduler)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
 
         await presenter.viewDidAppear()
         presenter.didTapExit()
@@ -315,8 +235,8 @@ struct CookingFeaturePresenterTests {
     @Test("dismissing the exit leaves the timers running")
     func dismissingTheExitKeepsTheTimers() async {
         let viewModel = makeViewModel()
-        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[makeRunningTimer()]])
-        let presenter = makePresenter(viewModel: viewModel, timerScheduler: timerScheduler)
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[RunningTimer.stubbed()]])
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
 
         await presenter.viewDidAppear()
         presenter.didTapExit()

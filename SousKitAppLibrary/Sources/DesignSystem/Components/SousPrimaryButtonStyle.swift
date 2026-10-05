@@ -11,11 +11,7 @@ public struct SousPrimaryButtonStyle: ButtonStyle {
                 // No press scale: the interactive glass already gives under the finger.
                 .glassEffect(.regular.tint(.accent).interactive(), in: shape)
                 .contentShape(shape)
-                .sensoryFeedback(trigger: isDown) { _, isDown in
-                    isDown
-                        ? .impact(flexibility: .rigid)
-                        : .impact(flexibility: .rigid, intensity: ButtonPress.releaseIntensity)
-                }
+                .sousPressFeedback(isDown: isDown)
         }
     }
 }

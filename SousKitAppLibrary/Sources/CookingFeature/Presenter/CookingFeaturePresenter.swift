@@ -4,9 +4,11 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
     private let timerScheduler: TimerScheduler
     private let viewModel: CookingFeatureViewModel
 
+    @MainActor
     init(
         handler: CookingFeatureHandler,
         idleTimer: IdleTimer,
+        restoration: CookingFeatureRestoration?,
         timerScheduler: TimerScheduler,
         viewModel: CookingFeatureViewModel
     ) {
@@ -14,6 +16,9 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         self.idleTimer = idleTimer
         self.timerScheduler = timerScheduler
         self.viewModel = viewModel
+
+        // Applied before the screen first draws, so a step done before the cold start never shows as not done.
+        viewModel.completedStepNumbers = restoration?.completedStepNumbers ?? []
     }
 
     func viewDidAppear() async {
@@ -31,6 +36,18 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
 
     func viewDidDisappear() {
         idleTimer.setDisabled(false)
+    }
+
+    func didToggleStep(_ number: Int) {
+        if viewModel.completedStepNumbers.contains(number) {
+            viewModel.completedStepNumbers.remove(number)
+        } else {
+            viewModel.completedStepNumbers.insert(number)
+        }
+
+        handler.cookingFeatureDidChangeRestoration(
+            CookingFeatureRestoration(completedStepNumbers: viewModel.completedStepNumbers)
+        )
     }
 
     func didTapTimer(_ timer: StepTimer) async {

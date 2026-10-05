@@ -6,6 +6,7 @@ import SousKit
 final class CookingFeatureViewModel {
     let recipe: Recipe
     let title: String
+    var completedStepNumbers: Set<Int> = []
     var isConfirmingExit = false
     var runningTimers: [RunningTimer] = []
     var startedTimerCount = 0
@@ -23,6 +24,16 @@ final class CookingFeatureViewModel {
 
     var canOpenTimerList: Bool {
         runningTimers.count > 1
+    }
+
+    func progress(ofStep number: Int) -> StepProgress {
+        if completedStepNumbers.contains(number) {
+            .done
+        } else if (1..<number).allSatisfy(completedStepNumbers.contains) {
+            .current
+        } else {
+            .upcoming
+        }
     }
 
     func isRunning(_ id: RunningTimer.ID) -> Bool {

@@ -1,3 +1,4 @@
+import CookingFeature
 import RecipeFeature
 
 /// What the kitchen has open over its recipe list, kept so a cold start opens it again.
@@ -8,6 +9,6 @@ struct KitchenRestoration: Hashable, Codable {
     /// What the recipe's screen has open, or `nil` while it stands as a push opened it.
     var recipe: RecipeFeatureRestoration?
 
-    /// Whether cooking from the recipe is open over the kitchen.
-    var isCooking: Bool
+    /// What cooking from the recipe has done, or `nil` while cooking is not open over the kitchen.
+    var cooking: CookingFeatureRestoration?
 }

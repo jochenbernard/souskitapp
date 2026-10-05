@@ -1,3 +1,4 @@
+import CookingFeature
 import Foundation
 @testable import KitchenFeature
 import Testing
@@ -19,7 +20,7 @@ struct KitchenRestorationRecordTests {
         isSettling: Bool = false
     ) -> KitchenRestorationRecord {
         KitchenRestorationRecord(
-            restoration: KitchenRestoration(recipeID: "crepes", isCooking: true),
+            restoration: KitchenRestoration(recipeID: "crepes", cooking: CookingFeatureRestoration()),
             lastUse: lastUse,
             isTerminated: isTerminated,
             isSettling: isSettling

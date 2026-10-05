@@ -3,6 +3,8 @@ struct CookingFeaturePresenterStub: CookingFeaturePresenterProtocol {
 
     func viewDidDisappear() {}
 
+    func didToggleStep(_: Int) {}
+
     func didTapTimer(_: StepTimer) {}
 
     func didOpenTimerList() {}
