@@ -1,6 +1,6 @@
 /// Timers that count down and go off when they are over, whether the app is open or not.
 public protocol TimerScheduler: Sendable {
-    /// The timers running now.
+    /// The timers running, read once without following later changes.
     ///
     /// - Returns: The timers, soonest first.
     @MainActor
