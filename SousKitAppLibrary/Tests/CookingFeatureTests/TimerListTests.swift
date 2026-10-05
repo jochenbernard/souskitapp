@@ -1,5 +1,4 @@
 @testable import CookingFeature
-import Foundation
 import SousKit
 import Testing
 
@@ -9,33 +8,6 @@ struct TimerListTests {
 
     private func makeViewModel() -> CookingFeatureViewModel {
         CookingFeatureViewModel(recipe: parser.parseRecipe("Whisk it.").value, title: "Vinaigrette")
-    }
-
-    @MainActor
-    private func makePresenter(
-        viewModel: CookingFeatureViewModel,
-        timerScheduler: TimerScheduler = TimerSchedulerSpy()
-    ) -> CookingFeaturePresenter {
-        CookingFeaturePresenter(
-            handler: CookingFeatureHandlerSpy(),
-            idleTimer: IdleTimerSpy(),
-            restoration: nil,
-            timerScheduler: timerScheduler,
-            viewModel: viewModel
-        )
-    }
-
-    private func makeRunningTimer() -> RunningTimer {
-        RunningTimer(
-            id: UUID(),
-            stepTimer: StepTimer(
-                stepNumber: 3,
-                text: "15 min",
-                duration: .seconds(900)
-            ),
-            endDate: .now.addingTimeInterval(900.0),
-            isRinging: false
-        )
     }
 
     @MainActor
@@ -49,7 +21,7 @@ struct TimerListTests {
     func openingTheStackOpensTheList() {
         let viewModel = makeViewModel()
 
-        makePresenter(viewModel: viewModel).didOpenTimerList()
+        CookingFeaturePresenter.stubbed(viewModel: viewModel).didOpenTimerList()
 
         #expect(viewModel.isTimerListOpen)
     }
@@ -58,7 +30,7 @@ struct TimerListTests {
     @Test("closing the list folds it back into the stack")
     func closingTheList() {
         let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel)
 
         presenter.didOpenTimerList()
         presenter.didCloseTimerList()
@@ -71,9 +43,9 @@ struct TimerListTests {
     func listClosesOnceEmpty() async {
         let viewModel = makeViewModel()
         viewModel.isTimerListOpen = true
-        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[makeRunningTimer()], []])
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[RunningTimer.stubbed()], []])
 
-        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
+        await CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
 
         #expect(!viewModel.isTimerListOpen)
     }
@@ -83,9 +55,9 @@ struct TimerListTests {
     func listStaysOpenWithATimer() async {
         let viewModel = makeViewModel()
         viewModel.isTimerListOpen = true
-        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[makeRunningTimer()]])
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[RunningTimer.stubbed()]])
 
-        await makePresenter(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
+        await CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler).viewDidAppear()
 
         #expect(viewModel.isTimerListOpen)
     }

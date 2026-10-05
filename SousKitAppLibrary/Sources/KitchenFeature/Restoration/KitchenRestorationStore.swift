@@ -38,14 +38,7 @@ public struct KitchenRestorationStore {
     ///
     /// - Parameter restoration: What the kitchen has open.
     func save(_ restoration: KitchenRestoration) {
-        // A change made while a cold start settles keeps it unsettled, so a crash in it still counts.
-        write(
-            KitchenRestorationRecord(
-                restoration: restoration,
-                lastUse: .now,
-                isSettling: record()?.isSettling ?? false
-            )
-        )
+        write(restoration, over: record())
     }
 
     /// Changes what the kitchen has open for a recipe, in use now, or leaves the store as it is where another is open.
@@ -62,9 +55,7 @@ public struct KitchenRestorationStore {
         }
 
         change(&record.restoration)
-        record.lastUse = .now
-        record.isTerminated = false
-        write(record)
+        write(record.restoration, over: record)
     }
 
     /// Records that the kitchen is in use now.
@@ -97,6 +88,17 @@ public struct KitchenRestorationStore {
 
         change(&record)
         write(record)
+    }
+
+    private func write(_ restoration: KitchenRestoration, over previous: KitchenRestorationRecord?) {
+        // A change made while a cold start settles keeps it unsettled, so a crash in it still counts.
+        write(
+            KitchenRestorationRecord(
+                restoration: restoration,
+                lastUse: .now,
+                isSettling: previous?.isSettling ?? false
+            )
+        )
     }
 
     private func write(_ record: KitchenRestorationRecord) {

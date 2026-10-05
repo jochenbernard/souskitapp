@@ -26,15 +26,10 @@ final class CookingFeatureViewModel {
         runningTimers.count > 1
     }
 
-    // Past the last step once every step is done, so no step is current then.
-    private var currentStepNumber: Int? {
-        (1...).first(where: { !completedStepNumbers.contains($0) })
-    }
-
     func progress(ofStep number: Int) -> StepProgress {
         if completedStepNumbers.contains(number) {
             .done
-        } else if number == currentStepNumber {
+        } else if (1..<number).allSatisfy(completedStepNumbers.contains) {
             .current
         } else {
             .upcoming

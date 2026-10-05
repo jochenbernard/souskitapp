@@ -26,21 +26,6 @@ struct StepCompletionTests {
     }
 
     @MainActor
-    private func makePresenter(
-        viewModel: CookingFeatureViewModel,
-        handler: CookingFeatureHandler = CookingFeatureHandlerSpy(),
-        restoration: CookingFeatureRestoration? = nil
-    ) -> CookingFeaturePresenter {
-        CookingFeaturePresenter(
-            handler: handler,
-            idleTimer: IdleTimerSpy(),
-            restoration: restoration,
-            timerScheduler: TimerSchedulerSpy(),
-            viewModel: viewModel
-        )
-    }
-
-    @MainActor
     @Test("the first step is the current one before any is done")
     func firstStepStartsCurrent() {
         let viewModel = makeStepsViewModel()
@@ -55,7 +40,7 @@ struct StepCompletionTests {
     func tickingOffMovesTheCurrentStep() {
         let viewModel = makeStepsViewModel()
 
-        makePresenter(viewModel: viewModel).didToggleStep(1)
+        CookingFeaturePresenter.stubbed(viewModel: viewModel).didToggleStep(1)
 
         #expect(viewModel.progress(ofStep: 1) == .done)
         #expect(viewModel.progress(ofStep: 2) == .current)
@@ -67,7 +52,7 @@ struct StepCompletionTests {
     func tickingOffAheadKeepsTheCurrentStep() {
         let viewModel = makeStepsViewModel()
 
-        makePresenter(viewModel: viewModel).didToggleStep(2)
+        CookingFeaturePresenter.stubbed(viewModel: viewModel).didToggleStep(2)
 
         #expect(viewModel.progress(ofStep: 1) == .current)
         #expect(viewModel.progress(ofStep: 2) == .done)
@@ -78,7 +63,7 @@ struct StepCompletionTests {
     @Test("ticking off a step again undoes it")
     func tickingOffAgainUndoes() {
         let viewModel = makeStepsViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel)
 
         presenter.didToggleStep(1)
         presenter.didToggleStep(2)
@@ -92,7 +77,7 @@ struct StepCompletionTests {
     @Test("the steps count on across the groups")
     func stepsCountOnAcrossGroups() {
         let viewModel = makeStepsViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel)
 
         presenter.didToggleStep(1)
         presenter.didToggleStep(2)
@@ -104,7 +89,7 @@ struct StepCompletionTests {
     @Test("no step is current once every step is done")
     func noStepIsCurrentOnceAllAreDone() {
         let viewModel = makeStepsViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel)
 
         for number in 1...3 {
             presenter.didToggleStep(number)
@@ -117,7 +102,7 @@ struct StepCompletionTests {
     @Test("every tick and untick reports the steps done, for a cold start")
     func tickingReportsTheRestoration() {
         let handler = CookingFeatureHandlerSpy()
-        let presenter = makePresenter(viewModel: makeStepsViewModel(), handler: handler)
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: makeStepsViewModel(), handler: handler)
 
         presenter.didToggleStep(1)
         presenter.didToggleStep(3)
@@ -137,7 +122,7 @@ struct StepCompletionTests {
     func restorationTicksOffItsSteps() {
         let viewModel = makeStepsViewModel()
 
-        _ = makePresenter(
+        _ = CookingFeaturePresenter.stubbed(
             viewModel: viewModel,
             restoration: CookingFeatureRestoration(completedStepNumbers: [1, 2])
         )
