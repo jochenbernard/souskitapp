@@ -17,6 +17,11 @@ struct CookingSteps: View {
     // A `.body` number with room around it, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var stepNumberDiameter = 32.0
 
+    // A check that marks a done step on the number's corner, growing with it.
+    @ScaledMetric(relativeTo: .body) private var doneBadgeDiameter = 20.0
+    // Far enough out to clear a two-digit number.
+    @ScaledMetric(relativeTo: .body) private var doneBadgeOffset = 9.0
+
     init(
         presenter: CookingFeaturePresenterProtocol,
         viewModel: CookingFeatureViewModel
@@ -86,6 +91,9 @@ struct CookingSteps: View {
                 stepMark(number, progress: progress)
                     .frame(width: stepNumberDiameter, height: stepNumberDiameter)
                     .background(markFill(progress), in: Circle())
+                    .overlay(alignment: .bottomTrailing) {
+                        doneBadge(isDone: progress == .done)
+                    }
                     // A target a finger finds without aiming, inside the room the row's padding leaves.
                     .padding(SousSpacing.small)
                     .contentShape(.rect)
@@ -97,47 +105,23 @@ struct CookingSteps: View {
         .accessibilityValue(progressDescription(progress))
     }
 
-    // The number stays in place under the check, hidden, so the mark keeps the baseline the step's first line sits on.
+    // A done step keeps its number, since a timer names the step it belongs to by number.
     private func stepMark(_ number: Int, progress: StepProgress) -> some View {
-        let isDone = progress == .done
-
-        return Text(verbatim: String(number))
+        Text(verbatim: String(number))
             .monospacedDigit()
             .foregroundStyle(numberStyle(progress))
-            .opacity(isDone ? 0.0 : 1.0)
-            .overlay {
-                checkmark(progress)
-            }
     }
 
     private func numberStyle(_ progress: StepProgress) -> Color {
         switch progress {
-        case .done, .upcoming:
-            .primary
+        case .done:
+            .secondary
 
         case .current:
             .white
-        }
-    }
 
-    @ViewBuilder
-    private func checkmark(_ progress: StepProgress) -> some View {
-        switch progress {
-        case .done:
-            Image(systemName: "checkmark")
-                .imageScale(.small)
-                .foregroundStyle(.secondary)
-                // The toggle's value already reads the step as done.
-                .accessibilityHidden(true)
-                .transition(
-                    AsymmetricTransition(
-                        insertion: SymbolEffectTransition(effect: .drawOn, options: .default),
-                        removal: OpacityTransition()
-                    )
-                )
-
-        case .current, .upcoming:
-            EmptyView()
+        case .upcoming:
+            .primary
         }
     }
 
@@ -149,6 +133,23 @@ struct CookingSteps: View {
         case .current:
             .accent
         }
+    }
+
+    // The badge comes and goes inside a frame that stays where it sits, so it grows in from its own centre.
+    private func doneBadge(isDone: Bool) -> some View {
+        ZStack {
+            if isDone {
+                StepDoneBadge()
+                    .transition(
+                        .asymmetric(
+                            insertion: .scale.combined(with: .opacity).animation(.spring(duration: 0.35, bounce: 0.3)),
+                            removal: .opacity
+                        )
+                    )
+            }
+        }
+        .frame(width: doneBadgeDiameter, height: doneBadgeDiameter)
+        .offset(x: doneBadgeOffset, y: doneBadgeOffset)
     }
 
     private func progressDescription(_ progress: StepProgress) -> Text {
