@@ -134,9 +134,24 @@ public struct SousCatalog: View {
                 Button(action: {}, label: { Text(verbatim: "Vinaigrette") })
                     .buttonStyle(.sousQuiet)
 
+                bareButton
+
                 chipButtons
             }
         }
+    }
+
+    private var bareButton: some View {
+        Button(
+            action: {},
+            label: {
+                Text(verbatim: "1")
+                    .monospacedDigit()
+                    .frame(width: 32.0, height: 32.0)
+                    .background(.tertiaryFill, in: Circle())
+            }
+        )
+        .buttonStyle(.sousBare)
     }
 
     private var chipButtons: some View {

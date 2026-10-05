@@ -1,3 +1,4 @@
+import CookingFeature
 import Foundation
 @testable import KitchenFeature
 import Testing
@@ -16,39 +17,39 @@ struct KitchenRestorationRecordTests {
 
     private func makeRecord(
         isTerminated: Bool = false,
-        isRestoring: Bool = false
+        isSettling: Bool = false
     ) -> KitchenRestorationRecord {
         KitchenRestorationRecord(
-            restoration: KitchenRestoration(recipeID: "crepes", isCooking: true),
+            restoration: KitchenRestoration(recipeID: "crepes", cooking: CookingFeatureRestoration()),
             lastUse: lastUse,
             isTerminated: isTerminated,
-            isRestoring: isRestoring
+            isSettling: isSettling
         )
     }
 
     @Test("a kitchen in use within the lifetime opens again")
-    func withinLifetimeOpens() {
-        #expect(makeRecord().isRestorable(at: withinLifetime, hasRunningTimers: false))
+    func withinLifetimeOpens() async {
+        #expect(await makeRecord().isRestorable(at: withinLifetime, hasRunningTimers: false))
     }
 
     @Test("a kitchen last in use a lifetime ago or more does not open")
-    func pastLifetimeDoesNotOpen() {
-        #expect(!makeRecord().isRestorable(at: pastLifetime, hasRunningTimers: false))
+    func pastLifetimeDoesNotOpen() async {
+        #expect(await !makeRecord().isRestorable(at: pastLifetime, hasRunningTimers: false))
     }
 
     @Test("a kitchen quit while it ran does not open")
-    func terminatedDoesNotOpen() {
-        #expect(!makeRecord(isTerminated: true).isRestorable(at: withinLifetime, hasRunningTimers: false))
+    func terminatedDoesNotOpen() async {
+        #expect(await !makeRecord(isTerminated: true).isRestorable(at: withinLifetime, hasRunningTimers: false))
     }
 
     @Test("a running timer opens a kitchen quit while it ran, or past its lifetime")
-    func runningTimerOpens() {
-        #expect(makeRecord(isTerminated: true).isRestorable(at: withinLifetime, hasRunningTimers: true))
-        #expect(makeRecord().isRestorable(at: pastLifetime, hasRunningTimers: true))
+    func runningTimerOpens() async {
+        #expect(await makeRecord(isTerminated: true).isRestorable(at: withinLifetime, hasRunningTimers: true))
+        #expect(await makeRecord().isRestorable(at: pastLifetime, hasRunningTimers: true))
     }
 
     @Test("a restore that never settled does not open, even with a running timer")
-    func unsettledRestoreDoesNotOpen() {
-        #expect(!makeRecord(isRestoring: true).isRestorable(at: withinLifetime, hasRunningTimers: true))
+    func unsettledRestoreDoesNotOpen() async {
+        #expect(await !makeRecord(isSettling: true).isRestorable(at: withinLifetime, hasRunningTimers: true))
     }
 }

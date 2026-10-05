@@ -40,16 +40,6 @@ struct RecipeFeatureRestorationTests {
     }
 
     @MainActor
-    private func scaledRecipe(of viewModel: RecipeFeatureViewModel) -> ScaledRecipe? {
-        guard case .recipe(let recipe) = viewModel.recipeContent else {
-            Issue.record("The recipe did not reach the view model.")
-            return nil
-        }
-
-        return recipe
-    }
-
-    @MainActor
     @Test("a restored scale applies to the recipe once it is read")
     func restoredScale() async {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
@@ -61,7 +51,7 @@ struct RecipeFeatureRestorationTests {
 
         await presenter.viewDidAppear()
 
-        #expect(scaledRecipe(of: viewModel)?.scale == eightServings)
+        #expect(viewModel.scaledRecipe?.scale == eightServings)
         #expect(viewModel.scaleText == "8")
     }
 
@@ -79,7 +69,7 @@ struct RecipeFeatureRestorationTests {
         presenter.didTapReset()
         await presenter.viewDidAppear()
 
-        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .servings, value: 4.0))
+        #expect(viewModel.scaledRecipe?.scale == RecipeScale(target: .servings, value: 4.0))
     }
 
     @MainActor

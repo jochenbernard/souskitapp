@@ -38,14 +38,24 @@ public struct KitchenRestorationStore {
     ///
     /// - Parameter restoration: What the kitchen has open.
     func save(_ restoration: KitchenRestoration) {
-        // A change made while a cold start settles keeps it unsettled, so a crash in it still counts.
-        write(
-            KitchenRestorationRecord(
-                restoration: restoration,
-                lastUse: .now,
-                isRestoring: record()?.isRestoring ?? false
-            )
-        )
+        write(restoration, over: record())
+    }
+
+    /// Changes what the kitchen has open for a recipe, in use now, or leaves the store as it is where another is open.
+    ///
+    /// - Parameters:
+    ///   - recipeID: The id of the recipe the change is for.
+    ///   - change: The change.
+    func update(recipeID: String, _ change: (inout KitchenRestoration) -> Void) {
+        guard
+            var record = record(),
+            record.restoration.recipeID == recipeID
+        else {
+            return
+        }
+
+        change(&record.restoration)
+        write(record.restoration, over: record)
     }
 
     /// Records that the kitchen is in use now.
@@ -59,16 +69,16 @@ public struct KitchenRestorationStore {
     }
 
     /// Records that a cold start is opening what the kitchen had open, in use now.
-    func beginRestoring() {
+    func beginSettling() {
         update { record in
-            record.isRestoring = true
+            record.isSettling = true
             record.lastUse = .now
         }
     }
 
     /// Records that the cold start opening what the kitchen had open settled.
-    func finishRestoring() {
-        update({ $0.isRestoring = false })
+    func finishSettling() {
+        update({ $0.isSettling = false })
     }
 
     private func update(_ change: (inout KitchenRestorationRecord) -> Void) {
@@ -80,12 +90,18 @@ public struct KitchenRestorationStore {
         write(record)
     }
 
-    private func write(_ record: KitchenRestorationRecord) {
-        guard let data = try? JSONEncoder().encode(record) else {
-            clear()
-            return
-        }
+    private func write(_ restoration: KitchenRestoration, over previous: KitchenRestorationRecord?) {
+        // A change made while a cold start settles keeps it unsettled, so a crash in it still counts.
+        write(
+            KitchenRestorationRecord(
+                restoration: restoration,
+                lastUse: .now,
+                isSettling: previous?.isSettling ?? false
+            )
+        )
+    }
 
-        userDefaults.set(data, forKey: Self.key)
+    private func write(_ record: KitchenRestorationRecord) {
+        userDefaults.set(try? JSONEncoder().encode(record), forKey: Self.key)
     }
 }

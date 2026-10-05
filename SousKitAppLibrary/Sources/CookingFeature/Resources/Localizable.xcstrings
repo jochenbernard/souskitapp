@@ -129,6 +129,22 @@
         }
       }
     },
+    "In progress" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In progress"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezig"
+          }
+        }
+      }
+    },
     "Keep timer" : {
       "localizations" : {
         "en" : {
@@ -141,6 +157,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Timer laten lopen"
+          }
+        }
+      }
+    },
+    "Marks the step as done" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marks the step as done"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markeert de stap als klaar"
+          }
+        }
+      }
+    },
+    "Marks the step as not done" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Marks the step as not done"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markeert de stap als niet klaar"
           }
         }
       }

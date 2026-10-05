@@ -38,16 +38,6 @@ struct RecipeFeaturePresenterTests {
     }
 
     @MainActor
-    private func scaledRecipe(of viewModel: RecipeFeatureViewModel) -> ScaledRecipe? {
-        guard case .recipe(let recipe) = viewModel.recipeContent else {
-            Issue.record("The recipe did not reach the view model.")
-            return nil
-        }
-
-        return recipe
-    }
-
-    @MainActor
     @Test("the view model starts out reading")
     func readingBeforeTheFirstRead() {
         guard case .reading = RecipeFeatureViewModel(recipeEntry: crepes).recipeContent else {
@@ -74,7 +64,7 @@ struct RecipeFeaturePresenterTests {
 
         await presenter.viewDidAppear()
 
-        guard let recipe = scaledRecipe(of: viewModel) else {
+        guard let recipe = viewModel.scaledRecipe else {
             return
         }
 
@@ -92,7 +82,7 @@ struct RecipeFeaturePresenterTests {
 
         await makePresenter(viewModel: viewModel, recipeText: "").viewDidAppear()
 
-        #expect(scaledRecipe(of: viewModel)?.scaled.steps.isEmpty == true)
+        #expect(viewModel.scaledRecipe?.scaled.steps.isEmpty == true)
     }
 
     @MainActor
@@ -105,7 +95,7 @@ struct RecipeFeaturePresenterTests {
         presenter.didChangeScaleText("8")
         await presenter.viewDidAppear()
 
-        guard let recipe = scaledRecipe(of: viewModel) else {
+        guard let recipe = viewModel.scaledRecipe else {
             return
         }
 
@@ -131,7 +121,7 @@ struct RecipeFeaturePresenterTests {
                 """
         ).viewDidAppear()
 
-        guard let recipe = scaledRecipe(of: viewModel) else {
+        guard let recipe = viewModel.scaledRecipe else {
             return
         }
 

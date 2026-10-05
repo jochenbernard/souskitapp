@@ -1,4 +1,4 @@
-import CookingFeature
+@testable import CookingFeature
 import Foundation
 @testable import KitchenFeature
 @testable import RecipeFeature
@@ -43,19 +43,31 @@ struct KitchenFeatureRestorationTests {
         viewModel: KitchenFeatureViewModel,
         recipeRepository: RecipeRepositorySpy = RecipeRepositorySpy()
     ) -> KitchenFeaturePresenter {
-        KitchenFeaturePresenter(
-            cookingFeatureFactory: CookingFeatureFactory(
-                idleTimer: IdleTimerStub(),
-                timerScheduler: TimerSchedulerStub()
-            ),
-            handler: KitchenFeatureHandlerStub(),
-            recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
-            recipeRepository: recipeRepository,
-            restorationSettleTime: .zero,
+        .stubbed(
+            viewModel: viewModel,
+            parser: parser,
             restorationStore: restorationStore,
-            timerScheduler: TimerSchedulerStub(),
-            viewModel: viewModel
+            recipeRepository: recipeRepository
         )
+    }
+
+    /// Restores a kitchen whose repository lists each of the results in turn, and returns its view model and presenter.
+    @MainActor
+    private func restore(
+        listing results: [Result<[RecipeEntry], Error>]
+    ) async -> (viewModel: KitchenFeatureViewModel, presenter: KitchenFeaturePresenter) {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = makeViewModel(isRestoring: true)
+        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
+
+        for result in results {
+            recipeRepository.send(result)
+        }
+
+        recipeRepository.finish()
+        await presenter.viewDidAppear()
+
+        return (viewModel, presenter)
     }
 
     @MainActor
@@ -63,7 +75,7 @@ struct KitchenFeatureRestorationTests {
     func pushKeepsTheRecipe() {
         makePresenter(viewModel: makeViewModel()).didChangeScreenPath([.recipe(crepes)])
 
-        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: crepes.id))
     }
 
     @MainActor
@@ -111,11 +123,11 @@ struct KitchenFeatureRestorationTests {
         presenter.didChangeScreenPath([.recipe(crepes)])
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
-        #expect(restorationStore.restoration()?.isCooking == true)
+        #expect(restorationStore.restoration()?.cooking == CookingFeatureRestoration())
 
         presenter.cookingFeatureDidExit()
 
-        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: crepes.id))
     }
 
     @MainActor
@@ -128,7 +140,24 @@ struct KitchenFeatureRestorationTests {
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         presenter.didDismissCooking()
 
-        #expect(restorationStore.restoration()?.isCooking == false)
+        #expect(restorationStore.restoration()?.cooking == nil)
+    }
+
+    @MainActor
+    @Test("the steps cooking ticks off are kept, and forgotten once cooking is exited")
+    func tickedStepsAreKeptUntilExited() {
+        let cooking = CookingFeatureRestoration(completedStepNumbers: [1])
+        let presenter = makePresenter(viewModel: makeViewModel())
+
+        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.recipeFeatureDidStartCooking(recipe: parser.parseRecipe("Whisk it.").value)
+        presenter.cookingFeatureDidChangeRestoration(cooking)
+
+        #expect(restorationStore.restoration()?.cooking == cooking)
+
+        presenter.cookingFeatureDidExit()
+
+        #expect(restorationStore.restoration()?.cooking == nil)
     }
 
     @MainActor
@@ -139,32 +168,23 @@ struct KitchenFeatureRestorationTests {
             name: crepes.name,
             availability: .downloaded
         )
-        let recipeRepository = RecipeRepositorySpy()
-        let viewModel = makeViewModel(isRestoring: true)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: true))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
 
-        recipeRepository.send(.success([listedCrepes]))
-        recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+        let viewModel = await restore(listing: [.success([listedCrepes])]).viewModel
 
         #expect(viewModel.screenPath == [.recipe(listedCrepes)])
         #expect(viewModel.openRecipe?.recipeEntry == listedCrepes)
         #expect(viewModel.openCooking == nil)
         #expect(!viewModel.isRestoring)
-        #expect(restorationStore.restoration()?.isCooking == true)
+        #expect(restorationStore.restoration()?.cooking != nil)
     }
 
     @MainActor
     @Test("a kitchen whose recipe is no longer listed stays on its recipe list and forgets the recipe")
     func restoreWithoutTheRecipe() async {
-        let recipeRepository = RecipeRepositorySpy()
-        let viewModel = makeViewModel(isRestoring: true)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: true))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
 
-        recipeRepository.send(.success([]))
-        recipeRepository.send(.success([crepes]))
-        recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+        let viewModel = await restore(listing: [.success([]), .success([crepes])]).viewModel
 
         #expect(viewModel.screenPath.isEmpty)
         #expect(viewModel.openRecipe == nil)
@@ -175,14 +195,9 @@ struct KitchenFeatureRestorationTests {
     @MainActor
     @Test("a kitchen whose recipes cannot be listed stays on its recipe list and forgets the recipe")
     func restoreAfterAFailure() async {
-        let recipeRepository = RecipeRepositorySpy()
-        let viewModel = makeViewModel(isRestoring: true)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id))
 
-        recipeRepository.send(.failure(CocoaError(.fileReadNoSuchFile)))
-        recipeRepository.send(.success([crepes]))
-        recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+        let (viewModel, _) = await restore(listing: [.failure(CocoaError(.fileReadNoSuchFile)), .success([crepes])])
 
         #expect(viewModel.screenPath.isEmpty)
         #expect(restorationStore.restoration() == nil)
@@ -210,14 +225,9 @@ struct KitchenFeatureRestorationTests {
             name: "crepes suzette",
             availability: crepes.availability
         )
-        let recipeRepository = RecipeRepositorySpy()
-        let viewModel = makeViewModel(isRestoring: true)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: false))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id))
 
-        recipeRepository.send(.success([crepes]))
-        recipeRepository.send(.success([renamedCrepes]))
-        recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+        let viewModel = await restore(listing: [.success([crepes]), .success([renamedCrepes])]).viewModel
 
         #expect(viewModel.screenPath == [.recipe(crepes)])
         #expect(viewModel.openRecipe?.recipeEntry == crepes)
@@ -226,19 +236,25 @@ struct KitchenFeatureRestorationTests {
     @MainActor
     @Test("cooking resumed opens over the kitchen as resumed, and stays kept")
     func resumedCookingOpens() async {
-        let recipe = parser.parseRecipe("Whisk it.").value
-        let recipeRepository = RecipeRepositorySpy()
-        let viewModel = makeViewModel(isRestoring: true)
-        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
-        restorationStore.save(KitchenRestoration(recipeID: crepes.id, isCooking: true))
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
 
-        recipeRepository.send(.success([crepes]))
-        recipeRepository.finish()
-        await presenter.viewDidAppear()
-        presenter.recipeFeatureDidResumeCooking(recipe: recipe)
+        let (viewModel, presenter) = await restore(listing: [.success([crepes])])
+        presenter.recipeFeatureDidResumeCooking(recipe: parser.parseRecipe("Whisk it.").value)
 
         #expect(viewModel.openCooking?.isResumed == true)
-        #expect(restorationStore.restoration()?.isCooking == true)
+        #expect(restorationStore.restoration()?.cooking != nil)
+    }
+
+    @MainActor
+    @Test("cooking resumed keeps the steps it had ticked off")
+    func resumedCookingKeepsItsTickedSteps() async {
+        let cooking = CookingFeatureRestoration(completedStepNumbers: [1])
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: cooking))
+
+        let presenter = await restore(listing: [.success([crepes])]).presenter
+        presenter.recipeFeatureDidResumeCooking(recipe: parser.parseRecipe("Whisk it.").value)
+
+        #expect(restorationStore.restoration()?.cooking == cooking)
     }
 
     @MainActor
@@ -262,7 +278,7 @@ struct KitchenFeatureRestorationTests {
                 scale: RecipeScale(target: .yield(unit: "crepes"), value: 24.0),
                 isScaling: false
             ),
-            isCooking: true
+            cooking: CookingFeatureRestoration(completedStepNumbers: [1, 3])
         )
 
         restorationStore.save(restoration)

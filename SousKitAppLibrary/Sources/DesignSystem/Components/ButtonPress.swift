@@ -48,4 +48,16 @@ extension View {
         scaleEffect(isDown ? ButtonPress.scale : 1.0)
             .animation(ButtonPress.travel(isDown: isDown), value: isDown)
     }
+
+    /// Taps as a press goes down, and more lightly as it comes back.
+    ///
+    /// - Parameter isDown: Whether the control is down.
+    /// - Returns: The view, felt as it is pressed.
+    func sousPressFeedback(isDown: Bool) -> some View {
+        sensoryFeedback(trigger: isDown) { _, isDown in
+            isDown
+                ? .impact(flexibility: .rigid)
+                : .impact(flexibility: .rigid, intensity: ButtonPress.releaseIntensity)
+        }
+    }
 }

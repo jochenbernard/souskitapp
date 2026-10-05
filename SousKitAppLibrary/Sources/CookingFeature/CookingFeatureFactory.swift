@@ -23,11 +23,14 @@ public struct CookingFeatureFactory: Sendable {
     /// - Parameters:
     ///   - recipe: The recipe to cook from, already read.
     ///   - title: The recipe's title, as the cooking screen shows it.
+    ///   - restoration: What the screen had done when it was left, or `nil` for cooking just started.
     ///   - handler: What the feature reports to.
     /// - Returns: The feature.
+    @MainActor
     public func makeCookingFeature(
         recipe: Recipe,
         title: String,
+        restoration: CookingFeatureRestoration?,
         handler: CookingFeatureHandler
     ) -> CookingFeature {
         let viewModel = CookingFeatureViewModel(
@@ -37,6 +40,7 @@ public struct CookingFeatureFactory: Sendable {
         let presenter = CookingFeaturePresenter(
             handler: handler,
             idleTimer: idleTimer,
+            restoration: restoration,
             timerScheduler: timerScheduler,
             viewModel: viewModel
         )
