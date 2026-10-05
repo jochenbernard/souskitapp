@@ -186,8 +186,8 @@ extension RunningTimersPanel {
                 // A scrolled list scrolls the swipe's start; at its top, the start goes into the fold.
                 canOpen = true
                 let start = scrollView.contentOffset.y > 0.0 ? 0.0 : scrollView.distanceMoved(by: pan, along: \.y)
-                // A list caught bouncing past its top is folded as far as it has bounced instead.
-                let bounce = max(0.0, -scrollView.contentOffset.y)
+                // A list caught bouncing past its top is folded as far as it had bounced when the finger came down.
+                let bounce = max(0.0, -scrollView.touchDownContentOffset.y)
                 if bounce > 0.0 {
                     scrollView.contentOffset.y = 0.0
                 }
@@ -331,7 +331,7 @@ extension RunningTimersPanel {
             withVelocity _: CGPoint,
             targetContentOffset: UnsafeMutablePointer<CGPoint>
         ) {
-            if fold > 0.0 {
+            if fold != 0.0 {
                 targetContentOffset.pointee.y = 0.0
             }
         }
