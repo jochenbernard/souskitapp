@@ -55,23 +55,13 @@ struct RecipeFeatureScalingTests {
     }
 
     @MainActor
-    private func scaledRecipe(of viewModel: RecipeFeatureViewModel) -> ScaledRecipe? {
-        guard case .recipe(let recipe) = viewModel.recipeContent else {
-            Issue.record("The recipe did not reach the view model.")
-            return nil
-        }
-
-        return recipe
-    }
-
-    @MainActor
     @Test("the sheet opens on the servings a recipe declares")
     func fieldAfterTheFirstRead() async {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
 
         await makePresenter(viewModel: viewModel, recipeText: crepesText).viewDidAppear()
 
-        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .servings, value: 4.0))
+        #expect(viewModel.scaledRecipe?.scale == RecipeScale(target: .servings, value: 4.0))
         #expect(viewModel.scaleText == "4")
     }
 
@@ -82,7 +72,7 @@ struct RecipeFeatureScalingTests {
 
         await makePresenter(viewModel: viewModel, recipeText: vinaigretteText).viewDidAppear()
 
-        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .multiplier, value: 1.0))
+        #expect(viewModel.scaledRecipe?.scale == RecipeScale(target: .multiplier, value: 1.0))
         #expect(viewModel.scaleText == "1")
     }
 
@@ -105,7 +95,7 @@ struct RecipeFeatureScalingTests {
         await presenter.viewDidAppear()
         presenter.didChangeScaleText("8")
 
-        guard let recipe = scaledRecipe(of: viewModel) else {
+        guard let recipe = viewModel.scaledRecipe else {
             return
         }
 
@@ -125,7 +115,7 @@ struct RecipeFeatureScalingTests {
         presenter.didChangeScaleText("8")
         presenter.didChangeScaleText("12")
 
-        #expect(scaledRecipe(of: viewModel)?.scaled.ingredients.map(\.amount?.text) == ["12", "750 g"])
+        #expect(viewModel.scaledRecipe?.scaled.ingredients.map(\.amount?.text) == ["12", "750 g"])
     }
 
     @MainActor
@@ -139,7 +129,7 @@ struct RecipeFeatureScalingTests {
         presenter.didChangeScaleText("")
 
         #expect(viewModel.scaleText.isEmpty)
-        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .servings, value: 8.0))
+        #expect(viewModel.scaledRecipe?.scale == RecipeScale(target: .servings, value: 8.0))
     }
 
     @MainActor
@@ -151,7 +141,7 @@ struct RecipeFeatureScalingTests {
         await presenter.viewDidAppear()
         presenter.didStepScale(by: 1.0)
 
-        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .servings, value: 5.0))
+        #expect(viewModel.scaledRecipe?.scale == RecipeScale(target: .servings, value: 5.0))
         #expect(viewModel.scaleText == "5")
     }
 
@@ -165,7 +155,7 @@ struct RecipeFeatureScalingTests {
         presenter.didChangeScaleText("1")
         presenter.didStepScale(by: -1.0)
 
-        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .servings, value: 1.0))
+        #expect(viewModel.scaledRecipe?.scale == RecipeScale(target: .servings, value: 1.0))
     }
 
     @MainActor
@@ -178,7 +168,7 @@ struct RecipeFeatureScalingTests {
         presenter.didChangeScaleText("8")
         presenter.didTapTarget(.multiplier)
 
-        guard let recipe = scaledRecipe(of: viewModel) else {
+        guard let recipe = viewModel.scaledRecipe else {
             return
         }
 
@@ -196,7 +186,7 @@ struct RecipeFeatureScalingTests {
         await presenter.viewDidAppear()
         presenter.didTapTarget(.servings)
 
-        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .multiplier, value: 1.0))
+        #expect(viewModel.scaledRecipe?.scale == RecipeScale(target: .multiplier, value: 1.0))
     }
 
     @MainActor
@@ -210,7 +200,7 @@ struct RecipeFeatureScalingTests {
         presenter.didTapTarget(.multiplier)
         presenter.didTapReset()
 
-        guard let recipe = scaledRecipe(of: viewModel) else {
+        guard let recipe = viewModel.scaledRecipe else {
             return
         }
 
@@ -248,7 +238,7 @@ struct RecipeFeatureScalingTests {
         await presenter.viewDidAppear()
 
         #expect(viewModel.scaleText == "1.")
-        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .servings, value: 1.0))
+        #expect(viewModel.scaledRecipe?.scale == RecipeScale(target: .servings, value: 1.0))
     }
 
     @MainActor
@@ -261,7 +251,7 @@ struct RecipeFeatureScalingTests {
         presenter.didChangeScaleText("12")
         presenter.didTapTarget(.yield(unit: "kg"))
 
-        guard let recipe = scaledRecipe(of: viewModel) else {
+        guard let recipe = viewModel.scaledRecipe else {
             return
         }
 
@@ -280,7 +270,7 @@ struct RecipeFeatureScalingTests {
         presenter.didChangeScaleText("17")
         presenter.didTapTarget(.yield(unit: "kg"))
 
-        #expect(scaledRecipe(of: viewModel)?.scale.value == 5.1)
+        #expect(viewModel.scaledRecipe?.scale.value == 5.1)
     }
 
     @MainActor
@@ -293,7 +283,7 @@ struct RecipeFeatureScalingTests {
         presenter.didTapTarget(.yield(unit: "kg"))
         presenter.didChangeScaleText("0.9")
 
-        guard let recipe = scaledRecipe(of: viewModel) else {
+        guard let recipe = viewModel.scaledRecipe else {
             return
         }
 
@@ -312,7 +302,7 @@ struct RecipeFeatureScalingTests {
         presenter.didTapTarget(.yield(unit: "kg"))
         presenter.didStepScale(by: 1.0)
 
-        #expect(scaledRecipe(of: viewModel)?.scale == RecipeScale(target: .yield(unit: "kg"), value: 1.9))
+        #expect(viewModel.scaledRecipe?.scale == RecipeScale(target: .yield(unit: "kg"), value: 1.9))
         #expect(viewModel.scaleText == "1.9")
     }
 }
