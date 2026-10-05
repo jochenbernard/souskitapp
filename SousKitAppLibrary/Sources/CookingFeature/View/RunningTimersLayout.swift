@@ -88,8 +88,10 @@ struct RunningTimersLayout: Layout {
     ///     into, or a gap under the bar.
     ///   - horizontalInset: How far the timers keep from the region's sides.
     ///   - listAnchor: Where the list sits while it is shorter than the region.
-    ///   - scrollOffset: How far the list is scrolled down, which the collapse button stays clear of.
-    ///   - scrollShift: How far up the list keeps its rows while it folds from a scrolled position.
+    ///   - scrollOffset: How far the list is scrolled down, or bounced past its top for negative values, which the
+    ///     collapse button stays clear of.
+    ///   - scrollShift: How far up the list keeps its rows while it folds from a scrolled position, down for negative
+    ///     values.
     ///   - metrics: Where the layout leaves what a swipe needs to know.
     init(
         openness: Double,

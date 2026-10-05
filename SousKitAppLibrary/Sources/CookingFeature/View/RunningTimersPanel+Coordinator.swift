@@ -188,7 +188,10 @@ extension RunningTimersPanel {
                 let start = scrollView.contentOffset.y > 0.0 ? 0.0 : scrollView.distanceMoved(by: pan, along: \.y)
                 // A list caught bouncing past its top is folded as far as it has bounced instead.
                 let bounce = max(0.0, -scrollView.contentOffset.y)
-                scrollView.contentOffset.y += bounce
+                if bounce > 0.0 {
+                    scrollView.contentOffset.y = 0.0
+                }
+
                 fold = presentedFold() + bounce + (fits ? start : max(0.0, start))
                 foldBase = travel - fold
                 setFold(fold)
