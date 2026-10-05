@@ -84,7 +84,8 @@ struct RunningTimersLayout: Layout {
     ///   - rubberBand: How far the timers are pulled past where they open or fold to, down for positive values.
     ///   - region: The room the panel shows the timers in.
     ///   - topInset: How far into the region the list may rise.
-    ///   - roomHeight: The room kept above the listed timers, for the collapse button and the fade they scroll into.
+    ///   - roomHeight: The room kept above the listed timers, for the collapse button and the fade they scroll
+    ///     into, or a gap under the bar.
     ///   - horizontalInset: How far the timers keep from the region's sides.
     ///   - listAnchor: Where the list sits while it is shorter than the region.
     ///   - scrollOffset: How far the list is scrolled down, which the collapse button stays clear of.
