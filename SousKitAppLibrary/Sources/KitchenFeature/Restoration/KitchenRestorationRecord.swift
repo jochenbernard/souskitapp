@@ -15,25 +15,25 @@ struct KitchenRestorationRecord: Codable {
     var isTerminated = false
 
     /// Whether a cold start is opening the restoration and has not settled yet.
-    var isRestoring = false
+    var isSettling = false
 
     /// Whether a cold start opens the restoration again.
     ///
     /// - Parameters:
     ///   - date: When the cold start happens.
-    ///   - hasRunningTimers: Whether a timer is counting down or ringing.
+    ///   - hasRunningTimers: Whether a timer is counting down or ringing, evaluated only where it changes the result.
     /// - Returns: Whether the restoration opens.
-    func isRestorable(at date: Date, hasRunningTimers: Bool) -> Bool {
+    func isRestorable(at date: Date, hasRunningTimers: @autoclosure @MainActor () async -> Bool) async -> Bool {
         // A restoration that never settled took the app down with it, and would again.
-        guard !isRestoring else {
+        guard !isSettling else {
             return false
         }
 
-        // A timer outlives the app, so cooking comes back to show it and cancel it, however the app ended.
-        guard !hasRunningTimers else {
+        guard isTerminated || date.timeIntervalSince(lastUse) >= Self.lifetime else {
             return true
         }
 
-        return !isTerminated && date.timeIntervalSince(lastUse) < Self.lifetime
+        // A timer outlives the app, so cooking comes back to show it and cancel it, however the app ended.
+        return await hasRunningTimers()
     }
 }

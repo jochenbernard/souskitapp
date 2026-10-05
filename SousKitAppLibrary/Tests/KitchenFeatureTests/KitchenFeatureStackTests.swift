@@ -1,8 +1,6 @@
-import CookingFeature
 @testable import KitchenFeature
 import Observation
 import os
-import RecipeFeature
 import RecipeLibrary
 import SousKit
 import Testing
@@ -34,20 +32,10 @@ struct KitchenFeatureStackTests {
 
     @MainActor
     private func makePresenter(viewModel: KitchenFeatureViewModel) -> KitchenFeaturePresenter {
-        let recipeRepository = RecipeRepositorySpy()
-
-        return KitchenFeaturePresenter(
-            cookingFeatureFactory: CookingFeatureFactory(
-                idleTimer: IdleTimerStub(),
-                timerScheduler: TimerSchedulerStub()
-            ),
-            handler: KitchenFeatureHandlerStub(),
-            recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
-            recipeRepository: recipeRepository,
-            restorationSettleTime: .zero,
-            restorationStore: KitchenRestorationStore(userDefaults: defaults.userDefaults),
-            timerScheduler: TimerSchedulerStub(),
-            viewModel: viewModel
+        .stubbed(
+            viewModel: viewModel,
+            parser: parser,
+            restorationStore: KitchenRestorationStore(userDefaults: defaults.userDefaults)
         )
     }
 

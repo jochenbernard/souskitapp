@@ -1,7 +1,6 @@
 @testable import CookingFeature
 import Foundation
 @testable import KitchenFeature
-import RecipeFeature
 import RecipeLibrary
 import SousKit
 import Testing
@@ -56,18 +55,13 @@ struct KitchenFeatureRestorationRulesTests {
         timerScheduler: TimerSchedulerStub = TimerSchedulerStub(),
         restorationSettleTime: Duration = .zero
     ) -> KitchenFeaturePresenter {
-        KitchenFeaturePresenter(
-            cookingFeatureFactory: CookingFeatureFactory(
-                idleTimer: IdleTimerStub(),
-                timerScheduler: timerScheduler
-            ),
-            handler: KitchenFeatureHandlerStub(),
-            recipeFeatureFactory: RecipeFeatureFactory(parser: parser, recipeRepository: recipeRepository),
-            recipeRepository: recipeRepository,
-            restorationSettleTime: restorationSettleTime,
+        .stubbed(
+            viewModel: viewModel,
+            parser: parser,
             restorationStore: restorationStore,
+            recipeRepository: recipeRepository,
             timerScheduler: timerScheduler,
-            viewModel: viewModel
+            restorationSettleTime: restorationSettleTime
         )
     }
 
@@ -124,7 +118,7 @@ struct KitchenFeatureRestorationRulesTests {
     @Test("a restore that never settled is not opened again, even with a timer running")
     func unsettledRestoreIsDropped() async {
         restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
-        restorationStore.beginRestoring()
+        restorationStore.beginSettling()
 
         let viewModel = await restoreListingCrepes(timerScheduler: TimerSchedulerStub(timers: [runningTimer]))
 
@@ -141,7 +135,7 @@ struct KitchenFeatureRestorationRulesTests {
         _ = await restoreListingCrepes(restorationSettleTime: .seconds(60))
 
         let record = try #require(restorationStore.record())
-        #expect(record.isRestoring)
+        #expect(record.isSettling)
         #expect(record.lastUse >= before)
     }
 
@@ -153,11 +147,11 @@ struct KitchenFeatureRestorationRulesTests {
         _ = await restoreListingCrepes()
 
         // Waits for the settle, or for the suite's time limit to end the test.
-        while restorationStore.record()?.isRestoring == true {
+        while restorationStore.record()?.isSettling == true {
             await Task.yield()
         }
 
-        #expect(restorationStore.record()?.isRestoring == false)
+        #expect(restorationStore.record()?.isSettling == false)
     }
 
     @MainActor
@@ -173,15 +167,41 @@ struct KitchenFeatureRestorationRulesTests {
 
     @MainActor
     @Test("a change keeps a restore unsettled, and forgets that the app was quit")
-    func changeKeepsRestoringAndForgetsTermination() throws {
+    func changeKeepsSettlingAndForgetsTermination() throws {
         restorationStore.save(KitchenRestoration(recipeID: crepes.id))
-        restorationStore.beginRestoring()
+        restorationStore.beginSettling()
         restorationStore.recordTermination()
 
         restorationStore.save(KitchenRestoration(recipeID: crepes.id, cooking: CookingFeatureRestoration()))
 
         let record = try #require(restorationStore.record())
-        #expect(record.isRestoring)
+        #expect(record.isSettling)
         #expect(!record.isTerminated)
+    }
+
+    @MainActor
+    @Test("a change to the recipe kept keeps a restore unsettled, and forgets that the app was quit")
+    func updateKeepsSettlingAndForgetsTermination() throws {
+        restorationStore.save(KitchenRestoration(recipeID: crepes.id))
+        restorationStore.beginSettling()
+        restorationStore.recordTermination()
+
+        restorationStore.update(recipeID: crepes.id, { $0.cooking = CookingFeatureRestoration() })
+
+        let record = try #require(restorationStore.record())
+        #expect(record.restoration.cooking != nil)
+        #expect(record.isSettling)
+        #expect(!record.isTerminated)
+    }
+
+    @MainActor
+    @Test("a change to another recipe leaves the recipe kept as it is")
+    func updateForAnotherRecipeIsIgnored() {
+        let restoration = KitchenRestoration(recipeID: crepes.id)
+        restorationStore.save(restoration)
+
+        restorationStore.update(recipeID: "gratin", { $0.cooking = CookingFeatureRestoration() })
+
+        #expect(restorationStore.restoration() == restoration)
     }
 }

@@ -143,18 +143,18 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             return
         }
 
-        let hasRunningTimers = await hasRunningTimers()
+        let isRestorable = await record.isRestorable(at: .now, hasRunningTimers: await hasRunningTimers())
         viewModel.isRestoring = false
 
         guard
-            record.isRestorable(at: .now, hasRunningTimers: hasRunningTimers),
+            isRestorable,
             let recipeEntry = recipeEntries.first(where: { $0.id == record.restoration.recipeID })
         else {
             restorationStore.clear()
             return
         }
 
-        restorationStore.beginRestoring()
+        restorationStore.beginSettling()
         viewModel.screenPath = [.recipe(recipeEntry)]
         viewModel.openRecipe = makeOpenRecipe(
             recipeEntry,
@@ -162,9 +162,9 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             resumesCooking: record.restoration.cooking != nil
         )
 
-        Task {
+        Task { [restorationSettleTime, restorationStore] in
             try? await Task.sleep(for: restorationSettleTime)
-            restorationStore.finishRestoring()
+            restorationStore.finishSettling()
         }
     }
 
@@ -225,15 +225,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// Changes what the store keeps for the recipe on top of the stack.
     @MainActor
     private func updateRestoration(_ update: (inout KitchenRestoration) -> Void) {
-        guard
-            case .recipe(let recipeEntry) = viewModel.screenPath.last,
-            var restoration = restorationStore.restoration(),
-            restoration.recipeID == recipeEntry.id
-        else {
+        guard case .recipe(let recipeEntry) = viewModel.screenPath.last else {
             return
         }
 
-        update(&restoration)
-        restorationStore.save(restoration)
+        restorationStore.update(recipeID: recipeEntry.id, update)
     }
 }
