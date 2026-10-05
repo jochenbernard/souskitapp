@@ -11,6 +11,9 @@ struct CookingSteps: View {
     private let presenter: CookingFeaturePresenterProtocol
     private let viewModel: CookingFeatureViewModel
 
+    // Steps done before the steps appear, such as restored ones, show their check without drawing it on.
+    @State private var hasAppeared = false
+
     // A comfortable line length for the `.title3` steps, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title3) private var stepsWidth = 720.0
 
@@ -39,6 +42,9 @@ struct CookingSteps: View {
         .frame(maxWidth: stepsWidth)
         .environment(\.openURL, OpenURLAction(handler: openTimer))
         .animation(.spring(duration: 0.3, bounce: 0.0), value: viewModel.completedStepNumbers)
+        .onAppear {
+            hasAppeared = true
+        }
     }
 
     private func groupView(_ numbered: NumberedGroup) -> some View {
@@ -103,6 +109,8 @@ struct CookingSteps: View {
         .padding(-SousSpacing.small)
         .accessibilityLabel(Text("Step \(number)", bundle: .module))
         .accessibilityValue(progressDescription(progress))
+        .accessibilityHint(toggleHint(progress))
+        .accessibilityAddTraits(.isToggle)
     }
 
     // A done step keeps its number, since a timer names the step it belongs to by number.
@@ -139,7 +147,7 @@ struct CookingSteps: View {
     private func doneBadge(isDone: Bool) -> some View {
         ZStack {
             if isDone {
-                StepDoneBadge()
+                StepDoneBadge(drawsOn: hasAppeared)
                     .transition(
                         .asymmetric(
                             insertion: .scale.combined(with: .opacity).animation(.spring(duration: 0.35, bounce: 0.3)),
@@ -162,6 +170,16 @@ struct CookingSteps: View {
 
         case .upcoming:
             Text(verbatim: "")
+        }
+    }
+
+    private func toggleHint(_ progress: StepProgress) -> Text {
+        switch progress {
+        case .done:
+            Text("Marks the step as not done", bundle: .module)
+
+        case .current, .upcoming:
+            Text("Marks the step as done", bundle: .module)
         }
     }
 

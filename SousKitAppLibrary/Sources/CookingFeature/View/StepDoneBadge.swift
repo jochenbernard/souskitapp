@@ -1,10 +1,14 @@
 import DesignSystem
 import SwiftUI
 
-/// The check on a done step's number, drawn on as it appears.
+/// The check on a done step's number, drawn on as it appears when the step is ticked off.
 struct StepDoneBadge: View {
     // Drawn off until the badge is on screen, so the check draws on as the badge fades in.
-    @State private var isDrawn = false
+    @State private var isDrawn: Bool
+
+    init(drawsOn: Bool) {
+        self._isDrawn = State(initialValue: !drawsOn)
+    }
 
     var body: some View {
         ZStack {
@@ -28,7 +32,7 @@ struct StepDoneBadge: View {
 }
 
 #Preview("Step done badge") {
-    StepDoneBadge()
+    StepDoneBadge(drawsOn: true)
         .frame(width: 20.0, height: 20.0)
         .padding(SousSpacing.xLarge)
         .background(.secondaryGroupedBackground)
