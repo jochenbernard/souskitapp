@@ -87,8 +87,10 @@ struct RunningTimersPanelContent: View {
             .accessibilityElement(children: .contain)
             .accessibilityAddTraits(isListOpen ? .isModal : [])
             .accessibilityAction(.escape, close)
+            // Held to the hosting view's height, or it centers timers that outgrow it until it grows with them.
             .frame(
                 maxWidth: .infinity,
+                minHeight: 0.0,
                 maxHeight: .infinity,
                 alignment: .top
             )
@@ -100,6 +102,7 @@ struct RunningTimersPanelContent: View {
             swoop: arrival.swoopProgress,
             swoopingTimer: arrival.swoopingTimer,
             rubberBand: motion.rubberBand,
+            heldBounce: motion.heldBounce,
             region: region,
             topInset: topInset,
             roomHeight: roomHeight,

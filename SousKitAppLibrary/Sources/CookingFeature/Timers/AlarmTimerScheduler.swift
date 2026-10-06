@@ -11,10 +11,14 @@ public struct AlarmTimerScheduler: TimerScheduler {
         self.startedTimerStore = StartedTimerStore()
     }
 
+    public func currentRunningTimers() -> [RunningTimer] {
+        runningTimers(of: (try? AlarmManager.shared.alarms) ?? [])
+    }
+
     public func runningTimers() -> AsyncStream<[RunningTimer]> {
         AsyncStream { continuation in
             let task = Task { @MainActor in
-                continuation.yield(runningTimers(of: (try? AlarmManager.shared.alarms) ?? []))
+                continuation.yield(currentRunningTimers())
 
                 for await alarms in AlarmManager.shared.alarmUpdates {
                     continuation.yield(runningTimers(of: alarms))

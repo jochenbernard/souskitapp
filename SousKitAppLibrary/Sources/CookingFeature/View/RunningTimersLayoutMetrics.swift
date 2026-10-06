@@ -7,14 +7,28 @@ import Synchronization
 /// Not observed: the layout writes it in every pass, and a swipe reads it as it begins. Safe to use from any thread,
 /// since SwiftUI may lay the timers out away from the main thread while they animate.
 final class RunningTimersLayoutMetrics: Sendable {
-    private struct Values {
+    /// What a layout pass found.
+    struct Pass {
+        /// How far the soonest timer travels from the list to the stack.
         var foldDistance: CGFloat = 1.0
+
+        /// How far open the timers were laid out.
         var presentedOpenness = 0.0
-        var presentedRubberBand: CGFloat = 0.0
+
+        /// How far past its top the list was laid out held.
+        var presentedHeldBounce: CGFloat = 0.0
+
+        /// How far a finger folds the timers to where they were laid out.
+        var presentedFold: CGFloat = 0.0
+
+        /// Each timer and its frame in the panel's content, the soonest first.
         var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
+
+        /// The collapse button's frame in the panel's content, if there is one.
+        var collapseButtonFrame: CGRect?
     }
 
-    private let values = Mutex(Values())
+    private let values = Mutex(Pass())
 
     /// How far the soonest timer travels from its place in the list to its place in the stack.
     var foldDistance: CGFloat {
@@ -26,9 +40,16 @@ final class RunningTimersLayoutMetrics: Sendable {
         values.withLock({ $0.presentedOpenness })
     }
 
-    /// How far past where they open or fold to the timers were laid out, as an animation in flight has them.
-    var presentedRubberBand: CGFloat {
-        values.withLock({ $0.presentedRubberBand })
+    /// How far past its top the list was laid out held where a finger caught it bouncing, as an animation in flight has
+    /// it.
+    var presentedHeldBounce: CGFloat {
+        values.withLock({ $0.presentedHeldBounce })
+    }
+
+    /// How far a finger folds the timers to where they were laid out, as an animation in flight has them, down from the
+    /// list for positive values.
+    var presentedFold: CGFloat {
+        values.withLock({ $0.presentedFold })
     }
 
     /// Where each timer was laid out, the soonest first, in the panel's content.
@@ -36,26 +57,25 @@ final class RunningTimersLayoutMetrics: Sendable {
         values.withLock({ $0.timerFrames })
     }
 
+    /// Where the button that folds the list back was laid out, in the panel's content, if anywhere.
+    var collapseButtonFrame: CGRect? {
+        values.withLock({ $0.collapseButtonFrame })
+    }
+
     init() {}
+
+    /// How far the soonest timer travels to the stack from the list held past its top.
+    ///
+    /// - Parameter held: How far past its top the list is held.
+    /// - Returns: The distance, a point at least.
+    func foldDistance(holding held: CGFloat) -> CGFloat {
+        max(1.0, foldDistance - held)
+    }
 
     /// Records what a layout pass found.
     ///
-    /// - Parameters:
-    ///   - foldDistance: How far the soonest timer travels from the list to the stack.
-    ///   - presentedOpenness: How far open the timers were laid out.
-    ///   - presentedRubberBand: How far past where they open or fold to the timers were laid out.
-    ///   - timerFrames: Each timer and its frame in the panel's content, the soonest first.
-    func update(
-        foldDistance: CGFloat,
-        presentedOpenness: Double,
-        presentedRubberBand: CGFloat,
-        timerFrames: [(id: RunningTimer.ID, frame: CGRect)]
-    ) {
-        values.withLock { values in
-            values.foldDistance = foldDistance
-            values.presentedOpenness = presentedOpenness
-            values.presentedRubberBand = presentedRubberBand
-            values.timerFrames = timerFrames
-        }
+    /// - Parameter pass: What the pass found.
+    func update(_ pass: Pass) {
+        values.withLock({ $0 = pass })
     }
 }
