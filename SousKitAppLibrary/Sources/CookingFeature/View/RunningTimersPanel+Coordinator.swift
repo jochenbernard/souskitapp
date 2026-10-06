@@ -241,8 +241,7 @@ extension RunningTimersPanel {
             return kind == .folding && !viewModel.isTimerListOpen && !scrollView.isSideways(openingPan)
         }
 
-        // Holds the timers where they are laid out, so a spring still settling them stops there rather than carrying on
-        // under the finger. One overshooting past either end changes nothing here, so it settles back on its own.
+        // Stops a spring still settling the timers where they are laid out, rather than carrying on under the finger.
         private func catchTimers(at position: RunningTimersLayoutMetrics.Position) {
             withAnimation(.halt) {
                 motion.openness = position.openness
