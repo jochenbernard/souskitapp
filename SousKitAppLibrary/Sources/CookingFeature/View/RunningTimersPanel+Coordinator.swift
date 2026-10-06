@@ -138,7 +138,8 @@ extension RunningTimersPanel {
             scrollView.contentSize = size
         }
 
-        // While the list is closed, only the stack and the timers folding into it take touches; the steps get the rest.
+        // While the list is closed, only the stack, the timers folding into it and the collapse button fading with them
+        // take touches; the steps get the rest.
         private func isHittable(_ point: CGPoint) -> Bool {
             guard kind == .folding, !viewModel.isTimerListOpen else {
                 return true
@@ -154,7 +155,10 @@ extension RunningTimersPanel {
             // Timers above the top inset are faded out of sight, so the bar there keeps its taps as they fold.
             let isOnTimer = point.y >= topInset && metrics.timerFrames.contains(where: { $0.frame.contains(point) })
 
-            return stack.contains(point) || isOnTimer
+            let isOnButton = RunningTimersCollapseButton.isVisible(openness: metrics.presentedOpenness)
+                && metrics.collapseButtonFrame?.contains(point) == true
+
+            return stack.contains(point) || isOnTimer || isOnButton
         }
 
         // The list scrolls only while it is open. Closing it undoes its scrolling, which the content keeps in its

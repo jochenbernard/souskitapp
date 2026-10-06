@@ -14,7 +14,8 @@ struct RunningTimersCollapseButton: View, Animatable {
 
     /// - Parameters:
     ///   - openness: How far the timers are open, from 0 stacked to 1 listed.
-    ///   - isOpen: Whether the list is open, which is when the button takes taps.
+    ///   - isOpen: Whether the list is open. The button takes taps while it is, and while it is in sight as the list
+    ///     folds.
     ///   - action: What folds the list back.
     init(
         openness: Double,
@@ -24,6 +25,14 @@ struct RunningTimersCollapseButton: View, Animatable {
         self.openness = openness
         self.isOpen = isOpen
         self.action = action
+    }
+
+    /// Whether the button is in sight, at how far the timers are open.
+    ///
+    /// - Parameter openness: How far the timers are open, from 0 stacked to 1 listed.
+    /// - Returns: Whether any of the button shows.
+    static func isVisible(openness: Double) -> Bool {
+        openness > fadeStart
     }
 
     nonisolated var animatableData: Double {
@@ -43,7 +52,8 @@ struct RunningTimersCollapseButton: View, Animatable {
             }
             .buttonStyle(.glassCircle)
             .runningTimersFade(openness: openness, over: Self.fadeStart...Self.fadeEnd)
-            .allowsHitTesting(isOpen)
+            // A tap on it as it fades with the list folding still lands on it, and closes nothing more.
+            .allowsHitTesting(isOpen || Self.isVisible(openness: openness))
         }
     }
 }

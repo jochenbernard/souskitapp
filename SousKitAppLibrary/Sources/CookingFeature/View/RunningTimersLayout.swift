@@ -177,13 +177,6 @@ struct RunningTimersLayout: Layout {
             }
         }
 
-        metrics.update(
-            foldDistance: max(1.0, measured.stackTop - measured.listRowsTop),
-            presentedOpenness: openness.clamped(to: 0.0...1.0),
-            presentedRubberBand: rubberBand,
-            timerFrames: timerFrames
-        )
-
         if let countBadge = measured.countBadge, !measured.timers.isEmpty {
             let front = between(stackRect(0, in: measured), and: listRect(0, in: measured))
 
@@ -194,15 +187,28 @@ struct RunningTimersLayout: Layout {
             )
         }
 
+        var collapseButtonFrame: CGRect?
+
         if let button = measured.button {
             let rect = between(stackedButtonRect(button, in: measured), and: listedButtonRect(button, in: measured))
+            let origin = CGPoint(x: bounds.minX + rect.minX, y: bounds.minY + rubberBand + rect.minY)
 
             button.place(
-                at: CGPoint(x: bounds.minX + rect.minX, y: bounds.minY + rubberBand + rect.minY),
+                at: origin,
                 anchor: .topLeading,
                 proposal: ProposedViewSize(rect.size)
             )
+
+            collapseButtonFrame = CGRect(origin: origin, size: rect.size)
         }
+
+        metrics.update(
+            foldDistance: max(1.0, measured.stackTop - measured.listRowsTop),
+            presentedOpenness: openness.clamped(to: 0.0...1.0),
+            presentedRubberBand: rubberBand,
+            timerFrames: timerFrames,
+            collapseButtonFrame: collapseButtonFrame
+        )
 
         // Kept at the top of what is on screen, over the timers that have scrolled up under the room and faded.
         measured.cover?.place(

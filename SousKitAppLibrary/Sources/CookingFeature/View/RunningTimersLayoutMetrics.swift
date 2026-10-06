@@ -12,6 +12,7 @@ final class RunningTimersLayoutMetrics: Sendable {
         var presentedOpenness = 0.0
         var presentedRubberBand: CGFloat = 0.0
         var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
+        var collapseButtonFrame: CGRect?
     }
 
     private let values = Mutex(Values())
@@ -36,6 +37,11 @@ final class RunningTimersLayoutMetrics: Sendable {
         values.withLock({ $0.timerFrames })
     }
 
+    /// Where the button that folds the list back was laid out, in the panel's content, if anywhere.
+    var collapseButtonFrame: CGRect? {
+        values.withLock({ $0.collapseButtonFrame })
+    }
+
     init() {}
 
     /// Records what a layout pass found.
@@ -45,17 +51,20 @@ final class RunningTimersLayoutMetrics: Sendable {
     ///   - presentedOpenness: How far open the timers were laid out.
     ///   - presentedRubberBand: How far past where they open or fold to the timers were laid out.
     ///   - timerFrames: Each timer and its frame in the panel's content, the soonest first.
+    ///   - collapseButtonFrame: The collapse button's frame in the panel's content, if there is one.
     func update(
         foldDistance: CGFloat,
         presentedOpenness: Double,
         presentedRubberBand: CGFloat,
-        timerFrames: [(id: RunningTimer.ID, frame: CGRect)]
+        timerFrames: [(id: RunningTimer.ID, frame: CGRect)],
+        collapseButtonFrame: CGRect?
     ) {
         values.withLock { values in
             values.foldDistance = foldDistance
             values.presentedOpenness = presentedOpenness
             values.presentedRubberBand = presentedRubberBand
             values.timerFrames = timerFrames
+            values.collapseButtonFrame = collapseButtonFrame
         }
     }
 }
