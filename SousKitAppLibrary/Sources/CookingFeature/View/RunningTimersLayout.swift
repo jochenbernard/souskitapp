@@ -268,25 +268,12 @@ struct RunningTimersLayout: Layout {
         )
     }
 
-    // One curve from the front over the top of the stack and down into the timer's place, halfway along just above
-    // the soonest timer and clear of the stack, where it passes from in front of the others to behind them.
+    // The swooping timer's place on its way from the front of the stack to its own.
     private func swoopRect(_ depth: Int, in measured: Measurement) -> CGRect {
-        let start = stackRect(0, in: measured)
-        let end = stackRect(depth, in: measured)
-        let top = start.offsetBy(dx: 0.0, dy: -(start.height + Self.spacing))
-
-        func along(_ value: (CGRect) -> CGFloat) -> CGFloat {
-            let control = 2.0 * value(top) - (value(start) + value(end)) / 2.0
-            let remaining = 1.0 - swoop
-
-            return remaining * remaining * value(start) + 2.0 * remaining * swoop * control + swoop * swoop * value(end)
-        }
-
-        return CGRect(
-            x: along(\.minX),
-            y: along(\.minY),
-            width: along(\.width),
-            height: along(\.height)
+        RunningTimerSwoopPath.rect(
+            at: swoop,
+            from: stackRect(0, in: measured),
+            to: stackRect(depth, in: measured)
         )
     }
 
