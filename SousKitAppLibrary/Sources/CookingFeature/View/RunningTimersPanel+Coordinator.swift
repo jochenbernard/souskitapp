@@ -28,7 +28,9 @@ extension RunningTimersPanel {
         private lazy var scrolling = RunningTimersScrolling(
             scrollView: scrollView,
             contentView: hostingController.view,
-            motion: motion
+            motion: motion,
+            // The finger's travel counts the scrolling, so a hold let go under it would leave the fold that far behind.
+            onScrollBack: { [weak self] distance in self?.foldBase -= distance }
         )
 
         private lazy var folding = RunningTimersFolding(
@@ -248,22 +250,6 @@ extension RunningTimersPanel {
             }
 
             motion.scrollOffset = scrollView.contentOffset.y
-            scrolling.updateFloor()
-        }
-
-        // The finger scrolls the list from where it shows.
-        func scrollViewWillBeginDragging(_: UIScrollView) {
-            scrolling.releaseHold()
-        }
-
-        // A fling settles in `scrollViewDidEndDecelerating`, and may still lie past the end until then.
-        func scrollViewDidEndDragging(_: UIScrollView, willDecelerate decelerate: Bool) {
-            if !decelerate {
-                scrolling.updateFloor()
-            }
-        }
-
-        func scrollViewDidEndDecelerating(_: UIScrollView) {
             scrolling.updateFloor()
         }
 
