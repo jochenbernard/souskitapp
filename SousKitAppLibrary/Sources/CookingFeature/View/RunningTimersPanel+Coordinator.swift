@@ -136,23 +136,21 @@ extension RunningTimersPanel {
             scrolling.releaseHold()
         }
 
-        // While the list is closed, only the stack and the timers folding into it take touches; the steps get the rest.
+        // While the list is closed, the steps get every touch but those on the stack, folding timers and fading button.
         private func isHittable(_ point: CGPoint) -> Bool {
             guard kind == .folding, !viewModel.isTimerListOpen else {
                 return true
             }
 
-            let stack = CGRect(
-                x: 0.0,
-                y: region.height - motion.stackHeight,
-                width: region.width,
-                height: motion.stackHeight
-            )
+            let stack = motion.stackFrame(in: region)
 
             // Timers above the top inset are faded out of sight, so the bar there keeps its taps as they fold.
             let isOnTimer = point.y >= topInset && metrics.timerFrames.contains(where: { $0.frame.contains(point) })
 
-            return stack.contains(point) || isOnTimer
+            let isOnButton = RunningTimersCollapseButton.isVisible(openness: metrics.presentedOpenness)
+                && metrics.collapseButtonFrame?.contains(point) == true
+
+            return stack.contains(point) || isOnTimer || isOnButton
         }
 
         // Closing undoes the scrolling, which the content keeps in its rows' places so they fold from where they were.

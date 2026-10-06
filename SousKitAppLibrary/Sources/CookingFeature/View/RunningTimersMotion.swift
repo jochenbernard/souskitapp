@@ -37,4 +37,17 @@ final class RunningTimersMotion {
     var stackHeight: CGFloat = 0.0
 
     nonisolated init() {}
+
+    /// Where the stack stands, across the bottom of a region.
+    ///
+    /// - Parameter region: The room the panel shows the timers in.
+    /// - Returns: The stack's frame in the region.
+    func stackFrame(in region: CGSize) -> CGRect {
+        CGRect(
+            x: 0.0,
+            y: region.height - stackHeight,
+            width: region.width,
+            height: stackHeight
+        )
+    }
 }
