@@ -138,8 +138,7 @@ extension RunningTimersPanel {
             scrollView.contentSize = size
         }
 
-        // While the list is closed, only the stack, the timers folding into it and the collapse button fading with them
-        // take touches; the steps get the rest.
+        // While the list is closed, the steps get every touch but those on the stack, folding timers and fading button.
         private func isHittable(_ point: CGPoint) -> Bool {
             guard kind == .folding, !viewModel.isTimerListOpen else {
                 return true
