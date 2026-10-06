@@ -257,7 +257,7 @@ extension RunningTimersPanel {
         private func setFold(_ amount: CGFloat) {
             fold = amount
 
-            if let position = hold?.position(at: amount, distance: metrics.foldDistance) {
+            if let position = hold?.position(at: amount) {
                 moveTimers(to: position, animation: nil)
             }
         }
