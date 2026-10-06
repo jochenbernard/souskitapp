@@ -5,14 +5,16 @@ import SwiftUI
 /// instead of the scrolling cutting back at once.
 @MainActor
 final class RunningTimersScrolling {
-    // How long a hold lasts, by when the timers' spring has settled.
-    private static let holdDuration = Animation.runningTimersDuration * 2.0
-
     private let scrollView: UIScrollView
     private let contentView: UIView
     private let motion: RunningTimersMotion
     private var contentHeight: CGFloat = 0.0
     private var release: Task<Void, Never>?
+
+    // How far the list's floor lies below the timers.
+    private var hold: CGFloat {
+        max(0.0, motion.scrollFloor - contentHeight)
+    }
 
     /// - Parameters:
     ///   - scrollView: The scroll view the timers scroll in.
@@ -36,13 +38,13 @@ final class RunningTimersScrolling {
         contentHeight = height
         resizeContent()
 
-        guard motion.scrollFloor > height else {
+        guard hold > 0.0 else {
             return
         }
 
         release?.cancel()
         release = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(Self.holdDuration))
+            try? await Task.sleep(for: .seconds(Animation.runningTimersSettlingDuration))
 
             if !Task.isCancelled {
                 self?.releaseHold()
@@ -71,8 +73,6 @@ final class RunningTimersScrolling {
     /// moves, and sizes the content anew.
     func releaseHold() {
         release?.cancel()
-        release = nil
-        let hold = motion.scrollFloor - contentHeight
 
         if hold > 0.0 {
             scrollView.contentOffset.y = max(0.0, scrollView.contentOffset.y - hold)
@@ -84,19 +84,15 @@ final class RunningTimersScrolling {
 
     /// Takes the bottom of what shows as the list's floor while it rests, and none while a finger or a fling moves it.
     func updateFloor() {
-        let floor = if scrollView.isDragging || scrollView.isDecelerating {
+        motion.scrollFloor = if scrollView.isDragging || scrollView.isDecelerating {
             0.0
         } else {
             scrollView.contentOffset.y + scrollView.bounds.height
         }
-
-        if motion.scrollFloor != floor {
-            motion.scrollFloor = floor
-        }
     }
 
     private func resizeContent() {
-        let size = CGSize(width: scrollView.bounds.width, height: max(contentHeight, motion.scrollFloor))
+        let size = CGSize(width: scrollView.bounds.width, height: contentHeight + hold)
         contentView.frame = CGRect(origin: .zero, size: size)
         scrollView.contentSize = size
     }

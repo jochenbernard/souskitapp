@@ -13,6 +13,12 @@ extension Animation {
     /// or the list settling after a swipe. It overshoots a little.
     static let runningTimers = Animation.spring(duration: runningTimersDuration, bounce: runningTimersBounce)
 
+    /// How long the running timers take to come to rest once moved, overshoot included.
+    static let runningTimersSettlingDuration = Spring(
+        duration: runningTimersDuration,
+        bounce: runningTimersBounce
+    ).settlingDuration
+
     /// How a timer swoops from the front of the stack to its place behind the others: the timers' spring, slower.
     static let runningTimerSwoop = Animation.spring(duration: runningTimerSwoopDuration, bounce: runningTimersBounce)
 
