@@ -184,16 +184,16 @@ extension RunningTimersPanel {
             case .began:
                 // A scrolled list scrolls the swipe's start; at its top, the start goes into the fold.
                 canOpen = true
-                let start = scrollView.contentOffset.y > 0.0 ? 0.0 : scrollView.distanceMoved(by: pan, along: \.y)
-                let presented = metrics.presentedFold(dimension: scrollView.bounds.height)
+                let moved = scrollView.contentOffset.y > 0.0 ? 0.0 : scrollView.distanceMoved(by: pan, along: \.y)
+                let start = fits ? moved : max(0.0, moved)
+                let presented = metrics.presentedPosition(dimension: scrollView.bounds.height)
 
-                if fits || presented >= 0.0 {
-                    fold = presented + (fits ? start : max(0.0, start))
-                    catchTimers()
+                if fits || presented.fold >= 0.0 {
+                    fold = presented.fold + start
+                    catchTimers(at: presented)
                 } else {
                     // A list that scrolls takes no pull past its top, so a spring settling it back from one carries on.
-                    fold = max(0.0, start)
-                    setFold(fold)
+                    setFold(start)
                 }
 
                 foldBase = travel - fold
@@ -218,10 +218,10 @@ extension RunningTimersPanel {
             switch pan.state {
             case .began:
                 canOpen = viewModel.canOpenTimerList
-                let presented = metrics.presentedFold(dimension: scrollView.bounds.height)
-                fold = presented + scrollView.distanceMoved(by: pan, along: \.y)
+                let presented = metrics.presentedPosition(dimension: scrollView.bounds.height)
+                fold = presented.fold + scrollView.distanceMoved(by: pan, along: \.y)
                 foldBase = travel - fold
-                catchTimers()
+                catchTimers(at: presented)
             case .changed:
                 setFold(travel - foldBase)
             case .ended, .cancelled, .failed:
@@ -243,10 +243,10 @@ extension RunningTimersPanel {
 
         // Holds the timers where they are laid out, so a spring still settling them stops there rather than carrying on
         // under the finger. One overshooting past either end changes nothing here, so it settles back on its own.
-        private func catchTimers() {
+        private func catchTimers(at position: RunningTimersLayoutMetrics.Position) {
             withAnimation(.halt) {
-                motion.openness = metrics.presentedOpenness
-                motion.rubberBand = metrics.presentedRubberBand
+                motion.openness = position.openness
+                motion.rubberBand = position.rubberBand
             }
         }
 

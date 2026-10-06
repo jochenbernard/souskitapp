@@ -7,6 +7,21 @@ import Synchronization
 /// Not observed: the layout writes it in every pass, and a swipe reads it as it begins. Safe to use from any thread,
 /// since SwiftUI may lay the timers out away from the main thread while they animate.
 final class RunningTimersLayoutMetrics: Sendable {
+    /// Where the timers were laid out, as an animation in flight has them.
+    struct Position {
+        /// How far open the timers were laid out.
+        let openness: Double
+
+        /// How far past where they open or fold to the timers were laid out.
+        let rubberBand: CGFloat
+
+        /// The fold that puts the timers there, with what is left of a pull past either end: negative past open and
+        /// beyond ``RunningTimersLayoutMetrics/foldDistance`` past folded.
+        ///
+        /// A spring overshooting either end is left out, since it settles back on its own.
+        let fold: CGFloat
+    }
+
     private struct Values {
         var foldDistance: CGFloat = 1.0
         var presentedOpenness = 0.0
@@ -26,11 +41,6 @@ final class RunningTimersLayoutMetrics: Sendable {
         values.withLock({ $0.presentedOpenness })
     }
 
-    /// How far past where they open or fold to the timers were laid out, as an animation in flight has them.
-    var presentedRubberBand: CGFloat {
-        values.withLock({ $0.presentedRubberBand })
-    }
-
     /// Where each timer was laid out, the soonest first, in the panel's content.
     var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] {
         values.withLock({ $0.timerFrames })
@@ -38,18 +48,20 @@ final class RunningTimersLayoutMetrics: Sendable {
 
     init() {}
 
-    /// The fold that puts the timers where they were laid out, with what is left of a pull past either end.
-    ///
-    /// A spring overshooting either end is left out, since it settles back on its own.
+    /// Where the timers were laid out, every value from the same layout pass.
     ///
     /// - Parameter dimension: How long the scroll view is along the fold.
-    /// - Returns: How far the timers are folded from open, negative past open and beyond ``foldDistance`` past folded.
-    func presentedFold(dimension: CGFloat) -> CGFloat {
+    /// - Returns: How far open and past either end the timers were laid out, and the fold that puts them there.
+    func presentedPosition(dimension: CGFloat) -> Position {
         values.withLock { values in
             let rubberBand = values.presentedRubberBand
             let pull = RubberBand.pull(forOffset: abs(rubberBand), dimension: dimension)
 
-            return (1.0 - values.presentedOpenness) * values.foldDistance + (rubberBand < 0.0 ? -pull : pull)
+            return Position(
+                openness: values.presentedOpenness,
+                rubberBand: rubberBand,
+                fold: (1.0 - values.presentedOpenness) * values.foldDistance + (rubberBand < 0.0 ? -pull : pull)
+            )
         }
     }
 
