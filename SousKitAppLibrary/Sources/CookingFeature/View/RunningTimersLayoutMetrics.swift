@@ -10,7 +10,8 @@ final class RunningTimersLayoutMetrics: Sendable {
     private struct Values {
         var foldDistance: CGFloat = 1.0
         var presentedOpenness = 0.0
-        var presentedRubberBand: CGFloat = 0.0
+        var presentedHeldBounce: CGFloat = 0.0
+        var presentedFold: CGFloat = 0.0
         var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
         var collapseButtonFrame: CGRect?
     }
@@ -27,9 +28,16 @@ final class RunningTimersLayoutMetrics: Sendable {
         values.withLock({ $0.presentedOpenness })
     }
 
-    /// How far past where they open or fold to the timers were laid out, as an animation in flight has them.
-    var presentedRubberBand: CGFloat {
-        values.withLock({ $0.presentedRubberBand })
+    /// How far past its top the list was laid out held where a finger caught it bouncing, as an animation in flight has
+    /// it.
+    var presentedHeldBounce: CGFloat {
+        values.withLock({ $0.presentedHeldBounce })
+    }
+
+    /// How far a finger folds the timers to where they were laid out, as an animation in flight has them, down from the
+    /// list for positive values.
+    var presentedFold: CGFloat {
+        values.withLock({ $0.presentedFold })
     }
 
     /// Where each timer was laid out, the soonest first, in the panel's content.
@@ -44,25 +52,36 @@ final class RunningTimersLayoutMetrics: Sendable {
 
     init() {}
 
+    /// How far the soonest timer travels to the stack from the list held past its top.
+    ///
+    /// - Parameter held: How far past its top the list is held.
+    /// - Returns: The distance, a point at least.
+    func foldDistance(holding held: CGFloat) -> CGFloat {
+        max(1.0, foldDistance - held)
+    }
+
     /// Records what a layout pass found.
     ///
     /// - Parameters:
     ///   - foldDistance: How far the soonest timer travels from the list to the stack.
     ///   - presentedOpenness: How far open the timers were laid out.
-    ///   - presentedRubberBand: How far past where they open or fold to the timers were laid out.
+    ///   - presentedHeldBounce: How far past its top the list was laid out held.
+    ///   - presentedFold: How far a finger folds the timers to where they were laid out.
     ///   - timerFrames: Each timer and its frame in the panel's content, the soonest first.
     ///   - collapseButtonFrame: The collapse button's frame in the panel's content, if there is one.
     func update(
         foldDistance: CGFloat,
         presentedOpenness: Double,
-        presentedRubberBand: CGFloat,
+        presentedHeldBounce: CGFloat,
+        presentedFold: CGFloat,
         timerFrames: [(id: RunningTimer.ID, frame: CGRect)],
         collapseButtonFrame: CGRect?
     ) {
         values.withLock { values in
             values.foldDistance = foldDistance
             values.presentedOpenness = presentedOpenness
-            values.presentedRubberBand = presentedRubberBand
+            values.presentedHeldBounce = presentedHeldBounce
+            values.presentedFold = presentedFold
             values.timerFrames = timerFrames
             values.collapseButtonFrame = collapseButtonFrame
         }

@@ -102,6 +102,7 @@ struct RunningTimersPanelContent: View {
             swoop: arrival.swoopProgress,
             swoopingTimer: arrival.swoopingTimer,
             rubberBand: motion.rubberBand,
+            heldBounce: motion.heldBounce,
             region: region,
             topInset: topInset,
             roomHeight: roomHeight,
