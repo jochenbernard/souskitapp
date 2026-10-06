@@ -14,6 +14,11 @@ final class RunningTimersLayoutMetrics: Sendable {
 
         /// How far past where they open or fold to the timers were laid out.
         let rubberBand: CGFloat
+
+        /// The same position with nothing past open: open at most, and pulled past folded only.
+        var notPastOpen: Self {
+            Self(openness: min(openness, 1.0), rubberBand: max(rubberBand, 0.0))
+        }
     }
 
     private struct Values {

@@ -85,6 +85,22 @@ struct RunningTimersHoldTests {
         #expect(back.rubberBand == 0.0)
     }
 
+    @Test(
+        "a list that scrolls is open where its scrolling starts, however far past open it was caught",
+        arguments: [(0.78, -18.0), (0.33, -170.0), (1.02, -30.0), (1.01, 0.0), (0.6, 0.0)]
+    )
+    func openAtScrollStart(openness: Double, rubberBand: CGFloat) {
+        let caught = RunningTimersLayoutMetrics.Position(openness: openness, rubberBand: rubberBand).notPastOpen
+        var hold = catching(openness: caught.openness, rubberBand: caught.rubberBand)
+        let held = hold.position(at: hold.fold, distance: distance)
+        let top = hold.position(at: 0.0, distance: distance)
+
+        #expect(abs(held.openness - min(openness, 1.0)) < 0.0001)
+        #expect(held.rubberBand == 0.0)
+        #expect(top.openness == 1.0)
+        #expect(top.rubberBand == 0.0)
+    }
+
     @Test("a list the finger cannot open is only pulled past where it folds, whatever its openness")
     func cannotOpen() {
         var hold = catching(openness: 0.6, rubberBand: 0.0, canOpen: false)

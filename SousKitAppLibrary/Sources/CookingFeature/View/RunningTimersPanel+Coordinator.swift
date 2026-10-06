@@ -232,44 +232,44 @@ extension RunningTimersPanel {
 
         // The finger takes the timers from where they are laid out, rather than from where it came down, and stops a
         // spring still settling what it moves, which would otherwise carry on under it. How far a list it cannot open
-        // is open carries on. A list that scrolls takes no pull past open, so a spring settling it back carries on.
-        private func catchTimers(at position: RunningTimersLayoutMetrics.Position, holdsPastOpen: Bool) {
+        // is open carries on. A list that scrolls holds nothing past open, so the list is open where its scrolling
+        // starts: a spring settling it back to open carries on, and one the finger caught short of open as well springs
+        // what was past open back from where it is.
+        private func catchTimers(at presented: RunningTimersLayoutMetrics.Position, holdsPastOpen: Bool) {
+            let held = holdsPastOpen ? presented : presented.notPastOpen
             let caught = RunningTimersHold(
-                catching: position,
+                catching: held,
                 distance: metrics.foldDistance,
                 dimension: scrollView.bounds.height,
                 canOpen: canOpen
             )
             hold = caught
+            fold = caught.fold
 
-            guard holdsPastOpen || caught.fold >= 0.0 else {
-                setFold(0.0)
+            guard holdsPastOpen || held.openness < 1.0 || held.rubberBand > 0.0 else {
                 return
             }
 
-            fold = caught.fold
+            moveTimers(to: presented, animation: .halt)
+            moveTimers(to: held, animation: .runningTimers)
+        }
 
-            withAnimation(.halt) {
+        private func setFold(_ amount: CGFloat) {
+            fold = amount
+
+            if let position = hold?.position(at: amount, distance: metrics.foldDistance) {
+                moveTimers(to: position, animation: nil)
+            }
+        }
+
+        private func moveTimers(to position: RunningTimersLayoutMetrics.Position, animation: Animation?) {
+            withAnimation(animation) {
                 if canOpen {
                     motion.openness = position.openness
                 }
 
                 motion.rubberBand = position.rubberBand
             }
-        }
-
-        private func setFold(_ amount: CGFloat) {
-            fold = amount
-
-            guard let position = hold?.position(at: amount, distance: metrics.foldDistance) else {
-                return
-            }
-
-            if canOpen {
-                motion.openness = position.openness
-            }
-
-            motion.rubberBand = position.rubberBand
         }
 
         // Settles the timers open or folded on the timers' spring, carrying on at the finger's speed.
