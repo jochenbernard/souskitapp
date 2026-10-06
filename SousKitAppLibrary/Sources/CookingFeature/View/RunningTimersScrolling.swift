@@ -46,10 +46,12 @@ final class RunningTimersScrolling {
         settling = Task { [weak self] in
             try? await Task.sleep(for: .seconds(Animation.runningTimersSettlingDuration))
 
-            if !Task.isCancelled {
-                self?.settling = nil
-                self?.updateFloor()
+            guard !Task.isCancelled, let self else {
+                return
             }
+
+            settling = nil
+            updateFloor()
         }
     }
 
@@ -76,34 +78,37 @@ final class RunningTimersScrolling {
         settling?.cancel()
         settling = nil
         let held = hold
-        // Clears the hold, so `updateFloor` takes the floor afresh.
+        // Cleared before scrolling back, which calls `updateFloor` again through `scrollViewDidScroll`.
         motion.scrollFloor = 0.0
 
         if held > 0.0 {
             scrollView.contentOffset.y = max(0.0, scrollView.contentOffset.y - held)
         }
 
-        updateFloor()
+        takeFloor()
         resizeContent()
     }
 
     /// Takes the bottom of what shows as the list's floor, short of a pull past the timers' end, or lets a held list
     /// go once it can without anything moving.
     func updateFloor() {
-        guard hold == 0.0 else {
-            let offset = scrollView.contentOffset.y
-            // Released past its end, the list would lose its pull; a bounce settles there give or take rounding.
-            let isWithinEnd = offset < scrollView.contentSize.height - scrollView.bounds.height + 1.0
-            // Scrolled up into the hold, the list would show the gap above its timers.
-            let isInHold = offset < hold
-
-            if (settling == nil && isWithinEnd) || isInHold {
-                releaseHold()
-            }
-
+        guard hold > 0.0 else {
+            takeFloor()
             return
         }
 
+        let offset = scrollView.contentOffset.y
+        // Released past its end, the list would lose its pull; a bounce settles there give or take rounding.
+        let isWithinEnd = offset < scrollView.contentSize.height - scrollView.bounds.height + 1.0
+        // Scrolled up into the hold, the list would show the gap above its timers.
+        let isInHold = offset < hold
+
+        if (settling == nil && isWithinEnd) || isInHold {
+            releaseHold()
+        }
+    }
+
+    private func takeFloor() {
         motion.scrollFloor = min(scrollView.contentOffset.y + scrollView.bounds.height, contentHeight)
     }
 
