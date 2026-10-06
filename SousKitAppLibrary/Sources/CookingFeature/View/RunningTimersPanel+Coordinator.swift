@@ -151,7 +151,10 @@ extension RunningTimersPanel {
                 height: motion.stackHeight
             )
 
-            return stack.contains(point) || metrics.timerFrames.contains(where: { $0.frame.contains(point) })
+            // Timers above the top inset are faded out of sight, so the bar there keeps its taps as they fold.
+            let isOnTimer = point.y >= topInset && metrics.timerFrames.contains(where: { $0.frame.contains(point) })
+
+            return stack.contains(point) || isOnTimer
         }
 
         // The list scrolls only while it is open. Closing it undoes its scrolling, which the content keeps in its
