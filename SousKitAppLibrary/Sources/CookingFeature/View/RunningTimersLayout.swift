@@ -165,7 +165,13 @@ struct RunningTimersLayout: Layout {
         cache _: inout ()
     ) {
         let measured = measure(subviews)
-        var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
+        let foldDistance = max(1.0, measured.stackTop - measured.listRowsTop)
+        var pass = RunningTimersLayoutMetrics.Pass(
+            foldDistance: foldDistance,
+            presentedOpenness: openness.clamped(to: 0.0...1.0),
+            presentedHeldBounce: heldBounce,
+            presentedFold: fold(over: foldDistance)
+        )
 
         for (depth, timer) in measured.timers.enumerated() {
             let id = timer[TimerIDKey.self]
@@ -181,7 +187,7 @@ struct RunningTimersLayout: Layout {
             )
 
             if let id {
-                timerFrames.append((id: id, frame: CGRect(origin: origin, size: rect.size)))
+                pass.timerFrames.append((id: id, frame: CGRect(origin: origin, size: rect.size)))
             }
         }
 
@@ -195,8 +201,6 @@ struct RunningTimersLayout: Layout {
             )
         }
 
-        var collapseButtonFrame: CGRect?
-
         if let button = measured.button {
             let rect = between(stackedButtonRect(button, in: measured), and: listedButtonRect(button, in: measured))
             let origin = CGPoint(x: bounds.minX + rect.minX, y: bounds.minY + rubberBand + rect.minY)
@@ -207,19 +211,10 @@ struct RunningTimersLayout: Layout {
                 proposal: ProposedViewSize(rect.size)
             )
 
-            collapseButtonFrame = CGRect(origin: origin, size: rect.size)
+            pass.collapseButtonFrame = CGRect(origin: origin, size: rect.size)
         }
 
-        let foldDistance = max(1.0, measured.stackTop - measured.listRowsTop)
-
-        metrics.update(
-            foldDistance: foldDistance,
-            presentedOpenness: openness.clamped(to: 0.0...1.0),
-            presentedHeldBounce: heldBounce,
-            presentedFold: fold(over: foldDistance),
-            timerFrames: timerFrames,
-            collapseButtonFrame: collapseButtonFrame
-        )
+        metrics.update(pass)
 
         // Kept at the top of what is on screen, over the timers that have scrolled up under the room and faded.
         measured.cover?.place(

@@ -7,16 +7,28 @@ import Synchronization
 /// Not observed: the layout writes it in every pass, and a swipe reads it as it begins. Safe to use from any thread,
 /// since SwiftUI may lay the timers out away from the main thread while they animate.
 final class RunningTimersLayoutMetrics: Sendable {
-    private struct Values {
+    /// What a layout pass found.
+    struct Pass {
+        /// How far the soonest timer travels from the list to the stack.
         var foldDistance: CGFloat = 1.0
+
+        /// How far open the timers were laid out.
         var presentedOpenness = 0.0
+
+        /// How far past its top the list was laid out held.
         var presentedHeldBounce: CGFloat = 0.0
+
+        /// How far a finger folds the timers to where they were laid out.
         var presentedFold: CGFloat = 0.0
+
+        /// Each timer and its frame in the panel's content, the soonest first.
         var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
+
+        /// The collapse button's frame in the panel's content, if there is one.
         var collapseButtonFrame: CGRect?
     }
 
-    private let values = Mutex(Values())
+    private let values = Mutex(Pass())
 
     /// How far the soonest timer travels from its place in the list to its place in the stack.
     var foldDistance: CGFloat {
@@ -62,28 +74,8 @@ final class RunningTimersLayoutMetrics: Sendable {
 
     /// Records what a layout pass found.
     ///
-    /// - Parameters:
-    ///   - foldDistance: How far the soonest timer travels from the list to the stack.
-    ///   - presentedOpenness: How far open the timers were laid out.
-    ///   - presentedHeldBounce: How far past its top the list was laid out held.
-    ///   - presentedFold: How far a finger folds the timers to where they were laid out.
-    ///   - timerFrames: Each timer and its frame in the panel's content, the soonest first.
-    ///   - collapseButtonFrame: The collapse button's frame in the panel's content, if there is one.
-    func update(
-        foldDistance: CGFloat,
-        presentedOpenness: Double,
-        presentedHeldBounce: CGFloat,
-        presentedFold: CGFloat,
-        timerFrames: [(id: RunningTimer.ID, frame: CGRect)],
-        collapseButtonFrame: CGRect?
-    ) {
-        values.withLock { values in
-            values.foldDistance = foldDistance
-            values.presentedOpenness = presentedOpenness
-            values.presentedHeldBounce = presentedHeldBounce
-            values.presentedFold = presentedFold
-            values.timerFrames = timerFrames
-            values.collapseButtonFrame = collapseButtonFrame
-        }
+    /// - Parameter pass: What the pass found.
+    func update(_ pass: Pass) {
+        values.withLock({ $0 = pass })
     }
 }

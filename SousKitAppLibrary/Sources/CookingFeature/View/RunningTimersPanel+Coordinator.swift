@@ -147,12 +147,7 @@ extension RunningTimersPanel {
                 return true
             }
 
-            let stack = CGRect(
-                x: 0.0,
-                y: region.height - motion.stackHeight,
-                width: region.width,
-                height: motion.stackHeight
-            )
+            let stack = motion.stackFrame(in: region)
 
             // Timers above the top inset are faded out of sight, so the bar there keeps its taps as they fold.
             let isOnTimer = point.y >= topInset && metrics.timerFrames.contains(where: { $0.frame.contains(point) })
