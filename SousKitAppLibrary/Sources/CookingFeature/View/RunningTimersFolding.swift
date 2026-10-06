@@ -43,24 +43,32 @@ final class RunningTimersFolding {
     ///
     /// - Parameters:
     ///   - presented: Where the timers are laid out.
+    ///   - bounce: How far past its top the scroll view has the list, which the timers take over.
     ///   - holdsPastOpen: Whether the finger holds the timers past open, rather than scrolling a list that is open.
-    func catchTimers(at presented: RunningTimersLayoutMetrics.Position, holdsPastOpen: Bool) {
+    func catchTimers(
+        at presented: RunningTimersLayoutMetrics.Position,
+        bouncedBy bounce: CGFloat,
+        holdsPastOpen: Bool
+    ) {
+        let caught = presented.holding(further: bounce)
         // A scrolling list holds nothing past open, so it is open where its scrolling starts; a spring past carries on.
-        let held = holdsPastOpen ? presented : presented.notPastOpen
-        let caught = RunningTimersHold(
+        let held = holdsPastOpen ? caught : caught.notPastOpen
+        let caughtHold = RunningTimersHold(
             catching: held,
             distance: metrics.foldDistance,
             dimension: scrollView.bounds.height,
             canOpen: canOpen
         )
-        hold = caught
-        fold = caught.fold
+        hold = caughtHold
+        fold = caughtHold.fold
 
         guard holdsPastOpen || held.openness < 1.0 || held.rubberBand > 0.0 || held.heldBounce > 0.0 else {
             return
         }
 
         moveTimers(to: presented, animation: .halt)
+        // Set at once: the halt shows the value it starts from for a frame, which would drop the bounce for that frame.
+        motion.heldBounce = caught.heldBounce
         moveTimers(to: held, animation: .runningTimers)
     }
 

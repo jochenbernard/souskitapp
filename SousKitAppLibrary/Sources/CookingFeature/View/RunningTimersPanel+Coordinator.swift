@@ -183,7 +183,11 @@ extension RunningTimersPanel {
                     scrollView.contentOffset.y = 0.0
                 }
 
-                folding.catchTimers(at: metrics.presentedPosition.holding(further: bounce), holdsPastOpen: fits)
+                folding.catchTimers(
+                    at: metrics.presentedPosition,
+                    bouncedBy: bounce,
+                    holdsPastOpen: fits
+                )
                 foldBase = travel - folding.fold
             case .changed:
                 if folding.fold <= 0.0, scrollView.contentOffset.y > 0.0 {
@@ -206,7 +210,11 @@ extension RunningTimersPanel {
             switch pan.state {
             case .began:
                 folding.canOpen = viewModel.canOpenTimerList
-                folding.catchTimers(at: metrics.presentedPosition, holdsPastOpen: true)
+                folding.catchTimers(
+                    at: metrics.presentedPosition,
+                    bouncedBy: 0.0,
+                    holdsPastOpen: true
+                )
                 foldBase = travel - folding.fold
             case .changed:
                 folding.setFold(travel - foldBase)
