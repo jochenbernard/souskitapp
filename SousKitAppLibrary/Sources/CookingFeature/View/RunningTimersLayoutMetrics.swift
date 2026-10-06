@@ -15,24 +15,60 @@ final class RunningTimersLayoutMetrics: Sendable {
         /// How far past where they open or fold to the timers were laid out.
         let rubberBand: CGFloat
 
-        /// The same position with nothing past open: open at most, and pulled past folded only.
+        /// How far past its top the list was laid out held where a finger caught it bouncing.
+        let heldBounce: CGFloat
+
+        /// The same position with nothing past open: open at most, pulled past folded only, held below the top only.
         var notPastOpen: Self {
-            Self(openness: min(openness, 1.0), rubberBand: max(rubberBand, 0.0))
+            Self(
+                openness: min(openness, 1.0),
+                rubberBand: max(rubberBand, 0.0),
+                heldBounce: max(heldBounce, 0.0)
+            )
+        }
+
+        /// The same position with the list held further past its top.
+        ///
+        /// - Parameter bounce: How much further past its top the list is held.
+        /// - Returns: The position.
+        func holding(further bounce: CGFloat) -> Self {
+            Self(
+                openness: openness,
+                rubberBand: rubberBand,
+                heldBounce: heldBounce + bounce
+            )
         }
     }
 
-    private struct Values {
+    /// What a layout pass found.
+    struct Pass {
+        /// How far the soonest timer travels from the list to the stack.
         var foldDistance: CGFloat = 1.0
-        var presentedOpenness = 0.0
-        var presentedRubberBand: CGFloat = 0.0
+
+        /// Where the timers were laid out.
+        var presentedPosition = Position(
+            openness: 0.0,
+            rubberBand: 0.0,
+            heldBounce: 0.0
+        )
+
+        /// Each timer and its frame in the panel's content, the soonest first.
         var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
+
+        /// The collapse button's frame in the panel's content, if there is one.
+        var collapseButtonFrame: CGRect?
     }
 
-    private let values = Mutex(Values())
+    private let values = Mutex(Pass())
 
     /// How far the soonest timer travels from its place in the list to its place in the stack.
     var foldDistance: CGFloat {
         values.withLock({ $0.foldDistance })
+    }
+
+    /// Where the timers were laid out, all of it from the same layout pass.
+    var presentedPosition: Position {
+        values.withLock({ $0.presentedPosition })
     }
 
     /// Where each timer was laid out, the soonest first, in the panel's content.
@@ -40,31 +76,17 @@ final class RunningTimersLayoutMetrics: Sendable {
         values.withLock({ $0.timerFrames })
     }
 
-    init() {}
-
-    /// Where the timers were laid out, both values from the same layout pass.
-    var presentedPosition: Position {
-        values.withLock({ Position(openness: $0.presentedOpenness, rubberBand: $0.presentedRubberBand) })
+    /// Where the button that folds the list back was laid out, in the panel's content, if anywhere.
+    var collapseButtonFrame: CGRect? {
+        values.withLock({ $0.collapseButtonFrame })
     }
+
+    init() {}
 
     /// Records what a layout pass found.
     ///
-    /// - Parameters:
-    ///   - foldDistance: How far the soonest timer travels from the list to the stack.
-    ///   - presentedOpenness: How far open the timers were laid out.
-    ///   - presentedRubberBand: How far past where they open or fold to the timers were laid out.
-    ///   - timerFrames: Each timer and its frame in the panel's content, the soonest first.
-    func update(
-        foldDistance: CGFloat,
-        presentedOpenness: Double,
-        presentedRubberBand: CGFloat,
-        timerFrames: [(id: RunningTimer.ID, frame: CGRect)]
-    ) {
-        values.withLock { values in
-            values.foldDistance = foldDistance
-            values.presentedOpenness = presentedOpenness
-            values.presentedRubberBand = presentedRubberBand
-            values.timerFrames = timerFrames
-        }
+    /// - Parameter pass: What the pass found.
+    func update(_ pass: Pass) {
+        values.withLock({ $0 = pass })
     }
 }

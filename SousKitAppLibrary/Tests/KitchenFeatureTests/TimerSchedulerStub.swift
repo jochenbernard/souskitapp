@@ -4,6 +4,10 @@ import CookingFeature
 struct TimerSchedulerStub: TimerScheduler {
     var timers: [RunningTimer] = []
 
+    func currentRunningTimers() -> [RunningTimer] {
+        timers
+    }
+
     func runningTimers() -> AsyncStream<[RunningTimer]> {
         AsyncStream { continuation in
             continuation.yield(timers)

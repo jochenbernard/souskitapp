@@ -17,8 +17,9 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         self.timerScheduler = timerScheduler
         self.viewModel = viewModel
 
-        // Applied before the screen first draws, so a step done before the cold start never shows as not done.
+        // Set before the screen first draws, so neither a step already done nor a timer already running animates in.
         viewModel.completedStepNumbers = restoration?.completedStepNumbers ?? []
+        viewModel.runningTimers = timerScheduler.currentRunningTimers()
     }
 
     func viewDidAppear() async {

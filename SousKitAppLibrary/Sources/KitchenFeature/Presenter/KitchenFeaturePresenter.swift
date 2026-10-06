@@ -143,7 +143,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             return
         }
 
-        let isRestorable = await record.isRestorable(at: .now, hasRunningTimers: await hasRunningTimers())
+        let isRestorable = await record.isRestorable(
+            at: .now,
+            hasRunningTimers: !timerScheduler.currentRunningTimers().isEmpty
+        )
         viewModel.isRestoring = false
 
         guard
@@ -166,15 +169,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             try? await Task.sleep(for: restorationSettleTime)
             restorationStore.finishSettling()
         }
-    }
-
-    @MainActor
-    private func hasRunningTimers() async -> Bool {
-        for await runningTimers in timerScheduler.runningTimers() {
-            return !runningTimers.isEmpty
-        }
-
-        return false
     }
 
     @MainActor
