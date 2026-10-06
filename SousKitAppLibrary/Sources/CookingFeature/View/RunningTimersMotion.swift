@@ -15,6 +15,10 @@ final class RunningTimersMotion {
     /// down for negative values.
     var scrollShift: CGFloat = 0.0
 
+    /// How far down the list reaches at least: the bottom of what shows while it rests, so a timer going near its end
+    /// closes the gap from above.
+    var scrollFloor: CGFloat = 0.0
+
     /// How far the timers are pulled past where they open or fold to, down for positive values, which they spring
     /// back from once let go.
     var rubberBand: CGFloat = 0.0

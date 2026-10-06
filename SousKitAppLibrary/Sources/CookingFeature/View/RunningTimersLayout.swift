@@ -71,6 +71,7 @@ struct RunningTimersLayout: Layout {
     private let listAnchor: ListAnchor
     private let scrollOffset: CGFloat
     private let scrollShift: CGFloat
+    private let scrollFloor: CGFloat
     private let metrics: RunningTimersLayoutMetrics
     private let swoopingTimer: RunningTimer.ID?
     private var openness: Double
@@ -95,6 +96,7 @@ struct RunningTimersLayout: Layout {
     ///     collapse button stays clear of.
     ///   - scrollShift: How far up the list keeps its rows while it folds from a scrolled position, down for negative
     ///     values.
+    ///   - scrollFloor: How far down the list reaches at least, past the height the layout measures if need be.
     ///   - metrics: Where the layout leaves what a swipe needs to know.
     init(
         openness: Double,
@@ -109,6 +111,7 @@ struct RunningTimersLayout: Layout {
         listAnchor: ListAnchor,
         scrollOffset: CGFloat,
         scrollShift: CGFloat,
+        scrollFloor: CGFloat,
         metrics: RunningTimersLayoutMetrics
     ) {
         self.openness = openness
@@ -123,6 +126,7 @@ struct RunningTimersLayout: Layout {
         self.listAnchor = listAnchor
         self.scrollOffset = scrollOffset
         self.scrollShift = scrollShift
+        self.scrollFloor = scrollFloor
         self.metrics = metrics
     }
 
@@ -237,6 +241,9 @@ struct RunningTimersLayout: Layout {
         case .top: topInset
         case .bottom: max(topInset, region.height - roomHeight - rowsHeight)
         }
+        let contentHeight = max(region.height, listRoomTop + roomHeight + rowsHeight)
+        // Lower by what the list falls short of its floor, so a timer going closes its gap from above.
+        let hold = max(0.0, scrollFloor - contentHeight)
 
         return Measurement(
             timers: timers,
@@ -246,8 +253,8 @@ struct RunningTimersLayout: Layout {
             heights: heights,
             stackTop: region.height - stackHeight,
             listRoomTop: listRoomTop,
-            listRowsTop: listRoomTop + roomHeight,
-            contentHeight: max(region.height, listRoomTop + roomHeight + rowsHeight)
+            listRowsTop: listRoomTop + hold + roomHeight,
+            contentHeight: contentHeight
         )
     }
 
@@ -262,25 +269,12 @@ struct RunningTimersLayout: Layout {
         )
     }
 
-    // One curve from the front over the top of the stack and down into the timer's place, halfway along just above
-    // the soonest timer and clear of the stack, where it passes from in front of the others to behind them.
+    // The swooping timer's place on its way from the front of the stack to its own.
     private func swoopRect(_ depth: Int, in measured: Measurement) -> CGRect {
-        let start = stackRect(0, in: measured)
-        let end = stackRect(depth, in: measured)
-        let top = start.offsetBy(dx: 0.0, dy: -(start.height + Self.spacing))
-
-        func along(_ value: (CGRect) -> CGFloat) -> CGFloat {
-            let control = 2.0 * value(top) - (value(start) + value(end)) / 2.0
-            let remaining = 1.0 - swoop
-
-            return remaining * remaining * value(start) + 2.0 * remaining * swoop * control + swoop * swoop * value(end)
-        }
-
-        return CGRect(
-            x: along(\.minX),
-            y: along(\.minY),
-            width: along(\.width),
-            height: along(\.height)
+        RunningTimerSwoopPath.rect(
+            at: swoop,
+            from: stackRect(0, in: measured),
+            to: stackRect(depth, in: measured)
         )
     }
 
@@ -362,6 +356,7 @@ private func previewStack(openness: Double) -> some View {
         listAnchor: .bottom,
         scrollOffset: 0.0,
         scrollShift: 0.0,
+        scrollFloor: 0.0,
         metrics: RunningTimersLayoutMetrics()
     ) {
         ForEach(0..<4) { depth in
