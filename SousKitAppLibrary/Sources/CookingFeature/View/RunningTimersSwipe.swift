@@ -21,9 +21,11 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
     private let metrics: RunningTimersLayoutMetrics
     private let kind: RunningTimersPanel.Kind
 
-    // The timer the finger has, where it lies in the panel's content, and whether letting go now takes it away.
+    // The timer the finger has, where it lies in the panel's content, the pull the finger took it up at, and whether
+    // letting go now takes it away.
     private var timer: RunningTimer?
     private var frame = CGRect.zero
+    private var startPull: CGFloat = 0.0
     private var isArmed = false
 
     /// - Parameters:
@@ -95,9 +97,14 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
             motion.swipeOffsets = motion.swipeOffsets.filter({ viewModel.isRunning($0.key) })
             feedback.prepare()
             motion.swipedTimer = timer.id
-            move(timer, to: offset(for: scrollView.distanceMoved(by: pan, along: \.x)))
+            startPull = pull(forOffset: metrics.presentedSwipeOffset(of: timer.id))
+
+            // Stops a spring still settling the timer where it is drawn, rather than carrying on under the finger.
+            withAnimation(.halt) {
+                move(timer, to: offset(forPull: startPull + scrollView.distanceMoved(by: pan, along: \.x)))
+            }
         case .changed:
-            move(timer, to: offset(for: scrollView.distanceMoved(by: pan, along: \.x)))
+            move(timer, to: offset(forPull: startPull + scrollView.distanceMoved(by: pan, along: \.x)))
         case .ended:
             release(timer, velocity: pan.velocity(in: scrollView).x)
         case .cancelled, .failed:
@@ -122,12 +129,21 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
     }
 
     // Left as far as the finger goes; right less and less the further, as a scroll view gives past its end.
-    private func offset(for moved: CGFloat) -> CGFloat {
-        guard moved > 0.0 else {
-            return moved
+    private func offset(forPull pull: CGFloat) -> CGFloat {
+        guard pull > 0.0 else {
+            return pull
         }
 
-        return RubberBand.offset(forPull: moved, dimension: scrollView.bounds.width)
+        return RubberBand.offset(forPull: pull, dimension: scrollView.bounds.width)
+    }
+
+    // How far the finger goes for the timer to slide an offset, the other way around from `offset(forPull:)`.
+    private func pull(forOffset offset: CGFloat) -> CGFloat {
+        guard offset > 0.0 else {
+            return offset
+        }
+
+        return RubberBand.pull(forOffset: offset, dimension: scrollView.bounds.width)
     }
 
     // Let go past the threshold, the timer flies off at the finger's speed and is cancelled; short of it, it springs
