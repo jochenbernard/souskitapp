@@ -79,6 +79,18 @@ struct CookingFeaturePresenterTests {
     }
 
     @MainActor
+    @Test("the timers already running are there before the view first draws, so none of them animates in")
+    func runningTimersAreThereBeforeTheFirstDraw() {
+        let viewModel = makeViewModel()
+        let runningTimer = RunningTimer.stubbed()
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[runningTimer]])
+
+        _ = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+
+        #expect(viewModel.runningTimers == [runningTimer])
+    }
+
+    @MainActor
     @Test("the running timers arrive while the view is on screen")
     func runningTimersArrive() async {
         let viewModel = makeViewModel()

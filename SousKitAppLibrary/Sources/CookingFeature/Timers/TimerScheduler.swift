@@ -1,5 +1,11 @@
 /// Timers that count down and go off when they are over, whether the app is open or not.
 public protocol TimerScheduler: Sendable {
+    /// The timers running, read once without following later changes.
+    ///
+    /// - Returns: The timers, soonest first.
+    @MainActor
+    func currentRunningTimers() -> [RunningTimer]
+
     /// The timers running, yielded once now and again after every change to them.
     ///
     /// Cancelling the task iterating the stream ends it.
