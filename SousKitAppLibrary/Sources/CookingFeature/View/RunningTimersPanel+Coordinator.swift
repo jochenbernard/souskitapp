@@ -305,22 +305,6 @@ extension RunningTimersPanel {
             scrolling.updateFloor()
         }
 
-        // The finger scrolls the list from where it shows.
-        func scrollViewWillBeginDragging(_: UIScrollView) {
-            scrolling.releaseHold()
-        }
-
-        // A fling settles in `scrollViewDidEndDecelerating`, and may still lie past the end until then.
-        func scrollViewDidEndDragging(_: UIScrollView, willDecelerate decelerate: Bool) {
-            if !decelerate {
-                scrolling.updateFloor()
-            }
-        }
-
-        func scrollViewDidEndDecelerating(_: UIScrollView) {
-            scrolling.updateFloor()
-        }
-
         func scrollViewWillEndDragging(
             _: UIScrollView,
             withVelocity _: CGPoint,
