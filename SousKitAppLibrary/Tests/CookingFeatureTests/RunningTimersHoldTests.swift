@@ -40,7 +40,17 @@ struct RunningTimersHoldTests {
 
     @Test(
         "a catch holds the timers where they are",
-        arguments: [(0.3, 20.0), (0.86, -25.0), (1.02, 0.0), (-0.01, 0.0), (0.5, 0.0), (1.0, -12.0), (0.0, 18.0)]
+        arguments: [
+            (0.3, 20.0),
+            (0.86, -25.0),
+            (1.02, 0.0),
+            (-0.01, 0.0),
+            (0.5, 0.0),
+            (1.0, -12.0),
+            (0.0, 18.0),
+            (1.03, 7.0),
+            (-0.05, -10.0)
+        ]
     )
     func catchHolds(openness: Double, rubberBand: CGFloat) {
         var hold = catching(openness: openness, rubberBand: rubberBand)
@@ -48,6 +58,26 @@ struct RunningTimersHoldTests {
 
         #expect(abs(position.openness - openness) < 0.0001)
         #expect(abs(position.rubberBand - rubberBand) < 0.0001)
+    }
+
+    @Test(
+        "a catch past one end and pulled past the other moves on without a jump",
+        arguments: [(1.03, 7.0), (-0.05, -10.0)]
+    )
+    func pastOneEndPulledPastOther(openness: Double, rubberBand: CGFloat) {
+        let step = 0.5
+        var hold = catching(openness: openness, rubberBand: rubberBand)
+        var amount = hold.fold
+        var previous = hold.position(at: amount)
+
+        for direction in Array(repeating: 1.0, count: 80) + Array(repeating: -1.0, count: 160) {
+            amount += direction * step
+            let position = hold.position(at: amount)
+
+            #expect(abs(position.openness - previous.openness) <= step / distance + 0.0001)
+            #expect(abs(position.rubberBand - previous.rubberBand) <= step + 0.0001)
+            previous = position
+        }
     }
 
     @Test("a pull caught part of the way open goes before the timers open further")
@@ -103,7 +133,11 @@ struct RunningTimersHoldTests {
 
     @Test("a list the finger cannot open is only pulled past where it folds, whatever its openness")
     func cannotOpen() {
-        var hold = catching(openness: 0.6, rubberBand: 0.0, canOpen: false)
+        var hold = catching(
+            openness: 0.6,
+            rubberBand: 0.0,
+            canOpen: false
+        )
         let raised = hold.position(at: distance - 20.0)
         let lowered = hold.position(at: distance + 20.0)
 

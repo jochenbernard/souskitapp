@@ -158,9 +158,12 @@ struct RunningTimersLayout: Layout {
         var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
 
         for (depth, timer) in measured.timers.enumerated() {
-            let id = timer[TimerIDKey.self]
             let stacked = if let swoop = timer[SwoopKey.self] {
-                swoopRect(depth, at: swoop, in: measured)
+                swoopRect(
+                    depth,
+                    at: swoop,
+                    in: measured
+                )
             } else {
                 stackRect(depth, in: measured)
             }
@@ -173,7 +176,7 @@ struct RunningTimersLayout: Layout {
                 proposal: ProposedViewSize(rect.size)
             )
 
-            if let id {
+            if let id = timer[TimerIDKey.self] {
                 timerFrames.append((id: id, frame: CGRect(origin: origin, size: rect.size)))
             }
         }

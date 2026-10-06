@@ -230,11 +230,7 @@ extension RunningTimersPanel {
             return kind == .folding && !viewModel.isTimerListOpen && !scrollView.isSideways(openingPan)
         }
 
-        // The finger takes the timers from where they are laid out, rather than from where it came down, and stops a
-        // spring still settling what it moves, which would otherwise carry on under it. How far a list it cannot open
-        // is open carries on. A list that scrolls holds nothing past open, so the list is open where its scrolling
-        // starts: a spring settling it back to open carries on, and one the finger caught short of open as well springs
-        // what was past open back from where it is.
+        // A scrolling list holds nothing past open, so it is open where its scrolling starts; a spring past carries on.
         private func catchTimers(at presented: RunningTimersLayoutMetrics.Position, holdsPastOpen: Bool) {
             let held = holdsPastOpen ? presented : presented.notPastOpen
             let caught = RunningTimersHold(

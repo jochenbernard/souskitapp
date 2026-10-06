@@ -35,12 +35,6 @@ final class RunningTimersLayoutMetrics: Sendable {
         values.withLock({ $0.foldDistance })
     }
 
-    /// How far open the timers were laid out, as an animation in flight has them at that moment, past either end while
-    /// a spring overshoots it.
-    var presentedOpenness: Double {
-        values.withLock({ $0.presentedOpenness })
-    }
-
     /// Where each timer was laid out, the soonest first, in the panel's content.
     var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] {
         values.withLock({ $0.timerFrames })

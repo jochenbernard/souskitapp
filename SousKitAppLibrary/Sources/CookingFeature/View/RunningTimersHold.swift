@@ -17,8 +17,7 @@ struct RunningTimersHold {
     // Where the timers open to: the list for a finger that can open it, and the stack for one that cannot.
     private let open: CGFloat
 
-    // The ends the finger pulls the timers past while they are not where the timers open and fold, with how far it
-    // caught them pulled past them.
+    // The ends the timers were caught away from where they open and fold, with how far past them they were pulled.
     private var openEnd: (at: CGFloat, pull: CGFloat)?
     private var foldedEnd: (at: CGFloat, pull: CGFloat)?
 
@@ -59,8 +58,9 @@ struct RunningTimersHold {
     ///   with any pull past either end: negative past open and beyond the travel past folded.
     /// - Returns: How far open and past either end the timers are laid out.
     mutating func position(at amount: CGFloat) -> RunningTimersLayoutMetrics.Position {
-        let opened = moveOpenEnd(to: amount)
-        let folded = max(opened, moveFoldedEnd(to: amount))
+        // Each end sees the finger no further than the other, so a catch past one end and pulled past the other holds.
+        let opened = moveOpenEnd(to: min(amount, foldedEnd?.at ?? amount))
+        let folded = max(opened, moveFoldedEnd(to: max(amount, opened)))
 
         let rubberBand = if amount < opened {
             -RubberBand.offset(forPull: opened - amount, dimension: dimension)
@@ -76,8 +76,7 @@ struct RunningTimersHold {
         )
     }
 
-    // An end goes back to where the timers open or fold once the finger has them on the near side of both, and moves
-    // out toward there as the finger pulls them on past it.
+    // An end goes back once the finger is on the near side of it and of its usual place, and moves out as it pulls on.
     private mutating func moveOpenEnd(to amount: CGFloat) -> CGFloat {
         guard let end = openEnd, amount < max(end.at, open) else {
             openEnd = nil
