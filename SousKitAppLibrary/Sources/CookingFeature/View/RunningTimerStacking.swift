@@ -34,9 +34,13 @@ struct RunningTimerStacking: ViewModifier, Animatable {
 
     func body(content: Content) -> some View {
         content
-            .environment(\.runningTimerSwoop, isSwooping ? animatableData : nil)
+            .environment(\.runningTimerSwoop, swoop)
             .zIndex(isSwooping && animatableData < Self.halfway ? 1.0 : -Double(depth))
-            .layoutValue(key: RunningTimersLayout.SwoopKey.self, value: isSwooping ? animatableData : nil)
+            .layoutValue(key: RunningTimersLayout.SwoopKey.self, value: swoop)
+    }
+
+    private var swoop: Double? {
+        isSwooping ? animatableData : nil
     }
 }
 

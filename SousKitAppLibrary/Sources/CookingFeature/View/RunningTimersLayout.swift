@@ -77,25 +77,33 @@ struct RunningTimersLayout: Layout {
     private let listAnchor: ListAnchor
     private let scrollOffset: CGFloat
     private let scrollShift: CGFloat
+    private let scrollFloor: CGFloat
     private let metrics: RunningTimersLayoutMetrics
     private var openness: Double
     private var rubberBand: CGFloat
+    private var heldBounce: CGFloat
 
     /// - Parameters:
     ///   - openness: How far the timers are open, from 0 stacked to 1 listed.
     ///   - rubberBand: How far the timers are pulled past where they open or fold to, down for positive values.
+    ///   - heldBounce: How far past its top a finger holds the list it caught bouncing, which moves every listed timer
+    ///     alike, and which they fold from.
     ///   - region: The room the panel shows the timers in.
     ///   - topInset: How far into the region the list may rise.
     ///   - roomHeight: The room kept above the listed timers, for the collapse button and the fade they scroll
     ///     into, or a gap under the bar.
     ///   - horizontalInset: How far the timers keep from the region's sides.
     ///   - listAnchor: Where the list sits while it is shorter than the region.
-    ///   - scrollOffset: How far the list is scrolled down, which the collapse button stays clear of.
-    ///   - scrollShift: How far up the list keeps its rows while it folds from a scrolled position.
+    ///   - scrollOffset: How far the list is scrolled down, or bounced past its top for negative values, which the
+    ///     collapse button stays clear of.
+    ///   - scrollShift: How far up the list keeps its rows while it folds from a scrolled position, down for negative
+    ///     values.
+    ///   - scrollFloor: How far down the list reaches at least, past the height the layout measures if need be.
     ///   - metrics: Where the layout leaves what a swipe needs to know.
     init(
         openness: Double,
         rubberBand: CGFloat,
+        heldBounce: CGFloat,
         region: CGSize,
         topInset: CGFloat,
         roomHeight: CGFloat,
@@ -103,10 +111,12 @@ struct RunningTimersLayout: Layout {
         listAnchor: ListAnchor,
         scrollOffset: CGFloat,
         scrollShift: CGFloat,
+        scrollFloor: CGFloat,
         metrics: RunningTimersLayoutMetrics
     ) {
         self.openness = openness
         self.rubberBand = rubberBand
+        self.heldBounce = heldBounce
         self.region = region
         self.topInset = topInset
         self.roomHeight = roomHeight
@@ -114,15 +124,17 @@ struct RunningTimersLayout: Layout {
         self.listAnchor = listAnchor
         self.scrollOffset = scrollOffset
         self.scrollShift = scrollShift
+        self.scrollFloor = scrollFloor
         self.metrics = metrics
     }
 
     // The swoop is animated per timer and read from its layout value, so stopping the timers' spring leaves it going.
-    var animatableData: AnimatablePair<Double, CGFloat> {
-        get { AnimatablePair(openness, rubberBand) }
+    var animatableData: AnimatablePair<Double, AnimatablePair<CGFloat, CGFloat>> {
+        get { AnimatablePair(openness, AnimatablePair(rubberBand, heldBounce)) }
         set {
             openness = newValue.first
-            rubberBand = newValue.second
+            rubberBand = newValue.second.first
+            heldBounce = newValue.second.second
         }
     }
 
@@ -155,7 +167,10 @@ struct RunningTimersLayout: Layout {
         cache _: inout ()
     ) {
         let measured = measure(subviews)
-        var timerFrames: [(id: RunningTimer.ID, frame: CGRect)] = []
+        var pass = RunningTimersLayoutMetrics.Pass(
+            foldDistance: max(1.0, measured.stackTop - measured.listRowsTop),
+            presentedPosition: position
+        )
 
         for (depth, timer) in measured.timers.enumerated() {
             let stacked = if let swoop = timer[SwoopKey.self] {
@@ -177,16 +192,9 @@ struct RunningTimersLayout: Layout {
             )
 
             if let id = timer[TimerIDKey.self] {
-                timerFrames.append((id: id, frame: CGRect(origin: origin, size: rect.size)))
+                pass.timerFrames.append((id: id, frame: CGRect(origin: origin, size: rect.size)))
             }
         }
-
-        metrics.update(
-            foldDistance: max(1.0, measured.stackTop - measured.listRowsTop),
-            presentedOpenness: openness,
-            presentedRubberBand: rubberBand,
-            timerFrames: timerFrames
-        )
 
         if let countBadge = measured.countBadge, !measured.timers.isEmpty {
             let front = between(stackRect(0, in: measured), and: listRect(0, in: measured))
@@ -200,19 +208,32 @@ struct RunningTimersLayout: Layout {
 
         if let button = measured.button {
             let rect = between(stackedButtonRect(button, in: measured), and: listedButtonRect(button, in: measured))
+            let origin = CGPoint(x: bounds.minX + rect.minX, y: bounds.minY + rubberBand + rect.minY)
 
             button.place(
-                at: CGPoint(x: bounds.minX + rect.minX, y: bounds.minY + rubberBand + rect.minY),
+                at: origin,
                 anchor: .topLeading,
                 proposal: ProposedViewSize(rect.size)
             )
+
+            pass.collapseButtonFrame = CGRect(origin: origin, size: rect.size)
         }
+
+        metrics.update(pass)
 
         // Kept at the top of what is on screen, over the timers that have scrolled up under the room and faded.
         measured.cover?.place(
             at: CGPoint(x: bounds.minX, y: bounds.minY + scrollOffset),
             anchor: .topLeading,
             proposal: ProposedViewSize(width: region.width, height: topInset + roomHeight)
+        )
+    }
+
+    private var position: RunningTimersLayoutMetrics.Position {
+        RunningTimersLayoutMetrics.Position(
+            openness: openness,
+            rubberBand: rubberBand,
+            heldBounce: heldBounce
         )
     }
 
@@ -229,6 +250,9 @@ struct RunningTimersLayout: Layout {
         case .top: topInset
         case .bottom: max(topInset, region.height - roomHeight - rowsHeight)
         }
+        let contentHeight = max(region.height, listRoomTop + roomHeight + rowsHeight)
+        // Lower by what the list falls short of its floor, so a timer going closes its gap from above.
+        let hold = max(0.0, scrollFloor - contentHeight)
 
         return Measurement(
             timers: timers,
@@ -238,8 +262,8 @@ struct RunningTimersLayout: Layout {
             heights: heights,
             stackTop: region.height - stackHeight,
             listRoomTop: listRoomTop,
-            listRowsTop: listRoomTop + roomHeight,
-            contentHeight: max(region.height, listRoomTop + roomHeight + rowsHeight)
+            listRowsTop: listRoomTop + hold + roomHeight,
+            contentHeight: contentHeight
         )
     }
 
@@ -254,29 +278,16 @@ struct RunningTimersLayout: Layout {
         )
     }
 
-    // One curve from the front over the top of the stack and down into the timer's place, halfway along just above
-    // the soonest timer and clear of the stack, where it passes from in front of the others to behind them.
+    // The swooping timer's place on its way from the front of the stack to its own.
     private func swoopRect(
         _ depth: Int,
         at swoop: Double,
         in measured: Measurement
     ) -> CGRect {
-        let start = stackRect(0, in: measured)
-        let end = stackRect(depth, in: measured)
-        let top = start.offsetBy(dx: 0.0, dy: -(start.height + Self.spacing))
-
-        func along(_ value: (CGRect) -> CGFloat) -> CGFloat {
-            let control = 2.0 * value(top) - (value(start) + value(end)) / 2.0
-            let remaining = 1.0 - swoop
-
-            return remaining * remaining * value(start) + 2.0 * remaining * swoop * control + swoop * swoop * value(end)
-        }
-
-        return CGRect(
-            x: along(\.minX),
-            y: along(\.minY),
-            width: along(\.width),
-            height: along(\.height)
+        RunningTimerSwoopPath.rect(
+            at: swoop,
+            from: stackRect(0, in: measured),
+            to: stackRect(depth, in: measured)
         )
     }
 
@@ -287,7 +298,7 @@ struct RunningTimersLayout: Layout {
 
         return CGRect(
             x: horizontalInset,
-            y: measured.listRowsTop - scrollShift + above - stretchGap * below,
+            y: measured.listRowsTop - scrollShift + heldBounce + above - stretchGap * below,
             width: rowWidth,
             height: measured.heights[depth]
         )
@@ -304,15 +315,16 @@ struct RunningTimersLayout: Layout {
         )
     }
 
-    // Kept above the rows as they scroll under it, so it takes the scrolling back that the rows undergo. It spreads
-    // from the soonest as the rows spread from each other.
+    // Kept above the rows as they scroll under it, so it takes the scrolling back that the rows undergo, but goes
+    // along with them as they bounce past their top, and as they fold from there. It spreads from the soonest as the
+    // rows spread from each other.
     private func listedButtonRect(_ button: LayoutSubview, in measured: Measurement) -> CGRect {
         let size = button.sizeThatFits(.unspecified)
         let spread = stretchGap * CGFloat(measured.timers.count)
 
         return CGRect(
             x: horizontalInset + rowWidth - size.width,
-            y: measured.listRoomTop + scrollOffset - spread,
+            y: measured.listRoomTop + max(0.0, scrollOffset) - min(0.0, scrollShift) + heldBounce - spread,
             width: size.width,
             height: size.height
         )
@@ -338,6 +350,7 @@ private func previewStack(openness: Double) -> some View {
     RunningTimersLayout(
         openness: openness,
         rubberBand: 0.0,
+        heldBounce: 0.0,
         region: CGSize(width: 360.0, height: 500.0),
         topInset: 0.0,
         roomHeight: 52.0,
@@ -345,6 +358,7 @@ private func previewStack(openness: Double) -> some View {
         listAnchor: .bottom,
         scrollOffset: 0.0,
         scrollShift: 0.0,
+        scrollFloor: 0.0,
         metrics: RunningTimersLayoutMetrics()
     ) {
         ForEach(0..<4) { depth in

@@ -5,10 +5,6 @@ extension RunningTimersPanel {
     /// Scrolls the timers, turns a swipe past the list's top into folding it, and a swipe up the stack into opening it.
     @MainActor
     final class Coordinator: NSObject, UIScrollViewDelegate, UIGestureRecognizerDelegate {
-        // How far ahead of the finger a swipe is taken to go on, to decide whether it folds the list, and how far a
-        // swipe folds a tall list before letting go closes it.
-        private static let projection = 0.2
-        private static let closeDistance = 120.0
         let scrollView = RunningTimersScrollView()
 
         // The scroll view takes no swipes while the list is closed, so the stack has one of its own to open it.
@@ -24,18 +20,25 @@ extension RunningTimersPanel {
         private let metrics = RunningTimersLayoutMetrics()
         private var region = CGSize.zero
 
-        // How far the finger has folded the list, and the sum of the finger's travel and the scrolling it did before
-        // the fold, which stays put while the finger only scrolls.
-        private var fold: CGFloat = 0.0
+        // The sum of the finger's travel and the scrolling it did before the fold, which stays put while the finger
+        // only scrolls.
         private var foldBase: CGFloat = 0.0
 
-        // Whether the finger can open the list, which a single timer has none of, so it only pulls the stack past.
-        private var canOpen = true
-
-        // Where the finger's fold lays the timers out, from where it caught them.
-        private var hold: RunningTimersHold?
-
         private lazy var hostingController = UIHostingController(rootView: makeContent())
+        private lazy var scrolling = RunningTimersScrolling(
+            scrollView: scrollView,
+            contentView: hostingController.view,
+            motion: motion,
+            // The finger's travel counts the scrolling, so a hold let go under it would leave the fold that far behind.
+            onScrollBack: { [weak self] distance in self?.foldBase -= distance }
+        )
+
+        private lazy var folding = RunningTimersFolding(
+            scrollView: scrollView,
+            presenter: presenter,
+            motion: motion,
+            metrics: metrics
+        )
 
         var topInset: CGFloat = 0.0 {
             didSet {
@@ -61,7 +64,7 @@ extension RunningTimersPanel {
 
         private func configureScrollView() {
             scrollView.delegate = self
-            // A swipe is taken up whether the list scrolls or not, since it folds the list either way.
+            // A swipe is taken up whether the timers scroll or not, since it folds the list or bounces the column.
             scrollView.alwaysBounceVertical = true
             scrollView.clipsToBounds = false
             scrollView.contentInsetAdjustmentBehavior = .never
@@ -79,7 +82,7 @@ extension RunningTimersPanel {
                 metrics: metrics,
                 kind: kind
             )
-            scrollView.hittableRect = { [weak self] in self?.hittableRect() }
+            scrollView.isHittable = { [weak self] point in self?.isHittable(point) ?? true }
             scrollView.onSizeChange = { [weak self] size in self?.regionDidChange(size) }
             scrollView.onWindowChange = { [weak self] in self?.attachHostingController() }
 
@@ -97,7 +100,7 @@ extension RunningTimersPanel {
                 region: region,
                 topInset: topInset,
                 metrics: metrics,
-                onContentHeightChange: { [weak self] height in self?.contentHeightDidChange(height) },
+                onContentHeightChange: { [weak self] height in self?.scrolling.contentHeightDidChange(height) },
                 onListOpenChange: { [weak self] isOpen in self?.listOpenDidChange(isOpen) ?? 0.0 }
             )
         }
@@ -131,43 +134,31 @@ extension RunningTimersPanel {
         private func regionDidChange(_ size: CGSize) {
             region = size
             hostingController.rootView = makeContent()
-            // The content reports only its height, so a new width alone would leave it at the old one.
-            contentHeightDidChange(hostingController.view.frame.height)
+            // Releasing the hold also sizes the content to the new width, which it does not report.
+            scrolling.releaseHold()
         }
 
-        private func contentHeightDidChange(_ height: CGFloat) {
-            let size = CGSize(width: region.width, height: height)
-            hostingController.view.frame = CGRect(origin: .zero, size: size)
-            scrollView.contentSize = size
-        }
-
-        // Only the stack takes touches while the list is closed; beside it, they reach the steps.
-        private func hittableRect() -> CGRect? {
+        // While the list is closed, the steps get every touch but those on the stack, folding timers and fading button.
+        private func isHittable(_ point: CGPoint) -> Bool {
             guard kind == .folding, !viewModel.isTimerListOpen else {
-                return nil
+                return true
             }
 
-            return CGRect(
-                x: 0.0,
-                y: region.height - motion.stackHeight,
-                width: region.width,
-                height: motion.stackHeight
-            )
+            let stack = motion.stackFrame(in: region)
+
+            // Timers above the top inset are faded out of sight, so the bar there keeps its taps as they fold.
+            let isOnTimer = point.y >= topInset && metrics.timerFrames.contains(where: { $0.frame.contains(point) })
+
+            let isOnButton = RunningTimersCollapseButton.isVisible(openness: metrics.presentedPosition.openness)
+                && metrics.collapseButtonFrame?.contains(point) == true
+
+            return stack.contains(point) || isOnTimer || isOnButton
         }
 
-        // The list scrolls only while it is open. Closing it undoes its scrolling, which the content keeps in its
-        // rows' places so they fold from where they were.
+        // Closing undoes the scrolling, which the content keeps in its rows' places so they fold from where they were.
         private func listOpenDidChange(_ isOpen: Bool) -> CGFloat {
-            scrollView.isScrollEnabled = isOpen
-            fold = 0.0
-
-            guard !isOpen else {
-                return 0.0
-            }
-
-            let offset = max(0.0, scrollView.contentOffset.y)
-            scrollView.setContentOffset(.zero, animated: false)
-            return offset
+            folding.reset()
+            return scrolling.listOpenDidChange(isOpen)
         }
 
         // The finger scrolls the list until it reaches its top, and folds it from there: what the finger travels past
@@ -185,17 +176,27 @@ extension RunningTimersPanel {
 
             switch pan.state {
             case .began:
-                canOpen = true
-                catchTimers(at: metrics.presentedPosition, holdsPastOpen: fits)
-                foldBase = travel - fold
+                // A list caught bouncing past its top is held as far as it had bounced when the finger came down.
+                let bounce = max(0.0, -scrollView.touchDownContentOffset.y)
+                if bounce > 0.0 {
+                    scrollView.contentOffset.y = 0.0
+                }
+
+                folding.catchTimers(
+                    at: metrics.presentedPosition,
+                    bouncedBy: bounce,
+                    holdsPastOpen: fits,
+                    canOpen: true
+                )
+                foldBase = travel - folding.fold
             case .changed:
-                if fold <= 0.0, scrollView.contentOffset.y > 0.0 {
+                if folding.fold <= 0.0, scrollView.contentOffset.y > 0.0 {
                     foldBase = travel
                 }
 
-                setFold(fits ? travel - foldBase : max(0.0, travel - foldBase))
+                folding.setFold(fits ? travel - foldBase : max(0.0, travel - foldBase))
             case .ended, .cancelled, .failed:
-                release(velocity: pan.velocity(in: scrollView).y)
+                folding.release(velocity: pan.velocity(in: scrollView).y)
             default:
                 break
             }
@@ -208,13 +209,17 @@ extension RunningTimersPanel {
 
             switch pan.state {
             case .began:
-                canOpen = viewModel.canOpenTimerList
-                catchTimers(at: metrics.presentedPosition, holdsPastOpen: true)
-                foldBase = travel - fold
+                folding.catchTimers(
+                    at: metrics.presentedPosition,
+                    bouncedBy: 0.0,
+                    holdsPastOpen: true,
+                    canOpen: viewModel.canOpenTimerList
+                )
+                foldBase = travel - folding.fold
             case .changed:
-                setFold(travel - foldBase)
+                folding.setFold(travel - foldBase)
             case .ended, .cancelled, .failed:
-                releaseOpening(velocity: pan.velocity(in: scrollView).y)
+                folding.releaseOpening(velocity: pan.velocity(in: scrollView).y)
             default:
                 break
             }
@@ -230,100 +235,24 @@ extension RunningTimersPanel {
             return kind == .folding && !viewModel.isTimerListOpen && !scrollView.isSideways(openingPan)
         }
 
-        // A scrolling list holds nothing past open, so it is open where its scrolling starts; a spring past carries on.
-        private func catchTimers(at presented: RunningTimersLayoutMetrics.Position, holdsPastOpen: Bool) {
-            let held = holdsPastOpen ? presented : presented.notPastOpen
-            let caught = RunningTimersHold(
-                catching: held,
-                distance: metrics.foldDistance,
-                dimension: scrollView.bounds.height,
-                canOpen: canOpen
-            )
-            hold = caught
-            fold = caught.fold
-
-            guard holdsPastOpen || held.openness < 1.0 || held.rubberBand > 0.0 else {
-                return
-            }
-
-            moveTimers(to: presented, animation: .halt)
-            moveTimers(to: held, animation: .runningTimers)
-        }
-
-        private func setFold(_ amount: CGFloat) {
-            fold = amount
-
-            if let position = hold?.position(at: amount) {
-                moveTimers(to: position, animation: nil)
-            }
-        }
-
-        private func moveTimers(to position: RunningTimersLayoutMetrics.Position, animation: Animation?) {
-            withAnimation(animation) {
-                if canOpen {
-                    motion.openness = position.openness
-                }
-
-                motion.rubberBand = position.rubberBand
-            }
-        }
-
-        // Settles the timers open or folded on the timers' spring, carrying on at the finger's speed.
-        private func settle(isOpen: Bool, velocity: CGFloat) {
-            let target = isOpen ? 1.0 : 0.0
-            let delta = target - motion.openness
-            let remaining = abs(delta) < 0.05 ? (delta < 0.0 ? -0.05 : 0.05) : delta
-            fold = 0.0
-
-            withAnimation(.runningTimers(initialVelocity: -velocity / metrics.foldDistance / remaining)) {
-                motion.openness = target
-            }
-
-            withAnimation(.runningTimers) {
-                motion.rubberBand = 0.0
-            }
-        }
-
-        // Let go, the list folds or opens back up from the speed the finger had, whichever it is closer to going by.
-        // The fold starts here rather than on the list closing, so nothing waits between the finger and the fold.
-        private func release(velocity: CGFloat) {
-            guard fold != 0.0 else {
-                return
-            }
-
-            let distance = metrics.foldDistance
-            let closes = fold + velocity * Self.projection > min(distance / 2.0, Self.closeDistance)
-            settle(isOpen: !closes, velocity: velocity)
-
-            if closes {
-                presenter.didCloseTimerList()
-            }
-        }
-
-        // Let go, the stack opens or folds back from the speed the finger had, the way a swipe down the list decides.
-        private func releaseOpening(velocity: CGFloat) {
-            let distance = metrics.foldDistance
-            let opened = distance - fold - velocity * Self.projection
-            let opens = canOpen && opened > min(distance / 2.0, Self.closeDistance)
-            settle(isOpen: opens, velocity: velocity)
-
-            if opens {
-                presenter.didOpenTimerList()
-            }
-        }
-
-        // Never past the top, where the finger's travel folds the list instead, and held at the top while the finger
-        // has the list folded, so its way back up takes the fold back before it scrolls. A list that fits its room
-        // does not scroll at all.
+        // The column scrolls and bounces as any scroll view. The list goes past its top only on a swipe's momentum,
+        // and bounces back from there; under the finger, the travel past the top folds it instead. It is held at the
+        // top while the finger has it folded, so its way back up takes the fold back before it scrolls. A list that
+        // fits its room does not scroll at all.
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
             let offset = scrollView.contentOffset.y
             let fits = scrollView.contentSize.height <= scrollView.bounds.height
+            let isHeld = scrollView.isTracking || folding.fold != 0.0
 
-            if offset < 0.0 || (offset > 0.0 && (fits || (fold > 0.0 && scrollView.isTracking))) {
+            if
+                kind == .folding,
+                (offset < 0.0 && isHeld) || (offset > 0.0 && (fits || (folding.fold > 0.0 && scrollView.isTracking)))
+            {
                 scrollView.contentOffset.y = 0.0
             }
 
             motion.scrollOffset = scrollView.contentOffset.y
+            scrolling.updateFloor()
         }
 
         func scrollViewWillEndDragging(
@@ -331,7 +260,7 @@ extension RunningTimersPanel {
             withVelocity _: CGPoint,
             targetContentOffset: UnsafeMutablePointer<CGPoint>
         ) {
-            if fold > 0.0 {
+            if folding.fold != 0.0 {
                 targetContentOffset.pointee.y = 0.0
             }
         }

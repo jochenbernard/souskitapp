@@ -16,6 +16,10 @@ final class TimerSchedulerSpy: TimerScheduler {
         self.startError = startError
     }
 
+    func currentRunningTimers() -> [RunningTimer] {
+        runningTimerUpdates.first ?? []
+    }
+
     func runningTimers() -> AsyncStream<[RunningTimer]> {
         AsyncStream { continuation in
             for runningTimers in runningTimerUpdates {

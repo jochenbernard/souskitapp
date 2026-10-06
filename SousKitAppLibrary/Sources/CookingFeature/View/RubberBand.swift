@@ -16,6 +16,27 @@ enum RubberBand {
         return (1.0 - 1.0 / (pull * stiffness / length + 1.0)) * length
     }
 
+    /// How far content goes for a finger at a position along a range, past either end of it.
+    ///
+    /// - Parameters:
+    ///   - position: Where the finger has taken the content to.
+    ///   - range: Where the content follows the finger as far as it goes.
+    ///   - dimension: How long the scroll view is along the pull.
+    /// - Returns: How far the content goes past the range, up for negative values, or nothing within it.
+    static func offset(
+        at position: CGFloat,
+        pastEitherEndOf range: ClosedRange<CGFloat>,
+        dimension: CGFloat
+    ) -> CGFloat {
+        if position < range.lowerBound {
+            -offset(forPull: range.lowerBound - position, dimension: dimension)
+        } else if position > range.upperBound {
+            offset(forPull: position - range.upperBound, dimension: dimension)
+        } else {
+            0.0
+        }
+    }
+
     /// How far a finger pulls for content to have gone a distance past an end, the other way around from
     /// ``offset(forPull:dimension:)``.
     ///
