@@ -5,8 +5,8 @@ final class RunningTimersScrollView: UIScrollView {
     // How far a finger moves before a scroll view takes it as a swipe, which moves nothing.
     private static let swipeThreshold = 10.0
 
-    /// Where touches count, in the scroll view's bounds, or nil for everywhere in them.
-    var hittableRect: (() -> CGRect?)?
+    /// Whether a touch at a point in the scroll view's bounds counts, or nil for every point counting.
+    var isHittable: ((CGPoint) -> Bool)?
 
     /// Called with the bounds' size whenever it changes.
     var onSizeChange: ((CGSize) -> Void)?
@@ -16,6 +16,9 @@ final class RunningTimersScrollView: UIScrollView {
 
     /// Where the last finger to touch the scroll view came down, in the window.
     private(set) var touchDownLocation: CGPoint?
+
+    /// How far the content was scrolled when the last finger touched the scroll view.
+    private(set) var touchDownContentOffset = CGPoint.zero
 
     private var lastSize = CGSize.zero
 
@@ -29,12 +32,13 @@ final class RunningTimersScrollView: UIScrollView {
     }
 
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        if let rect = hittableRect?(), !rect.contains(point) {
+        if let isHittable, !isHittable(point) {
             return nil
         }
 
         if event?.type == .touches {
             touchDownLocation = convert(point, to: nil)
+            touchDownContentOffset = contentOffset
         }
 
         return super.hitTest(point, with: event)

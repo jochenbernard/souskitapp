@@ -64,7 +64,8 @@ final class RunningTimersScrolling {
             return 0.0
         }
 
-        let offset = max(0.0, scrollView.contentOffset.y)
+        // A list bouncing past its top keeps its rows that far down too.
+        let offset = scrollView.contentOffset.y
         scrollView.setContentOffset(.zero, animated: false)
         return offset
     }
