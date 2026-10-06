@@ -185,9 +185,18 @@ extension RunningTimersPanel {
                 // A scrolled list scrolls the swipe's start; at its top, the start goes into the fold.
                 canOpen = true
                 let start = scrollView.contentOffset.y > 0.0 ? 0.0 : scrollView.distanceMoved(by: pan, along: \.y)
-                fold = presentedFold() + (fits ? start : max(0.0, start))
+                let presented = metrics.presentedFold(dimension: scrollView.bounds.height)
+
+                if fits || presented >= 0.0 {
+                    fold = presented + (fits ? start : max(0.0, start))
+                    catchTimers()
+                } else {
+                    // A list that scrolls takes no pull past its top, so a spring settling it back from one carries on.
+                    fold = max(0.0, start)
+                    setFold(fold)
+                }
+
                 foldBase = travel - fold
-                setFold(fold)
             case .changed:
                 if fold <= 0.0, scrollView.contentOffset.y > 0.0 {
                     foldBase = travel
@@ -209,9 +218,10 @@ extension RunningTimersPanel {
             switch pan.state {
             case .began:
                 canOpen = viewModel.canOpenTimerList
-                fold = presentedFold() + scrollView.distanceMoved(by: pan, along: \.y)
+                let presented = metrics.presentedFold(dimension: scrollView.bounds.height)
+                fold = presented + scrollView.distanceMoved(by: pan, along: \.y)
                 foldBase = travel - fold
-                setFold(fold)
+                catchTimers()
             case .changed:
                 setFold(travel - foldBase)
             case .ended, .cancelled, .failed:
@@ -231,13 +241,13 @@ extension RunningTimersPanel {
             return kind == .folding && !viewModel.isTimerListOpen && !scrollView.isSideways(openingPan)
         }
 
-        // The fold the finger takes the timers up at, from where they are laid out: how far they are folded, and the
-        // pull past it of whatever is left of a pull, which a spring settling back from one overshoots either way.
-        private func presentedFold() -> CGFloat {
-            let rubberBand = metrics.presentedRubberBand
-            let pull = RubberBand.pull(forOffset: abs(rubberBand), dimension: scrollView.bounds.height)
-
-            return (1.0 - metrics.presentedOpenness) * metrics.foldDistance + (rubberBand < 0.0 ? -pull : pull)
+        // Holds the timers where they are laid out, so a spring still settling them stops there rather than carrying on
+        // under the finger. One overshooting past either end changes nothing here, so it settles back on its own.
+        private func catchTimers() {
+            withAnimation(.halt) {
+                motion.openness = metrics.presentedOpenness
+                motion.rubberBand = metrics.presentedRubberBand
+            }
         }
 
         // Within the timers' two ends the finger moves them as far as it goes; past either, less and less the further.

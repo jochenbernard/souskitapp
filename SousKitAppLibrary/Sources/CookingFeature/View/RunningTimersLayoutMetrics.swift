@@ -38,6 +38,21 @@ final class RunningTimersLayoutMetrics: Sendable {
 
     init() {}
 
+    /// The fold that puts the timers where they were laid out, with what is left of a pull past either end.
+    ///
+    /// A spring overshooting either end is left out, since it settles back on its own.
+    ///
+    /// - Parameter dimension: How long the scroll view is along the fold.
+    /// - Returns: How far the timers are folded from open, negative past open and beyond ``foldDistance`` past folded.
+    func presentedFold(dimension: CGFloat) -> CGFloat {
+        values.withLock { values in
+            let rubberBand = values.presentedRubberBand
+            let pull = RubberBand.pull(forOffset: abs(rubberBand), dimension: dimension)
+
+            return (1.0 - values.presentedOpenness) * values.foldDistance + (rubberBand < 0.0 ? -pull : pull)
+        }
+    }
+
     /// Records what a layout pass found.
     ///
     /// - Parameters:
