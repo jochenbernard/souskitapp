@@ -151,8 +151,7 @@ extension RunningTimersPanel {
             )
         }
 
-        // Closing the list undoes its scrolling, which the content keeps in its rows' places so they fold from where
-        // they were.
+        // Closing undoes the scrolling, which the content keeps in its rows' places so they fold from where they were.
         private func listOpenDidChange(_ isOpen: Bool) -> CGFloat {
             fold = 0.0
             return scrolling.listOpenDidChange(isOpen)
@@ -311,8 +310,11 @@ extension RunningTimersPanel {
             scrolling.releaseHold()
         }
 
-        func scrollViewDidEndDragging(_: UIScrollView, willDecelerate _: Bool) {
-            scrolling.updateFloor()
+        // A fling settles in `scrollViewDidEndDecelerating`, and may still lie past the end until then.
+        func scrollViewDidEndDragging(_: UIScrollView, willDecelerate decelerate: Bool) {
+            if !decelerate {
+                scrolling.updateFloor()
+            }
         }
 
         func scrollViewDidEndDecelerating(_: UIScrollView) {
