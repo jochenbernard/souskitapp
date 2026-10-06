@@ -66,7 +66,7 @@ final class RunningTimersLayoutMetrics: Sendable {
         values.withLock({ $0.presentedSwipeOffsets[id] = offset })
     }
 
-    /// Records what a layout pass found, and forgets how far the timers it no longer lays out were swiped.
+    /// Records what a layout pass found.
     ///
     /// - Parameters:
     ///   - foldDistance: How far the soonest timer travels from the list to the stack.
@@ -84,9 +84,6 @@ final class RunningTimersLayoutMetrics: Sendable {
             values.presentedOpenness = presentedOpenness
             values.presentedRubberBand = presentedRubberBand
             values.timerFrames = timerFrames
-            values.presentedSwipeOffsets = values.presentedSwipeOffsets.filter { id, _ in
-                timerFrames.contains(where: { $0.id == id })
-            }
         }
     }
 }
