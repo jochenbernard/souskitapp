@@ -160,7 +160,11 @@ struct RunningTimersHoldTests {
             (1.02, -6.0, -3.0)
         ]
     )
-    func catchHolds(openness: Double, rubberBand: CGFloat, heldBounce: CGFloat) {
+    func catchHolds(
+        openness: Double,
+        rubberBand: CGFloat,
+        heldBounce: CGFloat
+    ) {
         var hold = catching(
             openness: openness,
             rubberBand: rubberBand,

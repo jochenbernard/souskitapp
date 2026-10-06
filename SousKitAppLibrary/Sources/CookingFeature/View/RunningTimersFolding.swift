@@ -73,7 +73,10 @@ final class RunningTimersFolding {
         moveTimers(to: presented, animation: .halt)
         // Set at once: the halt shows the value it starts from for a frame, which would drop the bounce for that frame.
         motion.heldBounce = caught.heldBounce
-        moveTimers(to: held, animation: .runningTimers)
+
+        if held != caught {
+            moveTimers(to: held, animation: .runningTimers)
+        }
     }
 
     /// Moves the timers to where the hold lays them out for the fold, once a finger has caught them.
