@@ -17,6 +17,9 @@ final class RunningTimersScrollView: UIScrollView {
     /// Where the last finger to touch the scroll view came down, in the window.
     private(set) var touchDownLocation: CGPoint?
 
+    /// How far the content was scrolled when the last finger touched the scroll view.
+    private(set) var touchDownContentOffset = CGPoint.zero
+
     private var lastSize = CGSize.zero
 
     override func layoutSubviews() {
@@ -35,6 +38,7 @@ final class RunningTimersScrollView: UIScrollView {
 
         if event?.type == .touches {
             touchDownLocation = convert(point, to: nil)
+            touchDownContentOffset = contentOffset
         }
 
         return super.hitTest(point, with: event)
