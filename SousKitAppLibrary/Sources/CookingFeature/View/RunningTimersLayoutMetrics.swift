@@ -9,17 +9,11 @@ import Synchronization
 final class RunningTimersLayoutMetrics: Sendable {
     /// Where the timers were laid out, as an animation in flight has them.
     struct Position {
-        /// How far open the timers were laid out.
+        /// How far open the timers were laid out, past either end while a spring overshoots it.
         let openness: Double
 
         /// How far past where they open or fold to the timers were laid out.
         let rubberBand: CGFloat
-
-        /// The fold that puts the timers there, with what is left of a pull past either end: negative past open and
-        /// beyond ``RunningTimersLayoutMetrics/foldDistance`` past folded.
-        ///
-        /// A spring overshooting either end is left out, since it settles back on its own.
-        let fold: CGFloat
     }
 
     private struct Values {
@@ -36,7 +30,8 @@ final class RunningTimersLayoutMetrics: Sendable {
         values.withLock({ $0.foldDistance })
     }
 
-    /// How far open the timers were laid out, as an animation in flight has them at that moment.
+    /// How far open the timers were laid out, as an animation in flight has them at that moment, past either end while
+    /// a spring overshoots it.
     var presentedOpenness: Double {
         values.withLock({ $0.presentedOpenness })
     }
@@ -48,21 +43,9 @@ final class RunningTimersLayoutMetrics: Sendable {
 
     init() {}
 
-    /// Where the timers were laid out, every value from the same layout pass.
-    ///
-    /// - Parameter dimension: How long the scroll view is along the fold.
-    /// - Returns: How far open and past either end the timers were laid out, and the fold that puts them there.
-    func presentedPosition(dimension: CGFloat) -> Position {
-        values.withLock { values in
-            let rubberBand = values.presentedRubberBand
-            let pull = RubberBand.pull(forOffset: abs(rubberBand), dimension: dimension)
-
-            return Position(
-                openness: values.presentedOpenness,
-                rubberBand: rubberBand,
-                fold: (1.0 - values.presentedOpenness) * values.foldDistance + (rubberBand < 0.0 ? -pull : pull)
-            )
-        }
+    /// Where the timers were laid out, both values from the same layout pass.
+    var presentedPosition: Position {
+        values.withLock({ Position(openness: $0.presentedOpenness, rubberBand: $0.presentedRubberBand) })
     }
 
     /// Records what a layout pass found.

@@ -97,8 +97,6 @@ struct RunningTimersPanelContent: View {
     private var timers: some View {
         RunningTimersLayout(
             openness: motion.openness,
-            swoop: arrival.swoopProgress,
-            swoopingTimer: arrival.swoopingTimer,
             rubberBand: motion.rubberBand,
             region: region,
             topInset: topInset,
