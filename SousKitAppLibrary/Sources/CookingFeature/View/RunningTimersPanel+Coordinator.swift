@@ -176,7 +176,6 @@ extension RunningTimersPanel {
 
             switch pan.state {
             case .began:
-                folding.canOpen = true
                 // A list caught bouncing past its top is held as far as it had bounced when the finger came down.
                 let bounce = max(0.0, -scrollView.touchDownContentOffset.y)
                 if bounce > 0.0 {
@@ -186,7 +185,8 @@ extension RunningTimersPanel {
                 folding.catchTimers(
                     at: metrics.presentedPosition,
                     bouncedBy: bounce,
-                    holdsPastOpen: fits
+                    holdsPastOpen: fits,
+                    canOpen: true
                 )
                 foldBase = travel - folding.fold
             case .changed:
@@ -209,11 +209,11 @@ extension RunningTimersPanel {
 
             switch pan.state {
             case .began:
-                folding.canOpen = viewModel.canOpenTimerList
                 folding.catchTimers(
                     at: metrics.presentedPosition,
                     bouncedBy: 0.0,
-                    holdsPastOpen: true
+                    holdsPastOpen: true,
+                    canOpen: viewModel.canOpenTimerList
                 )
                 foldBase = travel - folding.fold
             case .changed:

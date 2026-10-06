@@ -12,8 +12,8 @@ final class RunningTimersFolding {
     /// How far the finger has folded the list, down from open for positive values.
     private(set) var fold: CGFloat = 0.0
 
-    /// Whether the finger can open the list, which a single timer has none of, so it only pulls the stack past.
-    var canOpen = true
+    // Whether the finger can open the list, which a single timer has none of, so it only pulls the stack past.
+    private var canOpen = true
 
     // Where the finger's fold lays the timers out, from where it caught them.
     private var hold: RunningTimersHold?
@@ -45,12 +45,16 @@ final class RunningTimersFolding {
     ///   - presented: Where the timers are laid out.
     ///   - bounce: How far past its top the scroll view has the list, which the timers take over.
     ///   - holdsPastOpen: Whether the finger holds the timers past open, rather than scrolling a list that is open.
+    ///   - canOpen: Whether the finger can open the list, or only pull the stack past where it folds.
     func catchTimers(
         at presented: RunningTimersLayoutMetrics.Position,
         bouncedBy bounce: CGFloat,
-        holdsPastOpen: Bool
+        holdsPastOpen: Bool,
+        canOpen: Bool
     ) {
-        let caught = presented.holding(further: bounce)
+        self.canOpen = canOpen
+        var caught = presented
+        caught.heldBounce += bounce
         // A scrolling list holds nothing past open, so it is open where its scrolling starts; a spring past carries on.
         let held = holdsPastOpen ? caught : caught.notPastOpen
         let caughtHold = RunningTimersHold(
@@ -62,7 +66,7 @@ final class RunningTimersFolding {
         hold = caughtHold
         fold = caughtHold.fold
 
-        guard holdsPastOpen || held.openness < 1.0 || held.rubberBand > 0.0 || held.heldBounce > 0.0 else {
+        guard holdsPastOpen || held != .open else {
             return
         }
 
@@ -72,8 +76,7 @@ final class RunningTimersFolding {
         moveTimers(to: held, animation: .runningTimers)
     }
 
-    /// Moves the timers as far as the finger within their two ends, and less and less the further past either. A
-    /// caught bounce moves every timer alike, as it did while bouncing, until the fold has taken it up.
+    /// Moves the timers to where the hold lays them out for the fold, once a finger has caught them.
     ///
     /// - Parameter amount: How far the finger has folded the list, down from open for positive values.
     func setFold(_ amount: CGFloat) {

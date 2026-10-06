@@ -70,7 +70,7 @@ struct RunningTimersHold {
         // Each end sees the finger no further than the other, so a catch past one end and pulled past the other holds.
         let opened = moveOpenEnd(to: min(folding, foldedEnd?.at ?? folding))
         let folded = max(opened, moveFoldedEnd(to: max(folding, opened)))
-        let taken = min(max(0.0, bounce), max(0.0, opened - folding))
+        let taken = (opened - folding).clamped(to: 0.0...max(0.0, bounce))
 
         return RunningTimersLayoutMetrics.Position(
             openness: 1.0 - folding.clamped(to: opened...folded) / distance,

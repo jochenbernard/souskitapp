@@ -25,6 +25,23 @@ struct RunningTimersHoldTests {
         )
     }
 
+    // Walks the fold from where the hold caught the timers in half-point steps, none of which may jump them.
+    private func expectNoJump(_ hold: inout RunningTimersHold, directions: [Double]) {
+        let step = 0.5
+        var amount = hold.fold
+        var previous = hold.position(at: amount)
+
+        for direction in directions {
+            amount += direction * step
+            let position = hold.position(at: amount)
+
+            #expect(abs(position.openness - previous.openness) <= step / hold.distance + 0.0001)
+            #expect(abs(position.rubberBand - previous.rubberBand) <= step + 0.0001)
+            #expect(abs(position.heldBounce - previous.heldBounce) <= step + 0.0001)
+            previous = position
+        }
+    }
+
     @Test("within the ends the fold opens the timers as far as it goes")
     func withinEnds() {
         var hold = catching(openness: 1.0, rubberBand: 0.0)
@@ -44,45 +61,13 @@ struct RunningTimersHoldTests {
     }
 
     @Test(
-        "a catch holds the timers where they are",
-        arguments: [
-            (0.3, 20.0),
-            (0.86, -25.0),
-            (1.02, 0.0),
-            (-0.01, 0.0),
-            (0.5, 0.0),
-            (1.0, -12.0),
-            (0.0, 18.0),
-            (1.03, 7.0),
-            (-0.05, -10.0)
-        ]
-    )
-    func catchHolds(openness: Double, rubberBand: CGFloat) {
-        var hold = catching(openness: openness, rubberBand: rubberBand)
-        let position = hold.position(at: hold.fold)
-
-        #expect(abs(position.openness - openness) < 0.0001)
-        #expect(abs(position.rubberBand - rubberBand) < 0.0001)
-    }
-
-    @Test(
         "a catch past one end and pulled past the other moves on without a jump",
         arguments: [(1.03, 7.0), (-0.05, -10.0)]
     )
     func pastOneEndPulledPastOther(openness: Double, rubberBand: CGFloat) {
-        let step = 0.5
         var hold = catching(openness: openness, rubberBand: rubberBand)
-        var amount = hold.fold
-        var previous = hold.position(at: amount)
 
-        for direction in Array(repeating: 1.0, count: 80) + Array(repeating: -1.0, count: 160) {
-            amount += direction * step
-            let position = hold.position(at: amount)
-
-            #expect(abs(position.openness - previous.openness) <= step / distance + 0.0001)
-            #expect(abs(position.rubberBand - previous.rubberBand) <= step + 0.0001)
-            previous = position
-        }
+        expectNoJump(&hold, directions: Array(repeating: 1.0, count: 80) + Array(repeating: -1.0, count: 160))
     }
 
     @Test("a pull caught part of the way open goes before the timers open further")
@@ -155,11 +140,27 @@ struct RunningTimersHoldTests {
         #expect(raised.rubberBand < 0.0)
         #expect(lowered.rubberBand > 0.0)
     }
+
     @Test(
-        "a catch holds a bounce past the top where it is, with the timers as far open and pulled past as they are",
-        arguments: [(1.0, 0.0, 30.0), (0.7, 0.0, 30.0), (1.04, 0.0, 12.0), (0.4, 15.0, 20.0), (1.02, -6.0, -3.0)]
+        "a catch holds the timers where they are, a bounce past the top included",
+        arguments: [
+            (0.3, 20.0, 0.0),
+            (0.86, -25.0, 0.0),
+            (1.02, 0.0, 0.0),
+            (-0.01, 0.0, 0.0),
+            (0.5, 0.0, 0.0),
+            (1.0, -12.0, 0.0),
+            (0.0, 18.0, 0.0),
+            (1.03, 7.0, 0.0),
+            (-0.05, -10.0, 0.0),
+            (1.0, 0.0, 30.0),
+            (0.7, 0.0, 30.0),
+            (1.04, 0.0, 12.0),
+            (0.4, 15.0, 20.0),
+            (1.02, -6.0, -3.0)
+        ]
     )
-    func catchHoldsBounce(openness: Double, rubberBand: CGFloat, heldBounce: CGFloat) {
+    func catchHolds(openness: Double, rubberBand: CGFloat, heldBounce: CGFloat) {
         var hold = catching(
             openness: openness,
             rubberBand: rubberBand,
@@ -226,23 +227,12 @@ struct RunningTimersHoldTests {
 
     @Test("a caught bounce moves on without a jump either way")
     func bounceMovesOn() {
-        let step = 0.5
         var hold = catching(
             openness: 0.9,
             rubberBand: 0.0,
             heldBounce: 25.0
         )
-        var amount = hold.fold
-        var previous = hold.position(at: amount)
 
-        for direction in Array(repeating: -1.0, count: 160) + Array(repeating: 1.0, count: 400) {
-            amount += direction * step
-            let position = hold.position(at: amount)
-
-            #expect(abs(position.heldBounce - previous.heldBounce) <= step + 0.0001)
-            #expect(abs(position.rubberBand - previous.rubberBand) <= step + 0.0001)
-            #expect(abs(position.openness - previous.openness) <= step / hold.distance + 0.0001)
-            previous = position
-        }
+        expectNoJump(&hold, directions: Array(repeating: -1.0, count: 160) + Array(repeating: 1.0, count: 400))
     }
 }

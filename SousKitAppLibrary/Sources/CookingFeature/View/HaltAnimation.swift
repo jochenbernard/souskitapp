@@ -21,7 +21,7 @@ private struct HaltAnimation: CustomAnimation {
 }
 
 extension Animation {
-    /// Puts a value where it is set at once, and stops any animation still moving it, which a change made without an
-    /// animation leaves running on top of the new value.
+    /// Stops any animation still moving a value, which a change made without an animation leaves running on top of the
+    /// new value, and puts the value where it is set from the next frame: the first still shows where it starts from.
     static let halt = Animation(HaltAnimation())
 }
