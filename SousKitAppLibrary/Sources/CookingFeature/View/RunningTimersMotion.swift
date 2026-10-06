@@ -14,6 +14,10 @@ final class RunningTimersMotion {
     /// How far up the list keeps its rows once its scrolling is undone as it folds, so they fold from where they were.
     var scrollShift: CGFloat = 0.0
 
+    /// How far down the list reaches at least: the bottom of what shows while it rests, so a timer going near its end
+    /// closes the gap from above.
+    var scrollFloor: CGFloat = 0.0
+
     /// How far the timers are pulled past where they open or fold to, down for positive values, which they spring
     /// back from once let go.
     var rubberBand: CGFloat = 0.0

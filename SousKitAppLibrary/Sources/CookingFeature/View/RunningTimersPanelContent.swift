@@ -107,6 +107,7 @@ struct RunningTimersPanelContent: View {
             listAnchor: kind == .folding ? .bottom : .top,
             scrollOffset: motion.scrollOffset,
             scrollShift: motion.scrollShift,
+            scrollFloor: motion.scrollFloor,
             metrics: metrics
         ) {
             ForEach(Array(shownTimers.enumerated()), id: \.element.id) { depth, timer in

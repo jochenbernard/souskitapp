@@ -71,6 +71,7 @@ struct RunningTimersLayout: Layout {
     private let listAnchor: ListAnchor
     private let scrollOffset: CGFloat
     private let scrollShift: CGFloat
+    private let scrollFloor: CGFloat
     private let metrics: RunningTimersLayoutMetrics
     private let swoopingTimer: RunningTimer.ID?
     private var openness: Double
@@ -90,6 +91,7 @@ struct RunningTimersLayout: Layout {
     ///   - listAnchor: Where the list sits while it is shorter than the region.
     ///   - scrollOffset: How far the list is scrolled down, which the collapse button stays clear of.
     ///   - scrollShift: How far up the list keeps its rows while it folds from a scrolled position.
+    ///   - scrollFloor: How far down the list reaches at least, past the height the layout measures if need be.
     ///   - metrics: Where the layout leaves what a swipe needs to know.
     init(
         openness: Double,
@@ -103,6 +105,7 @@ struct RunningTimersLayout: Layout {
         listAnchor: ListAnchor,
         scrollOffset: CGFloat,
         scrollShift: CGFloat,
+        scrollFloor: CGFloat,
         metrics: RunningTimersLayoutMetrics
     ) {
         self.openness = openness
@@ -116,6 +119,7 @@ struct RunningTimersLayout: Layout {
         self.listAnchor = listAnchor
         self.scrollOffset = scrollOffset
         self.scrollShift = scrollShift
+        self.scrollFloor = scrollFloor
         self.metrics = metrics
     }
 
@@ -225,6 +229,9 @@ struct RunningTimersLayout: Layout {
         case .top: topInset
         case .bottom: max(topInset, region.height - roomHeight - rowsHeight)
         }
+        let contentHeight = max(region.height, listRoomTop + roomHeight + rowsHeight)
+        // Lower by what the list falls short of its floor, so a timer going closes its gap from above.
+        let hold = max(0.0, scrollFloor - contentHeight)
 
         return Measurement(
             timers: timers,
@@ -234,8 +241,8 @@ struct RunningTimersLayout: Layout {
             heights: heights,
             stackTop: region.height - stackHeight,
             listRoomTop: listRoomTop,
-            listRowsTop: listRoomTop + roomHeight,
-            contentHeight: max(region.height, listRoomTop + roomHeight + rowsHeight)
+            listRowsTop: listRoomTop + hold + roomHeight,
+            contentHeight: contentHeight
         )
     }
 
@@ -339,6 +346,7 @@ private func previewStack(openness: Double) -> some View {
         listAnchor: .bottom,
         scrollOffset: 0.0,
         scrollShift: 0.0,
+        scrollFloor: 0.0,
         metrics: RunningTimersLayoutMetrics()
     ) {
         ForEach(0..<4) { depth in

@@ -33,6 +33,11 @@ extension RunningTimersPanel {
         private var canOpen = true
 
         private lazy var hostingController = UIHostingController(rootView: makeContent())
+        private lazy var scrolling = RunningTimersScrolling(
+            scrollView: scrollView,
+            contentView: hostingController.view,
+            motion: motion
+        )
 
         var topInset: CGFloat = 0.0 {
             didSet {
@@ -94,7 +99,7 @@ extension RunningTimersPanel {
                 region: region,
                 topInset: topInset,
                 metrics: metrics,
-                onContentHeightChange: { [weak self] height in self?.contentHeightDidChange(height) },
+                onContentHeightChange: { [weak self] height in self?.scrolling.contentHeightDidChange(height) },
                 onListOpenChange: { [weak self] isOpen in self?.listOpenDidChange(isOpen) ?? 0.0 }
             )
         }
@@ -128,14 +133,8 @@ extension RunningTimersPanel {
         private func regionDidChange(_ size: CGSize) {
             region = size
             hostingController.rootView = makeContent()
-            // The content reports only its height, so a new width alone would leave it at the old one.
-            contentHeightDidChange(hostingController.view.frame.height)
-        }
-
-        private func contentHeightDidChange(_ height: CGFloat) {
-            let size = CGSize(width: region.width, height: height)
-            hostingController.view.frame = CGRect(origin: .zero, size: size)
-            scrollView.contentSize = size
+            // Releasing the hold also sizes the content to the new width, which it does not report.
+            scrolling.releaseHold()
         }
 
         // Only the stack takes touches while the list is closed; beside it, they reach the steps.
@@ -152,19 +151,11 @@ extension RunningTimersPanel {
             )
         }
 
-        // The list scrolls only while it is open. Closing it undoes its scrolling, which the content keeps in its
-        // rows' places so they fold from where they were.
+        // Closing the list undoes its scrolling, which the content keeps in its rows' places so they fold from where
+        // they were.
         private func listOpenDidChange(_ isOpen: Bool) -> CGFloat {
-            scrollView.isScrollEnabled = isOpen
             fold = 0.0
-
-            guard !isOpen else {
-                return 0.0
-            }
-
-            let offset = max(0.0, scrollView.contentOffset.y)
-            scrollView.setContentOffset(.zero, animated: false)
-            return offset
+            return scrolling.listOpenDidChange(isOpen)
         }
 
         // The finger scrolls the list until it reaches its top, and folds it from there: what the finger travels past
@@ -312,6 +303,20 @@ extension RunningTimersPanel {
             }
 
             motion.scrollOffset = scrollView.contentOffset.y
+            scrolling.updateFloor()
+        }
+
+        // The finger scrolls the list from where it shows.
+        func scrollViewWillBeginDragging(_: UIScrollView) {
+            scrolling.releaseHold()
+        }
+
+        func scrollViewDidEndDragging(_: UIScrollView, willDecelerate _: Bool) {
+            scrolling.updateFloor()
+        }
+
+        func scrollViewDidEndDecelerating(_: UIScrollView) {
+            scrolling.updateFloor()
         }
 
         func scrollViewWillEndDragging(
