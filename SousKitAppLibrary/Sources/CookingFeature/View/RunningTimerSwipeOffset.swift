@@ -38,7 +38,13 @@ extension View {
         id: RunningTimer.ID,
         metrics: RunningTimersLayoutMetrics
     ) -> some View {
-        modifier(RunningTimerSwipeOffset(offset: offset, id: id, metrics: metrics))
+        modifier(
+            RunningTimerSwipeOffset(
+                offset: offset,
+                id: id,
+                metrics: metrics
+            )
+        )
     }
 }
 
@@ -55,7 +61,11 @@ extension View {
             timer: timer,
             isConfirmingCancel: false
         )
-        .runningTimerSwipeOffset(offset, id: timer.id, metrics: RunningTimersLayoutMetrics())
+        .runningTimerSwipeOffset(
+            offset,
+            id: timer.id,
+            metrics: RunningTimersLayoutMetrics()
+        )
     }
     .padding()
 }

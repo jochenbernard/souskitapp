@@ -21,12 +21,16 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
     private let metrics: RunningTimersLayoutMetrics
     private let kind: RunningTimersPanel.Kind
 
-    // The timer the finger has, where it lies in the panel's content, the pull the finger took it up at, and whether
-    // letting go now takes it away.
+    // The timer the finger has, where it lies in the panel's content, and whether letting go now takes it away.
     private var timer: RunningTimer?
     private var frame = CGRect.zero
-    private var startPull: CGFloat = 0.0
     private var isArmed = false
+
+    // The pull the finger took the timer up at, from where it was drawn.
+    private var startPull: CGFloat = 0.0
+
+    // Timers flown off and waiting to be cancelled, which a finger can no longer take back.
+    private var leaving: Set<RunningTimer.ID> = []
 
     /// - Parameters:
     ///   - scrollView: The panel's scroll view, which the swipe is added to.
@@ -77,6 +81,7 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
 
         guard
             let hit = frames.first(where: { $0.frame.contains(point) }),
+            !leaving.contains(hit.id),
             let hitTimer = viewModel.runningTimers.first(where: { $0.id == hit.id })
         else {
             return nil
@@ -171,12 +176,15 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
             return
         }
 
+        leaving.insert(timer.id)
+
         // Cancelled once it is off the screen: a timer that goes away stops where it is, so mid-flight it would fade
         // there instead. Timed, so it does not hang on the animation reporting its end.
         Task {
             try? await Task.sleep(for: .seconds(Animation.runningTimersDuration))
             presenter.didSwipeAwayTimer(timer)
             try? await Task.sleep(for: Self.cancelTimeout)
+            leaving.remove(timer.id)
 
             if viewModel.isRunning(timer.id) {
                 withAnimation(.runningTimers) {
