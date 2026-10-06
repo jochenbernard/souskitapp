@@ -29,6 +29,9 @@ extension RunningTimersPanel {
         private var fold: CGFloat = 0.0
         private var foldBase: CGFloat = 0.0
 
+        // How far past its top the finger caught the list bouncing, which the fold takes up before it folds the rows.
+        private var caughtBounce: CGFloat = 0.0
+
         // Whether the finger can open the list, which a single timer has none of, so it only pulls the stack past.
         private var canOpen = true
 
@@ -186,13 +189,14 @@ extension RunningTimersPanel {
                 // A scrolled list scrolls the swipe's start; at its top, the start goes into the fold.
                 canOpen = true
                 let start = scrollView.contentOffset.y > 0.0 ? 0.0 : scrollView.distanceMoved(by: pan, along: \.y)
-                // A list caught bouncing past its top is folded as far as it had bounced when the finger came down.
+                // A list caught bouncing past its top is held as far as it had bounced when the finger came down.
                 let bounce = max(0.0, -scrollView.touchDownContentOffset.y)
                 if bounce > 0.0 {
                     scrollView.contentOffset.y = 0.0
                 }
 
-                fold = presentedFold() + bounce + (fits ? start : max(0.0, start))
+                caughtBounce = metrics.presentedHeldBounce + bounce
+                fold = metrics.presentedFold + bounce + (fits ? start : max(0.0, start))
                 foldBase = travel - fold
                 setFold(fold)
             case .changed:
@@ -216,7 +220,8 @@ extension RunningTimersPanel {
             switch pan.state {
             case .began:
                 canOpen = viewModel.canOpenTimerList
-                fold = presentedFold() + scrollView.distanceMoved(by: pan, along: \.y)
+                caughtBounce = metrics.presentedHeldBounce
+                fold = metrics.presentedFold + scrollView.distanceMoved(by: pan, along: \.y)
                 foldBase = travel - fold
                 setFold(fold)
             case .changed:
@@ -238,29 +243,22 @@ extension RunningTimersPanel {
             return kind == .folding && !viewModel.isTimerListOpen && !scrollView.isSideways(openingPan)
         }
 
-        // The fold the finger takes the timers up at, from where they are laid out: how far they are folded, and the
-        // pull past it of whatever is left of a pull, which a spring settling back from one overshoots either way.
-        private func presentedFold() -> CGFloat {
-            let rubberBand = metrics.presentedRubberBand
-            let pull = RubberBand.pull(forOffset: abs(rubberBand), dimension: scrollView.bounds.height)
-
-            return (1.0 - metrics.presentedOpenness) * metrics.foldDistance + (rubberBand < 0.0 ? -pull : pull)
-        }
-
         // Within the timers' two ends the finger moves them as far as it goes; past either, less and less the further.
+        // A caught bounce moves every timer alike, as it did while bouncing, until the fold has taken it up.
         private func setFold(_ amount: CGFloat) {
-            let distance = metrics.foldDistance
+            let distance = metrics.foldDistance(holding: caughtBounce)
             let open = canOpen ? 0.0 : distance
             let height = scrollView.bounds.height
+            let held = min(max(0.0, amount), caughtBounce)
+            let folded = amount - held
             fold = amount
-            motion.openness = 1.0 - min(1.0, max(open, amount) / distance)
-            motion.rubberBand = if amount < open {
-                -RubberBand.offset(forPull: open - amount, dimension: height)
-            } else if amount > distance {
-                RubberBand.offset(forPull: amount - distance, dimension: height)
-            } else {
-                0.0
-            }
+            motion.heldBounce = held
+            motion.openness = 1.0 - min(1.0, max(open, folded) / distance)
+            motion.rubberBand = RubberBand.offset(
+                at: folded,
+                pastEitherEndOf: open...distance,
+                dimension: height
+            )
         }
 
         // Settles the timers open or folded on the timers' spring, carrying on at the finger's speed.
@@ -268,14 +266,16 @@ extension RunningTimersPanel {
             let target = isOpen ? 1.0 : 0.0
             let delta = target - motion.openness
             let remaining = abs(delta) < 0.05 ? (delta < 0.0 ? -0.05 : 0.05) : delta
+            let distance = metrics.foldDistance(holding: caughtBounce)
             fold = 0.0
 
-            withAnimation(.runningTimers(initialVelocity: -velocity / metrics.foldDistance / remaining)) {
+            withAnimation(.runningTimers(initialVelocity: -velocity / distance / remaining)) {
                 motion.openness = target
             }
 
             withAnimation(.runningTimers) {
                 motion.rubberBand = 0.0
+                motion.heldBounce = 0.0
             }
         }
 

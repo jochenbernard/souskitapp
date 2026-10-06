@@ -76,12 +76,15 @@ struct RunningTimersLayout: Layout {
     private var openness: Double
     private var swoop: Double
     private var rubberBand: CGFloat
+    private var heldBounce: CGFloat
 
     /// - Parameters:
     ///   - openness: How far the timers are open, from 0 stacked to 1 listed.
     ///   - swoop: How far the swooping timer is on its way, from 0 in front to 1 in its place.
     ///   - swoopingTimer: The timer swooping from the front of the stack to its place behind the others, if any.
     ///   - rubberBand: How far the timers are pulled past where they open or fold to, down for positive values.
+    ///   - heldBounce: How far past its top a finger holds the list it caught bouncing, which moves every listed timer
+    ///     alike, and which they fold from.
     ///   - region: The room the panel shows the timers in.
     ///   - topInset: How far into the region the list may rise.
     ///   - roomHeight: The room kept above the listed timers, for the collapse button and the fade they scroll
@@ -98,6 +101,7 @@ struct RunningTimersLayout: Layout {
         swoop: Double,
         swoopingTimer: RunningTimer.ID?,
         rubberBand: CGFloat,
+        heldBounce: CGFloat,
         region: CGSize,
         topInset: CGFloat,
         roomHeight: CGFloat,
@@ -111,6 +115,7 @@ struct RunningTimersLayout: Layout {
         self.swoop = swoop
         self.swoopingTimer = swoopingTimer
         self.rubberBand = rubberBand
+        self.heldBounce = heldBounce
         self.region = region
         self.topInset = topInset
         self.roomHeight = roomHeight
@@ -121,12 +126,13 @@ struct RunningTimersLayout: Layout {
         self.metrics = metrics
     }
 
-    var animatableData: AnimatablePair<AnimatablePair<Double, Double>, CGFloat> {
-        get { AnimatablePair(AnimatablePair(openness, swoop), rubberBand) }
+    var animatableData: AnimatablePair<AnimatablePair<Double, Double>, AnimatablePair<CGFloat, CGFloat>> {
+        get { AnimatablePair(AnimatablePair(openness, swoop), AnimatablePair(rubberBand, heldBounce)) }
         set {
             openness = newValue.first.first
             swoop = newValue.first.second
-            rubberBand = newValue.second
+            rubberBand = newValue.second.first
+            heldBounce = newValue.second.second
         }
     }
 
@@ -179,10 +185,13 @@ struct RunningTimersLayout: Layout {
             }
         }
 
+        let foldDistance = max(1.0, measured.stackTop - measured.listRowsTop)
+
         metrics.update(
-            foldDistance: max(1.0, measured.stackTop - measured.listRowsTop),
+            foldDistance: foldDistance,
             presentedOpenness: openness.clamped(to: 0.0...1.0),
-            presentedRubberBand: rubberBand,
+            presentedHeldBounce: heldBounce,
+            presentedFold: fold(over: foldDistance),
             timerFrames: timerFrames
         )
 
@@ -281,7 +290,7 @@ struct RunningTimersLayout: Layout {
 
         return CGRect(
             x: horizontalInset,
-            y: measured.listRowsTop - scrollShift + above - stretchGap * below,
+            y: measured.listRowsTop - scrollShift + heldBounce + above - stretchGap * below,
             width: rowWidth,
             height: measured.heights[depth]
         )
@@ -307,10 +316,19 @@ struct RunningTimersLayout: Layout {
 
         return CGRect(
             x: horizontalInset + rowWidth - size.width,
-            y: measured.listRoomTop + max(0.0, scrollOffset) - min(0.0, scrollShift) - spread,
+            y: measured.listRoomTop + max(0.0, scrollOffset) - min(0.0, scrollShift) + heldBounce - spread,
             width: size.width,
             height: size.height
         )
+    }
+
+    // How far a finger folds the timers to lay them out here: the list held past its top, the timers folded from
+    // there, and whatever is left of a pull past either end, which a spring settling back from one overshoots.
+    private func fold(over distance: CGFloat) -> CGFloat {
+        let folded = (1.0 - openness.clamped(to: 0.0...1.0)) * (distance - heldBounce)
+        let pull = RubberBand.pull(forOffset: abs(rubberBand), dimension: region.height)
+
+        return heldBounce + folded + (rubberBand < 0.0 ? -pull : pull)
     }
 
     // How much wider each gap between listed timers stands, for how far they are pulled up past open.
@@ -335,6 +353,7 @@ private func previewStack(openness: Double) -> some View {
         swoop: 0.0,
         swoopingTimer: nil,
         rubberBand: 0.0,
+        heldBounce: 0.0,
         region: CGSize(width: 360.0, height: 500.0),
         topInset: 0.0,
         roomHeight: 52.0,

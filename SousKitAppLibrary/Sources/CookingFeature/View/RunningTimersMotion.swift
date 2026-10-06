@@ -19,6 +19,10 @@ final class RunningTimersMotion {
     /// back from once let go.
     var rubberBand: CGFloat = 0.0
 
+    /// How far past its top a finger holds the list it caught bouncing, which the timers fold from, and spring back
+    /// from once let go.
+    var heldBounce: CGFloat = 0.0
+
     /// How far each timer is swiped sideways, left for negative values, or flown off the screen once swiped away.
     var swipeOffsets: [RunningTimer.ID: CGFloat] = [:]
 
