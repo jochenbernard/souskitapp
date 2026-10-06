@@ -36,7 +36,9 @@ extension RunningTimersPanel {
         private lazy var scrolling = RunningTimersScrolling(
             scrollView: scrollView,
             contentView: hostingController.view,
-            motion: motion
+            motion: motion,
+            // The finger's travel counts the scrolling, so a hold let go under it would leave the fold that far behind.
+            onScrollBack: { [weak self] distance in self?.foldBase -= distance }
         )
 
         var topInset: CGFloat = 0.0 {

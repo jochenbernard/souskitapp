@@ -8,6 +8,7 @@ final class RunningTimersScrolling {
     private let scrollView: UIScrollView
     private let contentView: UIView
     private let motion: RunningTimersMotion
+    private let onScrollBack: (CGFloat) -> Void
     private var contentHeight: CGFloat = 0.0
     private var settling: Task<Void, Never>?
 
@@ -20,14 +21,17 @@ final class RunningTimersScrolling {
     ///   - scrollView: The scroll view the timers scroll in.
     ///   - contentView: The view showing the timers in it.
     ///   - motion: Where the list's floor goes, for the timers to be laid out above.
+    ///   - onScrollBack: Reports how far letting a hold go scrolled the list back, which no finger did.
     init(
         scrollView: UIScrollView,
         contentView: UIView,
-        motion: RunningTimersMotion
+        motion: RunningTimersMotion,
+        onScrollBack: @escaping (CGFloat) -> Void
     ) {
         self.scrollView = scrollView
         self.contentView = contentView
         self.motion = motion
+        self.onScrollBack = onScrollBack
     }
 
     /// Sizes the content to the height the timers take, or holds it at the list's floor while that lies lower, until
@@ -82,7 +86,9 @@ final class RunningTimersScrolling {
         motion.scrollFloor = 0.0
 
         if held > 0.0 {
-            scrollView.contentOffset.y = max(0.0, scrollView.contentOffset.y - held)
+            let offset = scrollView.contentOffset.y
+            scrollView.contentOffset.y = max(0.0, offset - held)
+            onScrollBack(offset - scrollView.contentOffset.y)
         }
 
         takeFloor()
