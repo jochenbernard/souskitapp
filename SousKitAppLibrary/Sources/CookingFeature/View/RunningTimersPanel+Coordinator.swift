@@ -182,8 +182,11 @@ extension RunningTimersPanel {
                     scrollView.contentOffset.y = 0.0
                 }
 
+                // A scrolled list scrolls on under the finger, which only folds it from its top; any spring carries on.
+                let isScrolled = scrollView.touchDownContentOffset.y > 0.0
+
                 folding.catchTimers(
-                    at: metrics.presentedPosition,
+                    at: isScrolled ? .open : metrics.presentedPosition,
                     bouncedBy: bounce,
                     holdsPastOpen: fits,
                     canOpen: true
