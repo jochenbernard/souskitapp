@@ -102,6 +102,13 @@ final class RunningTimersLayoutMetrics: Sendable {
         presentedSwipeOffsets.withLock({ $0[id] = offset })
     }
 
+    /// Forgets how far the timers no longer running were drawn swiped.
+    ///
+    /// - Parameter ids: The timers still running.
+    func keepSwipeOffsets(of ids: Set<RunningTimer.ID>) {
+        presentedSwipeOffsets.withLock({ $0 = $0.filter({ ids.contains($0.key) }) })
+    }
+
     /// Records what a layout pass found.
     ///
     /// - Parameter pass: What the pass found.

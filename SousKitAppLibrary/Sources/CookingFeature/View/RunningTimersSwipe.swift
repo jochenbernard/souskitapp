@@ -100,6 +100,7 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
         case .began:
             // Forgets the timers taken away, which are gone from the screen by now.
             motion.swipeOffsets = motion.swipeOffsets.filter({ viewModel.isRunning($0.key) })
+            metrics.keepSwipeOffsets(of: Set(viewModel.runningTimers.map(\.id)))
             feedback.prepare()
             motion.swipedTimer = timer.id
             startPull = pull(forOffset: metrics.presentedSwipeOffset(of: timer.id))
