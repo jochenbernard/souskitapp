@@ -143,7 +143,11 @@ struct RunningTimersPanelContent: View {
         .onGeometryChange(for: CGFloat.self, of: \.size.height) { height in
             rowHeights[timer.id] = height
         }
-        .offset(x: swipeOffset)
+        .runningTimerSwipeOffset(
+            swipeOffset,
+            id: timer.id,
+            metrics: metrics
+        )
         // Behind the timer and where it was laid out, so it fills the room the timer leaves.
         .background(alignment: .trailing) {
             RunningTimerSwipeReveal(
