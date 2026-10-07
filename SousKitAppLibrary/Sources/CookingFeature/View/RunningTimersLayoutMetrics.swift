@@ -1,11 +1,12 @@
 import SwiftUI
 import Synchronization
 
-/// What ``RunningTimersLayout`` found as it last laid the timers out, for the swipes that fold them and take them away
-/// to read.
+/// What ``RunningTimersLayout`` found as it last laid the timers out, and where each timer was last drawn swiped, for
+/// the swipes that fold them and take them away to read.
 ///
-/// Not observed: the layout writes it in every pass, and a swipe reads it as it begins. Safe to use from any thread,
-/// since SwiftUI may lay the timers out away from the main thread while they animate.
+/// Not observed: the layout writes it in every pass and the timers as they are drawn, and a swipe reads it as it
+/// begins. Safe to use from any thread, since SwiftUI may lay the timers out away from the main thread while they
+/// animate.
 final class RunningTimersLayoutMetrics: Sendable {
     /// Where the timers lie: how far open, pulled past where they open or fold to, and held past the list's top.
     struct Position: Equatable {
@@ -59,6 +60,9 @@ final class RunningTimersLayoutMetrics: Sendable {
 
     private let values = Mutex(Pass())
 
+    // Apart from the pass, which each layout pass replaces whole.
+    private let presentedSwipeOffsets = Mutex([RunningTimer.ID: CGFloat]())
+
     /// How far the soonest timer travels from its place in the list to its place in the stack.
     var foldDistance: CGFloat {
         values.withLock({ $0.foldDistance })
@@ -80,6 +84,30 @@ final class RunningTimersLayoutMetrics: Sendable {
     }
 
     init() {}
+
+    /// How far a timer was drawn swiped sideways, as an animation in flight has it.
+    ///
+    /// - Parameter id: The timer.
+    /// - Returns: How far it was drawn swiped, left for negative values.
+    func presentedSwipeOffset(of id: RunningTimer.ID) -> CGFloat {
+        presentedSwipeOffsets.withLock({ $0[id] ?? 0.0 })
+    }
+
+    /// Records how far a timer was drawn swiped sideways.
+    ///
+    /// - Parameters:
+    ///   - offset: How far it was drawn swiped, left for negative values.
+    ///   - id: The timer.
+    func updateSwipeOffset(_ offset: CGFloat, of id: RunningTimer.ID) {
+        presentedSwipeOffsets.withLock({ $0[id] = offset })
+    }
+
+    /// Forgets how far the timers no longer running were drawn swiped.
+    ///
+    /// - Parameter ids: The timers still running.
+    func keepSwipeOffsets(of ids: Set<RunningTimer.ID>) {
+        presentedSwipeOffsets.withLock({ $0 = $0.filter({ ids.contains($0.key) }) })
+    }
 
     /// Records what a layout pass found.
     ///
