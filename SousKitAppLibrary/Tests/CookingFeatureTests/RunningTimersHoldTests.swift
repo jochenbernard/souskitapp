@@ -125,6 +125,14 @@ struct RunningTimersHoldTests {
         #expect(top.rubberBand == 0.0)
     }
 
+    @Test("a list caught open holds no fold, so a scrolled list caught as open scrolls on from the first move")
+    func openHoldsNoFold() {
+        var hold = catching(openness: 1.0, rubberBand: 0.0)
+
+        #expect(hold.fold == 0.0)
+        #expect(hold.position(at: 0.0) == .open)
+    }
+
     @Test("a list the finger cannot open is only pulled past where it folds, whatever its openness")
     func cannotOpen() {
         var hold = catching(
