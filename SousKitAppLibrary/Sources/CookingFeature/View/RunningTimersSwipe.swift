@@ -67,7 +67,7 @@ final class RunningTimersSwipe: NSObject, UIGestureRecognizerDelegate {
             return nil
         }
 
-        let openness = metrics.presentedOpenness
+        let openness = metrics.presentedPosition.openness
         let isListed = kind == .column || (viewModel.isTimerListOpen && openness > 0.99)
         let isStacked = kind == .folding && !viewModel.isTimerListOpen && openness < 0.01
         let frames = isListed ? metrics.timerFrames : Array(metrics.timerFrames.prefix(isStacked ? 1 : 0))

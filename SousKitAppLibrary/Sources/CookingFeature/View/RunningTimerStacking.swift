@@ -3,6 +3,7 @@ import SwiftUI
 
 /// Lays a running timer over or under the others by its place in the stack: the soonest on top, each one further
 /// down under the one above it, and a timer swooping to its place over them until halfway, where it is clear of them.
+/// Marks how far a timer is on its swoop for ``RunningTimersLayout`` to place it along the way.
 struct RunningTimerStacking: ViewModifier, Animatable {
     // Where along the swoop the timer passes behind the others, and starts no longer showing what it is.
     private static let halfway = 0.5
@@ -33,8 +34,13 @@ struct RunningTimerStacking: ViewModifier, Animatable {
 
     func body(content: Content) -> some View {
         content
-            .environment(\.runningTimerSwoop, isSwooping ? animatableData : nil)
+            .environment(\.runningTimerSwoop, swoop)
             .zIndex(isSwooping && animatableData < Self.halfway ? 1.0 : -Double(depth))
+            .layoutValue(key: RunningTimersLayout.SwoopKey.self, value: swoop)
+    }
+
+    private var swoop: Double? {
+        isSwooping ? animatableData : nil
     }
 }
 

@@ -149,7 +149,7 @@ extension RunningTimersPanel {
             // Timers above the top inset are faded out of sight, so the bar there keeps its taps as they fold.
             let isOnTimer = point.y >= topInset && metrics.timerFrames.contains(where: { $0.frame.contains(point) })
 
-            let isOnButton = RunningTimersCollapseButton.isVisible(openness: metrics.presentedOpenness)
+            let isOnButton = RunningTimersCollapseButton.isVisible(openness: metrics.presentedPosition.openness)
                 && metrics.collapseButtonFrame?.contains(point) == true
 
             return stack.contains(point) || isOnTimer || isOnButton
@@ -176,19 +176,19 @@ extension RunningTimersPanel {
 
             switch pan.state {
             case .began:
-                // A scrolled list scrolls the swipe's start; at its top, the start goes into the fold.
-                folding.canOpen = true
-                let start = scrollView.contentOffset.y > 0.0 ? 0.0 : scrollView.distanceMoved(by: pan, along: \.y)
                 // A list caught bouncing past its top is held as far as it had bounced when the finger came down.
                 let bounce = max(0.0, -scrollView.touchDownContentOffset.y)
                 if bounce > 0.0 {
                     scrollView.contentOffset.y = 0.0
                 }
 
-                folding.caughtBounce = metrics.presentedHeldBounce + bounce
-                let fold = metrics.presentedFold + bounce + (fits ? start : max(0.0, start))
-                foldBase = travel - fold
-                folding.setFold(fold)
+                folding.catchTimers(
+                    at: metrics.presentedPosition,
+                    bouncedBy: bounce,
+                    holdsPastOpen: fits,
+                    canOpen: true
+                )
+                foldBase = travel - folding.fold
             case .changed:
                 if folding.fold <= 0.0, scrollView.contentOffset.y > 0.0 {
                     foldBase = travel
@@ -209,11 +209,13 @@ extension RunningTimersPanel {
 
             switch pan.state {
             case .began:
-                folding.canOpen = viewModel.canOpenTimerList
-                folding.caughtBounce = metrics.presentedHeldBounce
-                let fold = metrics.presentedFold + scrollView.distanceMoved(by: pan, along: \.y)
-                foldBase = travel - fold
-                folding.setFold(fold)
+                folding.catchTimers(
+                    at: metrics.presentedPosition,
+                    bouncedBy: 0.0,
+                    holdsPastOpen: true,
+                    canOpen: viewModel.canOpenTimerList
+                )
+                foldBase = travel - folding.fold
             case .changed:
                 folding.setFold(travel - foldBase)
             case .ended, .cancelled, .failed:
