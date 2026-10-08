@@ -1,7 +1,7 @@
 import Foundation
 
 /// Which release of the app is running, and which build of it.
-public struct AppVersion: Sendable, Hashable {
+public struct AppVersion: Sendable {
     /// The release, such as `0.3`.
     let version: String
 

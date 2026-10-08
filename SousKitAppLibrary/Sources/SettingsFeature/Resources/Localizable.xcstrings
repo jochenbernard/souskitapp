@@ -54,7 +54,7 @@
       }
     },
     "Folder" : {
-      "comment" : "The folder recipes are read from, as a settings section and as a debug choice.",
+      "comment" : "The title of the settings section on the folder recipes are read from.",
       "localizations" : {
         "en" : {
           "stringUnit" : {

@@ -36,7 +36,11 @@ struct RecipeMetadataView: View {
 
             scaleDivider
 
-            RecipeScaleRow(presenter: presenter, scale: scale)
+            ScaleRow(
+                Text("Scale", bundle: .module),
+                scale: scale,
+                action: presenter.didTapScale
+            )
         }
         .sousRowSurface()
     }

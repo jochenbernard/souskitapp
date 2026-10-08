@@ -1,10 +1,10 @@
 import DesignSystem
 import SwiftUI
 
-/// A titled set of settings rows, with a note under it where one is given.
+/// A titled set of settings rows on one surface, with a note under it where one is given.
 ///
-/// One row stands as a row of its own, as the recipes on home do, and more share one box, as on a recipe. Each row
-/// takes ``SwiftUI/View/sousRowPadding()`` itself, inside a button's label where it is one, so all of it is tapped.
+/// Each row takes ``SwiftUI/View/sousRowPadding()`` itself, inside a button's label where it is one, so all of it is
+/// tapped.
 struct SettingsSection<Rows: View>: View {
     private let title: Text
     private let footer: Text?
@@ -28,15 +28,8 @@ struct SettingsSection<Rows: View>: View {
                 .padding(.horizontal, SousSpacing.large)
                 .accessibilityAddTraits(.isHeader)
 
-            Group(subviews: rows) { subviews in
-                if subviews.count == 1 {
-                    subviews
-                        .sousRowSurface()
-                } else {
-                    SousRowGroup {
-                        subviews
-                    }
-                }
+            SousRowGroup {
+                rows
             }
 
             footerNote

@@ -79,12 +79,11 @@ struct SettingsFeatureView: View {
 
     private var scalingSection: some View {
         SettingsSection(Text("Scaling", bundle: .module), footer: scalingNote) {
-            Button(action: presenter.didTapScale) {
-                ScaleRowLabel(Text("Open recipes at", bundle: .module), scale: viewModel.scale)
-                    .sousRowPadding()
-                    .contentShape(.rect)
-            }
-            .buttonStyle(.plain)
+            ScaleRow(
+                Text("Open recipes at", bundle: .module),
+                scale: viewModel.scale,
+                action: presenter.didTapScale
+            )
         }
     }
 

@@ -205,10 +205,8 @@ struct KitchenFeaturePresenter:
         }
 
         if record.restoration.isShowingSettings {
-            restorationStore.beginSettling()
             openSettings(isRestored: true)
         } else if let recipeEntry = recipeEntries.first(where: { $0.id == record.restoration.recipeID }) {
-            restorationStore.beginSettling()
             viewModel.screenPath = [.recipe(recipeEntry)]
             viewModel.openRecipe = makeOpenRecipe(
                 recipeEntry,
@@ -220,6 +218,7 @@ struct KitchenFeaturePresenter:
             return
         }
 
+        restorationStore.beginSettling()
         Task { [restorationSettleTime, restorationStore] in
             try? await Task.sleep(for: restorationSettleTime)
             restorationStore.finishSettling()

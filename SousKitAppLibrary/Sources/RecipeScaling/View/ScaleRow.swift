@@ -1,22 +1,38 @@
 import DesignSystem
 import SwiftUI
 
-/// What a row that opens the scale sheet reads: its title, and the scale in force.
-public struct ScaleRowLabel: View {
+/// The row that reads the scale in force beside a title, and opens the scale sheet.
+public struct ScaleRow: View {
     private let title: Text
     private let scale: RecipeScale
+    private let action: @MainActor () -> Void
 
-    /// Creates the label.
+    /// Creates the row.
     ///
     /// - Parameters:
     ///   - title: What the row is called.
     ///   - scale: The scale in force.
-    public init(_ title: Text, scale: RecipeScale) {
+    ///   - action: Opens the scale sheet.
+    public init(
+        _ title: Text,
+        scale: RecipeScale,
+        action: @escaping @MainActor () -> Void
+    ) {
         self.title = title
         self.scale = scale
+        self.action = action
     }
 
     public var body: some View {
+        Button(action: action) {
+            label
+                .sousRowPadding()
+                .contentShape(.rect)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var label: some View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
             title
 
@@ -39,7 +55,7 @@ public struct ScaleRowLabel: View {
     }
 }
 
-#Preview("Scale row label") {
+#Preview("Scale row") {
     VStack(spacing: SousSpacing.medium) {
         ForEach(
             [
@@ -50,8 +66,8 @@ public struct ScaleRowLabel: View {
             ],
             id: \.self
         ) { scale in
-            ScaleRowLabel(Text(verbatim: "Scale"), scale: scale)
-                .sousRow()
+            ScaleRow(Text(verbatim: "Scale"), scale: scale, action: {})
+                .sousRowSurface()
         }
     }
     .sousPagePadding()

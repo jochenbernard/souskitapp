@@ -35,16 +35,20 @@ struct RunningTimerSwipeReveal: View {
     }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: radius)
+        shape
             .fill(.red)
             .overlay {
                 label
             }
-            .clipShape(RoundedRectangle(cornerRadius: radius))
+            .clipShape(shape)
             .frame(width: max(0.0, width - Self.gap))
             .opacity(opacity)
             .animation(.runningTimers, value: isArmed)
             .accessibilityHidden(true)
+    }
+
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: radius)
     }
 
     // Always the same, cut off by the action's edges while it is narrow and fading in as it makes room for it.
