@@ -199,10 +199,14 @@ struct SettingsFeaturePresenterTests {
         #expect(!onServings.isDefault)
     }
 
-    @Test("picking another kind of repository reports it")
+    @Test("picking another kind of repository moves the switch and reports it, leaving the folder in force")
     func kindPicked() {
-        makePresenter(viewModel: makeViewModel()).didSelectRecipeRepositoryKind(.mock)
+        let viewModel = makeViewModel()
 
+        makePresenter(viewModel: viewModel).didSelectRecipeRepositoryKind(.mock)
+
+        #expect(viewModel.selectedRecipeRepositoryKind == .mock)
+        #expect(viewModel.recipeRepositoryKind == .files)
         #expect(handler.selectedRecipeRepositoryKinds == [.mock])
     }
 

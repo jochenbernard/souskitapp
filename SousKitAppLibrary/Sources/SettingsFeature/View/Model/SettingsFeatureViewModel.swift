@@ -7,6 +7,7 @@ import RecipeScaling
 final class SettingsFeatureViewModel {
     let recipeRepositoryName: String
     let recipeRepositoryKind: RecipeRepositoryKind
+    var selectedRecipeRepositoryKind: RecipeRepositoryKind
     let appVersion: AppVersion
     var scale: RecipeScale
     var scaleText: String
@@ -23,6 +24,7 @@ final class SettingsFeatureViewModel {
     ) {
         self.recipeRepositoryName = recipeRepositoryName
         self.recipeRepositoryKind = recipeRepositoryKind
+        self.selectedRecipeRepositoryKind = recipeRepositoryKind
         self.appVersion = appVersion
         self.scale = scale
         self.scaleText = ScaleNumber.text(scale.value)

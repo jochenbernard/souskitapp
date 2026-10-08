@@ -103,7 +103,9 @@ struct SettingsFeaturePresenter: SettingsFeaturePresenterProtocol {
         apply(RecipeScale(.asWritten))
     }
 
+    /// Moves the switch before reporting, so it shows the kind picked while the settings close.
     func didSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
+        viewModel.selectedRecipeRepositoryKind = recipeRepositoryKind
         handler.settingsFeatureDidSelectRecipeRepositoryKind(recipeRepositoryKind)
     }
 

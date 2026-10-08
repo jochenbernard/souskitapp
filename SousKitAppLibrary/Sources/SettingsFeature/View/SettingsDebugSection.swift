@@ -58,7 +58,7 @@ struct SettingsDebugSection: View {
 
     private var readsTestRecipes: Binding<Bool> {
         Binding(
-            get: { viewModel.recipeRepositoryKind == .mock },
+            get: { viewModel.selectedRecipeRepositoryKind == .mock },
             set: { presenter.didSelectRecipeRepositoryKind($0 ? .mock : .files) }
         )
     }
