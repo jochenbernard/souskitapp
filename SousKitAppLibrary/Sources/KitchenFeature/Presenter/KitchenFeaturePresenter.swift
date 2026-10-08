@@ -89,7 +89,12 @@ struct KitchenFeaturePresenter:
     }
 
     func didTapSettings() {
-        guard viewModel.screenPath.isEmpty, viewModel.openSettings == nil else {
+        guard
+            viewModel.screenPath.isEmpty,
+            viewModel.openSettings == nil,
+            // Settings still sliding away to replace the kitchen would take a fresh sheet down with it.
+            pendingSettingsExit.exit == nil
+        else {
             return
         }
 
@@ -199,26 +204,30 @@ struct KitchenFeaturePresenter:
         )
         viewModel.isRestoring = false
 
-        guard isRestorable else {
+        let recipeEntry = recipeEntries.first(where: { $0.id == record.restoration.recipeID })
+
+        guard
+            isRestorable,
+            record.restoration.isShowingSettings || recipeEntry != nil
+        else {
             restorationStore.clear()
             return
         }
 
+        // Settling begins before anything opens, so a crash while opening it still counts against it.
+        restorationStore.beginSettling()
+
         if record.restoration.isShowingSettings {
             openSettings(isRestored: true)
-        } else if let recipeEntry = recipeEntries.first(where: { $0.id == record.restoration.recipeID }) {
+        } else if let recipeEntry {
             viewModel.screenPath = [.recipe(recipeEntry)]
             viewModel.openRecipe = makeOpenRecipe(
                 recipeEntry,
                 restoration: record.restoration.recipe,
                 resumesCooking: record.restoration.cooking != nil
             )
-        } else {
-            restorationStore.clear()
-            return
         }
 
-        restorationStore.beginSettling()
         Task { [restorationSettleTime, restorationStore] in
             try? await Task.sleep(for: restorationSettleTime)
             restorationStore.finishSettling()

@@ -21,7 +21,7 @@ public struct KitchenRestorationStore {
         userDefaults.removeObject(forKey: Self.key)
     }
 
-    /// What the kitchen had open, or `nil` where it stood on its recipe list.
+    /// What the kitchen had open, or `nil` where it stood on its recipe list with nothing over it.
     func restoration() -> KitchenRestoration? {
         record()?.restoration
     }

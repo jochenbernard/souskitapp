@@ -261,4 +261,22 @@ struct KitchenFeaturePresenterTests {
         #expect(handler.selectedRecipeRepositoryKinds.isEmpty)
         #expect(handler.resetCount == 0)
     }
+
+    @MainActor
+    @Test("the settings do not open again while settings that replace the kitchen slide away")
+    func settingsWaitForThePendingExit() {
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didTapSettings()
+        presenter.settingsFeatureDidConfirmReset()
+        presenter.didTapSettings()
+
+        #expect(viewModel.openSettings == nil)
+
+        presenter.didFinishDismissingSettings()
+        presenter.didTapSettings()
+
+        #expect(viewModel.openSettings != nil)
+    }
 }

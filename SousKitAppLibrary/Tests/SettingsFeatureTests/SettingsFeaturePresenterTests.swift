@@ -164,6 +164,18 @@ struct SettingsFeaturePresenterTests {
         #expect(viewModel.scaleText == "2")
     }
 
+    @Test("a number too small to keep leaves the scale where it is")
+    func typingTooSmall() {
+        let store = PreferredScaleStoreSpy(.multiplier(2.0))
+        let viewModel = makeViewModel(.multiplier(2.0))
+        let presenter = makePresenter(viewModel: viewModel, preferredScaleStore: store)
+
+        presenter.didChangeScaleText("0.0000001")
+
+        #expect(viewModel.scale == RecipeScale(target: .multiplier, value: 2.0))
+        #expect(store.preferredScale == .multiplier(2.0))
+    }
+
     @Test("reset goes back to the recipe as written")
     func resetScale() {
         let store = PreferredScaleStoreSpy(.servings(6.0))
