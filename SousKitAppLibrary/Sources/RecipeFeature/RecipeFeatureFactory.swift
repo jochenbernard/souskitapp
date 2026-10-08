@@ -4,18 +4,22 @@ import SousKit
 /// Builds ``RecipeFeature`` with what it reads.
 public struct RecipeFeatureFactory: Sendable {
     private let parser: SousParser
+    private let preferredScaleStore: PreferredScaleStore
     private let recipeRepository: RecipeRepository
 
     /// Creates a factory.
     ///
     /// - Parameters:
     ///   - parser: What a scaled recipe's amounts are read back with.
+    ///   - preferredScaleStore: Where the scale recipes open on is remembered.
     ///   - recipeRepository: The repository the recipes are read from.
     public init(
         parser: SousParser,
+        preferredScaleStore: PreferredScaleStore,
         recipeRepository: RecipeRepository
     ) {
         self.parser = parser
+        self.preferredScaleStore = preferredScaleStore
         self.recipeRepository = recipeRepository
     }
 
@@ -37,6 +41,7 @@ public struct RecipeFeatureFactory: Sendable {
         let presenter = RecipeFeaturePresenter(
             handler: handler,
             parser: parser,
+            preferredScaleStore: preferredScaleStore,
             recipeRepository: recipeRepository,
             restoration: restoration,
             resumesCooking: resumesCooking,

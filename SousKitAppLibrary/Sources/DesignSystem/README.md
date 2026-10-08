@@ -14,7 +14,7 @@ disagrees with this package, this package is right.
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sousBare`, `.sousChip(isSelected:)`, `.sous` | The three button styles, the button its label draws, the chip a cook chooses from a set, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
-| Containers | `.sousSurface(_:)`, `.sousRow()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row, the rows that share one card, the wash, the chip, the spinner. |
+| Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row and its two halves, the rows that share one card, the wash, the chip, the spinner. |
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
 
@@ -44,8 +44,9 @@ disagrees with this package, this package is right.
 - A container of one line reads as a capsule, and holds that radius as a rounded rectangle
   where its text wraps, so the curve of a row or a callout is the same whatever it holds. The
   radius is half the height of one `.body` line inside the container's own vertical padding,
-  taken through `@ScaledMetric` so it follows Dynamic Type. `.sousRow()` and `.sousCallout()`
-  share it through `LineContainerRadius`.
+  taken through `@ScaledMetric` so it follows Dynamic Type. Every other box takes the same radius,
+  a card or the rows sharing one included, so a screen curves alike from edge to edge. They share
+  it through `LineContainerRadius`, which `.sousRowSurface()` draws with.
 - A page is padded `SousSpacing.large` horizontally and `SousSpacing.small` vertically, through
   `.sousPagePadding()`. The padding sits on the content, not on `.sousPage()`, which a scroll view
   needs it to; anything else on the screen, a bottom bar included, takes it too so its edges line

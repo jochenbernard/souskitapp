@@ -59,7 +59,7 @@ let package = Package(
         ),
         .standardTarget(
             name: "KitchenFeature",
-            dependencies: ["CookingFeature", "RecipeFeature"],
+            dependencies: ["CookingFeature", "RecipeFeature", "SettingsFeature"],
             resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
@@ -87,7 +87,7 @@ let package = Package(
         ),
         .standardTarget(
             name: "RecipeFeature",
-            dependencies: ["DesignSystem", "RecipeLibrary"],
+            dependencies: ["RecipeLibrary", "RecipeScaling"],
             resources: [.process("Resources/Localizable.xcstrings")]
         ),
         .standardTestTarget(
@@ -101,6 +101,24 @@ let package = Package(
         .standardTestTarget(
             name: "RecipeLibraryTests",
             dependencies: ["RecipeLibrary"]
+        ),
+        .standardTarget(
+            name: "RecipeScaling",
+            dependencies: ["DesignSystem"],
+            resources: [.process("Resources/Localizable.xcstrings")]
+        ),
+        .standardTestTarget(
+            name: "RecipeScalingTests",
+            dependencies: ["LocalizationTestSupport", "RecipeScaling"]
+        ),
+        .standardTarget(
+            name: "SettingsFeature",
+            dependencies: ["RecipeLibrary", "RecipeScaling"],
+            resources: [.process("Resources/Localizable.xcstrings")]
+        ),
+        .standardTestTarget(
+            name: "SettingsFeatureTests",
+            dependencies: ["LocalizationTestSupport", "SettingsFeature"]
         )
     ],
     swiftLanguageModes: [.v6]

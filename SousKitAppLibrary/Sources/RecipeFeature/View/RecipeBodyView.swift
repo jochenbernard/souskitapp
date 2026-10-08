@@ -1,5 +1,6 @@
 import DesignSystem
 import RecipeLibrary
+import RecipeScaling
 import SousKit
 import SwiftUI
 
@@ -155,7 +156,7 @@ struct RecipeBodyView: View {
         content()
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(SousSpacing.large)
-            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+            .sousRowSurface()
     }
 
     @ViewBuilder

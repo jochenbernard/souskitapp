@@ -3,6 +3,7 @@ import Foundation
 @testable import KitchenFeature
 @testable import RecipeFeature
 import RecipeLibrary
+import RecipeScaling
 import SousKit
 import Testing
 
@@ -29,10 +30,7 @@ struct KitchenFeatureRestorationTests {
 
     @MainActor
     private func makeViewModel(isRestoring: Bool = false) -> KitchenFeatureViewModel {
-        let viewModel = KitchenFeatureViewModel(
-            recipeRepositoryName: "Recipes",
-            recipeRepositoryKind: .files
-        )
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
         viewModel.isRestoring = isRestoring
 
         return viewModel
@@ -177,6 +175,33 @@ struct KitchenFeatureRestorationTests {
         #expect(viewModel.openCooking == nil)
         #expect(!viewModel.isRestoring)
         #expect(restorationStore.restoration()?.cooking != nil)
+    }
+
+    @MainActor
+    @Test("the settings are kept while they are open, and forgotten once they close")
+    func settingsAreKeptUntilClosed() {
+        let presenter = makePresenter(viewModel: makeViewModel())
+
+        presenter.didTapSettings()
+
+        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: nil, isShowingSettings: true))
+
+        presenter.settingsFeatureDidFinish()
+
+        #expect(restorationStore.restoration() == nil)
+    }
+
+    @MainActor
+    @Test("a kitchen restored opens the settings kept, as restored, and keeps them")
+    func restoreOpensTheSettings() async {
+        restorationStore.save(KitchenRestoration(recipeID: nil, isShowingSettings: true))
+
+        let viewModel = await restore(listing: [.success([crepes])]).viewModel
+
+        #expect(viewModel.openSettings?.isRestored == true)
+        #expect(viewModel.screenPath.isEmpty)
+        #expect(!viewModel.isRestoring)
+        #expect(restorationStore.restoration()?.isShowingSettings == true)
     }
 
     @MainActor

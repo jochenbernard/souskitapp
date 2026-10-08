@@ -1,10 +1,12 @@
 import Foundation
 import RecipeLibrary
+import RecipeScaling
 import SousKit
 
 struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     private let handler: RecipeFeatureHandler
     private let parser: SousParser
+    private let preferredScaleStore: PreferredScaleStore
     private let recipeRepository: RecipeRepository
     private let restoration: RecipeFeatureRestoration?
     private let resumesCooking: Bool
@@ -13,6 +15,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     init(
         handler: RecipeFeatureHandler,
         parser: SousParser,
+        preferredScaleStore: PreferredScaleStore,
         recipeRepository: RecipeRepository,
         restoration: RecipeFeatureRestoration?,
         resumesCooking: Bool,
@@ -20,6 +23,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     ) {
         self.handler = handler
         self.parser = parser
+        self.preferredScaleStore = preferredScaleStore
         self.recipeRepository = recipeRepository
         self.restoration = restoration
         self.resumesCooking = resumesCooking
@@ -148,6 +152,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         return ScaledRecipe(
             asWritten: recipe,
             parser: parser,
+            preferredScale: preferredScaleStore.preferredScale,
             scale: scale
         )
     }

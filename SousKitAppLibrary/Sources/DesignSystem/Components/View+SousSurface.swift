@@ -3,8 +3,8 @@ import SwiftUI
 extension View {
     /// Draws this view on a surface, such as a card or a sheet.
     ///
-    /// A row takes ``sousRow()`` instead. Padding stays at the call site, since it varies with what
-    /// is on the surface.
+    /// A row takes ``sousRow()`` instead, and a card ``sousRowSurface()``, for the radius every box
+    /// shares. Padding stays at the call site, since it varies with what is on the surface.
     ///
     /// - Parameter shape: The shape the surface takes.
     /// - Returns: The view, on a surface.
@@ -31,7 +31,7 @@ extension View {
         Text(verbatim: "Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(SousSpacing.xLarge)
-            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+            .sousRowSurface()
     }
     .padding(SousSpacing.xLarge)
     .frame(

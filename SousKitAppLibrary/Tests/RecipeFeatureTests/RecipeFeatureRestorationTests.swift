@@ -1,5 +1,6 @@
 @testable import RecipeFeature
 import RecipeLibrary
+import RecipeScaling
 import SousKit
 import Testing
 
@@ -22,6 +23,7 @@ struct RecipeFeatureRestorationTests {
 
     private let eightServings = RecipeScale(target: .servings, value: 8.0)
 
+    @MainActor
     private func makePresenter(
         viewModel: RecipeFeatureViewModel,
         handler: RecipeFeatureHandler,
@@ -32,6 +34,7 @@ struct RecipeFeatureRestorationTests {
         RecipeFeaturePresenter(
             handler: handler,
             parser: SousParser(),
+            preferredScaleStore: PreferredScaleStoreStub(),
             recipeRepository: RecipeRepositoryStub(text: text),
             restoration: restoration,
             resumesCooking: resumesCooking,

@@ -1,8 +1,10 @@
 import FileRecipeLibrary
+import Foundation
 import KitchenFeature
 import MockRecipeLibrary
 import OnboardingFeature
 import RecipeLibrary
+import SettingsFeature
 import SousKit
 
 /// Builds ``AppFeature`` and everything under it.
@@ -11,6 +13,7 @@ struct AppFeatureFactory {
     private let kitchenRestorationStore: KitchenRestorationStore
     private let mockRecipeRepository: RecipeRepository
     private let onboardingFeatureFactory: OnboardingFeatureFactory
+    private let preferredScaleStore: UserDefaultsPreferredScaleStore
     private let recipeRepositoryKindStore: RecipeRepositoryKindStore
     private let recipeRepositoryStore: RecipeRepositoryStore
 
@@ -20,13 +23,21 @@ struct AppFeatureFactory {
         let parser = SousParser()
         let store = FileRecipeRepositoryStore(parser: parser)
         let restorationStore = KitchenRestorationStore()
+        let scaleStore = UserDefaultsPreferredScaleStore()
         self.kitchenFeatureFactory = KitchenFeatureFactory(
             parser: parser,
-            restorationStore: restorationStore
+            preferredScaleStore: scaleStore,
+            restorationStore: restorationStore,
+            settingsFeatureFactory: SettingsFeatureFactory(
+                appVersion: AppVersion(bundle: .main),
+                preferredScaleStore: scaleStore,
+                recipeRepositoryStore: store
+            )
         )
         self.kitchenRestorationStore = restorationStore
         self.mockRecipeRepository = MockRecipeRepository(parser: parser)
         self.onboardingFeatureFactory = OnboardingFeatureFactory(recipeRepositoryStore: store)
+        self.preferredScaleStore = scaleStore
         self.recipeRepositoryKindStore = RecipeRepositoryKindStore()
         self.recipeRepositoryStore = store
     }
@@ -41,6 +52,7 @@ struct AppFeatureFactory {
             kitchenRestorationStore: kitchenRestorationStore,
             mockRecipeRepository: mockRecipeRepository,
             onboardingFeatureFactory: onboardingFeatureFactory,
+            preferredScaleStore: preferredScaleStore,
             recipeRepositoryKindStore: recipeRepositoryKindStore,
             recipeRepositoryStore: recipeRepositoryStore
         )

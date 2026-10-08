@@ -1,5 +1,6 @@
 @testable import RecipeFeature
 import RecipeLibrary
+import RecipeScaling
 import SousKit
 import Testing
 
@@ -40,6 +41,7 @@ struct RecipeFeatureScalingTests {
         Whisk @{1 tsp} dijon mustard@ into @{2 tbsp} red wine vinegar@.
         """
 
+    @MainActor
     private func makePresenter(
         viewModel: RecipeFeatureViewModel,
         recipeText: String? = "Whisk."
@@ -47,6 +49,7 @@ struct RecipeFeatureScalingTests {
         RecipeFeaturePresenter(
             handler: RecipeFeatureHandlerSpy(),
             parser: parser,
+            preferredScaleStore: PreferredScaleStoreStub(),
             recipeRepository: RecipeRepositoryStub(text: recipeText),
             restoration: nil,
             resumesCooking: false,

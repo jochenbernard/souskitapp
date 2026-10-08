@@ -1,4 +1,4 @@
-@testable import RecipeFeature
+@testable import RecipeScaling
 import Testing
 
 @Suite("Scale target")

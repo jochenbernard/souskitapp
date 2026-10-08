@@ -1,5 +1,3 @@
-import RecipeLibrary
-
 struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
     func viewDidAppear() {}
 
@@ -11,11 +9,9 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didDismissCooking() {}
 
-    func didSelectRecipeRepositoryKind(_: RecipeRepositoryKind) {}
+    func didTapSettings() {}
 
-    func didTapReset() {}
+    func didDismissSettings() {}
 
-    func didChangeIsConfirmingReset(_: Bool) {}
-
-    func didConfirmReset() {}
+    func didFinishDismissingSettings() {}
 }

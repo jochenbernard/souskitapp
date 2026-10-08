@@ -72,7 +72,7 @@ extension DisclosureGroupStyle where Self == SousDisclosureGroupStyle {
             Text(verbatim: "Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(SousSpacing.large)
-                .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+                .sousRowSurface()
         },
         label: { Text(verbatim: "Boeuf Bourguignon") }
     )

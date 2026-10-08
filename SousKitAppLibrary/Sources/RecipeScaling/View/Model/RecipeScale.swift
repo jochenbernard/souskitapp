@@ -1,15 +1,15 @@
 import SwiftUI
 
 /// How much of a recipe to make: a number, and what that number counts.
-struct RecipeScale: Hashable, Codable {
+public struct RecipeScale: Sendable, Hashable, Codable {
     /// What the number counts.
-    let target: ScaleTarget
+    public let target: ScaleTarget
 
     /// The number, which multiplies the recipe where the target is the multiplier.
-    let value: Double
+    public let value: Double
 
     /// The scale read out, such as `12 servings` or `2×`.
-    var text: Text {
+    public var text: Text {
         let number = ScaleNumber.text(value)
 
         switch target {
@@ -30,7 +30,12 @@ struct RecipeScale: Hashable, Codable {
         }
     }
 
-    init(target: ScaleTarget, value: Double) {
+    /// Creates a scale.
+    ///
+    /// - Parameters:
+    ///   - target: What the number counts.
+    ///   - value: The number.
+    public init(target: ScaleTarget, value: Double) {
         self.target = target
         // Steps and switched targets land on 1.9000000000000001, which is not a number anyone typed.
         self.value = (value * 1_000_000.0).rounded() / 1_000_000.0

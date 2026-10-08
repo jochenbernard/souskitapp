@@ -1,12 +1,12 @@
 import DesignSystem
-import SousKit
 import SwiftUI
 
-/// The sheet that scales a recipe: one number, and what that number counts.
+/// The sheet that sets a scale: one number, and what that number counts.
 ///
-/// The sheet sits low, so the recipe above it stays in view and moves as the number is typed.
-struct RecipeScaleView: View {
-    private let presenter: RecipeFeaturePresenterProtocol
+/// The sheet sits low, so what it scales stays in view above it and moves as the number is typed.
+public struct ScaleSheet: View {
+    private let title: Text
+    private let presenter: ScaleSheetPresenterProtocol
     private let scale: ScaleDisplay
 
     // What the sheet holds, measured as it is laid out, so a row of chips that wraps still fits.
@@ -18,18 +18,26 @@ struct RecipeScaleView: View {
     // About as tall as the content comes out, for the one layout before it is measured.
     @ScaledMetric(relativeTo: .body) private var estimatedContentHeight = 200.0
 
-    init(
-        presenter: RecipeFeaturePresenterProtocol,
+    /// Creates the sheet.
+    ///
+    /// - Parameters:
+    ///   - title: What the sheet is called.
+    ///   - presenter: What the sheet reports to.
+    ///   - scale: What the sheet has on it.
+    public init(
+        _ title: Text,
+        presenter: ScaleSheetPresenterProtocol,
         scale: ScaleDisplay
     ) {
+        self.title = title
         self.presenter = presenter
         self.scale = scale
     }
 
-    var body: some View {
+    public var body: some View {
         NavigationStack {
             content
-                .navigationTitle(Text("Scale", bundle: .module))
+                .navigationTitle(title)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
@@ -90,7 +98,7 @@ struct RecipeScaleView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            RecipeScaleNumber(
+            ScaleNumberField(
                 presenter: presenter,
                 target: scale.target,
                 text: scale.text
@@ -100,7 +108,7 @@ struct RecipeScaleView: View {
         }
     }
 
-    /// The targets to choose between, which wrap where the recipe declares more than a row of them.
+    /// The targets to choose between, which wrap where there are more than a row of them.
     @ViewBuilder
     private var targets: some View {
         if !scale.targets.isEmpty {
@@ -112,7 +120,7 @@ struct RecipeScaleView: View {
         }
     }
 
-    /// What the number comes to on the recipe's other targets, which a cook reads rather than sets.
+    /// What the number comes to on the other targets, which a cook reads rather than sets.
     @ViewBuilder
     private var follows: some View {
         if !scale.follows.isEmpty {
@@ -140,56 +148,52 @@ struct RecipeScaleView: View {
 }
 
 @MainActor
-private func previewScaleView(
-    _ scale: RecipeScale,
-    declaresServings: Bool = true
-) -> RecipeScaleView {
-    let source = declaresServings
-        ? """
-            ---
-            title: Gratin Dauphinois
-            servings: 6
-            yield: [1.8 kg]
-            ---
-
-            Peel @{1.2 kg} potatoes@ and simmer them in @{500 ml} cream@.
-            """
-        : """
-            ---
-            title: Vinaigrette
-            ---
-
-            Whisk @{1 tsp} dijon mustard@ into @{2 tbsp} red wine vinegar@.
-            """
-    let parser = SousParser()
-    let scaled = ScaledRecipe(
-        asWritten: parser.parseRecipe(source).value,
-        parser: parser,
+private func previewScaleSheet(_ scale: ScaleDisplay) -> ScaleSheet {
+    ScaleSheet(
+        Text(verbatim: "Scale"),
+        presenter: ScaleSheetPresenterStub(),
         scale: scale
-    )
-
-    return RecipeScaleView(
-        presenter: RecipeFeaturePresenterStub(),
-        scale: ScaleDisplay(recipe: scaled, text: ScaleNumber.text(scaled.scale.value))
     )
 }
 
 #Preview("Scale sheet") {
-    previewScaleView(RecipeScale(target: .servings, value: 12.0))
+    previewScaleSheet(
+        ScaleDisplay(
+            target: .servings,
+            text: "12",
+            targets: [.servings, .yield(unit: "kg"), .multiplier],
+            follows: [
+                RecipeScale(target: .yield(unit: "kg"), value: 3.6),
+                RecipeScale(target: .multiplier, value: 2.0)
+            ],
+            isDefault: false
+        )
+    )
 }
 
-#Preview("Scale sheet, as written") {
-    previewScaleView(RecipeScale(target: .servings, value: 6.0))
+#Preview("Scale sheet, at its default") {
+    previewScaleSheet(
+        ScaleDisplay(
+            target: .servings,
+            text: "6",
+            targets: [.servings, .yield(unit: "kg"), .multiplier],
+            follows: [
+                RecipeScale(target: .yield(unit: "kg"), value: 1.8),
+                RecipeScale(target: .multiplier, value: 1.0)
+            ],
+            isDefault: true
+        )
+    )
 }
 
-#Preview("Scale sheet, on a yield") {
-    previewScaleView(RecipeScale(target: .yield(unit: "kg"), value: 3.6))
-}
-
-#Preview("Scale sheet, on the multiplier") {
-    previewScaleView(RecipeScale(target: .multiplier, value: 0.5))
-}
-
-#Preview("Scale sheet, no servings declared") {
-    previewScaleView(RecipeScale(target: .multiplier, value: 2.0), declaresServings: false)
+#Preview("Scale sheet, one target") {
+    previewScaleSheet(
+        ScaleDisplay(
+            target: .multiplier,
+            text: "2",
+            targets: [],
+            follows: [],
+            isDefault: false
+        )
+    )
 }

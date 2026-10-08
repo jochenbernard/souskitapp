@@ -1,4 +1,5 @@
 import DesignSystem
+import RecipeScaling
 import SwiftUI
 
 /// The row on the header card that reads how much of the recipe to make, and opens the scale sheet.
@@ -16,30 +17,11 @@ struct RecipeScaleRow: View {
 
     var body: some View {
         Button(action: presenter.didTapScale) {
-            HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
-                Text("Scale", bundle: .module)
-
-                Spacer(minLength: 0.0)
-
-                value
-            }
-            .padding(.horizontal, SousSpacing.large)
-            .padding(.vertical, SousSpacing.medium)
-            .contentShape(.rect)
+            ScaleRowLabel(Text("Scale", bundle: .module), scale: scale)
+                .sousRowPadding()
+                .contentShape(.rect)
         }
         .buttonStyle(.plain)
-    }
-
-    private var value: some View {
-        HStack(spacing: SousSpacing.xSmall) {
-            scale.text
-                .multilineTextAlignment(.trailing)
-
-            Image(systemName: "chevron.up.chevron.down")
-                .imageScale(.small)
-                .accessibilityHidden(true)
-        }
-        .foregroundStyle(.accent)
     }
 }
 
@@ -55,7 +37,7 @@ struct RecipeScaleRow: View {
             id: \.self
         ) { scale in
             RecipeScaleRow(presenter: RecipeFeaturePresenterStub(), scale: scale)
-                .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+                .sousRowSurface()
         }
     }
     .sousPagePadding()

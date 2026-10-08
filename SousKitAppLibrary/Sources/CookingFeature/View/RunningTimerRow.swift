@@ -3,9 +3,6 @@ import SwiftUI
 
 /// A running timer in a box, filling as its time runs out.
 struct RunningTimerRow: View {
-    /// The box each timer sits in, which the timers stacked behind one take as well.
-    static let shape = RoundedRectangle(cornerRadius: SousRadius.large)
-
     /// What taking a timer away does: stopping one that rings, or cancelling it.
     ///
     /// - Parameter isRinging: Whether the timer rings.
@@ -19,6 +16,8 @@ struct RunningTimerRow: View {
     private let isConfirmingCancel: Bool
     private let contentWidth: CGFloat?
     private let contentFade: RunningTimersMotionFade
+
+    @LineContainerRadius private var radius
 
     /// - Parameters:
     ///   - contentWidth: The width the timer lays what it shows out at, whatever the width of its box, or `nil` to
@@ -44,8 +43,13 @@ struct RunningTimerRow: View {
             .compositingGroup()
             .modifier(contentFade)
             .runningTimerContentShare()
-            .clipShape(Self.shape)
-            .glassEffect(.regular, in: Self.shape)
+            .clipShape(shape)
+            .glassEffect(.regular, in: shape)
+    }
+
+    /// The box the timer sits in.
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: radius)
     }
 
     @ViewBuilder

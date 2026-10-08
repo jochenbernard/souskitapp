@@ -2,16 +2,22 @@ import CookingFeature
 import Foundation
 import RecipeFeature
 import RecipeLibrary
+import SettingsFeature
 import SousKit
 
-struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
+struct KitchenFeaturePresenter:
+    KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler, SettingsFeatureHandler {
     private let cookingFeatureFactory: CookingFeatureFactory
     private let handler: KitchenFeatureHandler
+    // A class so every copy of the presenter, the sheet's among them, sees the exit waiting.
+    private let pendingSettingsExit = PendingSettingsExit()
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let recipeRepository: RecipeRepository
+    private let recipeRepositoryKind: RecipeRepositoryKind
     /// How long what a cold start opens stays up before a crash no longer counts against it.
     private let restorationSettleTime: Duration
     private let restorationStore: KitchenRestorationStore
+    private let settingsFeatureFactory: SettingsFeatureFactory
     private let terminationObserver: TerminationObserver
     private let timerScheduler: TimerScheduler
     private let viewModel: KitchenFeatureViewModel
@@ -22,8 +28,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         handler: KitchenFeatureHandler,
         recipeFeatureFactory: RecipeFeatureFactory,
         recipeRepository: RecipeRepository,
+        recipeRepositoryKind: RecipeRepositoryKind,
         restorationSettleTime: Duration,
         restorationStore: KitchenRestorationStore,
+        settingsFeatureFactory: SettingsFeatureFactory,
         timerScheduler: TimerScheduler,
         viewModel: KitchenFeatureViewModel
     ) {
@@ -31,8 +39,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         self.handler = handler
         self.recipeFeatureFactory = recipeFeatureFactory
         self.recipeRepository = recipeRepository
+        self.recipeRepositoryKind = recipeRepositoryKind
         self.restorationSettleTime = restorationSettleTime
         self.restorationStore = restorationStore
+        self.settingsFeatureFactory = settingsFeatureFactory
         // The store rather than the presenter, which would hold the observer holding it.
         self.terminationObserver = TerminationObserver(onTerminate: { restorationStore.recordTermination() })
         self.timerScheduler = timerScheduler
@@ -78,21 +88,41 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         }
     }
 
-    func didSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
-        handler.kitchenFeatureDidSelectRecipeRepositoryKind(recipeRepositoryKind)
+    func didTapSettings() {
+        guard viewModel.screenPath.isEmpty, viewModel.openSettings == nil else {
+            return
+        }
+
+        openSettings(isRestored: false)
+        restorationStore.save(KitchenRestoration(recipeID: nil, isShowingSettings: true))
     }
 
-    func didTapReset() {
-        viewModel.isConfirmingReset = true
+    func didDismissSettings() {
+        // The sheet also reports settings closed from here, which would drop the exit they are waiting to report.
+        guard viewModel.openSettings != nil else {
+            return
+        }
+
+        closeSettings()
     }
 
-    func didChangeIsConfirmingReset(_ isConfirming: Bool) {
-        viewModel.isConfirmingReset = isConfirming
-    }
+    func didFinishDismissingSettings() {
+        let exit = pendingSettingsExit.exit
+        pendingSettingsExit.exit = nil
 
-    func didConfirmReset() {
-        viewModel.isConfirmingReset = false
-        handler.kitchenFeatureDidConfirmReset()
+        switch exit {
+        case .connectRecipeRepository(let recipeRepository):
+            handler.kitchenFeatureDidConnectRecipeRepository(recipeRepository)
+
+        case .selectRecipeRepositoryKind(let recipeRepositoryKind):
+            handler.kitchenFeatureDidSelectRecipeRepositoryKind(recipeRepositoryKind)
+
+        case .reset:
+            handler.kitchenFeatureDidConfirmReset()
+
+        case nil:
+            break
+        }
     }
 
     func didDismissCooking() {
@@ -117,6 +147,26 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
     func cookingFeatureDidChangeRestoration(_ restoration: CookingFeatureRestoration) {
         updateRestoration({ $0.cooking = restoration })
+    }
+
+    func settingsFeatureDidFinish() {
+        closeSettings()
+    }
+
+    func settingsFeatureDidConnectRecipeRepository(_ recipeRepository: RecipeRepository) {
+        closeSettings(exit: .connectRecipeRepository(recipeRepository))
+    }
+
+    func settingsFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
+        guard recipeRepositoryKind != self.recipeRepositoryKind else {
+            return
+        }
+
+        closeSettings(exit: .selectRecipeRepositoryKind(recipeRepositoryKind))
+    }
+
+    func settingsFeatureDidConfirmReset() {
+        closeSettings(exit: .reset)
     }
 
     /// Builds the feature for a recipe pushed on the stack, or keeps the one a recipe already on it has.
@@ -149,21 +199,26 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         )
         viewModel.isRestoring = false
 
-        guard
-            isRestorable,
-            let recipeEntry = recipeEntries.first(where: { $0.id == record.restoration.recipeID })
-        else {
+        guard isRestorable else {
             restorationStore.clear()
             return
         }
 
-        restorationStore.beginSettling()
-        viewModel.screenPath = [.recipe(recipeEntry)]
-        viewModel.openRecipe = makeOpenRecipe(
-            recipeEntry,
-            restoration: record.restoration.recipe,
-            resumesCooking: record.restoration.cooking != nil
-        )
+        if record.restoration.isShowingSettings {
+            restorationStore.beginSettling()
+            openSettings(isRestored: true)
+        } else if let recipeEntry = recipeEntries.first(where: { $0.id == record.restoration.recipeID }) {
+            restorationStore.beginSettling()
+            viewModel.screenPath = [.recipe(recipeEntry)]
+            viewModel.openRecipe = makeOpenRecipe(
+                recipeEntry,
+                restoration: record.restoration.recipe,
+                resumesCooking: record.restoration.cooking != nil
+            )
+        } else {
+            restorationStore.clear()
+            return
+        }
 
         Task { [restorationSettleTime, restorationStore] in
             try? await Task.sleep(for: restorationSettleTime)
@@ -208,6 +263,26 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             isResumed: isResumed
         )
         updateRestoration({ $0.cooking = cookingRestoration ?? CookingFeatureRestoration() })
+    }
+
+    @MainActor
+    private func openSettings(isRestored: Bool) {
+        viewModel.openSettings = OpenSettings(
+            feature: settingsFeatureFactory.makeSettingsFeature(
+                recipeRepositoryName: viewModel.recipeRepositoryName,
+                recipeRepositoryKind: recipeRepositoryKind,
+                handler: self
+            ),
+            isRestored: isRestored
+        )
+    }
+
+    /// Closes the settings, leaving what they asked of the app to report once the sheet is gone.
+    @MainActor
+    private func closeSettings(exit: SettingsExit? = nil) {
+        pendingSettingsExit.exit = exit
+        viewModel.openSettings = nil
+        restorationStore.clear()
     }
 
     @MainActor

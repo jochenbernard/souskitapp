@@ -4,8 +4,8 @@ import SwiftUI
 /// The number a cook scales by, with a minus and a plus either side of it.
 ///
 /// The minus and the plus repeat while they are held, on the timing the system gives a stepper.
-struct RecipeScaleNumber: View {
-    private let presenter: RecipeFeaturePresenterProtocol
+struct ScaleNumberField: View {
+    private let presenter: ScaleSheetPresenterProtocol
     private let target: ScaleTarget
     private let text: String
 
@@ -16,7 +16,7 @@ struct RecipeScaleNumber: View {
     @ScaledMetric(relativeTo: .title3) private var stepDiameter = 48.0
 
     init(
-        presenter: RecipeFeaturePresenterProtocol,
+        presenter: ScaleSheetPresenterProtocol,
         target: ScaleTarget,
         text: String
     ) {
@@ -80,22 +80,22 @@ struct RecipeScaleNumber: View {
     }
 }
 
-#Preview("Scale number") {
+#Preview("Scale number field") {
     VStack(spacing: SousSpacing.xLarge) {
-        RecipeScaleNumber(
-            presenter: RecipeFeaturePresenterStub(),
+        ScaleNumberField(
+            presenter: ScaleSheetPresenterStub(),
             target: .servings,
             text: "12"
         )
 
-        RecipeScaleNumber(
-            presenter: RecipeFeaturePresenterStub(),
+        ScaleNumberField(
+            presenter: ScaleSheetPresenterStub(),
             target: .multiplier,
             text: "2.5"
         )
 
-        RecipeScaleNumber(
-            presenter: RecipeFeaturePresenterStub(),
+        ScaleNumberField(
+            presenter: ScaleSheetPresenterStub(),
             target: .yield(unit: "kg"),
             text: "3.6"
         )

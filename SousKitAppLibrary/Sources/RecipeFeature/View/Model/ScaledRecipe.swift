@@ -1,4 +1,6 @@
 import Foundation
+import RecipeLibrary
+import RecipeScaling
 import SousKit
 
 /// A recipe as its file writes it, beside what it comes to at the scale a cook chose.
@@ -9,8 +11,13 @@ struct ScaledRecipe {
     /// How much of it to make.
     private(set) var scale: RecipeScale
 
-    /// The recipe at that scale with its numbers to three decimals, or ``asWritten`` itself at the ``defaultScale``.
+    /// The recipe at that scale with its numbers to three decimals, or ``asWritten`` itself at the scale the file
+    /// writes it in.
     private(set) var scaled: Recipe
+
+    /// The scale the recipe opens on: the scale preferred where the recipe scales that way, or else the first of its
+    /// ``targets``, at what the header declares of it. A preferred multiple is counted on that first target.
+    let defaultScale: RecipeScale
 
     /// Each of the ``targets``, at what the header declares of it.
     private let declaredScales: [RecipeScale]
@@ -26,11 +33,6 @@ struct ScaledRecipe {
         declaredScales.map(\.target)
     }
 
-    /// The scale the recipe opens on: the first of its ``targets``, at what the header declares of it.
-    var defaultScale: RecipeScale {
-        declaredScales[0]
-    }
-
     /// Whether the recipe stands at its ``defaultScale``, which leaves nothing to reset.
     var isDefault: Bool {
         scale == defaultScale
@@ -43,34 +45,39 @@ struct ScaledRecipe {
         .grouping(.never)
         .locale(Locale(identifier: "en_US_POSIX"))
 
-    /// A recipe at a scale, or at its ``defaultScale``, the scale its file writes it in, where no scale
-    /// is given or it does not scale that way.
+    /// A recipe at a scale, or at its ``defaultScale`` where no scale is given or it does not scale that way.
     ///
     /// - Parameters:
     ///   - asWritten: The recipe as it was read.
     ///   - parser: What the scaled amounts are read back with.
+    ///   - preferredScale: The scale recipes open on, which this one takes where it scales that way.
     ///   - scale: How much of it to make.
     init(
         asWritten: Recipe,
         parser: SousParser,
+        preferredScale: PreferredScale = .asWritten,
         scale: RecipeScale? = nil
     ) {
-        let atDefault = Self(
+        let declared = Self.declaredScales(of: asWritten, parser: parser)
+        let atWritten = Self(
             asWritten: asWritten,
-            declaredScales: Self.declaredScales(of: asWritten, parser: parser),
+            declaredScales: declared,
+            defaultScale: Self.defaultScale(preferring: preferredScale, among: declared),
             parser: parser
         )
 
-        self = scale.flatMap(atDefault.rescaled(to:)) ?? atDefault
+        self = scale.flatMap(atWritten.rescaled(to:)) ?? atWritten.rescaled(to: atWritten.defaultScale) ?? atWritten
     }
 
     private init(
         asWritten: Recipe,
         declaredScales: [RecipeScale],
+        defaultScale: RecipeScale,
         parser: SousParser
     ) {
         self.asWritten = asWritten
         self.declaredScales = declaredScales
+        self.defaultScale = defaultScale
         self.scale = declaredScales[0]
         self.scaled = asWritten
         self.factor = 1.0
@@ -113,10 +120,11 @@ struct ScaledRecipe {
     /// - Parameter scale: How much of it to make.
     /// - Returns: The recipe at that scale.
     func rescaled(to scale: RecipeScale) -> Self? {
-        guard scale != defaultScale else {
+        guard scale != declaredScales[0] else {
             return Self(
                 asWritten: asWritten,
                 declaredScales: declaredScales,
+                defaultScale: defaultScale,
                 parser: parser
             )
         }
@@ -170,6 +178,35 @@ struct ScaledRecipe {
         }
 
         return scalable + [RecipeScale(target: .multiplier, value: 1.0)]
+    }
+
+    /// The scale preferred, or the first of the scales declared where the recipe has no such target.
+    private static func defaultScale(
+        preferring preferredScale: PreferredScale,
+        among declaredScales: [RecipeScale]
+    ) -> RecipeScale {
+        let declared = declaredScales[0]
+        let preferred: RecipeScale? = switch preferredScale {
+        case .servings(let value) where declaredScales.contains(where: { $0.target == .servings }):
+            RecipeScale(target: .servings, value: value)
+
+        case .servings:
+            nil
+
+        // A multiple is counted on the recipe's own first target, so 2× of a recipe for 6 opens on 12 servings.
+        case .multiplier(let factor):
+            RecipeScale(target: declared.target, value: declared.value * factor)
+        }
+
+        guard
+            let preferred,
+            preferred.value > 0.0,
+            preferred.value.isFinite
+        else {
+            return declared
+        }
+
+        return preferred
     }
 
     /// The first yield in each unit with a single number to count from, in the order the header writes them.

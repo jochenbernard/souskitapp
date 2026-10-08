@@ -1,4 +1,5 @@
 import DesignSystem
+import RecipeScaling
 import SousKit
 import SwiftUI
 
@@ -37,7 +38,7 @@ struct RecipeMetadataView: View {
 
             RecipeScaleRow(presenter: presenter, scale: scale)
         }
-        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+        .sousRowSurface()
     }
 
     private var hasLabels: Bool {

@@ -1,13 +1,16 @@
 import SwiftUI
 
-/// The corner radius of a row or a callout.
+/// The corner radius of every box: a row, a callout, a card, and the rows that share one.
 @propertyWrapper
-struct LineContainerRadius: DynamicProperty {
+public struct LineContainerRadius: DynamicProperty {
     /// The height of one `.body` line, before Dynamic Type scales it.
     @ScaledMetric(relativeTo: .body) private var scaledBodyLineHeight = 20.3
 
-    // swiftlint:disable:next unused_declaration
-    var wrappedValue: CGFloat {
+    /// The radius, for the text size in force.
+    public var wrappedValue: CGFloat {
         (scaledBodyLineHeight + SousSpacing.medium * 2.0) / 2.0
     }
+
+    /// Creates the radius.
+    public init() {}
 }

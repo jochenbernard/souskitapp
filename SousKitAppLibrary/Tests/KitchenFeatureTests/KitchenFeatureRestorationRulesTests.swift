@@ -39,10 +39,7 @@ struct KitchenFeatureRestorationRulesTests {
 
     @MainActor
     private func makeViewModel(isRestoring: Bool = false) -> KitchenFeatureViewModel {
-        let viewModel = KitchenFeatureViewModel(
-            recipeRepositoryName: "Recipes",
-            recipeRepositoryKind: .files
-        )
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
         viewModel.isRestoring = isRestoring
 
         return viewModel

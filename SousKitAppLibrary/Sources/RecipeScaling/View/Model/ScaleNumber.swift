@@ -1,13 +1,13 @@
 import Foundation
 
-/// How the recipe screen writes the numbers it works out, and reads the ones a cook types.
-enum ScaleNumber {
+/// How a scale's number is written, and how one a cook types is read.
+public enum ScaleNumber {
     /// The value as the screen writes it: no trailing zeros, no grouping, in the recipe's notation
     /// rather than the reader's, since it stands beside amounts the file wrote.
     ///
     /// - Parameter value: The number to write.
     /// - Returns: The text.
-    static func text(_ value: Double) -> String {
+    public static func text(_ value: Double) -> String {
         value.formatted(numberStyle)
     }
 
@@ -17,7 +17,7 @@ enum ScaleNumber {
     ///
     /// - Parameter text: What the field holds.
     /// - Returns: The number.
-    static func value(of text: String) -> Double? {
+    public static func value(of text: String) -> Double? {
         let value = Double(
             text
                 .trimmingCharacters(in: .whitespacesAndNewlines)

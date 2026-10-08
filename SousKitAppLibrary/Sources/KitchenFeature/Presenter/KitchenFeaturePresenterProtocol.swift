@@ -1,5 +1,3 @@
-import RecipeLibrary
-
 /// What ``KitchenFeatureView`` reports to.
 protocol KitchenFeaturePresenterProtocol {
     /// The view is on screen, and the call is cancelled when it leaves.
@@ -21,14 +19,12 @@ protocol KitchenFeaturePresenterProtocol {
     func didDismissCooking()
 
     @MainActor
-    func didSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind)
+    func didTapSettings()
 
     @MainActor
-    func didTapReset()
+    func didDismissSettings()
 
+    /// The settings sheet finished sliding away.
     @MainActor
-    func didChangeIsConfirmingReset(_ isConfirming: Bool)
-
-    @MainActor
-    func didConfirmReset()
+    func didFinishDismissingSettings()
 }

@@ -1,3 +1,4 @@
+import RecipeScaling
 import SousKit
 
 /// Gathers a recipe's ingredient annotations into the rows an ingredients list shows.

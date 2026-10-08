@@ -1,14 +1,10 @@
 import SwiftUI
 
 private struct SousRowModifier: ViewModifier {
-    @LineContainerRadius private var radius
-
     func body(content: Content) -> some View {
         content
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, SousSpacing.large)
-            .padding(.vertical, SousSpacing.medium)
-            .sousSurface(RoundedRectangle(cornerRadius: radius))
+            .sousRowPadding()
+            .sousRowSurface()
     }
 }
 

@@ -2,6 +2,7 @@ import CookingFeature
 import DesignSystem
 import RecipeFeature
 import RecipeLibrary
+import SettingsFeature
 import SousKit
 import SwiftUI
 
@@ -60,7 +61,19 @@ struct KitchenFeatureView: View {
         .navigationTitle(viewModel.recipeRepositoryName)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                debugMenu
+                settingsButton
+            }
+        }
+        // What the settings ask of the app can replace the kitchen, so it waits for the sheet to slide away.
+        .sheet(
+            item: openSettings,
+            onDismiss: presenter.didFinishDismissingSettings,
+            content: { $0.feature.makeView() }
+        )
+        // Settings a cold start opens again are there at once, rather than sliding up over a list never left.
+        .transaction(value: viewModel.openSettings?.id) { transaction in
+            if viewModel.openSettings?.isRestored == true {
+                transaction.disablesAnimations = true
             }
         }
         .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
@@ -168,75 +181,14 @@ struct KitchenFeatureView: View {
         }
     }
 
-    @ViewBuilder
-    private var debugMenu: some View {
-        #if DEBUG
-        Menu(
-            content: {
-                recipeRepositoryKindPicker
-
-                resetButton
-            },
-            label: {
-                Label(
-                    title: { Text("Debug", bundle: .module) },
-                    icon: { Image(systemName: "ladybug") }
-                )
-            }
-        )
-        .confirmationDialog(
-            Text("Are you sure you want to reset the app?", bundle: .module),
-            isPresented: isConfirmingReset,
-            titleVisibility: .visible,
-            actions: { confirmResetButton },
-            message: { resetNote }
-        )
-        #endif
-    }
-
-    #if DEBUG
-    private var recipeRepositoryKindPicker: some View {
-        Picker(
-            selection: recipeRepositoryKind,
-            content: {
-                Label(
-                    title: { Text("Folder", bundle: .module) },
-                    icon: { Image(systemName: "folder") }
-                )
-                .tag(RecipeRepositoryKind.files)
-
-                Label(
-                    title: { Text("Mock recipes", bundle: .module) },
-                    icon: { Image(systemName: "testtube.2") }
-                )
-                .tag(RecipeRepositoryKind.mock)
-            },
-            label: { Text("Recipes", bundle: .module) }
-        )
-    }
-
-    private var resetButton: some View {
-        Button(role: .destructive, action: presenter.didTapReset) {
+    private var settingsButton: some View {
+        Button(action: presenter.didTapSettings) {
             Label(
-                title: { Text("Reset the app", bundle: .module) },
-                icon: { Image(systemName: "arrow.counterclockwise") }
+                title: { Text("Settings", bundle: .module) },
+                icon: { Image(systemName: "gearshape") }
             )
         }
     }
-
-    private var confirmResetButton: some View {
-        Button(role: .destructive, action: presenter.didConfirmReset) {
-            Text("Reset the app", bundle: .module)
-        }
-    }
-
-    private var resetNote: some View {
-        Text(
-            "The folder is forgotten and setup starts over. Recipes on disk are left alone.",
-            bundle: .module
-        )
-    }
-    #endif
 
     @ViewBuilder
     private func screenView(for screen: KitchenScreen) -> some View {
@@ -253,17 +205,14 @@ struct KitchenFeatureView: View {
         }
     }
 
-    private var recipeRepositoryKind: Binding<RecipeRepositoryKind> {
+    private var openSettings: Binding<OpenSettings?> {
         Binding(
-            get: { viewModel.recipeRepositoryKind },
-            set: { presenter.didSelectRecipeRepositoryKind($0) }
-        )
-    }
-
-    private var isConfirmingReset: Binding<Bool> {
-        Binding(
-            get: { viewModel.isConfirmingReset },
-            set: { presenter.didChangeIsConfirmingReset($0) }
+            get: { viewModel.openSettings },
+            set: { openSettings in
+                if openSettings == nil {
+                    presenter.didDismissSettings()
+                }
+            }
         )
     }
 
@@ -291,10 +240,7 @@ private func previewViewModel(
     _ recipeList: KitchenRecipeList,
     isRestoring: Bool = false
 ) -> KitchenFeatureViewModel {
-    let viewModel = KitchenFeatureViewModel(
-        recipeRepositoryName: "Recipes",
-        recipeRepositoryKind: .files
-    )
+    let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
     viewModel.recipeList = recipeList
     viewModel.isRestoring = isRestoring
 

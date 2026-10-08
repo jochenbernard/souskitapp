@@ -2,6 +2,12 @@ import RecipeLibrary
 
 /// What ``KitchenFeature`` reports out of the kitchen to.
 public protocol KitchenFeatureHandler {
+    /// Another folder was picked to read recipes from, and it is recorded.
+    ///
+    /// - Parameter recipeRepository: The repository reading the folder.
+    @MainActor
+    func kitchenFeatureDidConnectRecipeRepository(_ recipeRepository: RecipeRepository)
+
     /// Another kind of recipe repository was picked to read from.
     ///
     /// - Parameter recipeRepositoryKind: The kind picked.

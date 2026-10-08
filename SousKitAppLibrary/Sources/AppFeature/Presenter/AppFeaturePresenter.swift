@@ -1,3 +1,4 @@
+import Foundation
 import KitchenFeature
 import OnboardingFeature
 import RecipeLibrary
@@ -11,6 +12,7 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
     private let kitchenRestorationStore: KitchenRestorationStore
     private let mockRecipeRepository: RecipeRepository
     private let onboardingFeatureFactory: OnboardingFeatureFactory
+    private let preferredScaleStore: UserDefaultsPreferredScaleStore
     private let recipeRepositoryKindStore: RecipeRepositoryKindStore
     private let recipeRepositoryStore: RecipeRepositoryStore
 
@@ -19,6 +21,7 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
         kitchenRestorationStore: KitchenRestorationStore,
         mockRecipeRepository: RecipeRepository,
         onboardingFeatureFactory: OnboardingFeatureFactory,
+        preferredScaleStore: UserDefaultsPreferredScaleStore,
         recipeRepositoryKindStore: RecipeRepositoryKindStore,
         recipeRepositoryStore: RecipeRepositoryStore
     ) {
@@ -26,6 +29,7 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
         self.kitchenRestorationStore = kitchenRestorationStore
         self.mockRecipeRepository = mockRecipeRepository
         self.onboardingFeatureFactory = onboardingFeatureFactory
+        self.preferredScaleStore = preferredScaleStore
         self.recipeRepositoryKindStore = recipeRepositoryKindStore
         self.recipeRepositoryStore = recipeRepositoryStore
     }
@@ -53,11 +57,18 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
         selectRecipeRepositoryKind(.mock)
     }
 
+    func kitchenFeatureDidConnectRecipeRepository(_ recipeRepository: RecipeRepository) {
+        // A folder picked over the mock recipes is read from now on.
+        recipeRepositoryKindStore.remember(.files)
+        viewModel?.screen = makeScreen(recipeRepository: recipeRepository, kind: .files)
+    }
+
     func kitchenFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
         selectRecipeRepositoryKind(recipeRepositoryKind)
     }
 
     func kitchenFeatureDidConfirmReset() {
+        preferredScaleStore.clear()
         recipeRepositoryKindStore.clear()
         recipeRepositoryStore.clear()
         viewModel?.screen = makeScreen()
@@ -81,7 +92,7 @@ final class AppFeaturePresenter: AppFeaturePresenterProtocol, OnboardingFeatureH
                 recipeRepositoryKind: kind,
                 handler: self
             ),
-            kind
+            id: UUID()
         )
     }
 

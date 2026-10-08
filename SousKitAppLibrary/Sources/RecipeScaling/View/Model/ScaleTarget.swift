@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// What a recipe is scaled by: the recipe itself, or a quantity its header declares.
-enum ScaleTarget: Hashable, Codable {
+public enum ScaleTarget: Sendable, Hashable, Codable {
     /// The recipe itself, multiplied.
     case multiplier
 
@@ -13,7 +13,7 @@ enum ScaleTarget: Hashable, Codable {
     case yield(unit: String)
 
     /// What names the target among the others, which is the unit as written for a yield that has one.
-    var name: Text {
+    public var name: Text {
         switch self {
         case .multiplier: Text("Multiplier", bundle: .module)
         case .servings: Text("Servings", bundle: .module)
@@ -23,7 +23,7 @@ enum ScaleTarget: Hashable, Codable {
     }
 
     /// What the number is labelled, which carries the unit for a yield that has one.
-    var label: Text {
+    public var label: Text {
         guard case .yield(let unit) = self, !unit.isEmpty else {
             return name
         }
@@ -39,7 +39,7 @@ enum ScaleTarget: Hashable, Codable {
     ///
     /// - Parameter declared: What the recipe declares of this target.
     /// - Returns: The step.
-    func step(declared: Double) -> Double {
+    public func step(declared: Double) -> Double {
         switch self {
         case .multiplier:
             return 0.5
@@ -60,7 +60,7 @@ enum ScaleTarget: Hashable, Codable {
     ///
     /// - Parameter declared: What the recipe declares of this target.
     /// - Returns: The range.
-    func stepRange(declared: Double) -> ClosedRange<Double> {
+    public func stepRange(declared: Double) -> ClosedRange<Double> {
         switch self {
         case .multiplier: 0.5...99.0
         case .servings: 1.0...999.0
@@ -75,7 +75,7 @@ enum ScaleTarget: Hashable, Codable {
     ///   - steps: How many steps to take, which is -1 for the minus and 1 for the plus.
     ///   - declared: What the recipe declares of this target.
     /// - Returns: The number stepped to.
-    func stepped(
+    public func stepped(
         _ value: Double,
         by steps: Double,
         declared: Double
