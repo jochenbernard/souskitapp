@@ -20,6 +20,11 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         // Set before the screen first draws, so neither a step already done nor a timer already running animates in.
         viewModel.completedStepNumbers = restoration?.completedStepNumbers ?? []
         viewModel.runningTimers = timerScheduler.currentRunningTimers()
+
+        if let newTimer = restoration?.newTimer {
+            viewModel.newTimer = newTimer
+            viewModel.isAddingTimer = true
+        }
     }
 
     func viewDidAppear() async {
@@ -46,20 +51,47 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
             viewModel.completedStepNumbers.insert(number)
         }
 
-        handler.cookingFeatureDidChangeRestoration(
-            CookingFeatureRestoration(completedStepNumbers: viewModel.completedStepNumbers)
-        )
+        reportRestoration()
     }
 
     func didTapTimer(_ timer: StepTimer) async {
-        do {
-            try await timerScheduler.start(timer)
-            viewModel.startedTimerCount += 1
-        } catch TimerSchedulerError.notAuthorized {
-            viewModel.isAskingToAllowTimers = true
-        } catch {
-            // Nothing starts, which the timers on screen already show.
+        await start(.step(timer))
+    }
+
+    func didTapNewTimer() {
+        viewModel.newTimer = NewTimerEntry()
+        viewModel.isAddingTimer = true
+        reportRestoration()
+    }
+
+    func didChangeIsAddingTimer(_ isAdding: Bool) {
+        viewModel.isAddingTimer = isAdding
+        reportRestoration()
+    }
+
+    func didChangeNewTimerText(_ text: String) {
+        viewModel.newTimer.text = text
+        reportRestoration()
+    }
+
+    func didStepNewTimer(by steps: Double) {
+        viewModel.newTimer = viewModel.newTimer.stepped(by: steps)
+        reportRestoration()
+    }
+
+    func didTapNewTimerUnit(_ unit: TimerUnit) {
+        viewModel.newTimer.unit = unit
+        reportRestoration()
+    }
+
+    func didTapStartNewTimer() async {
+        guard let duration = viewModel.newTimer.duration else {
+            return
         }
+
+        viewModel.isAddingTimer = false
+        reportRestoration()
+        await start(.custom(duration))
     }
 
     func didOpenTimerList() {
@@ -120,6 +152,28 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         }
 
         handler.cookingFeatureDidExit()
+    }
+
+    @MainActor
+    private func reportRestoration() {
+        handler.cookingFeatureDidChangeRestoration(
+            CookingFeatureRestoration(
+                completedStepNumbers: viewModel.completedStepNumbers,
+                newTimer: viewModel.isAddingTimer ? viewModel.newTimer : nil
+            )
+        )
+    }
+
+    @MainActor
+    private func start(_ timer: CookingTimer) async {
+        do {
+            try await timerScheduler.start(timer)
+            viewModel.startedTimerCount += 1
+        } catch TimerSchedulerError.notAuthorized {
+            viewModel.isAskingToAllowTimers = true
+        } catch {
+            // Nothing starts, which the timers on screen already show.
+        }
     }
 
     /// Closes the cancel confirmation of a timer that went off or went away, which leaves nothing to cancel.

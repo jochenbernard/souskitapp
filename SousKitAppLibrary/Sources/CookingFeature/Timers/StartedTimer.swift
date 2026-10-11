@@ -2,6 +2,6 @@ import Foundation
 
 /// A timer as it was started, kept beside the alarm it sounds.
 struct StartedTimer: Codable, Sendable {
-    let stepTimer: StepTimer
+    let cookingTimer: CookingTimer
     let endDate: Date
 }

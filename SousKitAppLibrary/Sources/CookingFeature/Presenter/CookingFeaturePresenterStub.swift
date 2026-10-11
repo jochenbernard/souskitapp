@@ -7,6 +7,18 @@ struct CookingFeaturePresenterStub: CookingFeaturePresenterProtocol {
 
     func didTapTimer(_: StepTimer) {}
 
+    func didTapNewTimer() {}
+
+    func didChangeIsAddingTimer(_: Bool) {}
+
+    func didChangeNewTimerText(_: String) {}
+
+    func didStepNewTimer(by _: Double) {}
+
+    func didTapNewTimerUnit(_: TimerUnit) {}
+
+    func didTapStartNewTimer() {}
+
     func didOpenTimerList() {}
 
     func didCloseTimerList() {}

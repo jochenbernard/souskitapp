@@ -68,6 +68,9 @@ struct CookingFeatureView: View {
             actions: { allowTimersButtons },
             message: { allowTimersMessage }
         )
+        .sheet(isPresented: isAddingTimer) {
+            newTimerSheet
+        }
         .task {
             await presenter.viewDidAppear()
         }
@@ -163,6 +166,17 @@ struct CookingFeatureView: View {
         Binding(
             get: { viewModel.isAskingToAllowTimers },
             set: { presenter.didChangeIsAskingToAllowTimers($0) }
+        )
+    }
+
+    private var newTimerSheet: some View {
+        NewTimerSheet(presenter: presenter, entry: viewModel.newTimer)
+    }
+
+    private var isAddingTimer: Binding<Bool> {
+        Binding(
+            get: { viewModel.isAddingTimer },
+            set: { presenter.didChangeIsAddingTimer($0) }
         )
     }
 

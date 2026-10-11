@@ -81,6 +81,22 @@
         }
       }
     },
+    "Cancel the custom %@ timer?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel the custom %@ timer?"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De aangepaste timer van %@ annuleren?"
+          }
+        }
+      }
+    },
     "Cancel timer" : {
       "localizations" : {
         "en" : {
@@ -113,6 +129,38 @@
         }
       }
     },
+    "Custom" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aangepast"
+          }
+        }
+      }
+    },
+    "Custom %@ timer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom %@ timer"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aangepaste timer van %@"
+          }
+        }
+      }
+    },
     "Done" : {
       "localizations" : {
         "en" : {
@@ -125,6 +173,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klaar"
+          }
+        }
+      }
+    },
+    "Hours" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hours"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uren"
           }
         }
       }
@@ -193,6 +257,38 @@
         }
       }
     },
+    "Minutes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minutes"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minuten"
+          }
+        }
+      }
+    },
+    "New timer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New timer"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuwe timer"
+          }
+        }
+      }
+    },
     "Open Settings" : {
       "localizations" : {
         "en" : {
@@ -209,6 +305,22 @@
         }
       }
     },
+    "Seconds" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seconds"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seconden"
+          }
+        }
+      }
+    },
     "Show all timers" : {
       "localizations" : {
         "en" : {
@@ -221,6 +333,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle timers tonen"
+          }
+        }
+      }
+    },
+    "Start timer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start timer"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timer starten"
           }
         }
       }

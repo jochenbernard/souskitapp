@@ -16,11 +16,11 @@ public protocol TimerScheduler: Sendable {
 
     /// Starts a timer counting down.
     ///
-    /// - Parameter timer: The step's timer to start.
+    /// - Parameter timer: The timer to start.
     /// - Throws: ``TimerSchedulerError/notAuthorized`` when the cook has not allowed timers, or whatever starting
     ///   the timer throws.
     @MainActor
-    func start(_ timer: StepTimer) async throws
+    func start(_ timer: CookingTimer) async throws
 
     /// Cancels a timer counting down, or silences one ringing.
     ///

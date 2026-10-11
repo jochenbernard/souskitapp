@@ -9,15 +9,6 @@ public struct ScaleSheet: View {
     private let presenter: ScaleSheetPresenterProtocol
     private let scale: ScaleDisplay
 
-    // What the sheet holds, measured as it is laid out, so a row of chips that wraps still fits.
-    @State private var contentHeight: Double?
-
-    // The toolbar and home indicator, which the sheet cannot measure before its detent applies.
-    @ScaledMetric(relativeTo: .body) private var barHeight = 70.0
-
-    // About as tall as the content comes out, for the one layout before it is measured.
-    @ScaledMetric(relativeTo: .body) private var estimatedContentHeight = 200.0
-
     /// Creates the sheet.
     ///
     /// - Parameters:
@@ -35,26 +26,19 @@ public struct ScaleSheet: View {
     }
 
     public var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle(title)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        resetButton
-                    }
-
-                    ToolbarItem(placement: .confirmationAction) {
-                        doneButton
-                    }
+        SousSheet(
+            title,
+            content: { content },
+            actions: {
+                ToolbarItem(placement: .topBarLeading) {
+                    resetButton
                 }
-        }
-        .presentationDetents([.height(sheetHeight)])
-        .presentationDragIndicator(.hidden)
-    }
 
-    private var sheetHeight: Double {
-        (contentHeight ?? estimatedContentHeight) + barHeight
+                ToolbarItem(placement: .confirmationAction) {
+                    doneButton
+                }
+            }
+        )
     }
 
     private var content: some View {
@@ -63,19 +47,6 @@ public struct ScaleSheet: View {
 
             targets
         }
-        .sousPagePadding()
-        .onGeometryChange(
-            for: Double.self,
-            of: { $0.size.height },
-            action: { contentHeight = $0 }
-        )
-        // The sheet's own ground, so the page behind it is read through nothing but the sheet.
-        .frame(
-            maxWidth: .infinity,
-            maxHeight: .infinity,
-            alignment: .top
-        )
-        .sousPage()
     }
 
     private var resetButton: some View {
@@ -94,14 +65,10 @@ public struct ScaleSheet: View {
 
     private var number: some View {
         VStack(spacing: SousSpacing.small) {
-            scale.target.label
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            ScaleNumberField(
-                presenter: presenter,
-                target: scale.target,
-                text: scale.text
+            SousNumberField(
+                scale.target.label,
+                text: Binding(get: { scale.text }, set: { presenter.didChangeScaleText($0) }),
+                onStep: { presenter.didStepScale(by: $0) }
             )
 
             follows

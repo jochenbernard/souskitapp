@@ -30,7 +30,7 @@ public struct AlarmTimerScheduler: TimerScheduler {
         }
     }
 
-    public func start(_ timer: StepTimer) async throws {
+    public func start(_ timer: CookingTimer) async throws {
         let manager = AlarmManager.shared
 
         if manager.authorizationState == .notDetermined {
@@ -44,7 +44,10 @@ public struct AlarmTimerScheduler: TimerScheduler {
         let id = UUID()
 
         // Kept before scheduling, so the first update carrying the alarm finds it.
-        startedTimerStore.add(StartedTimer(stepTimer: timer, endDate: .now.addingTimeInterval(timer.seconds)), id: id)
+        startedTimerStore.add(
+            StartedTimer(cookingTimer: timer, endDate: .now.addingTimeInterval(timer.seconds)),
+            id: id
+        )
 
         do {
             _ = try await manager.schedule(
@@ -81,7 +84,7 @@ public struct AlarmTimerScheduler: TimerScheduler {
                 startedTimers[alarm.id].map { startedTimer in
                     RunningTimer(
                         id: alarm.id,
-                        stepTimer: startedTimer.stepTimer,
+                        cookingTimer: startedTimer.cookingTimer,
                         endDate: startedTimer.endDate,
                         isRinging: alarm.state == .alerting
                     )
@@ -90,12 +93,16 @@ public struct AlarmTimerScheduler: TimerScheduler {
             .sorted(by: { $0.endDate < $1.endDate })
     }
 
-    private func attributes(of timer: StepTimer) -> AlarmAttributes<CookingTimerMetadata> {
+    private func attributes(of timer: CookingTimer) -> AlarmAttributes<CookingTimerMetadata> {
         // The system reads the title out of process, so it names the bundle by its location.
-        let title = LocalizedStringResource(
-            "\(timer.text) for step \(timer.stepNumber)",
-            bundle: .atURL(Bundle.module.bundleURL)
-        )
+        let bundle = LocalizedStringResource.BundleDescription.atURL(Bundle.module.bundleURL)
+        let title = switch timer {
+        case .step(let stepTimer):
+            LocalizedStringResource("\(stepTimer.text) for step \(stepTimer.stepNumber)", bundle: bundle)
+
+        case .custom:
+            LocalizedStringResource("Custom \(timer.text) timer", bundle: bundle)
+        }
 
         return AlarmAttributes(
             presentation: AlarmPresentation(
