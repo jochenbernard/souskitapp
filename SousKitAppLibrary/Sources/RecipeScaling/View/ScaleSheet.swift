@@ -28,7 +28,11 @@ public struct ScaleSheet: View {
     public var body: some View {
         SousSheet(
             title,
-            content: { content },
+            content: {
+                number
+
+                targets
+            },
             actions: {
                 ToolbarItem(placement: .topBarLeading) {
                     resetButton
@@ -39,28 +43,6 @@ public struct ScaleSheet: View {
                 }
             }
         )
-    }
-
-    private var content: some View {
-        VStack(spacing: SousSpacing.xLarge) {
-            number
-
-            targets
-        }
-    }
-
-    private var resetButton: some View {
-        Button(action: presenter.didTapReset) {
-            Label(
-                title: { Text("Reset", bundle: .module) },
-                icon: { Image(systemName: "arrow.counterclockwise") }
-            )
-        }
-        .disabled(scale.isDefault)
-    }
-
-    private var doneButton: some View {
-        Button(role: .confirm, action: { presenter.didChangeIsScaling(false) })
     }
 
     private var number: some View {
@@ -85,6 +67,20 @@ public struct ScaleSheet: View {
                 }
             }
         }
+    }
+
+    private var resetButton: some View {
+        Button(action: presenter.didTapReset) {
+            Label(
+                title: { Text("Reset", bundle: .module) },
+                icon: { Image(systemName: "arrow.counterclockwise") }
+            )
+        }
+        .disabled(scale.isDefault)
+    }
+
+    private var doneButton: some View {
+        Button(role: .confirm, action: { presenter.didChangeIsScaling(false) })
     }
 
     /// What the number comes to on the other targets, which a cook reads rather than sets.

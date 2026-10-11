@@ -9,7 +9,7 @@ struct CookingFeatureView: View {
     private let presenter: CookingFeaturePresenterProtocol
     private let viewModel: CookingFeatureViewModel
 
-    // Room for a `.title2` countdown beside its step, growing with Dynamic Type.
+    // Room for a `.title2` countdown beside its label, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title2) private var sideTimersWidth = 340.0
 
     // Where the timers stand between their stack and their list, which the blur behind them and the room the steps

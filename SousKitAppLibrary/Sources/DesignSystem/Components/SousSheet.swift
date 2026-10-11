@@ -21,7 +21,7 @@ public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
     ///
     /// - Parameters:
     ///   - title: What the sheet is called.
-    ///   - content: What the sheet holds.
+    ///   - content: What the sheet holds, stacked from the top down.
     ///   - actions: The actions in the sheet's bar.
     public init(
         _ title: Text,
@@ -47,20 +47,22 @@ public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
     }
 
     private var measuredContent: some View {
-        content
-            .sousPagePadding()
-            .onGeometryChange(
-                for: Double.self,
-                of: { $0.size.height },
-                action: { contentHeight = $0 }
-            )
-            // The sheet's own ground, so the page behind it is read through nothing but the sheet.
-            .frame(
-                maxWidth: .infinity,
-                maxHeight: .infinity,
-                alignment: .top
-            )
-            .sousPage()
+        VStack(spacing: SousSpacing.xLarge) {
+            content
+        }
+        .sousPagePadding()
+        .onGeometryChange(
+            for: Double.self,
+            of: { $0.size.height },
+            action: { contentHeight = $0 }
+        )
+        // The sheet's own ground, so the page behind it is read through nothing but the sheet.
+        .frame(
+            maxWidth: .infinity,
+            maxHeight: .infinity,
+            alignment: .top
+        )
+        .sousPage()
     }
 
     private var sheetHeight: Double {

@@ -17,7 +17,11 @@ struct NewTimerSheet: View {
     var body: some View {
         SousSheet(
             Text("New timer", bundle: .module),
-            content: { content },
+            content: {
+                number
+
+                units
+            },
             actions: {
                 ToolbarItem(placement: .cancellationAction) {
                     cancelButton
@@ -28,24 +32,6 @@ struct NewTimerSheet: View {
                 }
             }
         )
-    }
-
-    private var content: some View {
-        VStack(spacing: SousSpacing.xLarge) {
-            number
-
-            units
-        }
-    }
-
-    private var cancelButton: some View {
-        Button(role: .cancel, action: { presenter.didChangeIsAddingTimer(false) })
-    }
-
-    private var startButton: some View {
-        Button(role: .confirm, action: start)
-            .disabled(entry.duration == nil)
-            .accessibilityLabel(Text("Start timer", bundle: .module))
     }
 
     private var number: some View {
@@ -63,6 +49,16 @@ struct NewTimerSheet: View {
                 unitChip(unit)
             }
         }
+    }
+
+    private var cancelButton: some View {
+        Button(role: .cancel, action: { presenter.didChangeIsAddingTimer(false) })
+    }
+
+    private var startButton: some View {
+        Button(role: .confirm, action: start)
+            .disabled(entry.duration == nil)
+            .accessibilityLabel(Text("Start timer", bundle: .module))
     }
 
     private func start() {

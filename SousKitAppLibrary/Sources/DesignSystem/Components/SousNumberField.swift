@@ -22,7 +22,7 @@ public struct SousNumberField: View {
     ///   - label: What the number counts.
     ///   - text: What the field holds, which is not a number until it is typed out.
     ///   - prompt: What an empty field shows, or `nil` for what the number counts.
-    ///   - onStep: Takes the steps a tap beside the number asks for, which is -1 for the minus and 1 for the plus.
+    ///   - onStep: Reports how many steps a tap beside the number takes, which is -1 for the minus and 1 for the plus.
     public init(
         _ label: Text,
         text: Binding<String>,
