@@ -53,6 +53,8 @@ struct SettingsFeatureView: View {
 
             versionNote
         }
+        // The folder's note comes and goes when a debug build moves the kitchen under the open settings.
+        .animation(.spring(duration: 0.4, bounce: 0.0), value: viewModel.recipeRepositoryKind)
     }
 
     private var doneButton: some View {

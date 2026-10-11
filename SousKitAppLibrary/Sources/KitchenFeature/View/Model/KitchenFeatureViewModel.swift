@@ -9,7 +9,6 @@ final class KitchenFeatureViewModel {
     var screenPath: [KitchenScreen] = []
     var openRecipe: OpenRecipe?
     var openCooking: OpenCooking?
-    var openSettings: OpenSettings?
 
     nonisolated init(recipeRepositoryName: String) {
         self.recipeRepositoryName = recipeRepositoryName

@@ -39,12 +39,14 @@ struct KitchenFeatureRestorationTests {
     @MainActor
     private func makePresenter(
         viewModel: KitchenFeatureViewModel,
+        handler: KitchenFeatureHandler = KitchenFeatureHandlerStub(),
         recipeRepository: RecipeRepositorySpy = RecipeRepositorySpy()
     ) -> KitchenFeaturePresenter {
         .stubbed(
             viewModel: viewModel,
             parser: parser,
             restorationStore: restorationStore,
+            handler: handler,
             recipeRepository: recipeRepository
         )
     }
@@ -52,11 +54,16 @@ struct KitchenFeatureRestorationTests {
     /// Restores a kitchen whose repository lists each of the results in turn, and returns its view model and presenter.
     @MainActor
     private func restore(
-        listing results: [Result<[RecipeEntry], Error>]
+        listing results: [Result<[RecipeEntry], Error>],
+        handler: KitchenFeatureHandler = KitchenFeatureHandlerStub()
     ) async -> (viewModel: KitchenFeatureViewModel, presenter: KitchenFeaturePresenter) {
         let recipeRepository = RecipeRepositorySpy()
         let viewModel = makeViewModel(isRestoring: true)
-        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
+        let presenter = makePresenter(
+            viewModel: viewModel,
+            handler: handler,
+            recipeRepository: recipeRepository
+        )
 
         for result in results {
             recipeRepository.send(result)
@@ -178,27 +185,15 @@ struct KitchenFeatureRestorationTests {
     }
 
     @MainActor
-    @Test("the settings are kept while they are open, and forgotten once they close")
-    func settingsAreKeptUntilClosed() {
-        let presenter = makePresenter(viewModel: makeViewModel())
+    @Test("a kitchen restored reports the settings kept as restored, and keeps them")
+    func restoreReportsTheSettings() async {
+        let handler = KitchenFeatureHandlerStub()
+        restorationStore.saveSettings()
 
-        presenter.didTapSettings()
+        let viewModel = await restore(listing: [.success([crepes])], handler: handler).viewModel
 
-        #expect(restorationStore.restoration() == KitchenRestoration(recipeID: nil, isShowingSettings: true))
-
-        presenter.settingsFeatureDidFinish()
-
-        #expect(restorationStore.restoration() == nil)
-    }
-
-    @MainActor
-    @Test("a kitchen restored opens the settings kept, as restored, and keeps them")
-    func restoreOpensTheSettings() async {
-        restorationStore.save(KitchenRestoration(recipeID: nil, isShowingSettings: true))
-
-        let viewModel = await restore(listing: [.success([crepes])]).viewModel
-
-        #expect(viewModel.openSettings?.isRestored == true)
+        #expect(handler.settingsRestoreCount == 1)
+        #expect(handler.settingsTapCount == 0)
         #expect(viewModel.screenPath.isEmpty)
         #expect(!viewModel.isRestoring)
         #expect(restorationStore.restoration()?.isShowingSettings == true)

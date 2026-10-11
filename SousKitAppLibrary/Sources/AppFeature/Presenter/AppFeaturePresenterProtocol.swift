@@ -1,2 +1,5 @@
-/// What ``AppFeatureView`` reports to, which so far is nothing.
-protocol AppFeaturePresenterProtocol {}
+/// What ``AppFeatureView`` reports to.
+protocol AppFeaturePresenterProtocol {
+    @MainActor
+    func didDismissSettings()
+}

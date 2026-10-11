@@ -10,8 +10,4 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
     func didDismissCooking() {}
 
     func didTapSettings() {}
-
-    func didDismissSettings() {}
-
-    func didFinishDismissingSettings() {}
 }

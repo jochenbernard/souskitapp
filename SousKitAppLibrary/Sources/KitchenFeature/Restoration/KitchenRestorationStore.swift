@@ -21,6 +21,11 @@ public struct KitchenRestorationStore {
         userDefaults.removeObject(forKey: Self.key)
     }
 
+    /// Records that the settings are open over the recipe list, in use now.
+    public func saveSettings() {
+        save(KitchenRestoration(recipeID: nil, isShowingSettings: true))
+    }
+
     /// What the kitchen had open, or `nil` where it stood on its recipe list with nothing over it.
     func restoration() -> KitchenRestoration? {
         record()?.restoration

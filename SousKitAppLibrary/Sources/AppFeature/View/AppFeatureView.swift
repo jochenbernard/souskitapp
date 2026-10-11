@@ -1,12 +1,18 @@
 import DesignSystem
 import KitchenFeature
 import OnboardingFeature
+import SettingsFeature
 import SwiftUI
 
 struct AppFeatureView: View {
+    private let presenter: AppFeaturePresenterProtocol
     private let viewModel: AppFeatureViewModel
 
-    init(viewModel: AppFeatureViewModel) {
+    init(
+        presenter: AppFeaturePresenterProtocol,
+        viewModel: AppFeatureViewModel
+    ) {
+        self.presenter = presenter
         self.viewModel = viewModel
     }
 
@@ -22,6 +28,16 @@ struct AppFeatureView: View {
             // A blurred screen fades out at the perimeter, letting the window's own background
             // through, so the ground is drawn behind the transition rather than by the screens.
             .sousPage()
+            // Over the screens rather than on the kitchen, so the settings stay open while the kitchen is replaced.
+            .sheet(item: openSettings) { openSettings in
+                openSettings.feature.makeView()
+            }
+            // Settings a cold start opens again are there at once, rather than sliding up over a list never left.
+            .transaction(value: viewModel.openSettings?.id) { transaction in
+                if viewModel.openSettings?.isRestored == true {
+                    transaction.disablesAnimations = true
+                }
+            }
     }
 
     @ViewBuilder
@@ -33,5 +49,16 @@ struct AppFeatureView: View {
         case .kitchen(let kitchenFeature, _):
             kitchenFeature.makeView()
         }
+    }
+
+    private var openSettings: Binding<OpenSettings?> {
+        Binding(
+            get: { viewModel.openSettings },
+            set: { openSettings in
+                if openSettings == nil {
+                    presenter.didDismissSettings()
+                }
+            }
+        )
     }
 }

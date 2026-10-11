@@ -16,6 +16,7 @@ struct AppFeatureFactory {
     private let preferredScaleStore: UserDefaultsPreferredScaleStore
     private let recipeRepositoryKindStore: RecipeRepositoryKindStore
     private let recipeRepositoryStore: RecipeRepositoryStore
+    private let settingsFeatureFactory: SettingsFeatureFactory
 
     @MainActor
     init() {
@@ -27,12 +28,7 @@ struct AppFeatureFactory {
         self.kitchenFeatureFactory = KitchenFeatureFactory(
             parser: parser,
             preferredScaleStore: scaleStore,
-            restorationStore: restorationStore,
-            settingsFeatureFactory: SettingsFeatureFactory(
-                appVersion: AppVersion(bundle: .main),
-                preferredScaleStore: scaleStore,
-                recipeRepositoryStore: store
-            )
+            restorationStore: restorationStore
         )
         self.kitchenRestorationStore = restorationStore
         self.mockRecipeRepository = MockRecipeRepository(parser: parser)
@@ -40,6 +36,11 @@ struct AppFeatureFactory {
         self.preferredScaleStore = scaleStore
         self.recipeRepositoryKindStore = RecipeRepositoryKindStore()
         self.recipeRepositoryStore = store
+        self.settingsFeatureFactory = SettingsFeatureFactory(
+            appVersion: AppVersion(bundle: .main),
+            preferredScaleStore: scaleStore,
+            recipeRepositoryStore: store
+        )
     }
 
     /// Builds the feature, opening on whichever screen the remembered repository calls for.
@@ -54,7 +55,8 @@ struct AppFeatureFactory {
             onboardingFeatureFactory: onboardingFeatureFactory,
             preferredScaleStore: preferredScaleStore,
             recipeRepositoryKindStore: recipeRepositoryKindStore,
-            recipeRepositoryStore: recipeRepositoryStore
+            recipeRepositoryStore: recipeRepositoryStore,
+            settingsFeatureFactory: settingsFeatureFactory
         )
         let viewModel = AppFeatureViewModel(screen: presenter.makeScreen())
         presenter.viewModel = viewModel

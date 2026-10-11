@@ -20,11 +20,4 @@ protocol KitchenFeaturePresenterProtocol {
 
     @MainActor
     func didTapSettings()
-
-    @MainActor
-    func didDismissSettings()
-
-    /// The settings sheet finished sliding away.
-    @MainActor
-    func didFinishDismissingSettings()
 }

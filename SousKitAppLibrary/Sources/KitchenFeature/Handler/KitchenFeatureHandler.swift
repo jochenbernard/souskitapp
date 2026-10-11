@@ -1,20 +1,10 @@
-import RecipeLibrary
-
 /// What ``KitchenFeature`` reports out of the kitchen to.
 public protocol KitchenFeatureHandler {
-    /// Another folder was picked to read recipes from, and it is recorded.
-    ///
-    /// - Parameter recipeRepository: The repository reading the folder.
+    /// The settings were asked for from the recipe list.
     @MainActor
-    func kitchenFeatureDidConnectRecipeRepository(_ recipeRepository: RecipeRepository)
+    func kitchenFeatureDidTapSettings()
 
-    /// Another kind of recipe repository was picked to read from.
-    ///
-    /// - Parameter recipeRepositoryKind: The kind picked.
+    /// A cold start found the settings open over the recipe list, and they are to open again.
     @MainActor
-    func kitchenFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind)
-
-    /// A reset of the app was confirmed, and what the app remembers is to go.
-    @MainActor
-    func kitchenFeatureDidConfirmReset()
+    func kitchenFeatureDidRestoreSettings()
 }

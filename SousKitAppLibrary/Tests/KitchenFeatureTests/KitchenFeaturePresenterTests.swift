@@ -137,146 +137,24 @@ struct KitchenFeaturePresenterTests {
     }
 
     @MainActor
-    @Test("the settings open over the recipe list")
-    func settingsOpen() {
-        let viewModel = makeViewModel()
+    @Test("the settings asked for on the recipe list are reported")
+    func settingsAreReported() {
+        let handler = KitchenFeatureHandlerStub()
 
-        makePresenter(viewModel: viewModel).didTapSettings()
+        makePresenter(viewModel: makeViewModel(), handler: handler).didTapSettings()
 
-        #expect(viewModel.openSettings?.isRestored == false)
+        #expect(handler.settingsTapCount == 1)
     }
 
     @MainActor
-    @Test("the settings do not open over a recipe")
-    func settingsStayShutOverARecipe() {
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
+    @Test("the settings asked for over a recipe are not reported")
+    func settingsOverARecipeAreNotReported() {
+        let handler = KitchenFeatureHandlerStub()
+        let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
 
         presenter.didChangeScreenPath([.recipe(recipeEntry(named: "crepes"))])
         presenter.didTapSettings()
 
-        #expect(viewModel.openSettings == nil)
-    }
-
-    @MainActor
-    @Test("the settings close when they are done or dismissed")
-    func settingsClose() {
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didTapSettings()
-        presenter.settingsFeatureDidFinish()
-
-        #expect(viewModel.openSettings == nil)
-
-        presenter.didTapSettings()
-        presenter.didDismissSettings()
-
-        #expect(viewModel.openSettings == nil)
-    }
-
-    @MainActor
-    @Test("a folder connected in the settings closes them and is reported once they are gone")
-    func folderConnectedReports() {
-        let handler = KitchenFeatureHandlerStub()
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel, handler: handler)
-
-        presenter.didTapSettings()
-        presenter.settingsFeatureDidConnectRecipeRepository(RecipeRepositorySpy())
-
-        #expect(viewModel.openSettings == nil)
-        #expect(handler.connectCount == 0)
-
-        // The sheet writes its closing back through the binding before it reports it finished.
-        presenter.didDismissSettings()
-        presenter.didFinishDismissingSettings()
-        presenter.didFinishDismissingSettings()
-
-        #expect(handler.connectCount == 1)
-    }
-
-    @MainActor
-    @Test("another kind of repository picked in the settings closes them and is reported once they are gone")
-    func pickingAKindReports() {
-        let handler = KitchenFeatureHandlerStub()
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel, handler: handler)
-
-        presenter.didTapSettings()
-        presenter.settingsFeatureDidSelectRecipeRepositoryKind(.mock)
-
-        #expect(viewModel.openSettings == nil)
-        #expect(handler.selectedRecipeRepositoryKinds.isEmpty)
-
-        presenter.didFinishDismissingSettings()
-
-        #expect(handler.selectedRecipeRepositoryKinds == [.mock])
-    }
-
-    @MainActor
-    @Test("the kind of repository already read, picked in the settings, leaves them open and reports nothing")
-    func pickingTheSameKindReportsNothing() {
-        let handler = KitchenFeatureHandlerStub()
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel, handler: handler)
-
-        presenter.didTapSettings()
-        presenter.settingsFeatureDidSelectRecipeRepositoryKind(.files)
-        presenter.didFinishDismissingSettings()
-
-        #expect(viewModel.openSettings != nil)
-        #expect(handler.selectedRecipeRepositoryKinds.isEmpty)
-    }
-
-    @MainActor
-    @Test("a reset confirmed in the settings closes them and reports once they are gone")
-    func confirmedResetReports() {
-        let handler = KitchenFeatureHandlerStub()
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel, handler: handler)
-
-        presenter.didTapSettings()
-        presenter.settingsFeatureDidConfirmReset()
-
-        #expect(viewModel.openSettings == nil)
-        #expect(handler.resetCount == 0)
-
-        presenter.didFinishDismissingSettings()
-
-        #expect(handler.resetCount == 1)
-    }
-
-    @MainActor
-    @Test("settings closed with Done report nothing once they are gone")
-    func doneReportsNothing() {
-        let handler = KitchenFeatureHandlerStub()
-        let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
-
-        presenter.didTapSettings()
-        presenter.settingsFeatureDidFinish()
-        presenter.didFinishDismissingSettings()
-
-        #expect(handler.connectCount == 0)
-        #expect(handler.selectedRecipeRepositoryKinds.isEmpty)
-        #expect(handler.resetCount == 0)
-    }
-
-    @MainActor
-    @Test("the settings do not open again while settings that replace the kitchen slide away")
-    func settingsWaitForThePendingExit() {
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didTapSettings()
-        presenter.settingsFeatureDidConfirmReset()
-        presenter.didTapSettings()
-
-        #expect(viewModel.openSettings == nil)
-
-        presenter.didFinishDismissingSettings()
-        presenter.didTapSettings()
-
-        #expect(viewModel.openSettings != nil)
+        #expect(handler.settingsTapCount == 0)
     }
 }

@@ -3,7 +3,6 @@ import Foundation
 @testable import KitchenFeature
 import RecipeFeature
 import RecipeLibrary
-import SettingsFeature
 import SousKit
 
 extension KitchenFeaturePresenter {
@@ -15,7 +14,6 @@ extension KitchenFeaturePresenter {
         restorationStore: KitchenRestorationStore,
         handler: KitchenFeatureHandler = KitchenFeatureHandlerStub(),
         recipeRepository: RecipeRepository = RecipeRepositorySpy(),
-        recipeRepositoryKind: RecipeRepositoryKind = .files,
         timerScheduler: TimerSchedulerStub = TimerSchedulerStub(),
         restorationSettleTime: Duration = .zero
     ) -> Self {
@@ -33,14 +31,8 @@ extension KitchenFeaturePresenter {
                 recipeRepository: recipeRepository
             ),
             recipeRepository: recipeRepository,
-            recipeRepositoryKind: recipeRepositoryKind,
             restorationSettleTime: restorationSettleTime,
             restorationStore: restorationStore,
-            settingsFeatureFactory: SettingsFeatureFactory(
-                appVersion: AppVersion(bundle: .main),
-                preferredScaleStore: preferredScaleStore,
-                recipeRepositoryStore: RecipeRepositoryStoreStub()
-            ),
             timerScheduler: timerScheduler,
             viewModel: viewModel
         )

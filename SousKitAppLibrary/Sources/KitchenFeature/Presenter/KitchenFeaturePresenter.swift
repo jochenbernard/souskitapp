@@ -2,22 +2,16 @@ import CookingFeature
 import Foundation
 import RecipeFeature
 import RecipeLibrary
-import SettingsFeature
 import SousKit
 
-struct KitchenFeaturePresenter:
-    KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler, SettingsFeatureHandler {
+struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
     private let cookingFeatureFactory: CookingFeatureFactory
     private let handler: KitchenFeatureHandler
-    // A class so every copy of the presenter, the sheet's among them, sees the exit waiting.
-    private let pendingSettingsExit = PendingSettingsExit()
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let recipeRepository: RecipeRepository
-    private let recipeRepositoryKind: RecipeRepositoryKind
     /// How long what a cold start opens stays up before a crash no longer counts against it.
     private let restorationSettleTime: Duration
     private let restorationStore: KitchenRestorationStore
-    private let settingsFeatureFactory: SettingsFeatureFactory
     private let terminationObserver: TerminationObserver
     private let timerScheduler: TimerScheduler
     private let viewModel: KitchenFeatureViewModel
@@ -28,10 +22,8 @@ struct KitchenFeaturePresenter:
         handler: KitchenFeatureHandler,
         recipeFeatureFactory: RecipeFeatureFactory,
         recipeRepository: RecipeRepository,
-        recipeRepositoryKind: RecipeRepositoryKind,
         restorationSettleTime: Duration,
         restorationStore: KitchenRestorationStore,
-        settingsFeatureFactory: SettingsFeatureFactory,
         timerScheduler: TimerScheduler,
         viewModel: KitchenFeatureViewModel
     ) {
@@ -39,10 +31,8 @@ struct KitchenFeaturePresenter:
         self.handler = handler
         self.recipeFeatureFactory = recipeFeatureFactory
         self.recipeRepository = recipeRepository
-        self.recipeRepositoryKind = recipeRepositoryKind
         self.restorationSettleTime = restorationSettleTime
         self.restorationStore = restorationStore
-        self.settingsFeatureFactory = settingsFeatureFactory
         // The store rather than the presenter, which would hold the observer holding it.
         self.terminationObserver = TerminationObserver(onTerminate: { restorationStore.recordTermination() })
         self.timerScheduler = timerScheduler
@@ -89,45 +79,11 @@ struct KitchenFeaturePresenter:
     }
 
     func didTapSettings() {
-        guard
-            viewModel.screenPath.isEmpty,
-            viewModel.openSettings == nil,
-            // Settings still sliding away to replace the kitchen would take a fresh sheet down with it.
-            pendingSettingsExit.exit == nil
-        else {
+        guard viewModel.screenPath.isEmpty else {
             return
         }
 
-        openSettings(isRestored: false)
-        restorationStore.save(KitchenRestoration(recipeID: nil, isShowingSettings: true))
-    }
-
-    func didDismissSettings() {
-        // The sheet also reports settings closed from here, which would drop the exit they are waiting to report.
-        guard viewModel.openSettings != nil else {
-            return
-        }
-
-        closeSettings()
-    }
-
-    func didFinishDismissingSettings() {
-        let exit = pendingSettingsExit.exit
-        pendingSettingsExit.exit = nil
-
-        switch exit {
-        case .connectRecipeRepository(let recipeRepository):
-            handler.kitchenFeatureDidConnectRecipeRepository(recipeRepository)
-
-        case .selectRecipeRepositoryKind(let recipeRepositoryKind):
-            handler.kitchenFeatureDidSelectRecipeRepositoryKind(recipeRepositoryKind)
-
-        case .reset:
-            handler.kitchenFeatureDidConfirmReset()
-
-        case nil:
-            break
-        }
+        handler.kitchenFeatureDidTapSettings()
     }
 
     func didDismissCooking() {
@@ -152,26 +108,6 @@ struct KitchenFeaturePresenter:
 
     func cookingFeatureDidChangeRestoration(_ restoration: CookingFeatureRestoration) {
         updateRestoration({ $0.cooking = restoration })
-    }
-
-    func settingsFeatureDidFinish() {
-        closeSettings()
-    }
-
-    func settingsFeatureDidConnectRecipeRepository(_ recipeRepository: RecipeRepository) {
-        closeSettings(exit: .connectRecipeRepository(recipeRepository))
-    }
-
-    func settingsFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
-        guard recipeRepositoryKind != self.recipeRepositoryKind else {
-            return
-        }
-
-        closeSettings(exit: .selectRecipeRepositoryKind(recipeRepositoryKind))
-    }
-
-    func settingsFeatureDidConfirmReset() {
-        closeSettings(exit: .reset)
     }
 
     /// Builds the feature for a recipe pushed on the stack, or keeps the one a recipe already on it has.
@@ -218,7 +154,7 @@ struct KitchenFeaturePresenter:
         restorationStore.beginSettling()
 
         if record.restoration.isShowingSettings {
-            openSettings(isRestored: true)
+            handler.kitchenFeatureDidRestoreSettings()
         } else if let recipeEntry {
             viewModel.screenPath = [.recipe(recipeEntry)]
             viewModel.openRecipe = makeOpenRecipe(
@@ -271,26 +207,6 @@ struct KitchenFeaturePresenter:
             isResumed: isResumed
         )
         updateRestoration({ $0.cooking = cookingRestoration ?? CookingFeatureRestoration() })
-    }
-
-    @MainActor
-    private func openSettings(isRestored: Bool) {
-        viewModel.openSettings = OpenSettings(
-            feature: settingsFeatureFactory.makeSettingsFeature(
-                recipeRepositoryName: viewModel.recipeRepositoryName,
-                recipeRepositoryKind: recipeRepositoryKind,
-                handler: self
-            ),
-            isRestored: isRestored
-        )
-    }
-
-    /// Closes the settings, leaving what they asked of the app to report once the sheet is gone.
-    @MainActor
-    private func closeSettings(exit: SettingsExit? = nil) {
-        pendingSettingsExit.exit = exit
-        viewModel.openSettings = nil
-        restorationStore.clear()
     }
 
     @MainActor

@@ -2,7 +2,6 @@ import CookingFeature
 import DesignSystem
 import RecipeFeature
 import RecipeLibrary
-import SettingsFeature
 import SousKit
 import SwiftUI
 
@@ -62,18 +61,6 @@ struct KitchenFeatureView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 settingsButton
-            }
-        }
-        // What the settings ask of the app can replace the kitchen, so it waits for the sheet to slide away.
-        .sheet(
-            item: openSettings,
-            onDismiss: presenter.didFinishDismissingSettings,
-            content: { $0.feature.makeView() }
-        )
-        // Settings a cold start opens again are there at once, rather than sliding up over a list never left.
-        .transaction(value: viewModel.openSettings?.id) { transaction in
-            if viewModel.openSettings?.isRestored == true {
-                transaction.disablesAnimations = true
             }
         }
         .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
@@ -203,17 +190,6 @@ struct KitchenFeatureView: View {
         if let openRecipe = viewModel.openRecipe, openRecipe.recipeEntry == recipeEntry {
             openRecipe.feature.makeView(cookingTransition: cookingTransition)
         }
-    }
-
-    private var openSettings: Binding<OpenSettings?> {
-        Binding(
-            get: { viewModel.openSettings },
-            set: { openSettings in
-                if openSettings == nil {
-                    presenter.didDismissSettings()
-                }
-            }
-        )
     }
 
     private var openCooking: Binding<OpenCooking?> {
