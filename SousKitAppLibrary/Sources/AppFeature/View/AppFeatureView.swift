@@ -40,6 +40,7 @@ struct AppFeatureView: View {
                     transaction.disablesAnimations = true
                 }
             }
+            .onAppear(perform: presenter.viewDidAppear)
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background {
                     presenter.didEnterBackground()

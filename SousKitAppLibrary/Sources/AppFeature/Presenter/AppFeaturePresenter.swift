@@ -28,6 +28,9 @@ final class AppFeaturePresenter:
     /// What the user knows the recipes the kitchen reads by, which the settings show.
     private var recipeRepositoryName = ""
 
+    /// Whether a cold start found the settings open, and has yet to open them again.
+    private var restoresSettings = false
+
     @MainActor
     init(
         kitchenFeatureFactory: KitchenFeatureFactory,
@@ -71,9 +74,8 @@ final class AppFeaturePresenter:
             return launched
         }
 
-        if restoration.isShowingSettings {
-            openSettings(id: UUID(), isRestored: true)
-        }
+        // Opened once the view is up: a sheet already open on the first render slides in whatever the transaction.
+        restoresSettings = restoration.isShowingSettings
 
         // The kitchen reports when it has opened its own, once its recipe is listed.
         if restoration.kitchen == nil {
@@ -81,6 +83,15 @@ final class AppFeaturePresenter:
         }
 
         return launched
+    }
+
+    func viewDidAppear() {
+        guard restoresSettings else {
+            return
+        }
+
+        restoresSettings = false
+        openSettings(id: UUID(), isRestored: true)
     }
 
     func didTapSettings() {

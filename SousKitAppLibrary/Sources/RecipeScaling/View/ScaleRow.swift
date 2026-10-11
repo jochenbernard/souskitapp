@@ -66,8 +66,12 @@ public struct ScaleRow: View {
             ],
             id: \.self
         ) { scale in
-            ScaleRow(Text(verbatim: "Scale"), scale: scale, action: {})
-                .sousRowSurface()
+            ScaleRow(
+                Text(verbatim: "Scale"),
+                scale: scale,
+                action: {}
+            )
+            .sousRowSurface()
         }
     }
     .sousPagePadding()

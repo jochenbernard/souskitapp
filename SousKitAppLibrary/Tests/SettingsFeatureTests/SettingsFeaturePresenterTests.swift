@@ -133,7 +133,11 @@ struct SettingsFeaturePresenterTests {
             (.multiplier(0.5), -1.0, .multiplier(0.5))
         ]
     )
-    func stepping(from start: PreferredScale, steps: Double, to end: PreferredScale) {
+    func stepping(
+        from start: PreferredScale,
+        steps: Double,
+        to end: PreferredScale
+    ) {
         let store = PreferredScaleStoreSpy(start)
         let viewModel = makeViewModel(start)
 

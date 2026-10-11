@@ -1,5 +1,9 @@
 /// What ``AppFeatureView`` reports to.
 protocol AppFeaturePresenterProtocol {
+    /// The view is on screen.
+    @MainActor
+    func viewDidAppear()
+
     @MainActor
     func didTapSettings()
 

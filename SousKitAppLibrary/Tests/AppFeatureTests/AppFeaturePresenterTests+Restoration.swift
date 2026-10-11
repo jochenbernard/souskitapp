@@ -120,11 +120,15 @@ extension AppFeaturePresenterTests {
         #expect(restorationStore.record()?.isSettling == true)
     }
 
-    @Test("the settings a cold start finds open open again as restored, and settle")
+    @Test("the settings a cold start finds open open again as restored once the view is up, and settle")
     func coldStartOpensTheSettings() async {
         keep(settingsRestoration)
 
         let presenter = launch()
+
+        #expect(presenter.viewModel?.openSettings == nil)
+
+        presenter.viewDidAppear()
 
         #expect(presenter.viewModel?.openSettings?.isRestored == true)
 
@@ -140,7 +144,10 @@ extension AppFeaturePresenterTests {
         keep(settingsRestoration)
         restorationStore.recordTermination()
 
-        #expect(launch().viewModel?.openSettings == nil)
+        let presenter = launch()
+        presenter.viewDidAppear()
+
+        #expect(presenter.viewModel?.openSettings == nil)
         #expect(restorationStore.record() == nil)
     }
 
