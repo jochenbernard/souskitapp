@@ -137,7 +137,7 @@
       }
     },
     "Settings" : {
-      "comment" : "The title of the settings.",
+      "comment" : "The title of the settings, and the toolbar button that opens them.",
       "localizations" : {
         "en" : {
           "stringUnit" : {

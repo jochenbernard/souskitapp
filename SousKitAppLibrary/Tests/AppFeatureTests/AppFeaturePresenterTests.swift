@@ -1,4 +1,5 @@
 @testable import AppFeature
+import CookingFeature
 import FileRecipeLibrary
 import Foundation
 @testable import KitchenFeature
@@ -16,8 +17,8 @@ final class AppFeaturePresenterTests {
     private let suiteName: String
     private let userDefaults: UserDefaults
 
-    private let crepesRestoration = KitchenRestoration(recipeID: "crepes")
-    private let settingsRestoration = KitchenRestoration(recipeID: nil, isShowingSettings: true)
+    let crepesRestoration = AppRestoration(kitchen: KitchenFeatureRestoration(recipeID: "crepes"))
+    let settingsRestoration = AppRestoration(isShowingSettings: true)
 
     init() throws {
         self.suiteName = "AppFeaturePresenterTests.\(UUID().uuidString)"
@@ -28,13 +29,13 @@ final class AppFeaturePresenterTests {
         userDefaults.removePersistentDomain(forName: suiteName)
     }
 
-    /// A store keeping what the kitchen has open in this suite's defaults.
-    private var kitchenRestorationStore: KitchenRestorationStore {
-        KitchenRestorationStore(userDefaults: userDefaults)
+    /// A store keeping what the app has open in this suite's defaults.
+    var restorationStore: AppRestorationStore {
+        AppRestorationStore(userDefaults: userDefaults)
     }
 
     /// A store remembering the kind of repository in this suite's defaults.
-    private var recipeRepositoryKindStore: RecipeRepositoryKindStore {
+    var recipeRepositoryKindStore: RecipeRepositoryKindStore {
         RecipeRepositoryKindStore(userDefaults: userDefaults)
     }
 
@@ -44,35 +45,40 @@ final class AppFeaturePresenterTests {
     }
 
     /// A store remembering the folder in this suite's defaults.
-    private func makeRecipeRepositoryStore() -> FileRecipeRepositoryStore {
+    func makeRecipeRepositoryStore() -> FileRecipeRepositoryStore {
         FileRecipeRepositoryStore(
             parser: parser,
             userDefaults: userDefaults
         )
     }
 
-    /// A presenter opened on the screen the defaults call for, as a launch opens one.
-    private func launch() -> AppFeaturePresenter {
+    /// A presenter opened on the screen the defaults call for, as a cold start opens one.
+    func launch(
+        timers: [RunningTimer] = [],
+        restorationSettleTime: Duration = .zero
+    ) -> AppFeaturePresenter {
         let recipeRepositoryStore = makeRecipeRepositoryStore()
         let presenter = AppFeaturePresenter(
             kitchenFeatureFactory: KitchenFeatureFactory(
                 parser: parser,
                 preferredScaleStore: preferredScaleStore,
-                restorationStore: kitchenRestorationStore
+                timerScheduler: TimerSchedulerStub()
             ),
-            kitchenRestorationStore: kitchenRestorationStore,
             mockRecipeRepository: MockRecipeRepository(parser: parser),
             onboardingFeatureFactory: OnboardingFeatureFactory(recipeRepositoryStore: recipeRepositoryStore),
             preferredScaleStore: preferredScaleStore,
             recipeRepositoryKindStore: recipeRepositoryKindStore,
             recipeRepositoryStore: recipeRepositoryStore,
+            restorationSettleTime: restorationSettleTime,
+            restorationStore: restorationStore,
             settingsFeatureFactory: SettingsFeatureFactory(
                 appVersion: AppVersion(bundle: .main),
                 preferredScaleStore: preferredScaleStore,
                 recipeRepositoryStore: recipeRepositoryStore
-            )
+            ),
+            timerScheduler: TimerSchedulerStub(timers: timers)
         )
-        presenter.viewModel = AppFeatureViewModel(screen: presenter.makeScreen())
+        _ = presenter.makeViewModel()
 
         return presenter
     }
@@ -118,60 +124,51 @@ final class AppFeaturePresenterTests {
     func settingsOpen() {
         let presenter = launchOnMockRecipes()
 
-        presenter.kitchenFeatureDidTapSettings()
+        presenter.didTapSettings()
 
         #expect(presenter.viewModel?.openSettings?.isRestored == false)
-        #expect(kitchenRestorationStore.restoration() == settingsRestoration)
-    }
-
-    @Test("the settings a cold start opens again open as restored")
-    func settingsRestored() {
-        let presenter = launchOnMockRecipes()
-
-        presenter.kitchenFeatureDidRestoreSettings()
-
-        #expect(presenter.viewModel?.openSettings?.isRestored == true)
+        #expect(restorationStore.restoration() == settingsRestoration)
     }
 
     @Test("the settings close and are forgotten when they are done or dismissed")
     func settingsClose() {
         let presenter = launchOnMockRecipes()
 
-        presenter.kitchenFeatureDidTapSettings()
+        presenter.didTapSettings()
         presenter.settingsFeatureDidFinish()
 
         #expect(presenter.viewModel?.openSettings == nil)
-        #expect(kitchenRestorationStore.restoration() == nil)
+        #expect(restorationStore.restoration() == nil)
 
-        presenter.kitchenFeatureDidTapSettings()
+        presenter.didTapSettings()
         presenter.didDismissSettings()
 
         #expect(presenter.viewModel?.openSettings == nil)
-        #expect(kitchenRestorationStore.restoration() == nil)
+        #expect(restorationStore.restoration() == nil)
     }
 
     @Test("a sheet reporting settings already closed leaves what the kitchen opened since")
     func lateDismissalKeepsTheKitchen() {
         let presenter = launchOnMockRecipes()
 
-        presenter.kitchenFeatureDidTapSettings()
+        presenter.didTapSettings()
         presenter.settingsFeatureDidFinish()
-        kitchenRestorationStore.save(crepesRestoration)
+        presenter.kitchenFeatureDidChangeRestoration(crepesRestoration.kitchen)
         presenter.didDismissSettings()
 
-        #expect(kitchenRestorationStore.restoration() == crepesRestoration)
+        #expect(restorationStore.restoration() == crepesRestoration)
     }
 
     @Test("picking the folder in the settings before a folder is picked closes them and goes back to onboarding")
     func folderWithoutAFolderOpensOnboarding() {
         let presenter = launchOnMockRecipes()
 
-        presenter.kitchenFeatureDidTapSettings()
+        presenter.didTapSettings()
         presenter.settingsFeatureDidSelectRecipeRepositoryKind(.files)
 
         #expect(presenter.viewModel?.screen.identity == .onboarding)
         #expect(presenter.viewModel?.openSettings == nil)
-        #expect(kitchenRestorationStore.restoration() == nil)
+        #expect(restorationStore.restoration() == nil)
     }
 
     @Test("the kitchen moves between the folder picked and the mock recipes under the settings, which stay open")
@@ -182,7 +179,7 @@ final class AppFeaturePresenterTests {
 
         #expect(folderKitchen.kind == .files)
 
-        presenter.kitchenFeatureDidTapSettings()
+        presenter.didTapSettings()
         let settingsID = try #require(presenter.viewModel?.openSettings?.id)
         presenter.settingsFeatureDidSelectRecipeRepositoryKind(.mock)
         let mockKitchen = try #require(kitchen(of: presenter))
@@ -190,13 +187,13 @@ final class AppFeaturePresenterTests {
         #expect(mockKitchen.kind == .mock)
         #expect(mockKitchen.id != folderKitchen.id)
         #expect(presenter.viewModel?.openSettings?.id == settingsID)
-        #expect(kitchenRestorationStore.restoration() == settingsRestoration)
+        #expect(restorationStore.restoration() == settingsRestoration)
 
         presenter.settingsFeatureDidSelectRecipeRepositoryKind(.files)
 
         #expect(kitchen(of: presenter)?.kind == .files)
         #expect(presenter.viewModel?.openSettings?.id == settingsID)
-        #expect(kitchenRestorationStore.restoration() == settingsRestoration)
+        #expect(restorationStore.restoration() == settingsRestoration)
     }
 
     @Test("the kind of repository already read, picked in the settings, leaves the kitchen as it is")
@@ -204,24 +201,11 @@ final class AppFeaturePresenterTests {
         let presenter = launchOnMockRecipes()
         let mockKitchen = try #require(kitchen(of: presenter))
 
-        presenter.kitchenFeatureDidTapSettings()
+        presenter.didTapSettings()
         presenter.settingsFeatureDidSelectRecipeRepositoryKind(.mock)
 
         #expect(kitchen(of: presenter)?.id == mockKitchen.id)
         #expect(presenter.viewModel?.openSettings != nil)
-    }
-
-    @Test("a kitchen put under the open settings opens on its recipe list, not as a cold start")
-    func kitchenUnderTheSettingsIsNotRestored() throws {
-        _ = try makeRecipeRepositoryStore().connectRecipeDirectory(at: URL.temporaryDirectory)
-        let presenter = launch()
-
-        presenter.kitchenFeatureDidTapSettings()
-        presenter.settingsFeatureDidSelectRecipeRepositoryKind(.mock)
-
-        // A kitchen restoring would report the settings it found kept, as restored.
-        #expect(presenter.viewModel?.openSettings?.isRestored == false)
-        #expect(kitchenRestorationStore.record()?.isSettling == false)
     }
 
     @Test("a folder connected in the settings opens a kitchen of its own on it, over the mock recipes too")
@@ -229,7 +213,7 @@ final class AppFeaturePresenterTests {
         let presenter = launchOnMockRecipes()
         let mockKitchen = try #require(kitchen(of: presenter))
 
-        presenter.kitchenFeatureDidTapSettings()
+        presenter.didTapSettings()
         let settingsID = try #require(presenter.viewModel?.openSettings?.id)
         presenter.settingsFeatureDidConnectRecipeRepository(
             try makeRecipeRepositoryStore().connectRecipeDirectory(at: URL.temporaryDirectory)
@@ -255,13 +239,13 @@ final class AppFeaturePresenterTests {
         preferredScaleStore.remember(.servings(2.0))
         let presenter = launch()
 
-        presenter.kitchenFeatureDidTapSettings()
+        presenter.didTapSettings()
         presenter.settingsFeatureDidSelectRecipeRepositoryKind(.mock)
         presenter.settingsFeatureDidConfirmReset()
 
         #expect(presenter.viewModel?.screen.identity == .onboarding)
         #expect(presenter.viewModel?.openSettings == nil)
-        #expect(kitchenRestorationStore.restoration() == nil)
+        #expect(restorationStore.restoration() == nil)
         #expect(launch().viewModel?.screen.identity == .onboarding)
         #expect(preferredScaleStore.preferredScale == .asWritten)
     }
@@ -279,20 +263,11 @@ final class AppFeaturePresenterTests {
         #expect(preferredScaleStore.preferredScale == .asWritten)
     }
 
-    @Test("onboarding forgets what the last kitchen had open, which belongs to recipes the next may not read")
-    func onboardingForgetsTheKitchen() {
-        kitchenRestorationStore.save(crepesRestoration)
+    @Test("onboarding forgets what the app had open, which belongs to a kitchen that is gone")
+    func onboardingForgetsWhatWasOpen() {
+        restorationStore.update({ $0 = crepesRestoration })
 
         #expect(launch().viewModel?.screen.identity == .onboarding)
-        #expect(kitchenRestorationStore.restoration() == nil)
-    }
-
-    @Test("the kitchen keeps what it had open across a launch")
-    func kitchenKeepsWhatItHadOpen() {
-        launch().onboardingFeatureDidChooseMockRecipes()
-        kitchenRestorationStore.save(crepesRestoration)
-
-        #expect(kitchen(of: launch())?.kind == .mock)
-        #expect(kitchenRestorationStore.restoration() == crepesRestoration)
+        #expect(restorationStore.restoration() == nil)
     }
 }

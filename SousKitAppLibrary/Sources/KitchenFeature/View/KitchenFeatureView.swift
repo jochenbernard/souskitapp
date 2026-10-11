@@ -22,29 +22,27 @@ struct KitchenFeatureView: View {
     }
 
     var body: some View {
-        NavigationStack(path: screenPath) {
-            recipeListScreen
-                .navigationDestination(for: KitchenScreen.self) { screen in
-                    screenView(for: screen)
-                }
-        }
-        // The recipe a cold start opens again is there at once, rather than pushed over a list never shown.
-        .transaction(value: viewModel.isRestoring) { transaction in
-            transaction.disablesAnimations = true
-        }
-        // Over the whole kitchen rather than pushed on it, zooming out of the button that starts it, and never swiped
-        // or pinched away: its own exit is the only way out.
-        .fullScreenCover(item: openCooking) { openCooking in
-            openCooking.feature.makeView()
-                .navigationTransition(.zoom(sourceID: RecipeFeature.cookingTransitionID, in: cookingTransition))
-                .interactiveDismissDisabled()
-        }
-        // Cooking a cold start opens again is there at once, rather than zooming out of a button it never left.
-        .transaction(value: viewModel.openCooking?.id) { transaction in
-            if viewModel.openCooking?.isResumed == true {
+        recipeListScreen
+            .navigationDestination(item: pushedScreen) { screen in
+                screenView(for: screen)
+            }
+            // The recipe a cold start opens again is there at once, rather than pushed over a list never shown.
+            .transaction(value: viewModel.isRestoring) { transaction in
                 transaction.disablesAnimations = true
             }
-        }
+            // Over the whole kitchen rather than pushed on it, zooming out of the button that starts it, and never
+            // swiped or pinched away: its own exit is the only way out.
+            .fullScreenCover(item: openCooking) { openCooking in
+                openCooking.feature.makeView()
+                    .navigationTransition(.zoom(sourceID: RecipeFeature.cookingTransitionID, in: cookingTransition))
+                    .interactiveDismissDisabled()
+            }
+            // Cooking a cold start opens again is there at once, rather than zooming out of a button it never left.
+            .transaction(value: viewModel.openCooking?.id) { transaction in
+                if viewModel.openCooking?.isResumed == true {
+                    transaction.disablesAnimations = true
+                }
+            }
     }
 
     private var recipeListScreen: some View {
@@ -58,11 +56,6 @@ struct KitchenFeatureView: View {
         }
         .sousPage()
         .navigationTitle(viewModel.recipeRepositoryName)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                settingsButton
-            }
-        }
         .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
         .task {
             await presenter.viewDidAppear()
@@ -74,10 +67,7 @@ struct KitchenFeatureView: View {
                     await presenter.didBecomeActive()
                 }
 
-            case .background:
-                presenter.didEnterBackground()
-
-            case .inactive:
+            case .background, .inactive:
                 break
 
             @unknown default:
@@ -122,9 +112,10 @@ struct KitchenFeatureView: View {
     private func recipeRows(_ recipeEntries: [RecipeEntry]) -> some View {
         LazyVStack(spacing: SousSpacing.medium) {
             ForEach(recipeEntries) { recipeEntry in
-                NavigationLink(value: KitchenScreen.recipe(recipeEntry)) {
-                    recipeRow(recipeEntry)
-                }
+                Button(
+                    action: { presenter.didChangeScreenPath([.recipe(recipeEntry)]) },
+                    label: { recipeRow(recipeEntry) }
+                )
                 .buttonStyle(.plain)
             }
         }
@@ -168,15 +159,6 @@ struct KitchenFeatureView: View {
         }
     }
 
-    private var settingsButton: some View {
-        Button(action: presenter.didTapSettings) {
-            Label(
-                title: { Text("Settings", bundle: .module) },
-                icon: { Image(systemName: "gearshape") }
-            )
-        }
-    }
-
     @ViewBuilder
     private func screenView(for screen: KitchenScreen) -> some View {
         switch screen {
@@ -203,10 +185,10 @@ struct KitchenFeatureView: View {
         )
     }
 
-    private var screenPath: Binding<[KitchenScreen]> {
+    private var pushedScreen: Binding<KitchenScreen?> {
         Binding(
-            get: { viewModel.screenPath },
-            set: { presenter.didChangeScreenPath($0) }
+            get: { viewModel.screenPath.last },
+            set: { presenter.didChangeScreenPath($0.map({ [$0] }) ?? []) }
         )
     }
 }
@@ -235,44 +217,54 @@ private func previewRecipeEntry(
 }
 
 #Preview("Kitchen") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(
-            .recipes([
-                previewRecipeEntry("boeuf bourguignon", .downloaded),
-                previewRecipeEntry("bouillabaisse", .downloaded),
-                previewRecipeEntry("crepes", .notDownloaded),
-                previewRecipeEntry("gratin dauphinois", .downloading),
-                previewRecipeEntry("vinaigrette", .downloaded)
-            ])
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(
+                .recipes([
+                    previewRecipeEntry("boeuf bourguignon", .downloaded),
+                    previewRecipeEntry("bouillabaisse", .downloaded),
+                    previewRecipeEntry("crepes", .notDownloaded),
+                    previewRecipeEntry("gratin dauphinois", .downloading),
+                    previewRecipeEntry("vinaigrette", .downloaded)
+                ])
+            )
         )
-    )
+    }
 }
 
 #Preview("Kitchen, reading") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(.reading)
-    )
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(.reading)
+        )
+    }
 }
 
 #Preview("Kitchen, restoring") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(.reading, isRestoring: true)
-    )
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(.reading, isRestoring: true)
+        )
+    }
 }
 
 #Preview("Kitchen, empty") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(.recipes([]))
-    )
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(.recipes([]))
+        )
+    }
 }
 
 #Preview("Kitchen, after a failure") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(.failure("The folder no longer exists."))
-    )
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(.failure("The folder no longer exists."))
+        )
+    }
 }

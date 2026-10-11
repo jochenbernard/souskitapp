@@ -8,12 +8,6 @@ import Testing
 @Suite("Kitchen feature stack", .timeLimit(.minutes(1)))
 struct KitchenFeatureStackTests {
     private let parser = SousParser()
-    private let defaults: ThrowawayDefaults
-
-    @MainActor
-    init() throws {
-        self.defaults = try ThrowawayDefaults()
-    }
 
     private func recipeEntry(named name: String) -> RecipeEntry {
         RecipeEntry(
@@ -31,8 +25,7 @@ struct KitchenFeatureStackTests {
     private func makePresenter(viewModel: KitchenFeatureViewModel) -> KitchenFeaturePresenter {
         .stubbed(
             viewModel: viewModel,
-            parser: parser,
-            restorationStore: KitchenRestorationStore(userDefaults: defaults.userDefaults)
+            parser: parser
         )
     }
 

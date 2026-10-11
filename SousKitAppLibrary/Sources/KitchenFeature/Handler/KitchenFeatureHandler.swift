@@ -1,10 +1,12 @@
 /// What ``KitchenFeature`` reports out of the kitchen to.
 public protocol KitchenFeatureHandler {
-    /// The settings were asked for from the recipe list.
+    /// What the kitchen has open changed.
+    ///
+    /// - Parameter restoration: What a cold start opens again, or `nil` on the recipe list with nothing over it.
     @MainActor
-    func kitchenFeatureDidTapSettings()
+    func kitchenFeatureDidChangeRestoration(_ restoration: KitchenFeatureRestoration?)
 
-    /// A cold start found the settings open over the recipe list, and they are to open again.
+    /// The kitchen opened what it was built to open again.
     @MainActor
-    func kitchenFeatureDidRestoreSettings()
+    func kitchenFeatureDidRestore()
 }

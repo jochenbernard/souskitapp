@@ -5,6 +5,8 @@ import SettingsFeature
 import SwiftUI
 
 struct AppFeatureView: View {
+    @Environment(\.scenePhase) private var scenePhase
+
     private let presenter: AppFeaturePresenterProtocol
     private let viewModel: AppFeatureViewModel
 
@@ -38,6 +40,11 @@ struct AppFeatureView: View {
                     transaction.disablesAnimations = true
                 }
             }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background {
+                    presenter.didEnterBackground()
+                }
+            }
     }
 
     @ViewBuilder
@@ -47,7 +54,14 @@ struct AppFeatureView: View {
             onboardingFeature.makeView()
 
         case .kitchen(let kitchenFeature, _):
-            kitchenFeature.makeView()
+            NavigationStack {
+                kitchenFeature.makeView()
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            SettingsButton(action: presenter.didTapSettings)
+                        }
+                    }
+            }
         }
     }
 

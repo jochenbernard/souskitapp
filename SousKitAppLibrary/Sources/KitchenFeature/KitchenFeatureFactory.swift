@@ -7,38 +7,39 @@ import SousKit
 public struct KitchenFeatureFactory: Sendable {
     private let parser: SousParser
     private let preferredScaleStore: PreferredScaleStore
-    private let restorationStore: KitchenRestorationStore
+    private let timerScheduler: TimerScheduler
 
     /// Creates a factory.
     ///
     /// - Parameters:
     ///   - parser: What the kitchen reads Sous with.
     ///   - preferredScaleStore: Where the scale recipes open on is remembered.
-    ///   - restorationStore: Where the kitchen keeps what it has open for the next cold start.
+    ///   - timerScheduler: What cooking runs its timers on.
     public init(
         parser: SousParser,
         preferredScaleStore: PreferredScaleStore,
-        restorationStore: KitchenRestorationStore
+        timerScheduler: TimerScheduler
     ) {
         self.parser = parser
         self.preferredScaleStore = preferredScaleStore
-        self.restorationStore = restorationStore
+        self.timerScheduler = timerScheduler
     }
 
-    /// Builds the feature, which opens what the kitchen had open when the app last ran once its recipe is listed.
+    /// Builds the feature.
     ///
     /// - Parameters:
     ///   - recipeRepository: The repository recipes are read from.
+    ///   - restoration: What the kitchen opens again once its recipe is listed, or `nil` to open on its recipe list.
     ///   - handler: What the feature reports out of the kitchen to.
     /// - Returns: The feature.
     @MainActor
     public func makeKitchenFeature(
         recipeRepository: RecipeRepository,
+        restoration: KitchenFeatureRestoration?,
         handler: KitchenFeatureHandler
     ) -> KitchenFeature {
         let viewModel = KitchenFeatureViewModel(recipeRepositoryName: recipeRepository.name)
-        viewModel.isRestoring = restorationStore.restoration() != nil
-        let timerScheduler = AlarmTimerScheduler()
+        viewModel.isRestoring = restoration != nil
         let presenter = KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(
                 idleTimer: ApplicationIdleTimer(),
@@ -51,9 +52,7 @@ public struct KitchenFeatureFactory: Sendable {
                 recipeRepository: recipeRepository
             ),
             recipeRepository: recipeRepository,
-            restorationSettleTime: .seconds(5),
-            restorationStore: restorationStore,
-            timerScheduler: timerScheduler,
+            restoration: restoration,
             viewModel: viewModel
         )
 

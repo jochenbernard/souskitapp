@@ -1,16 +1,21 @@
 @testable import KitchenFeature
 
-/// A handler that counts the times the settings were asked for and restored.
+/// A handler that keeps what the kitchen last reported open, and counts its restores.
 @MainActor
 final class KitchenFeatureHandlerStub: KitchenFeatureHandler {
-    private(set) var settingsTapCount = 0
-    private(set) var settingsRestoreCount = 0
+    /// What the kitchen last reported open, which is what it was built to open again until it reports.
+    private(set) var restoration: KitchenFeatureRestoration?
+    private(set) var restoreCount = 0
 
-    func kitchenFeatureDidTapSettings() {
-        settingsTapCount += 1
+    init(restoration: KitchenFeatureRestoration? = nil) {
+        self.restoration = restoration
     }
 
-    func kitchenFeatureDidRestoreSettings() {
-        settingsRestoreCount += 1
+    func kitchenFeatureDidChangeRestoration(_ restoration: KitchenFeatureRestoration?) {
+        self.restoration = restoration
+    }
+
+    func kitchenFeatureDidRestore() {
+        restoreCount += 1
     }
 }

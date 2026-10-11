@@ -7,12 +7,6 @@ import Testing
 @Suite("Kitchen feature presenter", .timeLimit(.minutes(1)))
 struct KitchenFeaturePresenterTests {
     private let parser = SousParser()
-    private let defaults: ThrowawayDefaults
-
-    @MainActor
-    init() throws {
-        self.defaults = try ThrowawayDefaults()
-    }
 
     private func recipeEntry(named name: String) -> RecipeEntry {
         RecipeEntry(
@@ -35,7 +29,6 @@ struct KitchenFeaturePresenterTests {
         .stubbed(
             viewModel: viewModel,
             parser: parser,
-            restorationStore: KitchenRestorationStore(userDefaults: defaults.userDefaults),
             handler: handler,
             recipeRepository: recipeRepository
         )
@@ -134,27 +127,5 @@ struct KitchenFeaturePresenterTests {
         await makePresenter(viewModel: makeViewModel(), recipeRepository: recipeRepository).didBecomeActive()
 
         #expect(recipeRepository.refreshCount == 1)
-    }
-
-    @MainActor
-    @Test("the settings asked for on the recipe list are reported")
-    func settingsAreReported() {
-        let handler = KitchenFeatureHandlerStub()
-
-        makePresenter(viewModel: makeViewModel(), handler: handler).didTapSettings()
-
-        #expect(handler.settingsTapCount == 1)
-    }
-
-    @MainActor
-    @Test("the settings asked for over a recipe are not reported")
-    func settingsOverARecipeAreNotReported() {
-        let handler = KitchenFeatureHandlerStub()
-        let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
-
-        presenter.didChangeScreenPath([.recipe(recipeEntry(named: "crepes"))])
-        presenter.didTapSettings()
-
-        #expect(handler.settingsTapCount == 0)
     }
 }

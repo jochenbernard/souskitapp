@@ -1,39 +1,32 @@
 import CookingFeature
-import Foundation
 @testable import KitchenFeature
 import RecipeFeature
 import RecipeLibrary
 import SousKit
 
 extension KitchenFeaturePresenter {
-    /// A presenter on stubs, reading the folder, keeping what the kitchen has open in the given store.
+    /// A presenter on stubs, reading the folder, built to open the given restoration again.
     @MainActor
     static func stubbed(
         viewModel: KitchenFeatureViewModel,
         parser: SousParser,
-        restorationStore: KitchenRestorationStore,
         handler: KitchenFeatureHandler = KitchenFeatureHandlerStub(),
         recipeRepository: RecipeRepository = RecipeRepositorySpy(),
-        timerScheduler: TimerSchedulerStub = TimerSchedulerStub(),
-        restorationSettleTime: Duration = .zero
+        restoration: KitchenFeatureRestoration? = nil
     ) -> Self {
-        let preferredScaleStore = PreferredScaleStoreStub()
-
-        return Self(
+        Self(
             cookingFeatureFactory: CookingFeatureFactory(
                 idleTimer: IdleTimerStub(),
-                timerScheduler: timerScheduler
+                timerScheduler: TimerSchedulerStub()
             ),
             handler: handler,
             recipeFeatureFactory: RecipeFeatureFactory(
                 parser: parser,
-                preferredScaleStore: preferredScaleStore,
+                preferredScaleStore: PreferredScaleStoreStub(),
                 recipeRepository: recipeRepository
             ),
             recipeRepository: recipeRepository,
-            restorationSettleTime: restorationSettleTime,
-            restorationStore: restorationStore,
-            timerScheduler: timerScheduler,
+            restoration: restoration,
             viewModel: viewModel
         )
     }

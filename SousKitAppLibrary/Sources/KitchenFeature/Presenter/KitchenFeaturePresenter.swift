@@ -9,11 +9,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private let handler: KitchenFeatureHandler
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let recipeRepository: RecipeRepository
-    /// How long what a cold start opens stays up before a crash no longer counts against it.
-    private let restorationSettleTime: Duration
-    private let restorationStore: KitchenRestorationStore
-    private let terminationObserver: TerminationObserver
-    private let timerScheduler: TimerScheduler
+    private let restorationKeeper: KitchenRestorationKeeper
     private let viewModel: KitchenFeatureViewModel
 
     @MainActor
@@ -22,20 +18,17 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         handler: KitchenFeatureHandler,
         recipeFeatureFactory: RecipeFeatureFactory,
         recipeRepository: RecipeRepository,
-        restorationSettleTime: Duration,
-        restorationStore: KitchenRestorationStore,
-        timerScheduler: TimerScheduler,
+        restoration: KitchenFeatureRestoration?,
         viewModel: KitchenFeatureViewModel
     ) {
         self.cookingFeatureFactory = cookingFeatureFactory
         self.handler = handler
         self.recipeFeatureFactory = recipeFeatureFactory
         self.recipeRepository = recipeRepository
-        self.restorationSettleTime = restorationSettleTime
-        self.restorationStore = restorationStore
-        // The store rather than the presenter, which would hold the observer holding it.
-        self.terminationObserver = TerminationObserver(onTerminate: { restorationStore.recordTermination() })
-        self.timerScheduler = timerScheduler
+        self.restorationKeeper = KitchenRestorationKeeper(
+            restoration: restoration,
+            handler: handler
+        )
         self.viewModel = viewModel
     }
 
@@ -44,21 +37,17 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             switch result {
             case .success(let recipeEntries):
                 viewModel.recipeList = .recipes(recipeEntries)
-                await restore(from: recipeEntries)
+                restore(from: recipeEntries)
 
             case .failure(let error):
                 viewModel.recipeList = .failure(error.localizedDescription)
-                await restore(from: [])
+                restore(from: [])
             }
         }
     }
 
     func didBecomeActive() async {
         await recipeRepository.refresh()
-    }
-
-    func didEnterBackground() {
-        restorationStore.recordUse()
     }
 
     func didChangeScreenPath(_ screenPath: [KitchenScreen]) {
@@ -74,16 +63,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             openRecipe(recipeEntry, isPush: isPush)
 
         case nil:
-            restorationStore.clear()
+            restorationKeeper.save(nil)
         }
-    }
-
-    func didTapSettings() {
-        guard viewModel.screenPath.isEmpty else {
-            return
-        }
-
-        handler.kitchenFeatureDidTapSettings()
     }
 
     func didDismissCooking() {
@@ -118,56 +99,33 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         }
 
         viewModel.openRecipe = makeOpenRecipe(recipeEntry)
-        restorationStore.save(KitchenRestoration(recipeID: recipeEntry.id))
+        restorationKeeper.save(KitchenFeatureRestoration(recipeID: recipeEntry.id))
     }
 
-    /// Opens what the kitchen had open when the app last ran, or forgets it where it no longer opens or its recipe is
-    /// no longer listed.
+    /// Opens what the kitchen was built to open again, or forgets it where its recipe is no longer listed.
     @MainActor
-    private func restore(from recipeEntries: [RecipeEntry]) async {
+    private func restore(from recipeEntries: [RecipeEntry]) {
         guard viewModel.isRestoring else {
             return
         }
 
-        guard let record = restorationStore.record() else {
-            viewModel.isRestoring = false
-            return
-        }
-
-        let isRestorable = await record.isRestorable(
-            at: .now,
-            hasRunningTimers: !timerScheduler.currentRunningTimers().isEmpty
-        )
         viewModel.isRestoring = false
 
-        let recipeEntry = recipeEntries.first(where: { $0.id == record.restoration.recipeID })
-
         guard
-            isRestorable,
-            record.restoration.isShowingSettings || recipeEntry != nil
+            let restoration = restorationKeeper.restoration,
+            let recipeEntry = recipeEntries.first(where: { $0.id == restoration.recipeID })
         else {
-            restorationStore.clear()
+            restorationKeeper.save(nil)
             return
         }
 
-        // Settling begins before anything opens, so a crash while opening it still counts against it.
-        restorationStore.beginSettling()
-
-        if record.restoration.isShowingSettings {
-            handler.kitchenFeatureDidRestoreSettings()
-        } else if let recipeEntry {
-            viewModel.screenPath = [.recipe(recipeEntry)]
-            viewModel.openRecipe = makeOpenRecipe(
-                recipeEntry,
-                restoration: record.restoration.recipe,
-                resumesCooking: record.restoration.cooking != nil
-            )
-        }
-
-        Task { [restorationSettleTime, restorationStore] in
-            try? await Task.sleep(for: restorationSettleTime)
-            restorationStore.finishSettling()
-        }
+        viewModel.screenPath = [.recipe(recipeEntry)]
+        viewModel.openRecipe = makeOpenRecipe(
+            recipeEntry,
+            restoration: restoration.recipe,
+            resumesCooking: restoration.cooking != nil
+        )
+        handler.kitchenFeatureDidRestore()
     }
 
     @MainActor
@@ -195,7 +153,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         }
 
         // Resumed cooking picks up where it was left, and cooking started from the button starts afresh.
-        let cookingRestoration = isResumed ? restorationStore.restoration()?.cooking : nil
+        let cookingRestoration = isResumed ? restorationKeeper.restoration?.cooking : nil
 
         viewModel.openCooking = OpenCooking(
             feature: cookingFeatureFactory.makeCookingFeature(
@@ -215,13 +173,13 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         updateRestoration({ $0.cooking = nil })
     }
 
-    /// Changes what the store keeps for the recipe on top of the stack.
+    /// Changes what is kept for the recipe on top of the stack.
     @MainActor
-    private func updateRestoration(_ update: (inout KitchenRestoration) -> Void) {
+    private func updateRestoration(_ update: (inout KitchenFeatureRestoration) -> Void) {
         guard case .recipe(let recipeEntry) = viewModel.screenPath.last else {
             return
         }
 
-        restorationStore.update(recipeID: recipeEntry.id, update)
+        restorationKeeper.update(recipeID: recipeEntry.id, update)
     }
 }

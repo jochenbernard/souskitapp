@@ -1,59 +1,103 @@
+import CookingFeature
 import Foundation
 import KitchenFeature
 import OnboardingFeature
 import RecipeLibrary
 import SettingsFeature
 
-/// Moves the app between onboarding and the kitchen, the kitchen between the kinds of recipe repository, and opens the
-/// settings over it.
+/// Moves the app between onboarding and the kitchen, the kitchen between the kinds of recipe repository, opens the
+/// settings over it, and opens what the app had open again on a cold start.
 final class AppFeaturePresenter:
     AppFeaturePresenterProtocol, OnboardingFeatureHandler, KitchenFeatureHandler, SettingsFeatureHandler {
     // Set after init, and a class so every copy sees it: the features this handles are built first.
     var viewModel: AppFeatureViewModel?
 
     private let kitchenFeatureFactory: KitchenFeatureFactory
-    private let kitchenRestorationStore: KitchenRestorationStore
     private let mockRecipeRepository: RecipeRepository
     private let onboardingFeatureFactory: OnboardingFeatureFactory
     private let preferredScaleStore: UserDefaultsPreferredScaleStore
     private let recipeRepositoryKindStore: RecipeRepositoryKindStore
     private let recipeRepositoryStore: RecipeRepositoryStore
+    /// How long what a cold start opens stays up before a crash no longer counts against it.
+    private let restorationSettleTime: Duration
+    private let restorationStore: AppRestorationStore
     private let settingsFeatureFactory: SettingsFeatureFactory
+    private let terminationObserver: TerminationObserver
+    private let timerScheduler: TimerScheduler
 
     /// What the user knows the recipes the kitchen reads by, which the settings show.
     private var recipeRepositoryName = ""
 
+    @MainActor
     init(
         kitchenFeatureFactory: KitchenFeatureFactory,
-        kitchenRestorationStore: KitchenRestorationStore,
         mockRecipeRepository: RecipeRepository,
         onboardingFeatureFactory: OnboardingFeatureFactory,
         preferredScaleStore: UserDefaultsPreferredScaleStore,
         recipeRepositoryKindStore: RecipeRepositoryKindStore,
         recipeRepositoryStore: RecipeRepositoryStore,
-        settingsFeatureFactory: SettingsFeatureFactory
+        restorationSettleTime: Duration,
+        restorationStore: AppRestorationStore,
+        settingsFeatureFactory: SettingsFeatureFactory,
+        timerScheduler: TimerScheduler
     ) {
         self.kitchenFeatureFactory = kitchenFeatureFactory
-        self.kitchenRestorationStore = kitchenRestorationStore
         self.mockRecipeRepository = mockRecipeRepository
         self.onboardingFeatureFactory = onboardingFeatureFactory
         self.preferredScaleStore = preferredScaleStore
         self.recipeRepositoryKindStore = recipeRepositoryKindStore
         self.recipeRepositoryStore = recipeRepositoryStore
+        self.restorationSettleTime = restorationSettleTime
+        self.restorationStore = restorationStore
         self.settingsFeatureFactory = settingsFeatureFactory
+        // The store rather than the presenter, which would hold the observer holding it.
+        self.terminationObserver = TerminationObserver(onTerminate: { restorationStore.recordTermination() })
+        self.timerScheduler = timerScheduler
     }
 
-    /// The screen the remembered kind of repository calls for: the kitchen reading it, or onboarding where the folder
-    /// is to be picked.
+    /// Builds the view model a cold start opens on: the screen the remembered kind of repository calls for, with what
+    /// the app had open when it last ran where that still opens.
     ///
-    /// - Returns: The screen, reporting to this presenter.
+    /// - Returns: The view model, which this presenter writes from now on.
     @MainActor
-    func makeScreen() -> AppScreen {
-        makeScreen(recipeRepository: makeRecipeRepository(of: recipeRepositoryKindStore.recipeRepositoryKind))
+    func makeViewModel() -> AppFeatureViewModel {
+        let restoration = takeRestoration()
+        let screen = makeScreen(restoration: restoration?.kitchen)
+        let launched = AppFeatureViewModel(screen: screen)
+        viewModel = launched
+
+        // Onboarding forgot it all, and opens nothing again.
+        guard let restoration, case .kitchen = screen else {
+            return launched
+        }
+
+        if restoration.isShowingSettings {
+            openSettings(id: UUID(), isRestored: true)
+        }
+
+        // The kitchen reports when it has opened its own, once its recipe is listed.
+        if restoration.kitchen == nil {
+            settle()
+        }
+
+        return launched
+    }
+
+    func didTapSettings() {
+        guard viewModel?.openSettings == nil else {
+            return
+        }
+
+        openSettings(id: UUID(), isRestored: false)
+        restorationStore.update({ $0.isShowingSettings = true })
     }
 
     func didDismissSettings() {
         closeSettings()
+    }
+
+    func didEnterBackground() {
+        restorationStore.recordUse()
     }
 
     func onboardingFeatureDidFinish(recipeRepository: RecipeRepository) {
@@ -65,17 +109,12 @@ final class AppFeaturePresenter:
         viewModel?.screen = makeScreen()
     }
 
-    func kitchenFeatureDidTapSettings() {
-        guard viewModel?.openSettings == nil else {
-            return
-        }
-
-        openSettings(id: UUID(), isRestored: false)
-        kitchenRestorationStore.saveSettings()
+    func kitchenFeatureDidChangeRestoration(_ restoration: KitchenFeatureRestoration?) {
+        restorationStore.update({ $0.kitchen = restoration })
     }
 
-    func kitchenFeatureDidRestoreSettings() {
-        openSettings(id: UUID(), isRestored: true)
+    func kitchenFeatureDidRestore() {
+        settle()
     }
 
     func settingsFeatureDidFinish() {
@@ -112,6 +151,35 @@ final class AppFeaturePresenter:
         viewModel?.screen = makeScreen()
     }
 
+    /// What a cold start opens again, unsettled from here on, or `nil` with what no longer opens forgotten.
+    @MainActor
+    private func takeRestoration() -> AppRestoration? {
+        guard
+            let record = restorationStore.record(),
+            record.isRestorable(
+                at: .now,
+                hasRunningTimers: !timerScheduler.currentRunningTimers().isEmpty
+            )
+        else {
+            restorationStore.clear()
+            return nil
+        }
+
+        // Settling begins before anything opens, so a crash while opening it still counts against it.
+        restorationStore.beginSettling()
+
+        return record.restoration
+    }
+
+    /// Counts what a cold start opened as settled once it has stayed up for a while.
+    @MainActor
+    private func settle() {
+        Task { [restorationSettleTime, restorationStore] in
+            try? await Task.sleep(for: restorationSettleTime)
+            restorationStore.finishSettling()
+        }
+    }
+
     @MainActor
     private func makeRecipeRepository(of recipeRepositoryKind: RecipeRepositoryKind) -> RecipeRepository? {
         switch recipeRepositoryKind {
@@ -120,11 +188,24 @@ final class AppFeaturePresenter:
         }
     }
 
+    /// The screen the remembered kind of repository calls for: the kitchen reading it, or onboarding where the folder
+    /// is to be picked.
     @MainActor
-    private func makeScreen(recipeRepository: RecipeRepository?) -> AppScreen {
+    private func makeScreen(restoration: KitchenFeatureRestoration? = nil) -> AppScreen {
+        makeScreen(
+            recipeRepository: makeRecipeRepository(of: recipeRepositoryKindStore.recipeRepositoryKind),
+            restoration: restoration
+        )
+    }
+
+    @MainActor
+    private func makeScreen(
+        recipeRepository: RecipeRepository?,
+        restoration: KitchenFeatureRestoration? = nil
+    ) -> AppScreen {
         guard let recipeRepository else {
-            // What the last kitchen had open belongs to recipes the next one may not read.
-            kitchenRestorationStore.clear()
+            // What the app had open belongs to a kitchen that is gone.
+            restorationStore.clear()
 
             return .onboarding(onboardingFeatureFactory.makeOnboardingFeature(handler: self))
         }
@@ -134,6 +215,7 @@ final class AppFeaturePresenter:
         return .kitchen(
             kitchenFeatureFactory.makeKitchenFeature(
                 recipeRepository: recipeRepository,
+                restoration: restoration,
                 handler: self
             ),
             id: UUID()
@@ -143,8 +225,6 @@ final class AppFeaturePresenter:
     /// Puts a kitchen reading another repository under the settings, which stay open and show that repository.
     @MainActor
     private func replaceKitchen(recipeRepository: RecipeRepository) {
-        // Forgotten while the kitchen is built, so it opens on its recipe list rather than as a cold start would.
-        kitchenRestorationStore.clear()
         viewModel?.screen = makeScreen(recipeRepository: recipeRepository)
 
         guard let settings = viewModel?.openSettings else {
@@ -152,7 +232,6 @@ final class AppFeaturePresenter:
         }
 
         openSettings(id: settings.id, isRestored: settings.isRestored)
-        kitchenRestorationStore.saveSettings()
     }
 
     /// Builds the settings for the repository the kitchen reads now.
@@ -175,12 +254,7 @@ final class AppFeaturePresenter:
 
     @MainActor
     private func closeSettings() {
-        // The sheet also reports settings closed from here, which would forget what the kitchen opened since.
-        guard viewModel?.openSettings != nil else {
-            return
-        }
-
         viewModel?.openSettings = nil
-        kitchenRestorationStore.clear()
+        restorationStore.update({ $0.isShowingSettings = false })
     }
 }

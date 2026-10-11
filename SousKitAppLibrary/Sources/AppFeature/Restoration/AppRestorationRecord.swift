@@ -1,14 +1,14 @@
 import Foundation
 
-/// What the kitchen has open, with how the app last ran, which decides whether a cold start opens it again.
-struct KitchenRestorationRecord: Codable {
-    /// How long after the kitchen was last in use a cold start still opens it as it was left.
+/// What the app has open, with how the app last ran, which decides whether a cold start opens it again.
+struct AppRestorationRecord: Codable {
+    /// How long after the app was last in use a cold start still opens it as it was left.
     static let lifetime: TimeInterval = 12.0 * 60.0 * 60.0
 
-    /// What the kitchen has open.
-    var restoration: KitchenRestoration
+    /// What the app has open.
+    var restoration: AppRestoration
 
-    /// When the kitchen was last in use.
+    /// When the app was last in use.
     var lastUse: Date
 
     /// Whether the app was quit while it ran, rather than crashing or being stopped by the system.
@@ -23,7 +23,7 @@ struct KitchenRestorationRecord: Codable {
     ///   - date: When the cold start happens.
     ///   - hasRunningTimers: Whether a timer is counting down or ringing, evaluated only where it changes the result.
     /// - Returns: Whether the restoration opens.
-    func isRestorable(at date: Date, hasRunningTimers: @autoclosure @MainActor () async -> Bool) async -> Bool {
+    func isRestorable(at date: Date, hasRunningTimers: @autoclosure () -> Bool) -> Bool {
         // A restoration that never settled took the app down with it, and would again.
         guard !isSettling else {
             return false
@@ -34,6 +34,6 @@ struct KitchenRestorationRecord: Codable {
         }
 
         // A timer outlives the app, so cooking comes back to show it and cancel it, however the app ended.
-        return await hasRunningTimers()
+        return hasRunningTimers()
     }
 }

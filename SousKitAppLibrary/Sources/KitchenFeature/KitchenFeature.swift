@@ -14,9 +14,9 @@ public struct KitchenFeature {
         self.viewModel = viewModel
     }
 
-    /// The feature's screen.
+    /// The feature's screen, which pushes its recipes on the stack it is placed in.
     ///
-    /// - Returns: The view to place in a scene.
+    /// - Returns: The view to place at the root of a navigation stack.
     @MainActor
     public func makeView() -> some View {
         KitchenFeatureView(
