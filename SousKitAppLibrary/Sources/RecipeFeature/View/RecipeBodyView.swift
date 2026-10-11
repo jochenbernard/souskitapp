@@ -1,5 +1,6 @@
 import DesignSystem
 import RecipeLibrary
+import RecipeScaling
 import SousKit
 import SwiftUI
 
@@ -155,7 +156,7 @@ struct RecipeBodyView: View {
         content()
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(SousSpacing.large)
-            .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+            .sousRowSurface()
     }
 
     @ViewBuilder
@@ -184,8 +185,7 @@ struct RecipeBodyView: View {
 
             amountText(row.amount)
         }
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.vertical, SousSpacing.medium)
+        .sousRowPadding()
     }
 
     private func stepView(_ step: Step, number: Int) -> some View {

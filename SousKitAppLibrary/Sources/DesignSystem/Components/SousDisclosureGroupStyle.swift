@@ -3,7 +3,7 @@ import SwiftUI
 /// A disclosure group whose header lines up with content drawn on a surface.
 public struct SousDisclosureGroupStyle: DisclosureGroupStyle {
     public func makeBody(configuration: Configuration) -> some View {
-        // The automatic style clips its content, a surface's shadow included, and cannot inset its chevron.
+        // The automatic style cannot inset its chevron.
         VStack(alignment: .leading, spacing: 0.0) {
             header(configuration)
 
@@ -72,7 +72,7 @@ extension DisclosureGroupStyle where Self == SousDisclosureGroupStyle {
             Text(verbatim: "Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(SousSpacing.large)
-                .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+                .sousRowSurface()
         },
         label: { Text(verbatim: "Boeuf Bourguignon") }
     )

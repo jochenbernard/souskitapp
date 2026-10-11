@@ -22,29 +22,27 @@ struct KitchenFeatureView: View {
     }
 
     var body: some View {
-        NavigationStack(path: screenPath) {
-            recipeListScreen
-                .navigationDestination(for: KitchenScreen.self) { screen in
-                    screenView(for: screen)
-                }
-        }
-        // The recipe a cold start opens again is there at once, rather than pushed over a list never shown.
-        .transaction(value: viewModel.isRestoring) { transaction in
-            transaction.disablesAnimations = true
-        }
-        // Over the whole kitchen rather than pushed on it, zooming out of the button that starts it, and never swiped
-        // or pinched away: its own exit is the only way out.
-        .fullScreenCover(item: openCooking) { openCooking in
-            openCooking.feature.makeView()
-                .navigationTransition(.zoom(sourceID: RecipeFeature.cookingTransitionID, in: cookingTransition))
-                .interactiveDismissDisabled()
-        }
-        // Cooking a cold start opens again is there at once, rather than zooming out of a button it never left.
-        .transaction(value: viewModel.openCooking?.id) { transaction in
-            if viewModel.openCooking?.isResumed == true {
+        recipeListScreen
+            .navigationDestination(item: pushedScreen) { screen in
+                screenView(for: screen)
+            }
+            // The recipe a cold start opens again is there at once, rather than pushed over a list never shown.
+            .transaction(value: viewModel.isRestoring) { transaction in
                 transaction.disablesAnimations = true
             }
-        }
+            // Over the whole kitchen rather than pushed on it, zooming out of the button that starts it, and never
+            // swiped or pinched away: its own exit is the only way out.
+            .fullScreenCover(item: openCooking) { openCooking in
+                openCooking.feature.makeView()
+                    .navigationTransition(.zoom(sourceID: RecipeFeature.cookingTransitionID, in: cookingTransition))
+                    .interactiveDismissDisabled()
+            }
+            // Cooking a cold start opens again is there at once, rather than zooming out of a button it never left.
+            .transaction(value: viewModel.openCooking?.id) { transaction in
+                if viewModel.openCooking?.isResumed == true {
+                    transaction.disablesAnimations = true
+                }
+            }
     }
 
     private var recipeListScreen: some View {
@@ -58,11 +56,6 @@ struct KitchenFeatureView: View {
         }
         .sousPage()
         .navigationTitle(viewModel.recipeRepositoryName)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                debugMenu
-            }
-        }
         .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
         .task {
             await presenter.viewDidAppear()
@@ -74,10 +67,7 @@ struct KitchenFeatureView: View {
                     await presenter.didBecomeActive()
                 }
 
-            case .background:
-                presenter.didEnterBackground()
-
-            case .inactive:
+            case .background, .inactive:
                 break
 
             @unknown default:
@@ -122,9 +112,10 @@ struct KitchenFeatureView: View {
     private func recipeRows(_ recipeEntries: [RecipeEntry]) -> some View {
         LazyVStack(spacing: SousSpacing.medium) {
             ForEach(recipeEntries) { recipeEntry in
-                NavigationLink(value: KitchenScreen.recipe(recipeEntry)) {
-                    recipeRow(recipeEntry)
-                }
+                Button(
+                    action: { presenter.didChangePushedScreen(.recipe(recipeEntry)) },
+                    label: { recipeRow(recipeEntry) }
+                )
                 .buttonStyle(.plain)
             }
         }
@@ -169,76 +160,6 @@ struct KitchenFeatureView: View {
     }
 
     @ViewBuilder
-    private var debugMenu: some View {
-        #if DEBUG
-        Menu(
-            content: {
-                recipeRepositoryKindPicker
-
-                resetButton
-            },
-            label: {
-                Label(
-                    title: { Text("Debug", bundle: .module) },
-                    icon: { Image(systemName: "ladybug") }
-                )
-            }
-        )
-        .confirmationDialog(
-            Text("Are you sure you want to reset the app?", bundle: .module),
-            isPresented: isConfirmingReset,
-            titleVisibility: .visible,
-            actions: { confirmResetButton },
-            message: { resetNote }
-        )
-        #endif
-    }
-
-    #if DEBUG
-    private var recipeRepositoryKindPicker: some View {
-        Picker(
-            selection: recipeRepositoryKind,
-            content: {
-                Label(
-                    title: { Text("Folder", bundle: .module) },
-                    icon: { Image(systemName: "folder") }
-                )
-                .tag(RecipeRepositoryKind.files)
-
-                Label(
-                    title: { Text("Mock recipes", bundle: .module) },
-                    icon: { Image(systemName: "testtube.2") }
-                )
-                .tag(RecipeRepositoryKind.mock)
-            },
-            label: { Text("Recipes", bundle: .module) }
-        )
-    }
-
-    private var resetButton: some View {
-        Button(role: .destructive, action: presenter.didTapReset) {
-            Label(
-                title: { Text("Reset the app", bundle: .module) },
-                icon: { Image(systemName: "arrow.counterclockwise") }
-            )
-        }
-    }
-
-    private var confirmResetButton: some View {
-        Button(role: .destructive, action: presenter.didConfirmReset) {
-            Text("Reset the app", bundle: .module)
-        }
-    }
-
-    private var resetNote: some View {
-        Text(
-            "The folder is forgotten and setup starts over. Recipes on disk are left alone.",
-            bundle: .module
-        )
-    }
-    #endif
-
-    @ViewBuilder
     private func screenView(for screen: KitchenScreen) -> some View {
         switch screen {
         case .recipe(let recipeEntry):
@@ -253,20 +174,6 @@ struct KitchenFeatureView: View {
         }
     }
 
-    private var recipeRepositoryKind: Binding<RecipeRepositoryKind> {
-        Binding(
-            get: { viewModel.recipeRepositoryKind },
-            set: { presenter.didSelectRecipeRepositoryKind($0) }
-        )
-    }
-
-    private var isConfirmingReset: Binding<Bool> {
-        Binding(
-            get: { viewModel.isConfirmingReset },
-            set: { presenter.didChangeIsConfirmingReset($0) }
-        )
-    }
-
     private var openCooking: Binding<OpenCooking?> {
         Binding(
             get: { viewModel.openCooking },
@@ -278,10 +185,10 @@ struct KitchenFeatureView: View {
         )
     }
 
-    private var screenPath: Binding<[KitchenScreen]> {
+    private var pushedScreen: Binding<KitchenScreen?> {
         Binding(
-            get: { viewModel.screenPath },
-            set: { presenter.didChangeScreenPath($0) }
+            get: { viewModel.pushedScreen },
+            set: { presenter.didChangePushedScreen($0) }
         )
     }
 }
@@ -291,10 +198,7 @@ private func previewViewModel(
     _ recipeList: KitchenRecipeList,
     isRestoring: Bool = false
 ) -> KitchenFeatureViewModel {
-    let viewModel = KitchenFeatureViewModel(
-        recipeRepositoryName: "Recipes",
-        recipeRepositoryKind: .files
-    )
+    let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
     viewModel.recipeList = recipeList
     viewModel.isRestoring = isRestoring
 
@@ -313,44 +217,54 @@ private func previewRecipeEntry(
 }
 
 #Preview("Kitchen") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(
-            .recipes([
-                previewRecipeEntry("boeuf bourguignon", .downloaded),
-                previewRecipeEntry("bouillabaisse", .downloaded),
-                previewRecipeEntry("crepes", .notDownloaded),
-                previewRecipeEntry("gratin dauphinois", .downloading),
-                previewRecipeEntry("vinaigrette", .downloaded)
-            ])
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(
+                .recipes([
+                    previewRecipeEntry("boeuf bourguignon", .downloaded),
+                    previewRecipeEntry("bouillabaisse", .downloaded),
+                    previewRecipeEntry("crepes", .notDownloaded),
+                    previewRecipeEntry("gratin dauphinois", .downloading),
+                    previewRecipeEntry("vinaigrette", .downloaded)
+                ])
+            )
         )
-    )
+    }
 }
 
 #Preview("Kitchen, reading") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(.reading)
-    )
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(.reading)
+        )
+    }
 }
 
 #Preview("Kitchen, restoring") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(.reading, isRestoring: true)
-    )
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(.reading, isRestoring: true)
+        )
+    }
 }
 
 #Preview("Kitchen, empty") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(.recipes([]))
-    )
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(.recipes([]))
+        )
+    }
 }
 
 #Preview("Kitchen, after a failure") {
-    KitchenFeatureView(
-        presenter: KitchenFeaturePresenterStub(),
-        viewModel: previewViewModel(.failure("The folder no longer exists."))
-    )
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(.failure("The folder no longer exists."))
+        )
+    }
 }

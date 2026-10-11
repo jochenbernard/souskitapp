@@ -5,9 +5,6 @@ struct DisclosureReveal: ViewModifier, Animatable {
     /// How the reveal moves, which whatever toggles it takes so the two run together.
     static let animation = Animation.spring(duration: 0.3, bounce: 0.0)
 
-    // How far past its bounds content draws at rest, a surface's shadow included.
-    private static let overdraw: CGFloat = 32.0
-
     /// The part of the content shown, from 0 for none to 1 for all of it.
     var progress: Double
 
@@ -20,10 +17,7 @@ struct DisclosureReveal: ViewModifier, Animatable {
         DisclosureRevealLayout(progress: progress) {
             content
         }
-        .mask(alignment: .top) {
-            Rectangle()
-                .padding(progress < 1.0 ? 0.0 : -Self.overdraw)
-        }
+        .clipped()
         .opacity(progress)
     }
 }

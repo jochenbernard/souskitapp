@@ -6,40 +6,40 @@ import SousKit
 /// Builds ``KitchenFeature`` with what it reads.
 public struct KitchenFeatureFactory: Sendable {
     private let parser: SousParser
-    private let restorationStore: KitchenRestorationStore
+    private let preferredScaleStore: PreferredScaleStore
+    private let timerScheduler: TimerScheduler
 
     /// Creates a factory.
     ///
     /// - Parameters:
     ///   - parser: What the kitchen reads Sous with.
-    ///   - restorationStore: Where the kitchen keeps what it has open for the next cold start.
+    ///   - preferredScaleStore: Where the scale recipes open on is remembered.
+    ///   - timerScheduler: What cooking runs its timers on.
     public init(
         parser: SousParser,
-        restorationStore: KitchenRestorationStore
+        preferredScaleStore: PreferredScaleStore,
+        timerScheduler: TimerScheduler
     ) {
         self.parser = parser
-        self.restorationStore = restorationStore
+        self.preferredScaleStore = preferredScaleStore
+        self.timerScheduler = timerScheduler
     }
 
-    /// Builds the feature, which opens what the kitchen had open when the app last ran once its recipe is listed.
+    /// Builds the feature.
     ///
     /// - Parameters:
     ///   - recipeRepository: The repository recipes are read from.
-    ///   - recipeRepositoryKind: The kind of repository `recipeRepository` is.
+    ///   - restoration: What the kitchen opens again once its recipe is listed, or `nil` to open on its recipe list.
     ///   - handler: What the feature reports out of the kitchen to.
     /// - Returns: The feature.
     @MainActor
     public func makeKitchenFeature(
         recipeRepository: RecipeRepository,
-        recipeRepositoryKind: RecipeRepositoryKind,
+        restoration: KitchenFeatureRestoration?,
         handler: KitchenFeatureHandler
     ) -> KitchenFeature {
-        let viewModel = KitchenFeatureViewModel(
-            recipeRepositoryName: recipeRepository.name,
-            recipeRepositoryKind: recipeRepositoryKind
-        )
-        viewModel.isRestoring = restorationStore.restoration() != nil
-        let timerScheduler = AlarmTimerScheduler()
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: recipeRepository.name)
+        viewModel.isRestoring = restoration != nil
         let presenter = KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(
                 idleTimer: ApplicationIdleTimer(),
@@ -48,12 +48,11 @@ public struct KitchenFeatureFactory: Sendable {
             handler: handler,
             recipeFeatureFactory: RecipeFeatureFactory(
                 parser: parser,
+                preferredScaleStore: preferredScaleStore,
                 recipeRepository: recipeRepository
             ),
             recipeRepository: recipeRepository,
-            restorationSettleTime: .seconds(5),
-            restorationStore: restorationStore,
-            timerScheduler: timerScheduler,
+            restoration: restoration,
             viewModel: viewModel
         )
 

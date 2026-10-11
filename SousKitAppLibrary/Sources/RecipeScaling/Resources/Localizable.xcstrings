@@ -1,0 +1,176 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ servings" : {
+      "comment" : "The servings a recipe is scaled to.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ servings"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ porties"
+          }
+        }
+      }
+    },
+    "%@×" : {
+      "comment" : "What a recipe is multiplied by, such as 2×.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@×"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@×"
+          }
+        }
+      }
+    },
+    "1 serving" : {
+      "comment" : "The servings a recipe is scaled to, where it is scaled to one.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 serving"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 portie"
+          }
+        }
+      }
+    },
+    "Less" : {
+      "comment" : "The minus beside the number a recipe is scaled by.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minder"
+          }
+        }
+      }
+    },
+    "More" : {
+      "comment" : "The plus beside the number a recipe is scaled by.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meer"
+          }
+        }
+      }
+    },
+    "Multiplier" : {
+      "comment" : "What a recipe is scaled by where it is multiplied rather than taken to an amount.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Multiplier"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Factor"
+          }
+        }
+      }
+    },
+    "Reset" : {
+      "comment" : "Takes the scale back to the one it opens on, from the sheet that sets it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Herstel"
+          }
+        }
+      }
+    },
+    "Servings" : {
+      "comment" : "What a recipe is scaled by where it is taken to a number of servings.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Servings"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Porties"
+          }
+        }
+      }
+    },
+    "Yield" : {
+      "comment" : "The label on the line naming how much a recipe makes.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yield"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opbrengst"
+          }
+        }
+      }
+    },
+    "Yield (%@)" : {
+      "comment" : "What the number a recipe is scaled to is labelled, where it is a yield in the unit the recipe writes it in, such as kg.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yield (%@)"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opbrengst (%@)"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

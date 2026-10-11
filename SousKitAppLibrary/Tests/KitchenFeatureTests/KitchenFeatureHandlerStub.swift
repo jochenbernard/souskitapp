@@ -1,17 +1,21 @@
 @testable import KitchenFeature
-import RecipeLibrary
 
-/// A handler that keeps the kinds of repository picked and counts the resets reported to it.
+/// A handler that keeps what the kitchen last reported open, and counts its restores.
 @MainActor
 final class KitchenFeatureHandlerStub: KitchenFeatureHandler {
-    private(set) var selectedRecipeRepositoryKinds: [RecipeRepositoryKind] = []
-    private(set) var resetCount = 0
+    /// What the kitchen last reported open, which is what it was built to open again until it reports.
+    private(set) var restoration: KitchenFeatureRestoration?
+    private(set) var restoreCount = 0
 
-    func kitchenFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind) {
-        selectedRecipeRepositoryKinds.append(recipeRepositoryKind)
+    init(restoration: KitchenFeatureRestoration? = nil) {
+        self.restoration = restoration
     }
 
-    func kitchenFeatureDidConfirmReset() {
-        resetCount += 1
+    func kitchenFeatureDidChangeRestoration(_ restoration: KitchenFeatureRestoration?) {
+        self.restoration = restoration
+    }
+
+    func kitchenFeatureDidRestore() {
+        restoreCount += 1
     }
 }

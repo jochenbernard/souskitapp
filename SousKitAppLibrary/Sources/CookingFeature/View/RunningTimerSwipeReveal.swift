@@ -17,6 +17,9 @@ struct RunningTimerSwipeReveal: View {
     // How wide the label stands with room around it, which the action fades it in over.
     @State private var labelWidth = 0.0
 
+    // The timer's own, so the action fills the room it leaves.
+    @LineContainerRadius private var radius
+
     /// - Parameters:
     ///   - width: How far the timer has slid left, which the action fills, no further than the timer's own width.
     ///   - threshold: How far the timer slides before letting go takes it away.
@@ -32,16 +35,20 @@ struct RunningTimerSwipeReveal: View {
     }
 
     var body: some View {
-        RunningTimerRow.shape
+        shape
             .fill(.red)
             .overlay {
                 label
             }
-            .clipShape(RunningTimerRow.shape)
+            .clipShape(shape)
             .frame(width: max(0.0, width - Self.gap))
             .opacity(opacity)
             .animation(.runningTimers, value: isArmed)
             .accessibilityHidden(true)
+    }
+
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: radius)
     }
 
     // Always the same, cut off by the action's edges while it is narrow and fading in as it makes room for it.

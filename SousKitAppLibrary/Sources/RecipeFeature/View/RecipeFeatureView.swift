@@ -1,5 +1,6 @@
 import DesignSystem
 import RecipeLibrary
+import RecipeScaling
 import SousKit
 import SwiftUI
 
@@ -128,7 +129,11 @@ struct RecipeFeatureView: View {
         if case .recipe(let recipe) = viewModel.recipeContent {
             let scale = ScaleDisplay(recipe: recipe, text: viewModel.scaleText)
 
-            RecipeScaleView(presenter: presenter, scale: scale)
+            ScaleSheet(
+                Text("Scale", bundle: .module),
+                presenter: presenter,
+                scale: scale
+            )
         }
     }
 

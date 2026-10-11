@@ -29,7 +29,7 @@ public struct SousRowGroup<Content: View>: View {
                 }
             }
         }
-        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+        .sousRowSurface()
     }
 
     @ViewBuilder
@@ -45,9 +45,7 @@ public struct SousRowGroup<Content: View>: View {
     SousRowGroup {
         ForEach(["Boeuf Bourguignon", "Crepes", "Gratin Dauphinois"], id: \.self) { name in
             Text(verbatim: name)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, SousSpacing.large)
-                .padding(.vertical, SousSpacing.medium)
+                .sousRowPadding()
         }
     }
     .sousPagePadding()

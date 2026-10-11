@@ -32,7 +32,7 @@ extension View {
     }
     .frame(width: 240.0, alignment: .leading)
     .padding(SousSpacing.large)
-    .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+    .sousRowSurface()
     .sousPagePadding()
     .frame(
         maxWidth: .infinity,

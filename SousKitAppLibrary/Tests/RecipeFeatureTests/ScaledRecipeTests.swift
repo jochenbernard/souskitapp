@@ -1,4 +1,6 @@
 @testable import RecipeFeature
+import RecipeLibrary
+import RecipeScaling
 import SousKit
 import Testing
 
@@ -43,10 +45,15 @@ struct ScaledRecipeTests {
         Whisk @{1 tsp} dijon mustard@ into @{2 tbsp} red wine vinegar@.
         """
 
-    private func scaledRecipe(_ source: String, scale: RecipeScale? = nil) -> ScaledRecipe {
+    private func scaledRecipe(
+        _ source: String,
+        preferredScale: PreferredScale = .asWritten,
+        scale: RecipeScale? = nil
+    ) -> ScaledRecipe {
         ScaledRecipe(
             asWritten: parser.parseRecipe(source).value,
             parser: parser,
+            preferredScale: preferredScale,
             scale: scale
         )
     }
@@ -215,6 +222,59 @@ struct ScaledRecipeTests {
             scaledRecipe(vinaigrette).defaultScale
                 == RecipeScale(target: .multiplier, value: 1.0)
         )
+    }
+
+    @Test("the default is the scale preferred, on a recipe that scales that way")
+    func preferredDefaultScale() {
+        #expect(
+            scaledRecipe(crepes, preferredScale: .servings(2.0)).defaultScale
+                == RecipeScale(target: .servings, value: 2.0)
+        )
+        #expect(
+            scaledRecipe(gratin, preferredScale: .servings(2.0)).defaultScale
+                == RecipeScale(target: .yield(unit: "kg"), value: 1.8)
+        )
+    }
+
+    @Test("a multiple preferred is counted on the recipe's first target")
+    func preferredMultiple() {
+        #expect(
+            scaledRecipe(crepes, preferredScale: .multiplier(2.0)).defaultScale
+                == RecipeScale(target: .servings, value: 8.0)
+        )
+        #expect(
+            scaledRecipe(gratin, preferredScale: .multiplier(2.0)).defaultScale
+                == RecipeScale(target: .yield(unit: "kg"), value: 3.6)
+        )
+        #expect(
+            scaledRecipe(vinaigrette, preferredScale: .multiplier(2.0)).defaultScale
+                == RecipeScale(target: .multiplier, value: 2.0)
+        )
+        #expect(
+            scaledRecipe(crepes, preferredScale: .asWritten).defaultScale
+                == RecipeScale(target: .servings, value: 4.0)
+        )
+    }
+
+    @Test("a recipe opens on the scale preferred, and leaves it for a scale given")
+    func preferredScaleOpens() {
+        let atPreferred = scaledRecipe(crepes, preferredScale: .servings(2.0))
+        let written = RecipeScale(target: .servings, value: 4.0)
+        let atWritten = scaledRecipe(
+            crepes,
+            preferredScale: .servings(2.0),
+            scale: written
+        )
+
+        #expect(atPreferred.isDefault)
+        #expect(amounts(of: atPreferred.scaled) == ["2", "125 g", "0.25 tsp", "10 g"])
+        #expect(!atWritten.isDefault)
+        #expect(atWritten.scaled == atWritten.asWritten)
+    }
+
+    @Test("a scale preferred that a recipe of nothing would follow leaves the recipe as written")
+    func unusablePreferredScale() {
+        #expect(scaledRecipe(crepes, preferredScale: .multiplier(0.0)).defaultScale.target == .servings)
     }
 
     @Test("a recipe declaring no servings does not scale toward them")

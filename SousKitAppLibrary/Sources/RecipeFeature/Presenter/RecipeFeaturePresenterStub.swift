@@ -1,3 +1,5 @@
+import RecipeScaling
+
 struct RecipeFeaturePresenterStub: RecipeFeaturePresenterProtocol {
     func viewDidAppear() {}
 

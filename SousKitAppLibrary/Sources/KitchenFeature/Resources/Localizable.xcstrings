@@ -1,41 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Are you sure you want to reset the app?" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Are you sure you want to reset the app?"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Weet je zeker dat je de app wilt resetten?"
-          }
-        }
-      }
-    },
-    "Debug" : {
-      "comment" : "The debug menu, which only a debug build shows.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Debug"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Debug"
-          }
-        }
-      }
-    },
     "Downloading from iCloud" : {
       "comment" : "What VoiceOver reads for the spinner on a recipe coming down from iCloud.",
       "localizations" : {
@@ -53,24 +18,6 @@
         }
       }
     },
-    "Folder" : {
-      "comment" : "In the debug menu, reading recipes from the folder the user picked.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Folder"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Map"
-          }
-        }
-      }
-    },
     "In iCloud, not downloaded" : {
       "comment" : "What VoiceOver reads for the symbol on a recipe that is still in iCloud.",
       "localizations" : {
@@ -84,24 +31,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "In iCloud, niet gedownload"
-          }
-        }
-      }
-    },
-    "Mock recipes" : {
-      "comment" : "In the debug menu, reading the recipes kept in the app for trying it.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mock recipes"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Testrecepten"
           }
         }
       }
@@ -150,57 +79,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "De map wordt gelezen."
-          }
-        }
-      }
-    },
-    "Recipes" : {
-      "comment" : "The debug menu's choice of where recipes are read from.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recipes"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Recepten"
-          }
-        }
-      }
-    },
-    "Reset the app" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset the app"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App resetten"
-          }
-        }
-      }
-    },
-    "The folder is forgotten and setup starts over. Recipes on disk are left alone." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The folder is forgotten and setup starts over. Recipes on disk are left alone."
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "De map wordt vergeten en de setup begint opnieuw. Recepten op schijf blijven staan."
           }
         }
       }

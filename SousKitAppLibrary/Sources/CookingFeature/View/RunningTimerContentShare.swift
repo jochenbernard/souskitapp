@@ -38,7 +38,7 @@ extension View {
                 .compositingGroup()
                 .runningTimerContentShare()
                 .padding()
-                .glassEffect(.regular, in: RunningTimerRow.shape)
+                .glassEffect(.regular, in: Capsule())
                 .transition(.runningTimerLeaving)
         }
     }

@@ -1,4 +1,5 @@
 import DesignSystem
+import RecipeScaling
 import SousKit
 import SwiftUI
 
@@ -35,9 +36,13 @@ struct RecipeMetadataView: View {
 
             scaleDivider
 
-            RecipeScaleRow(presenter: presenter, scale: scale)
+            ScaleRow(
+                Text("Scale", bundle: .module),
+                scale: scale,
+                action: presenter.didTapScale
+            )
         }
-        .sousSurface(RoundedRectangle(cornerRadius: SousRadius.large))
+        .sousRowSurface()
     }
 
     private var hasLabels: Bool {
@@ -160,8 +165,7 @@ struct RecipeMetadataView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
         }
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.vertical, SousSpacing.medium)
+        .sousRowPadding()
     }
 
     @ViewBuilder

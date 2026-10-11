@@ -1,3 +1,4 @@
+import RecipeScaling
 import SousKit
 
 /// Rounds the numbers scaling writes past three decimals, which is as fine as a cook reads an amount.

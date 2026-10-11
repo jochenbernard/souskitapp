@@ -10,7 +10,7 @@ extension Color {
     /// The fill for a large control, such as a button or an input field, and for a chip.
     public static let tertiaryFill = Color(uiColor: .tertiarySystemFill)
 
-    /// The color of a border, a divider, or a shadow.
+    /// The color of a border or a divider.
     ///
     /// Not repeated on `ShapeStyle`, where it would make SwiftUI's own `.separator` ambiguous. Where
     /// a style is taken, write `.separator`.

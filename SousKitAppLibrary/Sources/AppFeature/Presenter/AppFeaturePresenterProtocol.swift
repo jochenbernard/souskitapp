@@ -1,2 +1,16 @@
-/// What ``AppFeatureView`` reports to, which so far is nothing.
-protocol AppFeaturePresenterProtocol {}
+/// What ``AppFeatureView`` reports to.
+protocol AppFeaturePresenterProtocol {
+    /// The view is on screen.
+    @MainActor
+    func viewDidAppear()
+
+    @MainActor
+    func didTapSettings()
+
+    @MainActor
+    func didDismissSettings()
+
+    /// The app left the foreground.
+    @MainActor
+    func didEnterBackground()
+}

@@ -1,14 +1,12 @@
-import RecipeLibrary
-
 /// What ``KitchenFeature`` reports out of the kitchen to.
 public protocol KitchenFeatureHandler {
-    /// Another kind of recipe repository was picked to read from.
+    /// What the kitchen has open changed.
     ///
-    /// - Parameter recipeRepositoryKind: The kind picked.
+    /// - Parameter restoration: What a cold start opens again, or `nil` on the recipe list with nothing over it.
     @MainActor
-    func kitchenFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind)
+    func kitchenFeatureDidChangeRestoration(_ restoration: KitchenFeatureRestoration?)
 
-    /// A reset of the app was confirmed, and what the app remembers is to go.
+    /// The kitchen opened what it was built to open again.
     @MainActor
-    func kitchenFeatureDidConfirmReset()
+    func kitchenFeatureDidRestore()
 }

@@ -7,12 +7,6 @@ import Testing
 @Suite("Kitchen feature presenter", .timeLimit(.minutes(1)))
 struct KitchenFeaturePresenterTests {
     private let parser = SousParser()
-    private let defaults: ThrowawayDefaults
-
-    @MainActor
-    init() throws {
-        self.defaults = try ThrowawayDefaults()
-    }
 
     private func recipeEntry(named name: String) -> RecipeEntry {
         RecipeEntry(
@@ -23,10 +17,7 @@ struct KitchenFeaturePresenterTests {
     }
 
     private func makeViewModel() -> KitchenFeatureViewModel {
-        KitchenFeatureViewModel(
-            recipeRepositoryName: "Recipes",
-            recipeRepositoryKind: .files
-        )
+        KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
     }
 
     @MainActor
@@ -38,7 +29,6 @@ struct KitchenFeaturePresenterTests {
         .stubbed(
             viewModel: viewModel,
             parser: parser,
-            restorationStore: KitchenRestorationStore(userDefaults: defaults.userDefaults),
             handler: handler,
             recipeRepository: recipeRepository
         )
@@ -137,55 +127,5 @@ struct KitchenFeaturePresenterTests {
         await makePresenter(viewModel: makeViewModel(), recipeRepository: recipeRepository).didBecomeActive()
 
         #expect(recipeRepository.refreshCount == 1)
-    }
-
-    @MainActor
-    @Test("picking a kind of repository reports it")
-    func pickingAKindReports() {
-        let handler = KitchenFeatureHandlerStub()
-
-        makePresenter(viewModel: makeViewModel(), handler: handler).didSelectRecipeRepositoryKind(.mock)
-
-        #expect(handler.selectedRecipeRepositoryKinds == [.mock])
-    }
-
-    @MainActor
-    @Test("the reset opens the confirmation and reports nothing yet")
-    func resetOpensTheConfirmation() {
-        let handler = KitchenFeatureHandlerStub()
-        let viewModel = makeViewModel()
-
-        makePresenter(viewModel: viewModel, handler: handler).didTapReset()
-
-        #expect(viewModel.isConfirmingReset)
-        #expect(handler.resetCount == 0)
-    }
-
-    @MainActor
-    @Test("a confirmed reset closes the confirmation and reports once")
-    func confirmedResetReports() {
-        let handler = KitchenFeatureHandlerStub()
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel, handler: handler)
-
-        presenter.didTapReset()
-        presenter.didConfirmReset()
-
-        #expect(!viewModel.isConfirmingReset)
-        #expect(handler.resetCount == 1)
-    }
-
-    @MainActor
-    @Test("a dismissed confirmation reports nothing")
-    func dismissedConfirmationReportsNothing() {
-        let handler = KitchenFeatureHandlerStub()
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel, handler: handler)
-
-        presenter.didTapReset()
-        presenter.didChangeIsConfirmingReset(false)
-
-        #expect(!viewModel.isConfirmingReset)
-        #expect(handler.resetCount == 0)
     }
 }
