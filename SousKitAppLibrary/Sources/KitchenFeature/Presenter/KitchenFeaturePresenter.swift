@@ -50,15 +50,15 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         await recipeRepository.refresh()
     }
 
-    func didChangeScreenPath(_ screenPath: [KitchenScreen]) {
+    func didChangePushedScreen(_ screen: KitchenScreen?) {
         // A push builds a fresh feature, so nothing done on a popped screen, such as a scale, comes back.
-        let isPush = screenPath.count > viewModel.screenPath.count
+        let isPush = viewModel.pushedScreen == nil
 
-        viewModel.screenPath = screenPath
+        viewModel.pushedScreen = screen
 
         // A pop leaves the screen it popped in place: clearing it empties that screen while it
         // is still animating away. The next push replaces it.
-        switch screenPath.last {
+        switch screen {
         case .recipe(let recipeEntry):
             openRecipe(recipeEntry, isPush: isPush)
 
@@ -80,7 +80,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func recipeFeatureDidChangeRestoration(_ restoration: RecipeFeatureRestoration) {
-        updateRestoration({ $0.recipe = restoration })
+        restorationKeeper.update({ $0.recipe = restoration })
     }
 
     func cookingFeatureDidExit() {
@@ -88,7 +88,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func cookingFeatureDidChangeRestoration(_ restoration: CookingFeatureRestoration) {
-        updateRestoration({ $0.cooking = restoration })
+        restorationKeeper.update({ $0.cooking = restoration })
     }
 
     /// Builds the feature for a recipe pushed on the stack, or keeps the one a recipe already on it has.
@@ -119,7 +119,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             return
         }
 
-        viewModel.screenPath = [.recipe(recipeEntry)]
+        viewModel.pushedScreen = .recipe(recipeEntry)
         viewModel.openRecipe = makeOpenRecipe(
             recipeEntry,
             restoration: restoration.recipe,
@@ -148,7 +148,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// Opens cooking from the recipe on top of the stack, unless cooking is already open.
     @MainActor
     private func openCooking(_ recipe: Recipe, isResumed: Bool) {
-        guard case .recipe(let recipeEntry) = viewModel.screenPath.last, viewModel.openCooking == nil else {
+        guard case .recipe(let recipeEntry) = viewModel.pushedScreen, viewModel.openCooking == nil else {
             return
         }
 
@@ -164,22 +164,12 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             ),
             isResumed: isResumed
         )
-        updateRestoration({ $0.cooking = cookingRestoration ?? CookingFeatureRestoration() })
+        restorationKeeper.update({ $0.cooking = cookingRestoration ?? CookingFeatureRestoration() })
     }
 
     @MainActor
     private func closeCooking() {
         viewModel.openCooking = nil
-        updateRestoration({ $0.cooking = nil })
-    }
-
-    /// Changes what is kept for the recipe on top of the stack.
-    @MainActor
-    private func updateRestoration(_ update: (inout KitchenFeatureRestoration) -> Void) {
-        guard case .recipe(let recipeEntry) = viewModel.screenPath.last else {
-            return
-        }
-
-        restorationKeeper.update(recipeID: recipeEntry.id, update)
+        restorationKeeper.update({ $0.cooking = nil })
     }
 }

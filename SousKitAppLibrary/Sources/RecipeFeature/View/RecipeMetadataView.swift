@@ -165,8 +165,7 @@ struct RecipeMetadataView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.trailing)
         }
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.vertical, SousSpacing.medium)
+        .sousRowPadding()
     }
 
     @ViewBuilder

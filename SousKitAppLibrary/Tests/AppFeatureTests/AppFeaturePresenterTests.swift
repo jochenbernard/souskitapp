@@ -127,7 +127,7 @@ final class AppFeaturePresenterTests {
         presenter.didTapSettings()
 
         #expect(presenter.viewModel?.openSettings?.isRestored == false)
-        #expect(restorationStore.restoration() == settingsRestoration)
+        #expect(restorationStore.record()?.restoration == settingsRestoration)
     }
 
     @Test("the settings close and are forgotten when they are done or dismissed")
@@ -138,13 +138,13 @@ final class AppFeaturePresenterTests {
         presenter.settingsFeatureDidFinish()
 
         #expect(presenter.viewModel?.openSettings == nil)
-        #expect(restorationStore.restoration() == nil)
+        #expect(restorationStore.record()?.restoration == nil)
 
         presenter.didTapSettings()
         presenter.didDismissSettings()
 
         #expect(presenter.viewModel?.openSettings == nil)
-        #expect(restorationStore.restoration() == nil)
+        #expect(restorationStore.record()?.restoration == nil)
     }
 
     @Test("a sheet reporting settings already closed leaves what the kitchen opened since")
@@ -156,7 +156,7 @@ final class AppFeaturePresenterTests {
         presenter.kitchenFeatureDidChangeRestoration(crepesRestoration.kitchen)
         presenter.didDismissSettings()
 
-        #expect(restorationStore.restoration() == crepesRestoration)
+        #expect(restorationStore.record()?.restoration == crepesRestoration)
     }
 
     @Test("picking the folder in the settings before a folder is picked closes them and goes back to onboarding")
@@ -168,7 +168,7 @@ final class AppFeaturePresenterTests {
 
         #expect(presenter.viewModel?.screen.identity == .onboarding)
         #expect(presenter.viewModel?.openSettings == nil)
-        #expect(restorationStore.restoration() == nil)
+        #expect(restorationStore.record()?.restoration == nil)
     }
 
     @Test("the kitchen moves between the folder picked and the mock recipes under the settings, which stay open")
@@ -187,13 +187,13 @@ final class AppFeaturePresenterTests {
         #expect(mockKitchen.kind == .mock)
         #expect(mockKitchen.id != folderKitchen.id)
         #expect(presenter.viewModel?.openSettings?.id == settingsID)
-        #expect(restorationStore.restoration() == settingsRestoration)
+        #expect(restorationStore.record()?.restoration == settingsRestoration)
 
         presenter.settingsFeatureDidSelectRecipeRepositoryKind(.files)
 
         #expect(kitchen(of: presenter)?.kind == .files)
         #expect(presenter.viewModel?.openSettings?.id == settingsID)
-        #expect(restorationStore.restoration() == settingsRestoration)
+        #expect(restorationStore.record()?.restoration == settingsRestoration)
     }
 
     @Test("the kind of repository already read, picked in the settings, leaves the kitchen as it is")
@@ -245,7 +245,7 @@ final class AppFeaturePresenterTests {
 
         #expect(presenter.viewModel?.screen.identity == .onboarding)
         #expect(presenter.viewModel?.openSettings == nil)
-        #expect(restorationStore.restoration() == nil)
+        #expect(restorationStore.record()?.restoration == nil)
         #expect(launch().viewModel?.screen.identity == .onboarding)
         #expect(preferredScaleStore.preferredScale == .asWritten)
     }
@@ -268,6 +268,6 @@ final class AppFeaturePresenterTests {
         restorationStore.update({ $0 = crepesRestoration })
 
         #expect(launch().viewModel?.screen.identity == .onboarding)
-        #expect(restorationStore.restoration() == nil)
+        #expect(restorationStore.record()?.restoration == nil)
     }
 }

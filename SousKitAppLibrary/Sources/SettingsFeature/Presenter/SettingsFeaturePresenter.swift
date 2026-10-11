@@ -134,9 +134,6 @@ struct SettingsFeaturePresenter: SettingsFeaturePresenterProtocol {
         guard
             // A plus held at the top of its range asks for the scale in force on every repeat.
             scale != viewModel.scale,
-            // A number typed too small or too large rounds to zero or infinity, which no recipe opens on.
-            scale.value > 0.0,
-            scale.value.isFinite,
             let preferredScale = PreferredScale(scale)
         else {
             return

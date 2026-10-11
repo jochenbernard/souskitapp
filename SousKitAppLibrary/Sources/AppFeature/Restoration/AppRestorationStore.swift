@@ -21,11 +21,6 @@ struct AppRestorationStore {
         userDefaults.removeObject(forKey: Self.key)
     }
 
-    /// What the app had open, or `nil` where nothing was.
-    func restoration() -> AppRestoration? {
-        record()?.restoration
-    }
-
     func record() -> AppRestorationRecord? {
         guard let data = userDefaults.data(forKey: Self.key) else {
             return nil

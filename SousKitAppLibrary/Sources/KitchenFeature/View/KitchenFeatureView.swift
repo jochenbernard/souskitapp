@@ -113,7 +113,7 @@ struct KitchenFeatureView: View {
         LazyVStack(spacing: SousSpacing.medium) {
             ForEach(recipeEntries) { recipeEntry in
                 Button(
-                    action: { presenter.didChangeScreenPath([.recipe(recipeEntry)]) },
+                    action: { presenter.didChangePushedScreen(.recipe(recipeEntry)) },
                     label: { recipeRow(recipeEntry) }
                 )
                 .buttonStyle(.plain)
@@ -187,8 +187,8 @@ struct KitchenFeatureView: View {
 
     private var pushedScreen: Binding<KitchenScreen?> {
         Binding(
-            get: { viewModel.screenPath.last },
-            set: { presenter.didChangeScreenPath($0.map({ [$0] }) ?? []) }
+            get: { viewModel.pushedScreen },
+            set: { presenter.didChangePushedScreen($0) }
         )
     }
 }

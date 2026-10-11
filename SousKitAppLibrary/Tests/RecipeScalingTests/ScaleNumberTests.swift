@@ -35,7 +35,7 @@ struct ScaleNumberTests {
         #expect(ScaleNumber.value(of: text) == nil)
     }
 
-    @Test("nothing to cook is nothing to scale by", arguments: ["0", "-2", "0.0"])
+    @Test("nothing to cook is nothing to scale by", arguments: ["0", "-2", "0.0", "0.0000001", "1e305"])
     func unusableNumbers(_ text: String) {
         #expect(ScaleNumber.value(of: text) == nil)
     }

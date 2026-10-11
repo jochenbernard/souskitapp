@@ -3,7 +3,7 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didBecomeActive() {}
 
-    func didChangeScreenPath(_: [KitchenScreen]) {}
+    func didChangePushedScreen(_: KitchenScreen?) {}
 
     func didDismissCooking() {}
 }

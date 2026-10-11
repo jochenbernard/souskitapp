@@ -23,12 +23,23 @@ public enum ScaleNumber {
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .replacingOccurrences(of: ",", with: ".")
         )
+        // Before it is checked, since a number typed too small or too large rounds to zero or infinity.
+        .map(rounded)
 
         guard let value, value.isFinite, value > 0.0 else {
             return nil
         }
 
         return value
+    }
+
+    /// The number as a scale holds it.
+    ///
+    /// - Parameter value: The number to hold.
+    /// - Returns: The number, to six decimals.
+    static func rounded(_ value: Double) -> Double {
+        // Steps and switched targets land on 1.9000000000000001, which is not a number anyone typed.
+        (value * 1_000_000.0).rounded() / 1_000_000.0
     }
 
     /// To three decimals, which is as fine as a scaled amount is written.

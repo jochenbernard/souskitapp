@@ -55,9 +55,9 @@ struct KitchenFeatureStackTests {
         let crepes = recipeEntry(named: "crepes")
         let viewModel = makeViewModel()
 
-        makePresenter(viewModel: viewModel).didChangeScreenPath([.recipe(crepes)])
+        makePresenter(viewModel: viewModel).didChangePushedScreen(.recipe(crepes))
 
-        #expect(viewModel.screenPath == [.recipe(crepes)])
+        #expect(viewModel.pushedScreen == .recipe(crepes))
         #expect(viewModel.openRecipe?.recipeEntry == crepes)
     }
 
@@ -68,10 +68,10 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.didChangeScreenPath([])
+        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didChangePushedScreen(nil)
 
-        #expect(viewModel.screenPath.isEmpty)
+        #expect(viewModel.pushedScreen == nil)
         #expect(viewModel.openRecipe?.recipeEntry == crepes)
     }
 
@@ -83,24 +83,24 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.didChangeScreenPath([])
-        presenter.didChangeScreenPath([.recipe(brioche)])
+        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didChangePushedScreen(nil)
+        presenter.didChangePushedScreen(.recipe(brioche))
 
         #expect(viewModel.openRecipe?.recipeEntry == brioche)
     }
 
     @MainActor
-    @Test("the stack set again as it stands keeps the feature already built for it")
-    func settingTheSameStackKeepsItsFeature() {
+    @Test("a recipe pushed again while it is open keeps the feature already built for it")
+    func pushingTheOpenRecipeKeepsItsFeature() {
         let crepes = recipeEntry(named: "crepes")
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.didChangePushedScreen(.recipe(crepes))
 
         #expect(!replaces(\.openRecipe, in: viewModel) {
-            presenter.didChangeScreenPath([.recipe(crepes)])
+            presenter.didChangePushedScreen(.recipe(crepes))
         })
     }
 
@@ -111,11 +111,11 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(crepes)])
-        presenter.didChangeScreenPath([])
+        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didChangePushedScreen(nil)
 
         #expect(replaces(\.openRecipe, in: viewModel) {
-            presenter.didChangeScreenPath([.recipe(crepes)])
+            presenter.didChangePushedScreen(.recipe(crepes))
         })
         #expect(viewModel.openRecipe?.recipeEntry == crepes)
     }
@@ -128,10 +128,10 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.didChangePushedScreen(.recipe(crepes))
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
-        #expect(viewModel.screenPath == [.recipe(crepes)])
+        #expect(viewModel.pushedScreen == .recipe(crepes))
         #expect(viewModel.openCooking != nil)
     }
 
@@ -143,7 +143,7 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.didChangePushedScreen(.recipe(crepes))
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
         #expect(!replaces(\.openCooking, in: viewModel) {
@@ -171,14 +171,14 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.didChangePushedScreen(.recipe(crepes))
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
         #expect(!replaces(\.openRecipe, in: viewModel) {
             presenter.cookingFeatureDidExit()
         })
         #expect(viewModel.openCooking == nil)
-        #expect(viewModel.screenPath == [.recipe(crepes)])
+        #expect(viewModel.pushedScreen == .recipe(crepes))
     }
 
     @MainActor
@@ -189,7 +189,7 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.didChangePushedScreen(.recipe(crepes))
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         presenter.didDismissCooking()
 
@@ -204,7 +204,7 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangeScreenPath([.recipe(crepes)])
+        presenter.didChangePushedScreen(.recipe(crepes))
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         let firstVisit = viewModel.openCooking?.id
         presenter.cookingFeatureDidExit()

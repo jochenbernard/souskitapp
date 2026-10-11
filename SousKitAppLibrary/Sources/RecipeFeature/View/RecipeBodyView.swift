@@ -185,8 +185,7 @@ struct RecipeBodyView: View {
 
             amountText(row.amount)
         }
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.vertical, SousSpacing.medium)
+        .sousRowPadding()
     }
 
     private func stepView(_ step: Step, number: Int) -> some View {

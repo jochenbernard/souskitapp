@@ -39,7 +39,7 @@ extension AppFeaturePresenterTests {
 
         presenter.kitchenFeatureDidChangeRestoration(crepesRestoration.kitchen)
 
-        #expect(restorationStore.restoration() == crepesRestoration)
+        #expect(restorationStore.record()?.restoration == crepesRestoration)
 
         presenter.kitchenFeatureDidChangeRestoration(nil)
 
@@ -76,7 +76,7 @@ extension AppFeaturePresenterTests {
 
         _ = launch(timers: [runningTimer])
 
-        #expect(restorationStore.restoration() == cookingRestoration)
+        #expect(restorationStore.record()?.restoration == cookingRestoration)
     }
 
     @Test("a restore that never settled is not opened again, even with a timer running")
@@ -106,7 +106,7 @@ extension AppFeaturePresenterTests {
             await Task.yield()
         }
 
-        #expect(restorationStore.restoration() == cookingRestoration)
+        #expect(restorationStore.record()?.restoration == cookingRestoration)
     }
 
     @Test("a restore the kitchen opened stays unsettled until it has been up for a while")
@@ -132,7 +132,7 @@ extension AppFeaturePresenterTests {
             await Task.yield()
         }
 
-        #expect(restorationStore.restoration() == settingsRestoration)
+        #expect(restorationStore.record()?.restoration == settingsRestoration)
     }
 
     @Test("the settings an app quit while it ran had open stay shut")
@@ -154,7 +154,7 @@ extension AppFeaturePresenterTests {
             try makeRecipeRepositoryStore().connectRecipeDirectory(at: URL.temporaryDirectory)
         )
 
-        #expect(restorationStore.restoration() == settingsRestoration)
+        #expect(restorationStore.record()?.restoration == settingsRestoration)
         #expect(restorationStore.record()?.isSettling == false)
     }
 
@@ -187,7 +187,7 @@ extension AppFeaturePresenterTests {
     func storeRoundTrip() {
         restorationStore.update({ $0 = cookingRestoration })
 
-        #expect(restorationStore.restoration() == cookingRestoration)
+        #expect(restorationStore.record()?.restoration == cookingRestoration)
 
         restorationStore.update({ $0.kitchen = nil })
 

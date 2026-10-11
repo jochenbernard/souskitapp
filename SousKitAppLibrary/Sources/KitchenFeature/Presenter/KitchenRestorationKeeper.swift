@@ -28,16 +28,11 @@ final class KitchenRestorationKeeper {
         handler.kitchenFeatureDidChangeRestoration(restoration)
     }
 
-    /// Changes what the kitchen has open for a recipe, or leaves it as it is where another is open.
+    /// Changes what the kitchen has open over its recipe list, or nothing where it is on the list.
     ///
-    /// - Parameters:
-    ///   - recipeID: The id of the recipe the change is for.
-    ///   - change: The change.
-    func update(recipeID: String, _ change: (inout KitchenFeatureRestoration) -> Void) {
-        guard
-            var restoration,
-            restoration.recipeID == recipeID
-        else {
+    /// - Parameter change: The change.
+    func update(_ change: (inout KitchenFeatureRestoration) -> Void) {
+        guard var restoration else {
             return
         }
 

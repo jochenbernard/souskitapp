@@ -37,7 +37,6 @@ public struct RecipeScale: Sendable, Hashable, Codable {
     ///   - value: The number.
     public init(target: ScaleTarget, value: Double) {
         self.target = target
-        // Steps and switched targets land on 1.9000000000000001, which is not a number anyone typed.
-        self.value = (value * 1_000_000.0).rounded() / 1_000_000.0
+        self.value = ScaleNumber.rounded(value)
     }
 }

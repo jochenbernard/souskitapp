@@ -9,7 +9,7 @@ protocol KitchenFeaturePresenterProtocol {
     func didBecomeActive() async
 
     @MainActor
-    func didChangeScreenPath(_ screenPath: [KitchenScreen])
+    func didChangePushedScreen(_ screen: KitchenScreen?)
 
     @MainActor
     func didDismissCooking()
