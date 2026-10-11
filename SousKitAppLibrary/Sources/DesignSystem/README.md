@@ -22,7 +22,7 @@ disagrees with this package, this package is right.
 
 - Every color but the accent is a system color, named at the call site and picked for its role
   rather than its value: `groupedBackground` for a page, `secondaryGroupedBackground` for a row
-  or a card, `tertiaryFill` for a control or a chip, `separator` for a border or a shadow,
+  or a card, `tertiaryFill` for a control or a chip, `separator` for a border,
   `.primary` and `.secondary` for text. Dark comes with them, and nothing reaches for
   `@Environment(\.colorScheme)` to pick a value.
 - A UIKit color is a static on `Color` in `Color+System`, so a call site never writes
@@ -118,8 +118,8 @@ the release haptic off the press.
 A callout draws `.quaternaryAccentFill` inside an accent outline, which is Attention on a
 container, and sets `.accent` on what it holds, so a call site names neither.
 
-A disclosure group takes `.sous` rather than the automatic style, which clips its content, a
-surface's shadow included, and cannot inset its chevron to line up with what is on a surface.
+A disclosure group takes `.sous` rather than the automatic style, which cannot inset its chevron
+to line up with what is on a surface.
 
 ## Adding to it
 

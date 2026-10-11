@@ -12,10 +12,6 @@ extension View {
         background {
             shape
                 .fill(.secondaryGroupedBackground)
-                .shadow(
-                    color: .separator.opacity(0.25),
-                    radius: 12.0
-                )
                 .overlay {
                     shape.sousBorder()
                 }

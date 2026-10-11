@@ -201,7 +201,7 @@ public struct SousCatalog: View {
         CatalogSwatch(
             fill: .separator,
             name: "separator",
-            role: "borders and shadows"
+            role: "borders"
         ),
         CatalogSwatch(
             fill: .primary,
