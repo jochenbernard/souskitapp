@@ -40,6 +40,7 @@ public struct SousNumberField: View {
             label
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
 
             HStack(spacing: SousSpacing.large) {
                 stepButton(
@@ -86,6 +87,8 @@ public struct SousNumberField: View {
             label: { label }
         )
         .labelsHidden()
+        // A text field's own label reaches VoiceOver only as a placeholder, and not at all beside a prompt.
+        .accessibilityLabel(label)
         .keyboardType(.decimalPad)
         .multilineTextAlignment(.center)
         .font(.largeTitle)
