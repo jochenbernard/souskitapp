@@ -101,7 +101,7 @@ public struct AlarmTimerScheduler: TimerScheduler {
             LocalizedStringResource("\(stepTimer.text) for step \(stepTimer.stepNumber)", bundle: bundle)
 
         case .custom:
-            LocalizedStringResource("Custom \(timer.text) timer", bundle: bundle)
+            LocalizedStringResource("\(timer.text) custom timer", bundle: bundle)
         }
 
         return AlarmAttributes(

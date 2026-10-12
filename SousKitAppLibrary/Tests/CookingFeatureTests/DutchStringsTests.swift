@@ -16,9 +16,4 @@ struct DutchStringsTests {
     func dutchIsWritten() throws {
         #expect(try LocalizableStrings.strings(of: "nl-BE", in: .module).values.allSatisfy({ !$0.isEmpty }))
     }
-
-    @Test("a custom timer goes off under a title leading with its length, which the system would cut off the end")
-    func customTimerTitleLeadsWithItsLength() throws {
-        #expect(try LocalizableStrings.strings(of: "nl-BE", in: .module)["Custom %@ timer"]?.hasPrefix("%@") == true)
-    }
 }

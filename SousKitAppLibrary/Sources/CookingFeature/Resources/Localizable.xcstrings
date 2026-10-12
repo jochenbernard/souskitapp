@@ -1,6 +1,23 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ custom timer" : {
+      "comment" : "The title a custom timer goes off under. The system cuts a long title off at its end, so the length comes first.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ custom timer"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (aangepast)"
+          }
+        }
+      }
+    },
     "%@ for step %lld" : {
       "localizations" : {
         "en" : {
@@ -141,23 +158,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aangepast"
-          }
-        }
-      }
-    },
-    "Custom %@ timer" : {
-      "comment" : "The title a custom timer goes off under. The system cuts a long title off at its end, so the length comes early.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Custom %@ timer"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (aangepast)"
           }
         }
       }
