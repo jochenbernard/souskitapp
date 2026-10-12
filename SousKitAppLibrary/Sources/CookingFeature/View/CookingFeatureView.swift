@@ -68,6 +68,8 @@ struct CookingFeatureView: View {
             actions: { allowTimersButtons },
             message: { allowTimersMessage }
         )
+        // VoiceOver stays on a full screen cover under a sheet this low, unless the cover is hidden from it.
+        .accessibilityHidden(viewModel.isAddingTimer)
         .sheet(isPresented: isAddingTimer) {
             newTimerSheet
         }
