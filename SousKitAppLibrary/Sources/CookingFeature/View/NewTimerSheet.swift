@@ -6,6 +6,9 @@ struct NewTimerSheet: View {
     private let presenter: CookingFeaturePresenterProtocol
     private let entry: NewTimerEntry
 
+    // VoiceOver finds nowhere to start while the cooking screen is hidden from it, so the sheet puts it on the number.
+    @AccessibilityFocusState private var isNumberFocused: Bool
+
     init(
         presenter: CookingFeaturePresenterProtocol,
         entry: NewTimerEntry
@@ -32,6 +35,9 @@ struct NewTimerSheet: View {
                 }
             }
         )
+        .onAppear {
+            isNumberFocused = true
+        }
     }
 
     private var number: some View {
@@ -41,6 +47,7 @@ struct NewTimerSheet: View {
             prompt: Text(verbatim: "0"),
             onStep: { presenter.didStepNewTimer(by: $0) }
         )
+        .accessibilityFocused($isNumberFocused)
     }
 
     private var units: some View {
