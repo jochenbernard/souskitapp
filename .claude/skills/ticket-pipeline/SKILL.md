@@ -17,8 +17,10 @@ The orchestrator (you) never writes the fix itself. It sets up each ticket, laun
    git worktree add --no-track -b <branch> ../souskitapp-sou-<n> <base>
    xcrun simctl create "iPhone 18 Pro - SOU-<n>" "iPhone 18 Pro" com.apple.CoreSimulator.SimRuntime.iOS-27-0
    xcrun simctl create "iPad Pro 11-inch (M5) - SOU-<n>" "iPad Pro 11-inch (M5)" com.apple.CoreSimulator.SimRuntime.iOS-27-0
+   <this skill's directory>/mute-simulators.sh <iPhone UDID> <iPad UDID>
    ```
    The agents of one ticket run one after another, so they share its worktree and simulators. Agents of different tickets never share either.
+5. Mute every simulator of the run before its first boot, a verifier's included. `mute-simulators.sh` sends a simulator's sound to a silent virtual output device, so VoiceOver, ringing timers and keyboard clicks stay off the user's speakers. It needs the simulator shut down, and `simctl erase` undoes it. If it finds no such device, tell the user, and have the agents keep VoiceOver off and timers from ringing.
 
 ## 2. Three fresh agents per ticket, in sequence
 
@@ -36,6 +38,7 @@ Agents forget these unless told. Include all of them:
 - Work only in `../souskitapp-sou-<n>`; never touch other worktrees or check out other branches.
 - Review or diff only the branch's own changes: `git diff origin/<base>...HEAD` (three dots). Review tooling defaults to main, so name the base and say not to edit code only the parent branch introduced.
 - Use only the ticket's simulator UDIDs; shut them down and uninstall the app when done.
+- The simulators are muted. Never create or boot another one, and after `simctl erase` shut the simulator down and rerun `mute-simulators.sh` (give its absolute path) before booting it. VoiceOver is read from its cursor and labels; nobody listens to it.
 - Build output and temp files only under `<scratchpad>/sou-<n>-<stage>/`, always with `-derivedDataPath`. The scratchpad is shared.
 - Never kill processes by pattern (`pkill -f`); stop only the PIDs you started.
 - Check every UI, gesture, layout or animation change and finding on the simulator: reproduce on the old code, show it gone on the new with the same script (AXe, `simctl io recordVideo`, ffmpeg per frame; slowed springs or a second AXe process with `--pre-delay` for fast cases). A passing build and tests is not enough.
