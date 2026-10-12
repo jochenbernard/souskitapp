@@ -4,7 +4,6 @@ import Testing
 
 @Suite("Running timers panel kind")
 struct RunningTimersPanelKindTests {
-    // Timers that take 356 points beside steps that keep 340.
     private func kind(_ horizontalSizeClass: UserInterfaceSizeClass?, width: CGFloat) -> RunningTimersPanel.Kind {
         RunningTimersPanel.Kind(
             horizontalSizeClass: horizontalSizeClass,

@@ -21,7 +21,6 @@ struct RunningTimersPanel: UIViewRepresentable {
         /// them on any other.
         ///
         /// - Parameters:
-        ///   - horizontalSizeClass: The screen's horizontal size class.
         ///   - width: How wide the screen is.
         ///   - columnWidth: How much of the width the timers take beside the steps.
         ///   - minimumStepsWidth: The least room the steps keep beside the timers.
