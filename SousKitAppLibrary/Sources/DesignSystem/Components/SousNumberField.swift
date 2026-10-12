@@ -13,6 +13,9 @@ public struct SousNumberField: View {
     // Wide enough for four digits at `.largeTitle`, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var fieldWidth = 148.0
 
+    // Four digits with no room to spare, which the field keeps while the minus and the plus shrink to fit beside it.
+    @ScaledMetric(relativeTo: .largeTitle) private var minFieldWidth = 96.0
+
     // A target big enough to hit with a wet hand, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title3) private var stepDiameter = 48.0
 
@@ -70,13 +73,17 @@ public struct SousNumberField: View {
                 Image(systemName: systemImage)
                     .font(.title3)
                     .foregroundStyle(.accent)
-                    .frame(width: stepDiameter, height: stepDiameter)
+                    .frame(maxWidth: stepDiameter, maxHeight: stepDiameter)
+                    .aspectRatio(1.0, contentMode: .fit)
+                    // As tall as it is wide whatever height it is offered, so a sheet short of room does not shrink it.
+                    .fixedSize(horizontal: false, vertical: true)
                     .background(.tertiaryFill, in: Circle())
             }
         )
         .buttonStyle(.plain)
         .buttonRepeatBehavior(.enabled)
         .accessibilityLabel(Text(label, bundle: .module))
+        .layoutPriority(1.0)
     }
 
     private var field: some View {
@@ -90,7 +97,7 @@ public struct SousNumberField: View {
         .multilineTextAlignment(.center)
         .font(.largeTitle)
         .monospacedDigit()
-        .frame(width: fieldWidth)
+        .frame(minWidth: minFieldWidth, maxWidth: fieldWidth)
         .padding(.vertical, SousSpacing.small)
         .background(.tertiaryFill, in: RoundedRectangle(cornerRadius: SousRadius.medium))
     }
