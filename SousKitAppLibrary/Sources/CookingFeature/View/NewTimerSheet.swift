@@ -45,9 +45,9 @@ struct NewTimerSheet: View {
             entry.unit.name,
             text: Binding(get: { entry.text }, set: { presenter.didChangeNewTimerText($0) }),
             prompt: Text(verbatim: "0"),
+            isFocused: $isNumberFocused,
             onStep: { presenter.didStepNewTimer(by: $0) }
         )
-        .accessibilityFocused($isNumberFocused)
     }
 
     private var units: some View {

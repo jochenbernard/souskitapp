@@ -6,9 +6,13 @@ import SwiftUI
 public struct SousNumberField: View {
     private let label: Text
     private let prompt: Text?
+    private let isFocused: AccessibilityFocusState<Bool>.Binding?
     private let onStep: @MainActor (Double) -> Void
 
     @Binding private var text: String
+
+    // Bound in place of `isFocused` when a caller passes none.
+    @AccessibilityFocusState private var isFieldFocused: Bool
 
     // Wide enough for four digits at `.largeTitle`, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var fieldWidth = 148.0
@@ -22,16 +26,19 @@ public struct SousNumberField: View {
     ///   - label: What the number counts.
     ///   - text: What the field holds, which is not a number until it is typed out.
     ///   - prompt: What an empty field shows, or `nil` for what the number counts.
+    ///   - isFocused: Whether VoiceOver is on the number, set to put it there, or `nil` to leave VoiceOver where it is.
     ///   - onStep: Reports how many steps a tap beside the number takes, which is -1 for the minus and 1 for the plus.
     public init(
         _ label: Text,
         text: Binding<String>,
         prompt: Text? = nil,
+        isFocused: AccessibilityFocusState<Bool>.Binding? = nil,
         onStep: @escaping @MainActor (Double) -> Void
     ) {
         self.label = label
         self._text = text
         self.prompt = prompt
+        self.isFocused = isFocused
         self.onStep = onStep
     }
 
@@ -89,6 +96,7 @@ public struct SousNumberField: View {
         .labelsHidden()
         // A text field's own label reaches VoiceOver only as a placeholder, and not at all beside a prompt.
         .accessibilityLabel(label)
+        .accessibilityFocused(isFocused ?? $isFieldFocused)
         .keyboardType(.decimalPad)
         .multilineTextAlignment(.center)
         .font(.largeTitle)
