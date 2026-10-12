@@ -53,7 +53,7 @@ public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
         .sousPagePadding()
         // As tall as the content needs whatever the detent offers, so the sheet grows where a line starts to wrap.
         .fixedSize(horizontal: false, vertical: true)
-        // Only once the content sits under the bar: earlier layouts are at other widths, where it wraps otherwise.
+        // Only once the content sits under the bar: earlier layouts are at other widths, where it wraps differently.
         .onGeometryChange(
             for: Double?.self,
             of: { $0.safeAreaInsets.top > 0.0 ? $0.size.height : nil },
