@@ -64,10 +64,13 @@ struct CookingFeatureView: View {
             self.width = width
         }
         .runningTimersBlur(motion: motion, isEnabled: isNarrow)
-        .accessibilityHidden(isTimerListOpen)
+        // VoiceOver stays on a full screen cover under a sheet this low, unless the cover is hidden from it.
+        .accessibilityHidden(isTimerListOpen || viewModel.isAddingTimer)
         .sousPage()
         .overlay {
             foldingTimers
+                // Hidden by a modifier of their own, since one around the steps too would undo the steps' own hiding.
+                .accessibilityHidden(viewModel.isAddingTimer)
         }
         .animation(.runningTimers, value: viewModel.runningTimers)
         // Every start is felt, since a timer that joins the stack out of sight shows little of itself.
@@ -78,8 +81,6 @@ struct CookingFeatureView: View {
             actions: { allowTimersButtons },
             message: { allowTimersMessage }
         )
-        // VoiceOver stays on a full screen cover under a sheet this low, unless the cover is hidden from it.
-        .accessibilityHidden(viewModel.isAddingTimer)
         .sheet(isPresented: isAddingTimer) {
             newTimerSheet
         }
