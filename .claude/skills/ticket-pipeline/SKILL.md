@@ -25,7 +25,7 @@ The orchestrator (you) never writes the fix itself. It sets up each ticket, laun
 
 ## 2. Three fresh agents per ticket, in sequence
 
-Tickets run in parallel, at most three agents at a time unless the user sets another number; verifier, fix and merge agents count. More than that and the simulators' input tools stall under the load. The stages of one ticket run one after another. Every stage is a new `general-purpose` agent with no context, for objectivity. Never reuse an agent for a later stage.
+Tickets run in parallel, up to the limit below; the stages of one ticket run one after another. Every stage is a new `general-purpose` agent with no context, for objectivity. Never reuse an agent for a later stage.
 
 1. **Implement:** the ticket's full text, the setup below, what to verify, and permission to commit, push and `gh pr create` (base main or the parent branch, title prefixed with its merge-order number, "stacks on #N" in the body when stacked).
 2. **Simplify:** the prompt starts with `/simplify <branch>`, followed by the operational context.
@@ -34,6 +34,11 @@ Tickets run in parallel, at most three agents at a time unless the user sets ano
 Start the next stage as soon as the previous agent hands back. Relay each report to the user briefly.
 
 Move the ticket to In Review once all three stages are done and pushed, any fix or verifier agent they led to included.
+
+How many run at once:
+- **Reliability limit, the default:** three agents at a time, verifier, fix and merge agents included. Beyond that the simulators' input tools stall and checks have to be rerun.
+- **The user's maximum:** when the user names one ("max 2 at once"), it counts tickets in development. Keep the tickets furthest along, pause the others (see Pause), and start or resume one each time a ticket's whole pipeline is done and it is In Review. A verifier or fix agent takes a ticket's place, not an extra one.
+- **Maximum lifted:** go back to the reliability limit and start what was waiting. Go past it only when the user names a higher number, and say then that five agents stalled the tools.
 
 ## 3. Operational context for every agent prompt
 
