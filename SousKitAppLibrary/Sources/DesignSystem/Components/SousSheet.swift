@@ -11,10 +11,10 @@ public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
     // What the sheet holds, measured as it is laid out, so content that wraps still fits.
     @State private var contentHeight: Double?
 
-    // The toolbar and home indicator, which the sheet cannot measure before its detent applies.
-    @ScaledMetric(relativeTo: .body) private var barHeight = 70.0
+    // The toolbar, which keeps its height at every text size and cannot be measured before the detent applies.
+    private let barHeight = 70.0
 
-    // About as tall as the content comes out, for the one layout before it is measured.
+    // About as tall as the content comes out, for the layouts before it is measured.
     @ScaledMetric(relativeTo: .body) private var estimatedContentHeight = 200.0
 
     /// Creates the sheet.
@@ -51,17 +51,22 @@ public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
             content
         }
         .sousPagePadding()
+        // As tall as the content needs whatever the detent offers, so the sheet grows where a line starts to wrap.
+        .fixedSize(horizontal: false, vertical: true)
+        // Only once the content sits under the bar: earlier layouts are at other widths, where it wraps otherwise.
         .onGeometryChange(
-            for: Double.self,
-            of: { $0.size.height },
-            action: { contentHeight = $0 }
+            for: Double?.self,
+            of: { $0.safeAreaInsets.top > 0.0 ? $0.size.height : nil },
+            action: { contentHeight = $0 ?? contentHeight }
         )
-        // The sheet's own ground, so the page behind it is read through nothing but the sheet.
+        // No taller than the detent offers, so content it cannot hold runs off the bottom and not up under the bar.
         .frame(
             maxWidth: .infinity,
+            minHeight: 0.0,
             maxHeight: .infinity,
             alignment: .top
         )
+        // The sheet's own ground, so the page behind it is read through nothing but the sheet.
         .sousPage()
     }
 
