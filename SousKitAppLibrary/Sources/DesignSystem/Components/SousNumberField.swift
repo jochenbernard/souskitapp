@@ -73,7 +73,12 @@ public struct SousNumberField: View {
                 Image(systemName: systemImage)
                     .font(.title3)
                     .foregroundStyle(.accent)
-                    .frame(maxWidth: stepDiameter, maxHeight: stepDiameter)
+                    .frame(
+                        idealWidth: stepDiameter,
+                        maxWidth: stepDiameter,
+                        idealHeight: stepDiameter,
+                        maxHeight: stepDiameter
+                    )
                     .aspectRatio(1.0, contentMode: .fit)
                     // As tall as it is wide whatever height it is offered, so a sheet short of room does not shrink it.
                     .fixedSize(horizontal: false, vertical: true)
@@ -97,7 +102,11 @@ public struct SousNumberField: View {
         .multilineTextAlignment(.center)
         .font(.largeTitle)
         .monospacedDigit()
-        .frame(minWidth: minFieldWidth, maxWidth: fieldWidth)
+        .frame(
+            minWidth: minFieldWidth,
+            idealWidth: fieldWidth,
+            maxWidth: fieldWidth
+        )
         .padding(.vertical, SousSpacing.small)
         .background(.tertiaryFill, in: RoundedRectangle(cornerRadius: SousRadius.medium))
     }
