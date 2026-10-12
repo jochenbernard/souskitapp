@@ -2,7 +2,8 @@ import SwiftUI
 
 /// A number a cook sets, under what it counts, with a minus and a plus either side of it.
 ///
-/// The minus and the plus repeat while they are held, on the timing the system gives a stepper.
+/// The minus and the plus repeat while they are held, on the timing the system gives a stepper. A number the steps
+/// pause on is announced to VoiceOver.
 public struct SousNumberField: View {
     private let label: Text
     private let prompt: Text?
@@ -15,6 +16,12 @@ public struct SousNumberField: View {
 
     // A target big enough to hit with a wet hand, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title3) private var stepDiameter = 48.0
+
+    // What the field held before the steps not yet announced, or `nil` where none are waiting.
+    @State private var textBeforeSteps: String?
+
+    // Restarts the wait on a step that changes no number, which would otherwise leave typing after it to be announced.
+    @State private var stepCount = 0
 
     /// Creates a field.
     ///
@@ -57,6 +64,10 @@ public struct SousNumberField: View {
                 )
             }
         }
+        // The number follows its step by an update, so the wait for the steps to pause restarts on either.
+        .task(id: [stepCount, text] as [AnyHashable]) {
+            await announceSteps()
+        }
     }
 
     private func stepButton(
@@ -65,7 +76,7 @@ public struct SousNumberField: View {
         label: LocalizedStringKey
     ) -> some View {
         Button(
-            action: { onStep(steps) },
+            action: { step(by: steps) },
             label: {
                 Image(systemName: systemImage)
                     .font(.title3)
@@ -93,6 +104,29 @@ public struct SousNumberField: View {
         .frame(width: fieldWidth)
         .padding(.vertical, SousSpacing.small)
         .background(.tertiaryFill, in: RoundedRectangle(cornerRadius: SousRadius.medium))
+    }
+
+    private func announceSteps() async {
+        // Held, a button steps up to twenty times a second, so only a number the steps pause on is said.
+        guard
+            let textBeforeSteps,
+            (try? await Task.sleep(for: .milliseconds(300))) != nil
+        else {
+            return
+        }
+
+        self.textBeforeSteps = nil
+
+        // A step at either end of the range leaves the number as it is, which is nothing to say.
+        if text != textBeforeSteps {
+            AccessibilityNotification.Announcement(text).post()
+        }
+    }
+
+    private func step(by steps: Double) {
+        textBeforeSteps = textBeforeSteps ?? text
+        stepCount += 1
+        onStep(steps)
     }
 }
 
