@@ -146,6 +146,7 @@
       }
     },
     "Custom %@ timer" : {
+      "comment" : "The title a custom timer goes off under. The system cuts a long title off at its end, so the length comes early.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -156,7 +157,7 @@
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aangepaste timer van %@"
+            "value" : "%@ (aangepast)"
           }
         }
       }
