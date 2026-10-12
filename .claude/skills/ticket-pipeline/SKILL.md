@@ -32,6 +32,8 @@ Tickets run in parallel; the stages of one ticket run one after another. Every s
 
 Start the next stage as soon as the previous agent hands back. Relay each report to the user briefly.
 
+Move the ticket to In Review once all three stages are done and pushed, any fix or verifier agent they led to included.
+
 ## 3. Operational context for every agent prompt
 
 Agents forget these unless told. Include all of them:
