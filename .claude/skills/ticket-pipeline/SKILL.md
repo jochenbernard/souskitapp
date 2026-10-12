@@ -20,7 +20,7 @@ The orchestrator (you) never writes the fix itself. It sets up each ticket, laun
    <this skill's directory>/mute-simulators.sh <iPhone UDID> <iPad UDID>
    ```
    The agents of one ticket run one after another, so they share its worktree and simulators. Agents of different tickets never share either.
-5. Build each base once: the app at the base commit, into `<scratchpad>/shared/<short sha>/`, before the first agent starts. Every agent gets that path as its "before" build and builds only its own change.
+5. Build each base once, before the first agent starts: a `git archive` copy of the base commit, built with `tools/build.sh build` into `<scratchpad>/shared/<short sha>/`, and for a ticket whose checks need running timers a second copy with `tools/patches/apply-standin-timers.sh` into `<scratchpad>/shared/<short sha>-standin/`. Every agent gets those paths as its "before" builds and builds only its own change.
 6. Mute every simulator of the run before its first boot, a verifier's included. `mute-simulators.sh` sends a simulator's sound to a silent virtual output device, so VoiceOver, ringing timers and keyboard clicks stay off the user's speakers. It needs the simulator shut down, and `simctl erase` undoes it. If it finds no such device, tell the user, and have the agents keep VoiceOver off and timers from ringing.
 
 ## 2. Three fresh agents per ticket, in sequence
