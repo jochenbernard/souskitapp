@@ -16,6 +16,24 @@ struct RunningTimersPanel: UIViewRepresentable {
 
         /// A list beside the steps, always open.
         case column
+
+        /// How a screen shows the timers: beside the steps on a wide screen that leaves the steps their room, over
+        /// them on any other.
+        ///
+        /// - Parameters:
+        ///   - horizontalSizeClass: The screen's horizontal size class.
+        ///   - width: How wide the screen is.
+        ///   - columnWidth: How much of the width the timers take beside the steps.
+        ///   - minimumStepsWidth: The least room the steps keep beside the timers.
+        init(
+            horizontalSizeClass: UserInterfaceSizeClass?,
+            width: CGFloat,
+            columnWidth: CGFloat,
+            minimumStepsWidth: CGFloat
+        ) {
+            let hasRoom = horizontalSizeClass == .regular && width - columnWidth >= minimumStepsWidth
+            self = hasRoom ? .column : .folding
+        }
     }
 
     private let presenter: CookingFeaturePresenterProtocol

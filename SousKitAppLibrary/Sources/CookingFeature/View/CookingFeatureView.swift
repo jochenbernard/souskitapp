@@ -12,11 +12,17 @@ struct CookingFeatureView: View {
     // Room for a `.title2` countdown beside its label, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title2) private var sideTimersWidth = 340.0
 
+    // The least room the `.title3` steps keep beside the timers, growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .title3) private var minimumStepsWidth = 340.0
+
     // Where the timers stand between their stack and their list, which the blur behind them and the room the steps
     // keep clear of them follow.
     @State private var motion = RunningTimersMotion()
     @State private var topBarHeight = 0.0
     @State private var areStepsScrolled = false
+
+    // Unbounded until measured, so the size class alone decides where the timers go.
+    @State private var width = CGFloat.infinity
 
     init(
         presenter: CookingFeaturePresenterProtocol,
@@ -52,6 +58,10 @@ struct CookingFeatureView: View {
                 .background {
                     topBarBackground
                 }
+        }
+        // Measured outside the timers beside the steps, which take their room out of what lies inside.
+        .onGeometryChange(for: CGFloat.self, of: \.size.width) { width in
+            self.width = width
         }
         .runningTimersBlur(motion: motion, isEnabled: isNarrow)
         .accessibilityHidden(isTimerListOpen)
@@ -139,7 +149,14 @@ struct CookingFeatureView: View {
     }
 
     private var isNarrow: Bool {
-        horizontalSizeClass != .regular
+        let kind = RunningTimersPanel.Kind(
+            horizontalSizeClass: horizontalSizeClass,
+            width: width,
+            columnWidth: sideTimersWidth + SousSpacing.large,
+            minimumStepsWidth: minimumStepsWidth
+        )
+
+        return kind == .folding
     }
 
     private var isTimerListOpen: Bool {
