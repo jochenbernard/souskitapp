@@ -242,6 +242,8 @@ final class AppFeaturePresenter:
     @MainActor
     private func replaceKitchen(recipeRepository: RecipeRepository) {
         viewModel?.screen = makeScreen(recipeRepository: recipeRepository)
+        // What the replaced kitchen had open is gone with it, and would keep the settings shut on the new one's list.
+        restorationStore.update({ $0.kitchen = nil })
 
         guard let settings = viewModel?.openSettings else {
             return

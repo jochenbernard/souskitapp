@@ -146,6 +146,23 @@ final class AppFeaturePresenterTests {
         #expect(presenter.viewModel?.openSettings != nil)
     }
 
+    @Test("the settings open again from the list of a kitchen put under them while they were open over a recipe")
+    func settingsOpenAfterAKitchenReplacesOneOnARecipe() throws {
+        _ = try makeRecipeRepositoryStore().connectRecipeDirectory(at: URL.temporaryDirectory)
+        restorationStore.update({ $0 = AppRestoration(kitchen: crepesRestoration.kitchen, isShowingSettings: true) })
+        let presenter = launch()
+        presenter.viewDidAppear()
+
+        presenter.settingsFeatureDidSelectRecipeRepositoryKind(.mock)
+
+        #expect(restorationStore.record()?.restoration == settingsRestoration)
+
+        presenter.settingsFeatureDidFinish()
+        presenter.didTapSettings()
+
+        #expect(presenter.viewModel?.openSettings != nil)
+    }
+
     @Test("the kitchen is told the settings are open over it, until they close")
     func settingsCoverTheKitchen() {
         let presenter = launchOnMockRecipes()
