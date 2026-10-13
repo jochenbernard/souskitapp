@@ -110,6 +110,8 @@ struct RunningTimerRow: View {
         .buttonStyle(.glass)
         .buttonBorderShape(.circle)
         .accessibilityLabel(Self.cancelTitle(isRinging: timer.isRinging))
+        // Read after the timer's time, which lies lower than the button where it is under the label.
+        .accessibilitySortPriority(-1.0)
         .confirmationDialog(
             cancelQuestion,
             isPresented: isConfirmingCancelBinding,
