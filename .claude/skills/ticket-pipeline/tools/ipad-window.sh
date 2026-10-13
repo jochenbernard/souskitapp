@@ -31,11 +31,11 @@ window_size() {
     axe describe-ui --udid "$udid" | python3 "$here/frames.py" - --window
 }
 
-# screen_size: "w h" of the screen in points.
+# screen_size: "w h" of the screen in points: the largest display, since a simulator may list another one first.
 screen_size() {
     xcrun simctl io "$udid" enumerate 2> /dev/null | awk -F '[{},:]' '
-        /Pixel Size/ && !width { width = $3; height = $4 }
-        /Preferred UI Scale/ && !scale { scale = $2 }
+        /Pixel Size/ { w = $3; h = $4 }
+        /Preferred UI Scale/ && w * h > area { area = w * h; width = w; height = h; scale = $2 }
         END { printf "%d %d\n", width / scale, height / scale }'
 }
 
