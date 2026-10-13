@@ -71,6 +71,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         closeCooking()
     }
 
+    var recipeFeatureIsCooking: Bool {
+        viewModel.openCooking != nil
+    }
+
     func recipeFeatureDidStartCooking(recipe: Recipe) {
         openCooking(recipe, isResumed: false)
     }

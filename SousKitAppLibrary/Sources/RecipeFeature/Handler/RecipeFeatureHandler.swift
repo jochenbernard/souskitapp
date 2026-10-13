@@ -2,6 +2,10 @@ import SousKit
 
 /// What ``RecipeFeature`` reports to.
 public protocol RecipeFeatureHandler {
+    /// Whether cooking is open over the recipe's screen, which opens nothing of its own under it.
+    @MainActor
+    var recipeFeatureIsCooking: Bool { get }
+
     /// A cook chose to cook the recipe on screen.
     ///
     /// - Parameter recipe: The recipe to cook, at the scale it is on screen at.

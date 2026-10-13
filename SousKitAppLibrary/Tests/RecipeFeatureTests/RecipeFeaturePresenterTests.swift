@@ -202,6 +202,66 @@ struct RecipeFeaturePresenterTests {
     }
 
     @MainActor
+    @Test("tapping cook while the scale sheet is open closes the sheet, with nothing for a cold start to open")
+    func cookingWhileScaling() async {
+        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
+        let handler = RecipeFeatureHandlerSpy()
+        let presenter = makePresenter(
+            viewModel: viewModel,
+            handler: handler,
+            recipeText: crepesText
+        )
+
+        await presenter.viewDidAppear()
+        presenter.didTapScale()
+        presenter.didTapCook()
+
+        #expect(handler.cookedRecipes.count == 1)
+        #expect(!viewModel.isScaling)
+        #expect(handler.restorations.last == RecipeFeatureRestoration(scale: nil, isScaling: false))
+    }
+
+    @MainActor
+    @Test("tapping the scale while cooking is open leaves the sheet closed, with nothing for a cold start to open")
+    func scalingWhileCooking() async {
+        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
+        let handler = RecipeFeatureHandlerSpy()
+        let presenter = makePresenter(
+            viewModel: viewModel,
+            handler: handler,
+            recipeText: crepesText
+        )
+
+        await presenter.viewDidAppear()
+        presenter.didTapCook()
+        handler.recipeFeatureIsCooking = true
+        presenter.didTapScale()
+
+        #expect(!viewModel.isScaling)
+        #expect(handler.restorations.isEmpty)
+    }
+
+    @MainActor
+    @Test("tapping the scale opens the sheet again once cooking is left")
+    func scalingAfterCooking() async {
+        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
+        let handler = RecipeFeatureHandlerSpy()
+        let presenter = makePresenter(
+            viewModel: viewModel,
+            handler: handler,
+            recipeText: crepesText
+        )
+
+        await presenter.viewDidAppear()
+        handler.recipeFeatureIsCooking = true
+        presenter.didTapScale()
+        handler.recipeFeatureIsCooking = false
+        presenter.didTapScale()
+
+        #expect(viewModel.isScaling)
+    }
+
+    @MainActor
     @Test("a recipe that cannot be read reaches the view model as a failure")
     func failureReachesTheViewModel() async {
         let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)

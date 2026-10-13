@@ -72,6 +72,11 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     }
 
     func didTapScale() {
+        // A sheet asked for under cooking, by a press landing after the cook button's, opens once cooking is left.
+        guard !handler.recipeFeatureIsCooking else {
+            return
+        }
+
         viewModel.isScaling = true
         reportRestoration()
     }
@@ -135,6 +140,11 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     func didTapCook() {
         guard case .recipe(let recipe) = viewModel.recipeContent else {
             return
+        }
+
+        // A sheet still asked for under cooking, by a press landing with this one, opens once cooking is left.
+        if viewModel.isScaling {
+            didChangeIsScaling(false)
         }
 
         handler.recipeFeatureDidStartCooking(recipe: recipe.scaled)

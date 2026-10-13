@@ -136,6 +136,25 @@ struct KitchenFeatureStackTests {
     }
 
     @MainActor
+    @Test("the recipe screen is told cooking is open over it, until cooking is exited")
+    func cookingIsOpenUntilExited() {
+        let recipe = parser.parseRecipe("Whisk it.").value
+        let presenter = makePresenter(viewModel: makeViewModel())
+
+        presenter.didChangePushedScreen(.recipe(recipeEntry(named: "crepes")))
+
+        #expect(!presenter.recipeFeatureIsCooking)
+
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+
+        #expect(presenter.recipeFeatureIsCooking)
+
+        presenter.cookingFeatureDidExit()
+
+        #expect(!presenter.recipeFeatureIsCooking)
+    }
+
+    @MainActor
     @Test("cooking reported again while cooking opens nothing new")
     func cookingTwiceOpensOnce() {
         let crepes = recipeEntry(named: "crepes")

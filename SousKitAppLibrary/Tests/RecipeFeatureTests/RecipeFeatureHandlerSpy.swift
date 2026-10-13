@@ -1,8 +1,10 @@
 @testable import RecipeFeature
 import SousKit
 
-/// Records what the recipe feature reports.
+/// Records what the recipe feature reports, with cooking open over it where a test says so.
 final class RecipeFeatureHandlerSpy: RecipeFeatureHandler {
+    var recipeFeatureIsCooking = false
+
     private(set) var cookedRecipes: [Recipe] = []
     private(set) var resumedRecipes: [Recipe] = []
     private(set) var restorations: [RecipeFeatureRestoration] = []
