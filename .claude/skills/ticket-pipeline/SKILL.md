@@ -36,7 +36,7 @@ Start the next stage as soon as the previous agent hands back. Relay each report
 Move the ticket to In Review once all three stages are done and pushed, any fix or verifier agent they led to included.
 
 How many run at once:
-- **Reliability limit, the default:** three agents at a time, verifier, fix and merge agents included. Beyond that the simulators' input tools stall and checks have to be rerun.
+- **Reliability limit, the default:** three agents at a time, verifier, fix and merge agents included, and your own builds and test runs count as one. Beyond that the simulators' input tools stall, simulators shut down mid-run and checks have to be rerun.
 - **The user's maximum:** when the user names one ("max 2 at once"), it counts tickets in development. Keep the tickets furthest along, pause the others (see Pause), and start or resume one each time a ticket's whole pipeline is done and it is In Review. A verifier or fix agent takes a ticket's place, not an extra one.
 - **Maximum lifted:** go back to the reliability limit and start what was waiting. Go past it only when the user names a higher number, and say then that five agents stalled the tools.
 
@@ -53,7 +53,8 @@ Agents forget these unless told. Include all of them:
 - Size the checks to the stage, since checking is where a ticket's hours go:
   - Implement: the states the ticket names plus a core set (text sizes large, accessibility-medium and the largest; one language unless strings change; the second device only where its layout differs).
   - Simplify: none unless an executable line changed.
-  - Review: the full sweep, once (every text size, both languages, both devices, dark, motion frame by frame).
+  - Review: what implement left out, once, in at most five named checks. Text sizes are the smallest, large, accessibility-medium and the largest, not all 12; one language unless strings change; the second device, dark, VoiceOver, restoration, motion frame by frame or a scratch merge with sibling PRs only where the change can affect them.
+  - Every stage: name the checks in the brief, ask for single runs, and give a time budget. What the agent did not get to it lists as "not run" instead of running on.
 - Start from the shared base build and the scripts in `<this skill's directory>/tools/` (give absolute paths); do not rebuild either. A script worth keeping is named in the report, so it can be added there.
 - Temporary instrumentation goes in scratch copies (`git archive`), never in the commit.
 - Build, `swiftlint --strict` on changed files and all tests must pass.
@@ -67,13 +68,14 @@ Agents forget these unless told. Include all of them:
 - **Blocked actions:** if an agent says a permission prompt blocked it and asks you to do it, do not. Show the user the command to run.
 - **Unverified claims:** never pass on "can't be tested" or an unrun finding as fact. Send a verifier agent.
 - **Commit messages:** check them; fix a HEAD message with `--amend` and `--force-with-lease`.
-- **Parent moved:** when a stacked parent changes, update the child by merging the parent's branch (no rebase once reviewed) and re-check on the simulator.
+- **Parent moved:** when a stacked parent changes, update each child by merging the parent's branch (no rebase once reviewed), run the tests and push. Re-check on the simulator only a child whose own change touches the code the parent changed.
+- **Running long:** when a stage passes its budget, message the agent to finish the check it is on, run the few that matter most and list the rest as "not run".
 - **Stalls:** check the worktree, `simctl list devices | grep Booted` and the agent's scratch folder before calling it stuck; never read its transcript file.
 - **Pause:** `TaskStop` every running agent, shut down this run's simulators, note each worktree's state. **Resume:** `SendMessage` each stopped agent to continue, telling it its simulators were shut down.
 
 ## 5. Newly found bugs
 
-1. A suspected bug is only a suspicion. Send a verifier agent (no fixes, no commits) to reproduce it on the simulator, on the branch and on main, in a temporary detached worktree with its own simulators.
+1. A suspected bug is only a suspicion. Send a verifier agent (no fixes, no commits) to answer two questions on the simulator and no more: is it real, and does main have it. It runs the shared base builds on a finished ticket's simulators, or on new muted ones.
 2. Only on the branch: fix it on that branch's PR with a fix agent.
 3. On main too: log a Linear ticket in the same project, labels App and Bug, assigned to the user, in the user's style (first sentence is the point, 1 to 3 sentences, acceptance criteria). Put it in Todo, or start its pipeline right away when the user allowed that and the fix needs no input from them.
 4. Not reproduced, or not visible to a user: no ticket. Say so.
@@ -89,4 +91,4 @@ Agents forget these unless told. Include all of them:
 
 ## 7. Wrap-up
 
-End with a table of PRs (number, ticket, head, base, state), how conflicts were resolved, what to test per PR, Linear changes, and open questions.
+End with a table of PRs (number, ticket, head, base, state), how conflicts were resolved, what to test per PR, the checks each PR's agents listed as not run, Linear changes, and open questions.
