@@ -4,24 +4,34 @@ import SwiftUI
 /// own.
 ///
 /// The button's label shows as its icon alone, which keeps one size at every text size as a toolbar's does, and keeps
-/// its title for VoiceOver.
-struct GlassCircleButtonStyle: ButtonStyle {
+/// its title for VoiceOver. Held at an accessibility text size, the button shows its icon and title enlarged, as a
+/// toolbar's does, and is pressed as the finger lifts from it.
+struct GlassCircleButtonStyle: PrimitiveButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
     /// How wide and tall the button stands, a toolbar button's size.
     nonisolated static let diameter = 44.0
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .labelStyle(.iconOnly)
-            .fontWeight(.medium)
-            // The circle does not grow with the text, so neither does the icon.
-            .dynamicTypeSize(.large)
-            .frame(width: Self.diameter, height: Self.diameter)
-            .contentShape(.circle)
-            .glassEffect(.regular.interactive(), in: .circle)
+        Button(configuration)
+            .buttonStyle(GlassCircleButtonFace())
+            .accessibilityShowsLargeContentViewer {
+                // A close button's own label shows as its title alone unless asked for both.
+                configuration.label
+                    .labelStyle(.titleAndIcon)
+            }
+            // The enlarged label takes the touch from the button, which is then pressed here instead.
+            .gesture(
+                LargeContentRelease(
+                    size: CGSize(width: Self.diameter, height: Self.diameter),
+                    isEnabled: isEnabled,
+                    action: configuration.trigger
+                )
+            )
     }
 }
 
-extension ButtonStyle where Self == GlassCircleButtonStyle {
+extension PrimitiveButtonStyle where Self == GlassCircleButtonStyle {
     /// A button drawn as an icon on a circle of glass. See ``GlassCircleButtonStyle``.
     static var glassCircle: GlassCircleButtonStyle {
         GlassCircleButtonStyle()
