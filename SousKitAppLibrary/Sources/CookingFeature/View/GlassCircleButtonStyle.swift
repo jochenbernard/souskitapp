@@ -16,7 +16,7 @@ struct GlassCircleButtonStyle: PrimitiveButtonStyle {
         Button(configuration)
             .buttonStyle(GlassCircleButtonFace())
             .accessibilityShowsLargeContentViewer {
-                // A close button's own label shows as its title alone unless asked for both.
+                // Without the style, a close button's own label shows as its title alone.
                 configuration.label
                     .labelStyle(.titleAndIcon)
             }

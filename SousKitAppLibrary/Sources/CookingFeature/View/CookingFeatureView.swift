@@ -55,6 +55,7 @@ struct CookingFeatureView: View {
         }
         .runningTimersBlur(motion: motion, isEnabled: isNarrow)
         .accessibilityHidden(isTimerListOpen)
+        // The large content viewer ignores what lies over a button, and would show one held under the open list.
         .allowsHitTesting(!isTimerListOpen)
         .sousPage()
         .overlay {
