@@ -14,7 +14,10 @@ struct CookingFeatureView: View {
 
     // Where the timers stand between their stack and their list, which the blur behind them and the room the steps
     // keep clear of them follow.
-    @State private var motion = RunningTimersMotion()
+    @State private var foldingMotion = RunningTimersMotion()
+
+    // Where they stand beside the steps, kept apart since a panel taken away still writes to its motion afterwards.
+    @State private var columnMotion = RunningTimersMotion()
     @State private var topBarHeight = 0.0
     @State private var areStepsScrolled = false
 
@@ -53,12 +56,13 @@ struct CookingFeatureView: View {
                     topBarBackground
                 }
         }
-        .runningTimersBlur(motion: motion, isEnabled: isNarrow)
+        .runningTimersBlur(motion: foldingMotion, isEnabled: isNarrow)
         .accessibilityHidden(isTimerListOpen)
         .sousPage()
         .overlay {
             foldingTimers
         }
+        .onChange(of: isNarrow, timersLayoutDidChange)
         .animation(.runningTimers, value: viewModel.runningTimers)
         // Every start is felt, since a timer that joins the stack out of sight shows little of itself.
         .sensoryFeedback(.impact(weight: .light), trigger: viewModel.startedTimerCount)
@@ -84,7 +88,7 @@ struct CookingFeatureView: View {
     private var stackRoom: some View {
         if isNarrow {
             Color.clear
-                .frame(height: motion.stackHeight)
+                .frame(height: foldingMotion.stackHeight)
         }
     }
 
@@ -95,7 +99,7 @@ struct CookingFeatureView: View {
             RunningTimersPanel(
                 presenter: presenter,
                 viewModel: viewModel,
-                motion: motion,
+                motion: columnMotion,
                 kind: .column,
                 topInset: 0.0
             )
@@ -117,7 +121,7 @@ struct CookingFeatureView: View {
     @ViewBuilder
     private var topBarBackground: some View {
         if !isNarrow {
-            CookingTopBarBackground(motion: motion, areStepsScrolled: areStepsScrolled)
+            CookingTopBarBackground(motion: columnMotion, areStepsScrolled: areStepsScrolled)
         }
     }
 
@@ -129,10 +133,22 @@ struct CookingFeatureView: View {
             RunningTimersPanel(
                 presenter: presenter,
                 viewModel: viewModel,
-                motion: motion,
+                motion: foldingMotion,
                 kind: .folding,
                 topInset: topBarHeight
             )
+        }
+    }
+
+    // The layout the timers left starts anew once they come back to it, as it would on a launch.
+    private func timersLayoutDidChange(
+        from wasNarrow: Bool,
+        to _: Bool
+    ) {
+        if wasNarrow {
+            foldingMotion = RunningTimersMotion()
+        } else {
+            columnMotion = RunningTimersMotion()
         }
     }
 
