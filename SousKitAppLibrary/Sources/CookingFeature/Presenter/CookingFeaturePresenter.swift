@@ -59,6 +59,10 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
     }
 
     func didTapNewTimer() {
+        guard !isPresenting else {
+            return
+        }
+
         viewModel.newTimer = NewTimerEntry()
         viewModel.isAddingTimer = true
         reportRestoration()
@@ -106,7 +110,7 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         // A ringing timer is over, so silencing it loses nothing worth confirming.
         if timer.isRinging {
             cancel(timer)
-        } else {
+        } else if !isPresenting {
             viewModel.timerConfirmingCancel = timer
         }
     }
@@ -134,6 +138,10 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
     }
 
     func didTapExit() {
+        guard !isPresenting else {
+            return
+        }
+
         viewModel.isConfirmingExit = true
     }
 
@@ -152,6 +160,15 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         handler.cookingFeatureDidExit()
     }
 
+    /// Whether something is open over the screen, which takes one at a time: two opened together show neither.
+    @MainActor
+    private var isPresenting: Bool {
+        viewModel.isAddingTimer
+            || viewModel.isConfirmingExit
+            || viewModel.isAskingToAllowTimers
+            || viewModel.timerConfirmingCancel != nil
+    }
+
     @MainActor
     private func reportRestoration() {
         handler.cookingFeatureDidChangeRestoration(
@@ -168,7 +185,9 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
             try await timerScheduler.start(timer)
             viewModel.startedTimerCount += 1
         } catch TimerSchedulerError.notAuthorized {
-            viewModel.isAskingToAllowTimers = true
+            if !isPresenting {
+                viewModel.isAskingToAllowTimers = true
+            }
         } catch {
             // Nothing starts, which the timers on screen already show.
         }
