@@ -107,10 +107,14 @@ public struct SousNumberField: View {
     }
 
     private func announceSteps() async {
+        // A step as the wait ends gets here before its number does, so it is left to the wait that step restarts.
+        let stepCountBeforeWait = stepCount
+
         // Held, a button steps up to twenty times a second, so only a number the steps pause on is said.
         guard
             let textBeforeSteps,
-            (try? await Task.sleep(for: .milliseconds(300))) != nil
+            (try? await Task.sleep(for: .milliseconds(300))) != nil,
+            stepCount == stepCountBeforeWait
         else {
             return
         }
