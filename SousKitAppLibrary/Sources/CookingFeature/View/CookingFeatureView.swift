@@ -55,6 +55,7 @@ struct CookingFeatureView: View {
         }
         .runningTimersBlur(motion: motion, isEnabled: isNarrow)
         .accessibilityHidden(isTimerListOpen)
+        .allowsHitTesting(!isTimerListOpen)
         .sousPage()
         .overlay {
             foldingTimers
