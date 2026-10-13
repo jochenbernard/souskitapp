@@ -107,14 +107,7 @@ extension RunningTimersPanel {
 
         // Presenting from the content, a confirmation included, takes a place among the screen's view controllers.
         private func attachHostingController() {
-            // Out of the window, the panel lets its place go, or every panel the screen ever showed stays a child.
-            guard scrollView.window != nil else {
-                hostingController.willMove(toParent: nil)
-                hostingController.removeFromParent()
-                return
-            }
-
-            guard hostingController.parent == nil else {
+            guard scrollView.window != nil, hostingController.parent == nil else {
                 return
             }
 
@@ -129,6 +122,12 @@ extension RunningTimersPanel {
 
                 responder = next
             }
+        }
+
+        // A panel taken away lets its place go, or it stays a child of the screen and its content lives on.
+        func detachHostingController() {
+            hostingController.willMove(toParent: nil)
+            hostingController.removeFromParent()
         }
 
         private func regionDidChange(_ size: CGSize) {
