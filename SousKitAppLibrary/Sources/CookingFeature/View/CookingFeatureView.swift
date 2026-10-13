@@ -57,10 +57,13 @@ struct CookingFeatureView: View {
                 }
         }
         .runningTimersBlur(motion: foldingMotion, isEnabled: isNarrow)
-        .accessibilityHidden(isTimerListOpen)
+        // VoiceOver stays on a full screen cover under a sheet this low, unless the cover is hidden from it.
+        .accessibilityHidden(isTimerListOpen || viewModel.isAddingTimer)
         .sousPage()
         .overlay {
             foldingTimers
+                // Hidden by a modifier of their own, since one around the steps too would undo the steps' own hiding.
+                .accessibilityHidden(viewModel.isAddingTimer)
         }
         .onChange(of: isNarrow, timersLayoutDidChange)
         .animation(.runningTimers, value: viewModel.runningTimers)
@@ -72,8 +75,6 @@ struct CookingFeatureView: View {
             actions: { allowTimersButtons },
             message: { allowTimersMessage }
         )
-        // VoiceOver stays on a full screen cover under a sheet this low, unless the cover is hidden from it.
-        .accessibilityHidden(viewModel.isAddingTimer)
         .sheet(isPresented: isAddingTimer) {
             newTimerSheet
         }
