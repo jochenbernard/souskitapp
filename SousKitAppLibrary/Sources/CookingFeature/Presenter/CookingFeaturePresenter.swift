@@ -116,10 +116,8 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         cancel(timer)
     }
 
-    func didChangeIsConfirmingCancelTimer(_ isConfirming: Bool) {
-        if !isConfirming {
-            viewModel.timerConfirmingCancel = nil
-        }
+    func didKeepTimer() {
+        viewModel.timerConfirmingCancel = nil
     }
 
     func didConfirmCancelTimer() {

@@ -142,18 +142,14 @@ struct RunningTimerRow: View {
             Text("Cancel timer", bundle: .module)
         }
 
-        Button(
-            role: .cancel,
-            action: {},
-            label: { Text("Keep timer", bundle: .module) }
-        )
+        Button(role: .cancel, action: presenter.didKeepTimer) {
+            Text("Keep timer", bundle: .module)
+        }
     }
 
+    // Only an answer closes the confirmation, or a timer taken away with its layout closes the next layout's too.
     private var isConfirmingCancelBinding: Binding<Bool> {
-        Binding(
-            get: { isConfirmingCancel },
-            set: { presenter.didChangeIsConfirmingCancelTimer($0) }
-        )
+        .constant(isConfirmingCancel)
     }
 
     private func cancel() {
