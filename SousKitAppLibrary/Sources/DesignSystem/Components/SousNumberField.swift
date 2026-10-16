@@ -36,6 +36,11 @@ public struct SousNumberField: View {
     }
 
     public var body: some View {
+        numberRow
+            .sousScrollsIntoViewWhileTyping(text)
+    }
+
+    private var numberRow: some View {
         VStack(spacing: SousSpacing.small) {
             label
                 .font(.subheadline)
