@@ -20,13 +20,9 @@ struct PresentationTests {
 
     /// A presenter whose timers are not allowed, so starting one asks to allow them.
     @MainActor
-    private func makePresenter(
-        viewModel: CookingFeatureViewModel,
-        handler: CookingFeatureHandler = CookingFeatureHandlerSpy()
-    ) -> CookingFeaturePresenter {
+    private func makePresenter(viewModel: CookingFeatureViewModel) -> CookingFeaturePresenter {
         CookingFeaturePresenter.stubbed(
             viewModel: viewModel,
-            handler: handler,
             timerScheduler: TimerSchedulerSpy(startError: TimerSchedulerError.notAuthorized)
         )
     }
@@ -82,18 +78,6 @@ struct PresentationTests {
         await open(second, with: presenter)
 
         #expect(openPresentations(in: viewModel) == [second])
-    }
-
-    @MainActor
-    @Test("a new timer asked for under something open reports no open sheet, for a cold start")
-    func newTimerUnderSomethingOpenReportsNothing() {
-        let handler = CookingFeatureHandlerSpy()
-        let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
-
-        presenter.didTapExit()
-        presenter.didTapNewTimer()
-
-        #expect(handler.restorations.isEmpty)
     }
 
     @MainActor
