@@ -1,23 +1,15 @@
 import SwiftUI
 
 private struct SousTypingScrollModifier: ViewModifier {
-    let text: String
-
-    // Whether the keyboard types into a field in the view.
-    @FocusState private var isTyping: Bool
+    let keyPresses: Int
 
     @Namespace private var scrollTarget
 
     func body(content: Content) -> some View {
         ScrollViewReader { proxy in
             content
-                .focused($isTyping)
                 .id(scrollTarget)
-                .onChange(of: text) {
-                    guard isTyping else {
-                        return
-                    }
-
+                .onChange(of: keyPresses) {
                     withAnimation(.spring(duration: 0.35, bounce: 0.0)) {
                         proxy.scrollTo(scrollTarget)
                     }
@@ -27,28 +19,34 @@ private struct SousTypingScrollModifier: ViewModifier {
 }
 
 extension View {
-    /// Scrolls this view back into view when what it holds changes while the keyboard types into it, so a cook sees
-    /// what they type.
+    /// Scrolls this view back into view on each key press typed into it, so a cook sees what they type.
     ///
-    /// - Parameter text: What the view holds.
+    /// - Parameter keyPresses: How many key presses the view has taken, counted up on each one.
     /// - Returns: The view, scrolled into view as it is typed into.
-    func sousScrollsIntoViewWhileTyping(_ text: String) -> some View {
-        modifier(SousTypingScrollModifier(text: text))
+    func sousScrollsIntoView(onChangeOf keyPresses: Int) -> some View {
+        modifier(SousTypingScrollModifier(keyPresses: keyPresses))
     }
 }
 
 #Preview("Scrolled into view while typing") {
     @Previewable @State var text = "12"
+    @Previewable @State var keyPresses = 0
 
     ScrollView {
         VStack(spacing: SousSpacing.xLarge) {
             TextField(
-                text: $text,
+                text: Binding(
+                    get: { text },
+                    set: { newText in
+                        keyPresses += 1
+                        text = newText
+                    }
+                ),
                 label: { Text(verbatim: "Servings") }
             )
             .keyboardType(.decimalPad)
             .font(.largeTitle)
-            .sousScrollsIntoViewWhileTyping(text)
+            .sousScrollsIntoView(onChangeOf: keyPresses)
 
             Rectangle()
                 .fill(.tertiaryFill)

@@ -8,6 +8,9 @@ public struct SousNumberField: View {
     private let prompt: Text?
     private let onStep: @MainActor (Double) -> Void
 
+    // Edits typed into the field, which bring it back into view where a step or another control setting it would not.
+    @State private var keyPresses = 0
+
     @Binding private var text: String
 
     // Wide enough for four digits at `.largeTitle`, growing with Dynamic Type.
@@ -37,7 +40,7 @@ public struct SousNumberField: View {
 
     public var body: some View {
         numberRow
-            .sousScrollsIntoViewWhileTyping(text)
+            .sousScrollsIntoView(onChangeOf: keyPresses)
     }
 
     private var numberRow: some View {
@@ -86,7 +89,17 @@ public struct SousNumberField: View {
 
     private var field: some View {
         TextField(
-            text: $text,
+            text: Binding(
+                get: { text },
+                set: { newText in
+                    // A write that keeps the number is no key press.
+                    if newText != text {
+                        keyPresses += 1
+                    }
+
+                    text = newText
+                }
+            ),
             prompt: prompt,
             label: { label }
         )
