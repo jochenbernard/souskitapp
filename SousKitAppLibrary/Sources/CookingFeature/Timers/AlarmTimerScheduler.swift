@@ -5,10 +5,11 @@ import DesignSystem
 public struct AlarmTimerScheduler: TimerScheduler {
     private let startedTimerStore: StartedTimerStore
 
-    /// Creates a scheduler.
+    /// Creates a scheduler, cancelling every timer no record is kept of.
     @MainActor
     public init() {
         self.startedTimerStore = StartedTimerStore()
+        cancelUntrackedTimers()
     }
 
     public func currentRunningTimers() -> [RunningTimer] {
@@ -61,18 +62,31 @@ public struct AlarmTimerScheduler: TimerScheduler {
     }
 
     public func cancel(_ timer: RunningTimer) throws {
-        let manager = AlarmManager.shared
-
         // The alarm itself, since the timer may have started ringing after it was handed over.
-        let alarm = try manager.alarms.first(where: { $0.id == timer.id })
+        let alarm = try AlarmManager.shared.alarms.first(where: { $0.id == timer.id })
 
-        if alarm?.state == .alerting {
-            try manager.stop(id: timer.id)
-        } else {
-            try manager.cancel(id: timer.id)
-        }
-
+        try silence(id: timer.id, isRinging: alarm?.state == .alerting)
         startedTimerStore.remove(id: timer.id)
+    }
+
+    // An alarm whose record is gone still rings, with no screen showing it or able to stop it.
+    @MainActor
+    private func cancelUntrackedTimers() {
+        let alarms = (try? AlarmManager.shared.alarms) ?? []
+        let startedTimers = startedTimerStore.startedTimers()
+
+        for alarm in alarms where startedTimers[alarm.id] == nil {
+            try? silence(id: alarm.id, isRinging: alarm.state == .alerting)
+        }
+    }
+
+    @MainActor
+    private func silence(id: UUID, isRinging: Bool) throws {
+        if isRinging {
+            try AlarmManager.shared.stop(id: id)
+        } else {
+            try AlarmManager.shared.cancel(id: id)
+        }
     }
 
     @MainActor
