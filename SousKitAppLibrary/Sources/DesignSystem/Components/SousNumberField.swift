@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A number a cook sets, under what it counts, with a minus and a plus either side of it.
+/// A number a cook sets, under what it counts, with a minus and a plus that step it.
 ///
 /// The minus and the plus repeat while they are held, on the timing the system gives a stepper.
 public struct SousNumberField: View {
@@ -44,12 +44,13 @@ public struct SousNumberField: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            HStack(spacing: SousSpacing.large) {
+            SousNumberFieldLayout(spacing: SousSpacing.large) {
                 stepButton(
                     -1.0,
                     systemImage: "minus",
                     label: "Less"
                 )
+                .accessibilitySortPriority(2.0)
 
                 field
 
@@ -58,7 +59,11 @@ public struct SousNumberField: View {
                     systemImage: "plus",
                     label: "More"
                 )
+
+                measuredNumber
             }
+            // VoiceOver reads the minus, the field and the plus in that order, also where the field sits above them.
+            .accessibilityElement(children: .contain)
         }
     }
 
@@ -102,13 +107,24 @@ public struct SousNumberField: View {
         .multilineTextAlignment(.center)
         .font(.largeTitle)
         .monospacedDigit()
+        // The layout keeps it to its ideal width in the row and stretches it across a line of its own.
         .frame(
             minWidth: minFieldWidth,
             idealWidth: fieldWidth,
-            maxWidth: fieldWidth
+            maxWidth: .infinity
         )
+        .accessibilitySortPriority(1.0)
         .padding(.vertical, SousSpacing.small)
         .background(.tertiaryFill, in: RoundedRectangle(cornerRadius: SousRadius.medium))
+    }
+
+    // The number as wide as the field sets it, which tells the layout when the row would cut it off.
+    private var measuredNumber: some View {
+        Text(verbatim: text)
+            .font(.largeTitle)
+            .monospacedDigit()
+            .hidden()
+            .accessibilityHidden(true)
     }
 }
 
@@ -126,4 +142,21 @@ public struct SousNumberField: View {
         maxHeight: .infinity
     )
     .sousPage()
+}
+
+#Preview("Number field, too long for its row") {
+    @Previewable @State var text = "1406.25"
+
+    SousNumberField(
+        Text(verbatim: "Yield (ml)"),
+        text: $text,
+        onStep: { text = String((Double(text) ?? 0.0) + $0) }
+    )
+    .sousPagePadding()
+    .frame(
+        maxWidth: .infinity,
+        maxHeight: .infinity
+    )
+    .sousPage()
+    .dynamicTypeSize(.accessibility5)
 }
