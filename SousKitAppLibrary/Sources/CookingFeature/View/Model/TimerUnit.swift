@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// What the number a cook enters for a new timer counts.
-enum TimerUnit: CaseIterable, Hashable, Codable, Sendable {
+enum TimerUnit: CaseIterable, Hashable, Sendable {
     case seconds
     case minutes
     case hours

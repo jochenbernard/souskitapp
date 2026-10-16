@@ -1,7 +1,7 @@
 import Foundation
 
 /// What the new timer sheet holds: a number as typed, and what that number counts.
-struct NewTimerEntry: Hashable, Codable, Sendable {
+struct NewTimerEntry: Equatable, Sendable {
     /// The longest a timer of an entered length runs, in seconds, which is a day.
     private static let longestSeconds = 86_400.0
 
