@@ -73,9 +73,9 @@ public struct AlarmTimerScheduler: TimerScheduler {
     @MainActor
     private func cancelUntrackedTimers() {
         let alarms = (try? AlarmManager.shared.alarms) ?? []
-        let untrackedIDs = Set(startedTimerStore.untracked(alarms.map(\.id)))
+        let startedTimers = startedTimerStore.startedTimers()
 
-        for alarm in alarms where untrackedIDs.contains(alarm.id) {
+        for alarm in alarms where startedTimers[alarm.id] == nil {
             try? silence(id: alarm.id, isRinging: alarm.state == .alerting)
         }
     }

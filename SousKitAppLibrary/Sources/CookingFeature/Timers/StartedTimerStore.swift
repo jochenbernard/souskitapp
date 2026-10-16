@@ -37,16 +37,6 @@ struct StartedTimerStore {
         save(startedTimers)
     }
 
-    /// Picks out the alarms no timer is kept for.
-    ///
-    /// - Parameter ids: The alarms.
-    /// - Returns: The alarms among them with no timer kept.
-    func untracked(_ ids: [UUID]) -> [UUID] {
-        let startedTimers = startedTimers()
-
-        return ids.filter({ startedTimers[$0] == nil })
-    }
-
     /// Forgets the timers over whose alarm is gone.
     ///
     /// - Returns: The timers kept.
