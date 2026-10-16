@@ -64,6 +64,7 @@ public struct SousNumberField: View {
                     label: "More"
                 )
             }
+            .accessibilityElement(children: .contain)
         }
     }
 
@@ -96,6 +97,10 @@ public struct SousNumberField: View {
         .labelsHidden()
         // A text field's own label reaches VoiceOver only as a placeholder, and not at all beside a prompt.
         .accessibilityLabel(label)
+        // An empty field without a prompt would otherwise read its label a second time, as its placeholder.
+        .accessibilityValue(text.isEmpty ? prompt ?? Text(verbatim: "") : Text(verbatim: text))
+        // VoiceOver reaches the number before the minus and the plus that change it.
+        .accessibilitySortPriority(1.0)
         .accessibilityFocused(isFocused ?? $isFieldFocused)
         .keyboardType(.decimalPad)
         .multilineTextAlignment(.center)
