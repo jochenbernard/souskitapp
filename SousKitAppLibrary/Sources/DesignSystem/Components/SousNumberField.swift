@@ -10,13 +10,13 @@ public struct SousNumberField: View {
 
     @Binding private var text: String
 
-    // Wide enough for four digits at `.largeTitle`, growing with Dynamic Type.
+    // Room to spare around a number at `.largeTitle`, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var fieldWidth = 148.0
 
     // Six characters such as 156.25, which the field keeps while the minus and the plus shrink to fit beside it.
     @ScaledMetric(relativeTo: .largeTitle) private var minFieldWidth = 120.0
 
-    // A target big enough to hit with a wet hand, growing with Dynamic Type.
+    // A target big enough to hit with a wet hand where the row has room, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title3) private var stepDiameter = 48.0
 
     /// Creates a field.
