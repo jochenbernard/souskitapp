@@ -34,4 +34,16 @@ final class StartedTimerStoreTests {
         #expect(startedTimers[customID]?.cookingTimer == customTimer.cookingTimer)
         #expect(startedTimers.count == 2)
     }
+
+    @Test("an alarm with no timer kept is picked out to cancel, and one with a timer is not")
+    func untrackedAlarms() {
+        let trackedID = UUID()
+        let untrackedID = UUID()
+        let startedTimer = StartedTimer(cookingTimer: .custom(.seconds(90)), endDate: .now.addingTimeInterval(90.0))
+
+        let store = StartedTimerStore(userDefaults: userDefaults)
+        store.add(startedTimer, id: trackedID)
+
+        #expect(store.untracked([trackedID, untrackedID]) == [untrackedID])
+    }
 }
