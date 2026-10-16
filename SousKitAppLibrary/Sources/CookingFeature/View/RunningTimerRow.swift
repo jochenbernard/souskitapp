@@ -88,7 +88,12 @@ struct RunningTimerRow: View {
                 .fixedSize()
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            countdown
+            // Room for the timer's whole time and for Done, so a timer keeps its shape as it counts down and rings.
+            ZStack(alignment: .trailing) {
+                widestCountdown
+
+                countdown
+            }
         }
     }
 
@@ -130,6 +135,20 @@ struct RunningTimerRow: View {
         }
     }
 
+    /// The widest the timer's time gets, unseen: its whole time, or Done once it rings.
+    private var widestCountdown: some View {
+        ZStack {
+            Text(Duration.seconds(timer.cookingTimer.seconds.rounded(.up)), format: .time(pattern: wholeTimePattern))
+                .monospacedDigit()
+
+            Text("Done", bundle: .module)
+        }
+        .font(.title2.weight(.semibold))
+        .fixedSize()
+        .hidden()
+        .accessibilityHidden(true)
+    }
+
     // Never wrapped, whatever room the timer has: its time is what a cook reads at a glance.
     private var countdown: some View {
         Group {
@@ -151,6 +170,11 @@ struct RunningTimerRow: View {
         case .step(let stepTimer): Text("Step \(stepTimer.stepNumber)", bundle: .module)
         case .custom: Text("Custom", bundle: .module)
         }
+    }
+
+    /// How the timer's countdown shows its whole time, with hours only for a timer of an hour or more.
+    private var wholeTimePattern: Duration.TimeFormatStyle.Pattern {
+        timer.cookingTimer.seconds >= 3_600.0 ? .hourMinuteSecond : .minuteSecond
     }
 
     private var cancelQuestion: Text {
