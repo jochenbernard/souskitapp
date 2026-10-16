@@ -34,19 +34,13 @@ extension View {
 
     ScrollView {
         VStack(spacing: SousSpacing.xLarge) {
-            TextField(
-                text: Binding(
-                    get: { text },
-                    set: { newText in
-                        keyPresses += 1
-                        text = newText
-                    }
-                ),
-                label: { Text(verbatim: "Servings") }
-            )
-            .keyboardType(.decimalPad)
-            .font(.largeTitle)
-            .sousScrollsIntoView(onChangeOf: keyPresses)
+            TextField(text: $text, label: { Text(verbatim: "Servings") })
+                .keyboardType(.decimalPad)
+                .font(.largeTitle)
+                .onChange(of: text) {
+                    keyPresses += 1
+                }
+                .sousScrollsIntoView(onChangeOf: keyPresses)
 
             Rectangle()
                 .fill(.tertiaryFill)
