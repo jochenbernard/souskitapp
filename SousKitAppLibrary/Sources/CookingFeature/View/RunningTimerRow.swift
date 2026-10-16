@@ -88,12 +88,7 @@ struct RunningTimerRow: View {
                 .fixedSize()
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Room for the timer's whole time and for Done, so a timer keeps its shape as it counts down and rings.
-            ZStack(alignment: .trailing) {
-                widestCountdown
-
-                countdown
-            }
+            countdown(reservingWidest: true)
         }
     }
 
@@ -102,7 +97,7 @@ struct RunningTimerRow: View {
         VStack(alignment: .leading, spacing: 0.0) {
             label
 
-            countdown
+            countdown(reservingWidest: false)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -135,23 +130,26 @@ struct RunningTimerRow: View {
         }
     }
 
-    /// The widest the timer's time gets, unseen: its whole time, or Done once it rings.
-    private var widestCountdown: some View {
-        ZStack {
-            Text(Duration.seconds(timer.cookingTimer.seconds.rounded(.up)), format: .time(pattern: wholeTimePattern))
-                .monospacedDigit()
+    /// The timer's time, or Done once it rings.
+    ///
+    /// - Parameter reservingWidest: Whether it takes the room of the timer's whole time and of Done all along.
+    private func countdown(reservingWidest: Bool) -> some View {
+        ZStack(alignment: .trailing) {
+            if reservingWidest {
+                // So a timer keeps its shape as it counts down and rings.
+                Group {
+                    Text(
+                        Duration.seconds(timer.cookingTimer.seconds.rounded(.up)),
+                        format: .time(pattern: wholeTimePattern)
+                    )
+                    .monospacedDigit()
 
-            Text("Done", bundle: .module)
-        }
-        .font(.title2.weight(.semibold))
-        .fixedSize()
-        .hidden()
-        .accessibilityHidden(true)
-    }
+                    Text("Done", bundle: .module)
+                }
+                .hidden()
+                .accessibilityHidden(true)
+            }
 
-    // Never wrapped, whatever room the timer has: its time is what a cook reads at a glance.
-    private var countdown: some View {
-        Group {
             if timer.isRinging {
                 Text("Done", bundle: .module)
                     .foregroundStyle(.accent)
@@ -161,6 +159,7 @@ struct RunningTimerRow: View {
             }
         }
         .font(.title2.weight(.semibold))
+        // Never wrapped, whatever room the timer has: its time is what a cook reads at a glance.
         .fixedSize()
     }
 
