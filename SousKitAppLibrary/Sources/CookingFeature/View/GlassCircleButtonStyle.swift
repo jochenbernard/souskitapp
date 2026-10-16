@@ -3,7 +3,7 @@ import SwiftUI
 /// A button drawn the way a toolbar draws one, as an icon on a circle of glass, for a bar or a list of the screen's
 /// own.
 ///
-/// The button's label shows as its icon alone, which keeps one size at every text size as a toolbar's does, and keeps
+/// The button's label shows as its icon alone, which follows the text size only as far as the circle fits it, and keeps
 /// its title for VoiceOver.
 struct GlassCircleButtonStyle: ButtonStyle {
     /// How wide and tall the button stands, a toolbar button's size.
@@ -13,8 +13,8 @@ struct GlassCircleButtonStyle: ButtonStyle {
         configuration.label
             .labelStyle(.iconOnly)
             .fontWeight(.medium)
-            // The circle does not grow with the text, so neither does the icon.
-            .dynamicTypeSize(.large)
+            // The circle does not grow with the text, and past this size the icon reaches its edge.
+            .dynamicTypeSize(...DynamicTypeSize.accessibility2)
             .frame(width: Self.diameter, height: Self.diameter)
             .contentShape(.circle)
             .glassEffect(.regular.interactive(), in: .circle)
