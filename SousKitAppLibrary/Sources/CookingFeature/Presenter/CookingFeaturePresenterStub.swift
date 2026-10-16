@@ -23,6 +23,8 @@ struct CookingFeaturePresenterStub: CookingFeaturePresenterProtocol {
 
     func didCloseTimerList() {}
 
+    func didFoldTimers() {}
+
     func didTapCancelTimer(_: RunningTimer) {}
 
     func didSwipeAwayTimer(_: RunningTimer) {}

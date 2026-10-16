@@ -106,6 +106,13 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         viewModel.isTimerListOpen = false
     }
 
+    // A confirmation points at its timer's row, and only the open list shows every row.
+    func didFoldTimers() {
+        if viewModel.timerConfirmingCancel != nil, viewModel.canOpenTimerList {
+            viewModel.isTimerListOpen = true
+        }
+    }
+
     func didTapCancelTimer(_ timer: RunningTimer) {
         // A ringing timer is over, so silencing it loses nothing worth confirming.
         if timer.isRinging {

@@ -150,6 +150,7 @@ struct CookingFeatureView: View {
             foldingMotion = RunningTimersMotion()
         } else {
             columnMotion = RunningTimersMotion()
+            presenter.didFoldTimers()
         }
     }
 
