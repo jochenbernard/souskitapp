@@ -13,7 +13,7 @@ struct GlassCircleButtonStyle: ButtonStyle {
         configuration.label
             .labelStyle(.iconOnly)
             .fontWeight(.medium)
-            // The circle does not grow with the text, and past this size the icon reaches its edge.
+            // Past this size the icon reaches the circle's edge.
             .dynamicTypeSize(...DynamicTypeSize.accessibility2)
             .frame(width: Self.diameter, height: Self.diameter)
             .contentShape(.circle)
