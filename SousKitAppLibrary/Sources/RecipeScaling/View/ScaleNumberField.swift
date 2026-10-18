@@ -35,7 +35,6 @@ struct ScaleNumberField: View {
                 systemImage: "minus",
                 label: "Less"
             )
-            .accessibilitySortPriority(2.0)
 
             field
 
@@ -47,7 +46,6 @@ struct ScaleNumberField: View {
 
             measuredNumber
         }
-        // VoiceOver reads the minus, the field and the plus in that order, also where the field sits above them.
         .accessibilityElement(children: .contain)
     }
 
@@ -87,6 +85,12 @@ struct ScaleNumberField: View {
             label: { target.label }
         )
         .labelsHidden()
+        // A text field's own label reaches VoiceOver only as a placeholder.
+        .accessibilityLabel(target.label)
+        // An empty field would otherwise read its label a second time, as its placeholder.
+        .accessibilityValue(Text(verbatim: text))
+        // VoiceOver reaches the number before the minus and the plus that change it.
+        .accessibilitySortPriority(1.0)
         .keyboardType(.decimalPad)
         .multilineTextAlignment(.center)
         .font(.largeTitle)
@@ -97,7 +101,6 @@ struct ScaleNumberField: View {
             idealWidth: fieldWidth,
             maxWidth: .infinity
         )
-        .accessibilitySortPriority(1.0)
         .padding(.vertical, SousSpacing.small)
         .background(.tertiaryFill, in: RoundedRectangle(cornerRadius: SousRadius.medium))
     }
