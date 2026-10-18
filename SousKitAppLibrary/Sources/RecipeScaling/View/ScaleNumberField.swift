@@ -1,7 +1,7 @@
 import DesignSystem
 import SwiftUI
 
-/// The number a cook scales by, with a minus and a plus either side of it.
+/// The number a cook scales by, with a minus and a plus that step it.
 ///
 /// The minus and the plus repeat while they are held, on the timing the system gives a stepper.
 struct ScaleNumberField: View {
@@ -9,10 +9,13 @@ struct ScaleNumberField: View {
     private let target: ScaleTarget
     private let text: String
 
-    // Wide enough for four digits at `.largeTitle`, growing with Dynamic Type.
+    // Room to spare around a number at `.largeTitle`, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var fieldWidth = 148.0
 
-    // A target big enough to hit with a wet hand, growing with Dynamic Type.
+    // Six characters such as 156.25, which the field keeps while the minus and the plus shrink to fit beside it.
+    @ScaledMetric(relativeTo: .largeTitle) private var minFieldWidth = 120.0
+
+    // A target big enough to hit with a wet hand where the row has room, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title3) private var stepDiameter = 48.0
 
     init(
@@ -26,7 +29,7 @@ struct ScaleNumberField: View {
     }
 
     var body: some View {
-        HStack(spacing: SousSpacing.large) {
+        ScaleNumberFieldLayout(spacing: SousSpacing.large) {
             stepButton(
                 -1.0,
                 systemImage: "minus",
@@ -40,6 +43,8 @@ struct ScaleNumberField: View {
                 systemImage: "plus",
                 label: "More"
             )
+
+            measuredNumber
         }
         .accessibilityElement(children: .contain)
     }
@@ -55,13 +60,22 @@ struct ScaleNumberField: View {
                 Image(systemName: systemImage)
                     .font(.title3)
                     .foregroundStyle(.accent)
-                    .frame(width: stepDiameter, height: stepDiameter)
+                    .frame(
+                        idealWidth: stepDiameter,
+                        maxWidth: stepDiameter,
+                        idealHeight: stepDiameter,
+                        maxHeight: stepDiameter
+                    )
+                    .aspectRatio(1.0, contentMode: .fit)
+                    // As tall as it is wide whatever height it is offered, so a sheet short of room does not shrink it.
+                    .fixedSize(horizontal: false, vertical: true)
                     .background(.tertiaryFill, in: Circle())
             }
         )
         .buttonStyle(.plain)
         .buttonRepeatBehavior(.enabled)
         .accessibilityLabel(Text(label, bundle: .module))
+        .layoutPriority(1.0)
     }
 
     private var field: some View {
@@ -81,9 +95,23 @@ struct ScaleNumberField: View {
         .multilineTextAlignment(.center)
         .font(.largeTitle)
         .monospacedDigit()
-        .frame(width: fieldWidth)
+        // The layout keeps it to its ideal width in the row and stretches it across a line of its own.
+        .frame(
+            minWidth: minFieldWidth,
+            idealWidth: fieldWidth,
+            maxWidth: .infinity
+        )
         .padding(.vertical, SousSpacing.small)
         .background(.tertiaryFill, in: RoundedRectangle(cornerRadius: SousRadius.medium))
+    }
+
+    // The number as wide as the field sets it, which tells the layout when the row would cut it off.
+    private var measuredNumber: some View {
+        Text(verbatim: text)
+            .font(.largeTitle)
+            .monospacedDigit()
+            .hidden()
+            .accessibilityHidden(true)
     }
 }
 
@@ -113,4 +141,19 @@ struct ScaleNumberField: View {
         maxHeight: .infinity
     )
     .sousPage()
+}
+
+#Preview("Scale number field, too long for its row") {
+    ScaleNumberField(
+        presenter: ScaleSheetPresenterStub(),
+        target: .yield(unit: "ml"),
+        text: "1406.25"
+    )
+    .sousPagePadding()
+    .frame(
+        maxWidth: .infinity,
+        maxHeight: .infinity
+    )
+    .sousPage()
+    .dynamicTypeSize(.accessibility5)
 }
