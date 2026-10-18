@@ -1,6 +1,6 @@
 /// What the new timer sheet holds: the digits a cook typed, which fill the seconds, then the minutes, then the hours
 /// from the right.
-struct NewTimerEntry: Equatable, Sendable {
+struct NewTimerEntry: Equatable {
     /// The most digits an entry holds, two each for the hours, the minutes and the seconds.
     static let capacity = 6
 
