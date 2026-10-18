@@ -20,7 +20,7 @@ struct NewTimerTests {
     @Test("tapping new timer opens the sheet on an empty entry, whatever the last one held")
     func tappingNewTimerOpensTheSheet() {
         let viewModel = makeViewModel()
-        viewModel.newTimer = NewTimerEntry(text: "8", unit: .hours)
+        viewModel.newTimer = NewTimerEntry(digits: "8")
 
         CookingFeaturePresenter.stubbed(viewModel: viewModel).didTapNewTimer()
 
@@ -29,17 +29,74 @@ struct NewTimerTests {
     }
 
     @MainActor
-    @Test("typing, stepping and choosing a unit change the entry")
-    func enteringALength() {
+    @Test(
+        "keys type their digits after the ones typed before",
+        arguments: [
+            (["5", "2", "0"], "520"),
+            (["4", "5"], "45"),
+            (["1", "3", "00", "0"], "13000"),
+            (["1", "3", "0", "0", "0", "0"], "130000")
+        ]
+    )
+    func typing(keys: [String], digits: String) {
         let viewModel = makeViewModel()
         let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel)
 
         presenter.didTapNewTimer()
-        presenter.didChangeNewTimerText("44")
-        presenter.didStepNewTimer(by: 1.0)
-        presenter.didTapNewTimerUnit(.seconds)
 
-        #expect(viewModel.newTimer == NewTimerEntry(text: "45", unit: .seconds))
+        for key in keys {
+            presenter.didTapNewTimerDigits(key)
+        }
+
+        #expect(viewModel.newTimer == NewTimerEntry(digits: digits))
+    }
+
+    @MainActor
+    @Test("a zero or a double zero typed first types nothing, since it adds nothing to the length")
+    func leadingZeros() {
+        let viewModel = makeViewModel()
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel)
+
+        presenter.didTapNewTimer()
+        presenter.didTapNewTimerDigits("0")
+        presenter.didTapNewTimerDigits("00")
+
+        #expect(viewModel.newTimer == NewTimerEntry())
+    }
+
+    @MainActor
+    @Test("keys type nothing past six digits, and a double zero with one place left types one zero")
+    func typingStopsAtSixDigits() {
+        let viewModel = makeViewModel()
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel)
+
+        presenter.didTapNewTimer()
+
+        for key in ["1", "2", "3", "4", "5", "00", "7"] {
+            presenter.didTapNewTimerDigits(key)
+        }
+
+        #expect(viewModel.newTimer == NewTimerEntry(digits: "123450"))
+    }
+
+    @MainActor
+    @Test("delete takes off the last digit typed, and does nothing once none is left")
+    func deleting() {
+        let viewModel = makeViewModel()
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel)
+
+        presenter.didTapNewTimer()
+        presenter.didTapNewTimerDigits("5")
+        presenter.didTapNewTimerDigits("20")
+        presenter.didTapDeleteNewTimerDigit()
+
+        #expect(viewModel.newTimer == NewTimerEntry(digits: "52"))
+
+        presenter.didTapDeleteNewTimerDigit()
+        presenter.didTapDeleteNewTimerDigit()
+        presenter.didTapDeleteNewTimerDigit()
+
+        #expect(viewModel.newTimer == NewTimerEntry())
     }
 
     @MainActor
@@ -50,7 +107,7 @@ struct NewTimerTests {
         let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
 
         presenter.didTapNewTimer()
-        presenter.didChangeNewTimerText("8")
+        presenter.didTapNewTimerDigits("8")
         presenter.didChangeIsAddingTimer(false)
 
         #expect(!viewModel.isAddingTimer)
@@ -66,11 +123,13 @@ struct NewTimerTests {
         let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
 
         presenter.didTapNewTimer()
-        presenter.didChangeNewTimerText("1,5")
+        presenter.didTapNewTimerDigits("5")
+        presenter.didTapNewTimerDigits("2")
+        presenter.didTapNewTimerDigits("0")
         await presenter.didTapStartNewTimer()
 
         #expect(!viewModel.isAddingTimer)
-        #expect(timerScheduler.startedTimers == [.custom(.seconds(90))])
+        #expect(timerScheduler.startedTimers == [.custom(.seconds(320))])
         #expect(viewModel.startedTimerCount == 1)
     }
 
@@ -96,7 +155,7 @@ struct NewTimerTests {
         let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
 
         presenter.didTapNewTimer()
-        presenter.didChangeNewTimerText("8")
+        presenter.didTapNewTimerDigits("8")
         await presenter.didTapStartNewTimer()
 
         #expect(!viewModel.isAddingTimer)

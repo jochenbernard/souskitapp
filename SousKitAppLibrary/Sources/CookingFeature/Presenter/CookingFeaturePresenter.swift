@@ -68,16 +68,17 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         viewModel.isAddingTimer = isAdding
     }
 
-    func didChangeNewTimerText(_ text: String) {
-        viewModel.newTimer.text = text
+    func didTapNewTimerDigits(_ digits: String) {
+        for digit in digits where viewModel.newTimer.digits.count < NewTimerEntry.capacity {
+            // A zero in front adds nothing to the length.
+            if digit != "0" || !viewModel.newTimer.digits.isEmpty {
+                viewModel.newTimer.digits.append(digit)
+            }
+        }
     }
 
-    func didStepNewTimer(by steps: Double) {
-        viewModel.newTimer = viewModel.newTimer.stepped(by: steps)
-    }
-
-    func didTapNewTimerUnit(_ unit: TimerUnit) {
-        viewModel.newTimer.unit = unit
+    func didTapDeleteNewTimerDigit() {
+        _ = viewModel.newTimer.digits.popLast()
     }
 
     func didTapStartNewTimer() async {
