@@ -59,7 +59,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         }
 
         if restores {
-            restore()
+            resumeCooking()
         }
     }
 
@@ -156,10 +156,10 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
 
     /// Opens cooking again where it was open when the screen was left, now that the recipe it opens over is read.
     @MainActor
-    private func restore() {
+    private func resumeCooking() {
         guard
-            case .recipe(let recipe) = viewModel.recipeContent,
             resumesCooking,
+            case .recipe(let recipe) = viewModel.recipeContent,
             // A file edited down to no steps since has nothing to cook, as its screen offers no button to start.
             !recipe.scaled.steps.isEmpty
         else {
