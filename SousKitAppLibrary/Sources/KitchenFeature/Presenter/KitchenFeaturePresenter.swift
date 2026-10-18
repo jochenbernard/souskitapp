@@ -51,6 +51,17 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func didChangePushedScreen(_ screen: KitchenScreen?) {
+        // A row pressed with the button that opened something over the kitchen pushes nothing under it.
+        guard screen == nil || !handler.kitchenFeatureIsCovered else {
+            return
+        }
+
+        // Back pressed with the cook button leaves cooking its recipe to return to.
+        guard screen != nil || viewModel.openCooking == nil else {
+            pushAgain()
+            return
+        }
+
         // A push builds a fresh feature, so nothing done on a popped screen, such as a scale, comes back.
         let isPush = viewModel.pushedScreen == nil
 
@@ -89,6 +100,15 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
     func cookingFeatureDidChangeRestoration(_ restoration: CookingFeatureRestoration) {
         restorationKeeper.update({ $0.cooking = restoration })
+    }
+
+    /// Writes the pushed screen again, so the stack pushes the recipe it already slid away at once, under cooking.
+    @MainActor
+    private func pushAgain() {
+        let pushedScreen = viewModel.pushedScreen
+
+        viewModel.pushedScreen = nil
+        viewModel.pushedScreen = pushedScreen
     }
 
     /// Builds the feature for a recipe pushed on the stack, or keeps the one a recipe already on it has.
