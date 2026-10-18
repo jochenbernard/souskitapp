@@ -57,6 +57,9 @@ struct NewTimerSheet: View {
         // Stops growing at the first accessibility size, where the keypad still fits under the length on an iPhone.
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .frame(maxWidth: Self.maxWidth)
+        .background {
+            VoiceOverHandoff()
+        }
     }
 
     private var cancelButton: some View {
