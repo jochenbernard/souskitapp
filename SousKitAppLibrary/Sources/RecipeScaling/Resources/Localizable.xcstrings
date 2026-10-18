@@ -52,6 +52,40 @@
         }
       }
     },
+    "Less" : {
+      "comment" : "The minus beside the number a recipe is scaled by.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Less"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minder"
+          }
+        }
+      }
+    },
+    "More" : {
+      "comment" : "The plus beside the number a recipe is scaled by.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meer"
+          }
+        }
+      }
+    },
     "Multiplier" : {
       "comment" : "What a recipe is scaled by where it is multiplied rather than taken to an amount.",
       "localizations" : {

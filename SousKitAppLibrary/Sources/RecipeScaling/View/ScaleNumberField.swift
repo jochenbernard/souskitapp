@@ -1,15 +1,14 @@
+import DesignSystem
 import SwiftUI
 
-/// A number a cook sets, under what it counts, with a minus and a plus either side of it.
+/// The number a cook scales by, with a minus and a plus either side of it.
 ///
 /// The minus and the plus repeat while they are held, on the timing the system gives a stepper. A number the steps
 /// pause on is announced to VoiceOver.
-public struct SousNumberField: View {
-    private let label: Text
-    private let prompt: Text?
-    private let onStep: @MainActor (Double) -> Void
-
-    @Binding private var text: String
+struct ScaleNumberField: View {
+    private let presenter: ScaleSheetPresenterProtocol
+    private let target: ScaleTarget
+    private let text: String
 
     // Wide enough for four digits at `.largeTitle`, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var fieldWidth = 148.0
@@ -23,46 +22,31 @@ public struct SousNumberField: View {
     // Restarts the wait on a step that changes no number, which would otherwise leave typing after it to be announced.
     @State private var stepCount = 0
 
-    /// Creates a field.
-    ///
-    /// - Parameters:
-    ///   - label: What the number counts.
-    ///   - text: What the field holds, which is not a number until it is typed out.
-    ///   - prompt: What an empty field shows, or `nil` for what the number counts.
-    ///   - onStep: Reports how many steps a tap beside the number takes, which is -1 for the minus and 1 for the plus.
-    public init(
-        _ label: Text,
-        text: Binding<String>,
-        prompt: Text? = nil,
-        onStep: @escaping @MainActor (Double) -> Void
+    init(
+        presenter: ScaleSheetPresenterProtocol,
+        target: ScaleTarget,
+        text: String
     ) {
-        self.label = label
-        self._text = text
-        self.prompt = prompt
-        self.onStep = onStep
+        self.presenter = presenter
+        self.target = target
+        self.text = text
     }
 
-    public var body: some View {
-        VStack(spacing: SousSpacing.small) {
-            label
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+    var body: some View {
+        HStack(spacing: SousSpacing.large) {
+            stepButton(
+                -1.0,
+                systemImage: "minus",
+                label: "Less"
+            )
 
-            HStack(spacing: SousSpacing.large) {
-                stepButton(
-                    -1.0,
-                    systemImage: "minus",
-                    label: "Less"
-                )
+            field
 
-                field
-
-                stepButton(
-                    1.0,
-                    systemImage: "plus",
-                    label: "More"
-                )
-            }
+            stepButton(
+                1.0,
+                systemImage: "plus",
+                label: "More"
+            )
         }
         // The number follows its step by an update, so the wait for the steps to pause restarts on either.
         .task(id: [stepCount, text] as [AnyHashable]) {
@@ -92,9 +76,9 @@ public struct SousNumberField: View {
 
     private var field: some View {
         TextField(
-            text: $text,
-            prompt: prompt,
-            label: { label }
+            text: Binding(get: { text }, set: { presenter.didChangeScaleText($0) }),
+            prompt: nil,
+            label: { target.label }
         )
         .labelsHidden()
         .keyboardType(.decimalPad)
@@ -130,18 +114,30 @@ public struct SousNumberField: View {
     private func step(by steps: Double) {
         textBeforeSteps = textBeforeSteps ?? text
         stepCount += 1
-        onStep(steps)
+        presenter.didStepScale(by: steps)
     }
 }
 
-#Preview("Number field") {
-    @Previewable @State var text = "12"
+#Preview("Scale number field") {
+    VStack(spacing: SousSpacing.xLarge) {
+        ScaleNumberField(
+            presenter: ScaleSheetPresenterStub(),
+            target: .servings,
+            text: "12"
+        )
 
-    SousNumberField(
-        Text(verbatim: "Servings"),
-        text: $text,
-        onStep: { text = String((Int(text) ?? 0) + Int($0)) }
-    )
+        ScaleNumberField(
+            presenter: ScaleSheetPresenterStub(),
+            target: .multiplier,
+            text: "2.5"
+        )
+
+        ScaleNumberField(
+            presenter: ScaleSheetPresenterStub(),
+            target: .yield(unit: "kg"),
+            text: "3.6"
+        )
+    }
     .sousPagePadding()
     .frame(
         maxWidth: .infinity,
