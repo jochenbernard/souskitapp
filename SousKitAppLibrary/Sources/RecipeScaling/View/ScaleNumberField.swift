@@ -41,6 +41,7 @@ struct ScaleNumberField: View {
                 label: "More"
             )
         }
+        .accessibilityElement(children: .contain)
     }
 
     private func stepButton(
@@ -70,6 +71,12 @@ struct ScaleNumberField: View {
             label: { target.label }
         )
         .labelsHidden()
+        // A text field's own label reaches VoiceOver only as a placeholder.
+        .accessibilityLabel(target.label)
+        // An empty field would otherwise read its label a second time, as its placeholder.
+        .accessibilityValue(Text(verbatim: text))
+        // VoiceOver reaches the number before the minus and the plus that change it.
+        .accessibilitySortPriority(1.0)
         .keyboardType(.decimalPad)
         .multilineTextAlignment(.center)
         .font(.largeTitle)
