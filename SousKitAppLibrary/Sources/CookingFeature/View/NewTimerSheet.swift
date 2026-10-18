@@ -3,8 +3,9 @@ import SwiftUI
 
 /// The sheet that starts a timer of a length a cook types on its keypad, as on a microwave.
 struct NewTimerSheet: View {
-    /// The widest the length and the keypad stand, so the keys stay a hand's span across on an iPad.
-    private static let maxWidth = 440.0
+    /// The widest the sheet stands, so the keys stay a hand's span across on an iPad and its sides no farther from them
+    /// than its bottom.
+    private static let maxWidth = 472.0
 
     /// The keypad's rows above its last, which holds the double zero, the zero and the delete key.
     private static let digitRows = [["1", "2", "3"], ["4", "5", "6"], ["7", "8", "9"]]
@@ -41,6 +42,7 @@ struct NewTimerSheet: View {
         )
         // Stops growing, bar included, at the first accessibility size, where the keypad still fits on an iPhone.
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+        .presentationSizing(NewTimerSheetSizing(maxWidth: Self.maxWidth))
         .onAppear {
             isLengthFocused = true
         }
@@ -56,7 +58,6 @@ struct NewTimerSheet: View {
 
             keypad
         }
-        .frame(maxWidth: Self.maxWidth)
         .background {
             VoiceOverHandoff()
         }
