@@ -34,40 +34,6 @@
           }
         }
       }
-    },
-    "Less" : {
-      "comment" : "The minus beside a number a cook sets.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Less"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Minder"
-          }
-        }
-      }
-    },
-    "More" : {
-      "comment" : "The plus beside a number a cook sets.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "More"
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Meer"
-          }
-        }
-      }
     }
   },
   "version" : "1.0"
