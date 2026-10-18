@@ -1,17 +1,16 @@
+import DesignSystem
 import SwiftUI
 
-/// A number a cook sets, under what it counts, with a minus and a plus either side of it.
+/// The number a cook scales by, under what it counts, with a minus and a plus either side of it.
 ///
 /// The minus and the plus repeat while they are held, on the timing the system gives a stepper.
-public struct SousNumberField: View {
-    private let label: Text
-    private let prompt: Text?
-    private let onStep: @MainActor (Double) -> Void
+struct ScaleNumberField: View {
+    private let presenter: ScaleSheetPresenterProtocol
+    private let target: ScaleTarget
+    private let text: String
 
-    // Edits typed into the field, which bring it back into view where a step or another control setting it would not.
+    // Edits typed into the field, which bring it back into view where a step or a chip setting it would not.
     @State private var keyPresses = 0
-
-    @Binding private var text: String
 
     // Wide enough for four digits at `.largeTitle`, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var fieldWidth = 148.0
@@ -19,33 +18,24 @@ public struct SousNumberField: View {
     // A target big enough to hit with a wet hand, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title3) private var stepDiameter = 48.0
 
-    /// Creates a field.
-    ///
-    /// - Parameters:
-    ///   - label: What the number counts.
-    ///   - text: What the field holds, which is not a number until it is typed out.
-    ///   - prompt: What an empty field shows, or `nil` for what the number counts.
-    ///   - onStep: Reports how many steps a tap beside the number takes, which is -1 for the minus and 1 for the plus.
-    public init(
-        _ label: Text,
-        text: Binding<String>,
-        prompt: Text? = nil,
-        onStep: @escaping @MainActor (Double) -> Void
+    init(
+        presenter: ScaleSheetPresenterProtocol,
+        target: ScaleTarget,
+        text: String
     ) {
-        self.label = label
-        self._text = text
-        self.prompt = prompt
-        self.onStep = onStep
+        self.presenter = presenter
+        self.target = target
+        self.text = text
     }
 
-    public var body: some View {
+    var body: some View {
         numberRow
-            .sousScrollsIntoView(onChangeOf: keyPresses)
+            .scrollsIntoView(onChangeOf: keyPresses)
     }
 
     private var numberRow: some View {
         VStack(spacing: SousSpacing.small) {
-            label
+            target.label
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
@@ -73,7 +63,7 @@ public struct SousNumberField: View {
         label: LocalizedStringKey
     ) -> some View {
         Button(
-            action: { onStep(steps) },
+            action: { presenter.didStepScale(by: steps) },
             label: {
                 Image(systemName: systemImage)
                     .font(.title3)
@@ -97,11 +87,11 @@ public struct SousNumberField: View {
                         keyPresses += 1
                     }
 
-                    text = newText
+                    presenter.didChangeScaleText(newText)
                 }
             ),
-            prompt: prompt,
-            label: { label }
+            prompt: nil,
+            label: { target.label }
         )
         .labelsHidden()
         .keyboardType(.decimalPad)
@@ -114,14 +104,26 @@ public struct SousNumberField: View {
     }
 }
 
-#Preview("Number field") {
-    @Previewable @State var text = "12"
+#Preview("Scale number field") {
+    VStack(spacing: SousSpacing.xLarge) {
+        ScaleNumberField(
+            presenter: ScaleSheetPresenterStub(),
+            target: .servings,
+            text: "12"
+        )
 
-    SousNumberField(
-        Text(verbatim: "Servings"),
-        text: $text,
-        onStep: { text = String((Int(text) ?? 0) + Int($0)) }
-    )
+        ScaleNumberField(
+            presenter: ScaleSheetPresenterStub(),
+            target: .multiplier,
+            text: "2.5"
+        )
+
+        ScaleNumberField(
+            presenter: ScaleSheetPresenterStub(),
+            target: .yield(unit: "kg"),
+            text: "3.6"
+        )
+    }
     .sousPagePadding()
     .frame(
         maxWidth: .infinity,

@@ -47,10 +47,10 @@ public struct ScaleSheet: View {
 
     private var number: some View {
         VStack(spacing: SousSpacing.small) {
-            SousNumberField(
-                scale.target.label,
-                text: Binding(get: { scale.text }, set: { presenter.didChangeScaleText($0) }),
-                onStep: { presenter.didStepScale(by: $0) }
+            ScaleNumberField(
+                presenter: presenter,
+                target: scale.target,
+                text: scale.text
             )
 
             follows

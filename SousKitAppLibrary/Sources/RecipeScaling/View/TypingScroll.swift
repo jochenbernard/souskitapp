@@ -1,6 +1,7 @@
+import DesignSystem
 import SwiftUI
 
-private struct SousTypingScrollModifier: ViewModifier {
+private struct TypingScroll: ViewModifier {
     let keyPresses: Int
 
     @Namespace private var scrollTarget
@@ -23,8 +24,8 @@ extension View {
     ///
     /// - Parameter keyPresses: How many key presses the view has taken, counted up on each one.
     /// - Returns: The view, scrolled into view as it is typed into.
-    func sousScrollsIntoView(onChangeOf keyPresses: Int) -> some View {
-        modifier(SousTypingScrollModifier(keyPresses: keyPresses))
+    func scrollsIntoView(onChangeOf keyPresses: Int) -> some View {
+        modifier(TypingScroll(keyPresses: keyPresses))
     }
 }
 
@@ -40,7 +41,7 @@ extension View {
                 .onChange(of: text) {
                     keyPresses += 1
                 }
-                .sousScrollsIntoView(onChangeOf: keyPresses)
+                .scrollsIntoView(onChangeOf: keyPresses)
 
             Rectangle()
                 .fill(.tertiaryFill)
