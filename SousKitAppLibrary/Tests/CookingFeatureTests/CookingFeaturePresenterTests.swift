@@ -111,7 +111,7 @@ struct CookingFeaturePresenterTests {
         let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
         await presenter.didTapTimer(StepTimer.stubbed())
 
-        #expect(timerScheduler.startedTimers == [StepTimer.stubbed()])
+        #expect(timerScheduler.startedTimers == [.step(StepTimer.stubbed())])
         #expect(viewModel.startedTimerCount == 1)
     }
 
@@ -215,7 +215,7 @@ struct CookingFeaturePresenterTests {
         let runningTimer = RunningTimer.stubbed()
         let ringingTimer = RunningTimer(
             id: runningTimer.id,
-            stepTimer: runningTimer.stepTimer,
+            cookingTimer: runningTimer.cookingTimer,
             endDate: runningTimer.endDate,
             isRinging: true
         )

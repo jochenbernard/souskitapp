@@ -9,7 +9,7 @@ public struct CookingFeatureFactory: Sendable {
     ///
     /// - Parameters:
     ///   - idleTimer: What keeps the screen on while the cooking screen is up.
-    ///   - timerScheduler: What counts down the timers a cook starts from the steps.
+    ///   - timerScheduler: What counts down the timers a cook starts.
     public init(
         idleTimer: IdleTimer,
         timerScheduler: TimerScheduler

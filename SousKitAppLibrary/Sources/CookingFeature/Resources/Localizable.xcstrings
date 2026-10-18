@@ -1,6 +1,23 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ custom timer" : {
+      "comment" : "The title a custom timer goes off under. The system cuts a long title off at its end, so the length comes first.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ custom timer"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (aangepast)"
+          }
+        }
+      }
+    },
     "%@ for step %lld" : {
       "localizations" : {
         "en" : {
@@ -81,6 +98,22 @@
         }
       }
     },
+    "Cancel the custom %@ timer?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel the custom %@ timer?"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De aangepaste timer van %@ annuleren?"
+          }
+        }
+      }
+    },
     "Cancel timer" : {
       "localizations" : {
         "en" : {
@@ -113,6 +146,39 @@
         }
       }
     },
+    "Custom" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aangepast"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "comment" : "The keypad key that removes the last digit typed, as VoiceOver reads it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wis"
+          }
+        }
+      }
+    },
     "Done" : {
       "localizations" : {
         "en" : {
@@ -125,6 +191,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Klaar"
+          }
+        }
+      }
+    },
+    "Double zero" : {
+      "comment" : "The keypad key that types two zeros, as VoiceOver reads it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double zero"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dubbele nul"
+          }
+        }
+      }
+    },
+    "h" : {
+      "comment" : "Hours, after their number in the length of a new timer.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "h"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "u"
           }
         }
       }
@@ -193,6 +293,39 @@
         }
       }
     },
+    "min" : {
+      "comment" : "Minutes, after their number in the length of a new timer.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "min"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "min"
+          }
+        }
+      }
+    },
+    "New timer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New timer"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nieuwe timer"
+          }
+        }
+      }
+    },
     "Open Settings" : {
       "localizations" : {
         "en" : {
@@ -209,6 +342,23 @@
         }
       }
     },
+    "s" : {
+      "comment" : "Seconds, after their number in the length of a new timer.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "s"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "s"
+          }
+        }
+      }
+    },
     "Show all timers" : {
       "localizations" : {
         "en" : {
@@ -221,6 +371,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle timers tonen"
+          }
+        }
+      }
+    },
+    "Start timer" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start timer"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timer starten"
           }
         }
       }
