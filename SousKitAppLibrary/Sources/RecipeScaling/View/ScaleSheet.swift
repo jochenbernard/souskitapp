@@ -50,6 +50,8 @@ public struct ScaleSheet: View {
             scale.target.label
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                // The number field carries it as its own name.
+                .accessibilityHidden(true)
 
             ScaleNumberField(
                 presenter: presenter,

@@ -22,10 +22,14 @@ struct KitchenFeatureStackTests {
     }
 
     @MainActor
-    private func makePresenter(viewModel: KitchenFeatureViewModel) -> KitchenFeaturePresenter {
+    private func makePresenter(
+        viewModel: KitchenFeatureViewModel,
+        handler: KitchenFeatureHandlerStub = KitchenFeatureHandlerStub()
+    ) -> KitchenFeaturePresenter {
         .stubbed(
             viewModel: viewModel,
-            parser: parser
+            parser: parser,
+            handler: handler
         )
     }
 
@@ -118,6 +122,77 @@ struct KitchenFeatureStackTests {
             presenter.didChangePushedScreen(.recipe(crepes))
         })
         #expect(viewModel.openRecipe?.recipeEntry == crepes)
+    }
+
+    @MainActor
+    @Test("a recipe pushed while something is open over the kitchen stays off the stack, until that closes")
+    func pushingWhileCoveredPushesNothing() {
+        let crepes = recipeEntry(named: "crepes")
+        let viewModel = makeViewModel()
+        let handler = KitchenFeatureHandlerStub()
+        let presenter = makePresenter(
+            viewModel: viewModel,
+            handler: handler
+        )
+
+        handler.kitchenFeatureIsCovered = true
+        presenter.didChangePushedScreen(.recipe(crepes))
+
+        #expect(viewModel.pushedScreen == nil)
+        #expect(viewModel.openRecipe == nil)
+        #expect(handler.restoration == nil)
+
+        handler.kitchenFeatureIsCovered = false
+        presenter.didChangePushedScreen(.recipe(crepes))
+
+        #expect(viewModel.pushedScreen == .recipe(crepes))
+    }
+
+    @MainActor
+    @Test("a pop while cooking is open hands the stack its recipe again, and leaves what a cold start opens again")
+    func poppingWhileCookingKeepsTheRecipe() {
+        let crepes = recipeEntry(named: "crepes")
+        let recipe = parser.parseRecipe("Whisk it.").value
+        let viewModel = makeViewModel()
+        let handler = KitchenFeatureHandlerStub()
+        let presenter = makePresenter(
+            viewModel: viewModel,
+            handler: handler
+        )
+
+        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+        let whileCooking = handler.restoration
+
+        #expect(replaces(\.pushedScreen, in: viewModel) {
+            presenter.didChangePushedScreen(nil)
+        })
+        #expect(viewModel.pushedScreen == .recipe(crepes))
+        #expect(viewModel.openRecipe?.recipeEntry == crepes)
+        #expect(viewModel.openCooking != nil)
+        #expect(whileCooking?.cooking != nil)
+        #expect(handler.restoration == whileCooking)
+    }
+
+    @MainActor
+    @Test("a pop after cooking is exited pops the recipe")
+    func poppingAfterCookingPops() {
+        let recipe = parser.parseRecipe("Whisk it.").value
+        let viewModel = makeViewModel()
+        let handler = KitchenFeatureHandlerStub()
+        let presenter = makePresenter(
+            viewModel: viewModel,
+            handler: handler
+        )
+
+        presenter.didChangePushedScreen(.recipe(recipeEntry(named: "crepes")))
+        presenter.recipeFeatureDidStartCooking(recipe: recipe)
+        presenter.didChangePushedScreen(nil)
+        presenter.cookingFeatureDidExit()
+        presenter.didChangePushedScreen(nil)
+
+        #expect(viewModel.pushedScreen == nil)
+        #expect(handler.restoration == nil)
     }
 
     @MainActor
