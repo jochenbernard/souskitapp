@@ -120,7 +120,7 @@ struct NewTimerSheet: View {
         }
     }
 
-    /// The hours, the minutes or the seconds, with the digits not typed yet faded.
+    /// The hours, the minutes or the seconds, with the digits not typed yet as faint as the units.
     private func lengthPart(_ index: Int, unit: Text) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.hairline) {
             HStack(spacing: 0.0) {
@@ -158,7 +158,7 @@ struct NewTimerSheet: View {
         let isTyped = position >= clockDigits.count - entry.digits.count
 
         return Text(verbatim: String(clockDigits[position]))
-            .foregroundStyle(isTyped ? .primary : .tertiary)
+            .foregroundStyle(isTyped ? .primary : .secondary)
     }
 }
 
