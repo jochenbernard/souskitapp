@@ -83,11 +83,11 @@ struct RunningTimerRow: View {
 
     private var label: some View {
         VStack(alignment: .leading, spacing: 0.0) {
-            Text("Step \(timer.stepTimer.stepNumber)", bundle: .module)
+            source
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            Text(verbatim: timer.stepTimer.text)
+            Text(verbatim: timer.cookingTimer.text)
         }
     }
 
@@ -111,11 +111,29 @@ struct RunningTimerRow: View {
         .buttonBorderShape(.circle)
         .accessibilityLabel(Self.cancelTitle(isRinging: timer.isRinging))
         .confirmationDialog(
-            Text("Cancel the \(timer.stepTimer.text) timer from step \(timer.stepTimer.stepNumber)?", bundle: .module),
+            cancelQuestion,
             isPresented: isConfirmingCancelBinding,
             titleVisibility: .visible,
             actions: { confirmCancelButtons }
         )
+    }
+
+    /// Where the timer comes from: the step naming it, or the cook.
+    private var source: Text {
+        switch timer.cookingTimer {
+        case .step(let stepTimer): Text("Step \(stepTimer.stepNumber)", bundle: .module)
+        case .custom: Text("Custom", bundle: .module)
+        }
+    }
+
+    private var cancelQuestion: Text {
+        switch timer.cookingTimer {
+        case .step(let stepTimer):
+            Text("Cancel the \(stepTimer.text) timer from step \(stepTimer.stepNumber)?", bundle: .module)
+
+        case .custom:
+            Text("Cancel the custom \(timer.cookingTimer.text) timer?", bundle: .module)
+        }
     }
 
     @ViewBuilder

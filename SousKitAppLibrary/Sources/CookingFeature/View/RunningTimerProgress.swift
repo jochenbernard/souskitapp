@@ -37,7 +37,7 @@ struct RunningTimerProgress: View {
     }
 
     private var interval: Double {
-        timer.stepTimer.seconds / Self.steps
+        timer.cookingTimer.seconds / Self.steps
     }
 
     private var isPaused: Bool {

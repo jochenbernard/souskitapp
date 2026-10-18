@@ -13,6 +13,8 @@ final class CookingFeatureViewModel {
     var isTimerListOpen = false
     var timerConfirmingCancel: RunningTimer?
     var isAskingToAllowTimers = false
+    var isAddingTimer = false
+    var newTimer = NewTimerEntry()
 
     nonisolated init(
         recipe: Recipe,

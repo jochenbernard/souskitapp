@@ -52,14 +52,42 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
     }
 
     func didTapTimer(_ timer: StepTimer) async {
-        do {
-            try await timerScheduler.start(timer)
-            viewModel.startedTimerCount += 1
-        } catch TimerSchedulerError.notAuthorized {
-            viewModel.isAskingToAllowTimers = true
-        } catch {
-            // Nothing starts, which the timers on screen already show.
+        await start(.step(timer))
+    }
+
+    func didTapNewTimer() {
+        guard !isPresenting else {
+            return
         }
+
+        viewModel.newTimer = NewTimerEntry()
+        viewModel.isAddingTimer = true
+    }
+
+    func didChangeIsAddingTimer(_ isAdding: Bool) {
+        viewModel.isAddingTimer = isAdding
+    }
+
+    func didTapNewTimerDigits(_ digits: String) {
+        for digit in digits where viewModel.newTimer.digits.count < NewTimerEntry.capacity {
+            // A zero in front adds nothing to the length.
+            if digit != "0" || !viewModel.newTimer.digits.isEmpty {
+                viewModel.newTimer.digits.append(digit)
+            }
+        }
+    }
+
+    func didTapDeleteNewTimerDigit() {
+        _ = viewModel.newTimer.digits.popLast()
+    }
+
+    func didTapStartNewTimer() async {
+        guard let duration = viewModel.newTimer.duration else {
+            return
+        }
+
+        viewModel.isAddingTimer = false
+        await start(.custom(duration))
     }
 
     func didOpenTimerList() {
@@ -74,7 +102,7 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         // A ringing timer is over, so silencing it loses nothing worth confirming.
         if timer.isRinging {
             cancel(timer)
-        } else {
+        } else if !isPresenting {
             viewModel.timerConfirmingCancel = timer
         }
     }
@@ -104,6 +132,10 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
     }
 
     func didTapExit() {
+        guard !isPresenting else {
+            return
+        }
+
         viewModel.isConfirmingExit = true
     }
 
@@ -120,6 +152,29 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         }
 
         handler.cookingFeatureDidExit()
+    }
+
+    /// Whether something is open over the screen, which takes one at a time: two opened together show neither.
+    @MainActor
+    private var isPresenting: Bool {
+        viewModel.isAddingTimer
+            || viewModel.isConfirmingExit
+            || viewModel.isAskingToAllowTimers
+            || viewModel.timerConfirmingCancel != nil
+    }
+
+    @MainActor
+    private func start(_ timer: CookingTimer) async {
+        do {
+            try await timerScheduler.start(timer)
+            viewModel.startedTimerCount += 1
+        } catch TimerSchedulerError.notAuthorized {
+            if !isPresenting {
+                viewModel.isAskingToAllowTimers = true
+            }
+        } catch {
+            // Nothing starts, which the timers on screen already show.
+        }
     }
 
     /// Closes the cancel confirmation of a timer that went off or went away, which leaves nothing to cancel.

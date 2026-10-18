@@ -16,6 +16,7 @@ disagrees with this package, this package is right.
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
 | Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row and its two halves, the rows that share one card, the wash, the chip, the spinner. |
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
+| Sheet | `SousSheet` | The low sheet that sets one thing. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
 
 ## Rules
