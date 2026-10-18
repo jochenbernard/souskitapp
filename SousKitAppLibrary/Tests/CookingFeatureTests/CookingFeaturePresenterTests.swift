@@ -169,14 +169,14 @@ struct CookingFeaturePresenterTests {
     }
 
     @MainActor
-    @Test("keeping the timer closes the confirmation and cancels nothing")
-    func keepingTheTimer() {
+    @Test("dismissing the cancel confirmation cancels nothing")
+    func dismissingTheCancel() {
         let viewModel = makeViewModel()
         let timerScheduler = TimerSchedulerSpy()
         let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
 
         presenter.didTapCancelTimer(RunningTimer.stubbed())
-        presenter.didKeepTimer()
+        presenter.didChangeIsConfirmingCancelTimer(false)
 
         #expect(viewModel.timerConfirmingCancel == nil)
         #expect(timerScheduler.cancelledTimers.isEmpty)

@@ -133,7 +133,6 @@ struct RunningTimersPanelContent: View {
             timer: timer,
             depth: depth,
             width: rowWidth,
-            isConfirmingCancel: timer.id == viewModel.timerConfirmingCancel?.id,
             isListed: kind == .column || isListOpen,
             opensOnTap: kind == .folding && depth == 0 && !isListOpen && viewModel.canOpenTimerList,
             isSwooping: swoop != nil,

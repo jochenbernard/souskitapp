@@ -13,9 +13,9 @@ struct RunningTimerRow: View {
 
     private let presenter: CookingFeaturePresenterProtocol
     private let timer: RunningTimer
-    private let isConfirmingCancel: Bool
     private let contentWidth: CGFloat?
     private let contentFade: RunningTimersMotionFade
+    private let onCancelButtonFrameChange: ((CGRect) -> Void)?
 
     @LineContainerRadius private var radius
 
@@ -24,18 +24,20 @@ struct RunningTimerRow: View {
     ///     fill the box.
     ///   - contentFade: How the timer shows what it is and its time, down to only its box, as it shows stacked
     ///     behind another.
+    ///   - onCancelButtonFrameChange: Reports where the cancel button stands on the screen, which the question
+    ///     whether to cancel the timer points at.
     init(
         presenter: CookingFeaturePresenterProtocol,
         timer: RunningTimer,
-        isConfirmingCancel: Bool,
         contentWidth: CGFloat? = nil,
-        contentFade: RunningTimersMotionFade = .disabled
+        contentFade: RunningTimersMotionFade = .disabled,
+        onCancelButtonFrameChange: ((CGRect) -> Void)? = nil
     ) {
         self.presenter = presenter
         self.timer = timer
-        self.isConfirmingCancel = isConfirmingCancel
         self.contentWidth = contentWidth
         self.contentFade = contentFade
+        self.onCancelButtonFrameChange = onCancelButtonFrameChange
     }
 
     var body: some View {
@@ -110,11 +112,10 @@ struct RunningTimerRow: View {
         .buttonStyle(.glass)
         .buttonBorderShape(.circle)
         .accessibilityLabel(Self.cancelTitle(isRinging: timer.isRinging))
-        .confirmationDialog(
-            cancelQuestion,
-            isPresented: isConfirmingCancelBinding,
-            titleVisibility: .visible,
-            actions: { confirmCancelButtons }
+        .onGeometryChange(
+            for: CGRect.self,
+            of: { $0.frame(in: .global) },
+            action: { frame in onCancelButtonFrameChange?(frame) }
         )
     }
 
@@ -124,32 +125,6 @@ struct RunningTimerRow: View {
         case .step(let stepTimer): Text("Step \(stepTimer.stepNumber)", bundle: .module)
         case .custom: Text("Custom", bundle: .module)
         }
-    }
-
-    private var cancelQuestion: Text {
-        switch timer.cookingTimer {
-        case .step(let stepTimer):
-            Text("Cancel the \(stepTimer.text) timer from step \(stepTimer.stepNumber)?", bundle: .module)
-
-        case .custom:
-            Text("Cancel the custom \(timer.cookingTimer.text) timer?", bundle: .module)
-        }
-    }
-
-    @ViewBuilder
-    private var confirmCancelButtons: some View {
-        Button(role: .destructive, action: presenter.didConfirmCancelTimer) {
-            Text("Cancel timer", bundle: .module)
-        }
-
-        Button(role: .cancel, action: presenter.didKeepTimer) {
-            Text("Keep timer", bundle: .module)
-        }
-    }
-
-    // Only an answer closes the confirmation, or a timer taken away with its layout closes the next layout's too.
-    private var isConfirmingCancelBinding: Binding<Bool> {
-        .constant(isConfirmingCancel)
     }
 
     private func cancel() {
@@ -162,8 +137,7 @@ struct RunningTimerRow: View {
         ForEach(RunningTimersPreview.timers()) { timer in
             RunningTimerRow(
                 presenter: CookingFeaturePresenterStub(),
-                timer: timer,
-                isConfirmingCancel: false
+                timer: timer
             )
         }
     }

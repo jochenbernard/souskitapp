@@ -27,7 +27,7 @@ struct CookingFeaturePresenterStub: CookingFeaturePresenterProtocol {
 
     func didSwipeAwayTimer(_: RunningTimer) {}
 
-    func didKeepTimer() {}
+    func didChangeIsConfirmingCancelTimer(_: Bool) {}
 
     func didConfirmCancelTimer() {}
 

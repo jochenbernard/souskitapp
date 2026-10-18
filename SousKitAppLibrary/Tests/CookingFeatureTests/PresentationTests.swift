@@ -42,7 +42,7 @@ struct PresentationTests {
         switch presentation {
         case .exitConfirmation: presenter.didChangeIsConfirmingExit(false)
         case .newTimerSheet: presenter.didChangeIsAddingTimer(false)
-        case .cancelConfirmation: presenter.didKeepTimer()
+        case .cancelConfirmation: presenter.didChangeIsConfirmingCancelTimer(false)
         case .timersRequest: presenter.didChangeIsAskingToAllowTimers(false)
         }
     }

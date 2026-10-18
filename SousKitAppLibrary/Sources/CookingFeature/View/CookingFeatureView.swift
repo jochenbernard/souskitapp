@@ -75,6 +75,9 @@ struct CookingFeatureView: View {
                 // Hidden by a modifier of their own, since one around the steps too would undo the steps' own hiding.
                 .accessibilityHidden(viewModel.isAddingTimer)
         }
+        .overlay {
+            cancelConfirmation
+        }
         .onChange(of: isNarrow, timersLayoutDidChange)
         .animation(.runningTimers, value: viewModel.runningTimers)
         // Every start is felt, since a timer that joins the stack out of sight shows little of itself.
@@ -149,6 +152,14 @@ struct CookingFeatureView: View {
                 topInset: topBarHeight
             )
         }
+    }
+
+    private var cancelConfirmation: some View {
+        RunningTimerCancelConfirmation(
+            presenter: presenter,
+            timer: viewModel.timerConfirmingCancel,
+            motion: isNarrow ? foldingMotion : columnMotion
+        )
     }
 
     // The layout the timers left starts anew once they come back to it, as it would on a launch.
