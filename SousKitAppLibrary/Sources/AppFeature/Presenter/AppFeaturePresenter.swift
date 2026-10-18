@@ -95,7 +95,8 @@ final class AppFeaturePresenter:
     }
 
     func didTapSettings() {
-        guard viewModel?.openSettings == nil else {
+        // A press landing after a recipe row's opens nothing over the recipe, whose screen has no such button.
+        guard viewModel?.openSettings == nil, restorationStore.record()?.restoration.kitchen == nil else {
             return
         }
 
@@ -118,6 +119,10 @@ final class AppFeaturePresenter:
     func onboardingFeatureDidChooseMockRecipes() {
         recipeRepositoryKindStore.remember(.mock)
         viewModel?.screen = makeScreen()
+    }
+
+    var kitchenFeatureIsCovered: Bool {
+        viewModel?.openSettings != nil
     }
 
     func kitchenFeatureDidChangeRestoration(_ restoration: KitchenFeatureRestoration?) {
@@ -237,6 +242,8 @@ final class AppFeaturePresenter:
     @MainActor
     private func replaceKitchen(recipeRepository: RecipeRepository) {
         viewModel?.screen = makeScreen(recipeRepository: recipeRepository)
+        // What the replaced kitchen had open is gone with it, and would keep the settings shut on the new one's list.
+        restorationStore.update({ $0.kitchen = nil })
 
         guard let settings = viewModel?.openSettings else {
             return
