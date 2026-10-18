@@ -5,7 +5,7 @@ import SwiftUI
 ///
 /// It takes the minus, the field, the plus and the number set in the field's font, in that order. One layout places
 /// both arrangements, so the field is the same view in either and keeps the keyboard when the number outgrows the row.
-struct SousNumberFieldLayout: Layout {
+struct ScaleNumberFieldLayout: Layout {
     // A row that fills the width can come out a rounding error wider than it.
     private static let tolerance = 0.5
 
