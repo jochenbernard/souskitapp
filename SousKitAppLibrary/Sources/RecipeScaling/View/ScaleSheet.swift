@@ -9,15 +9,6 @@ public struct ScaleSheet: View {
     private let presenter: ScaleSheetPresenterProtocol
     private let scale: ScaleDisplay
 
-    // What the sheet holds, measured as it is laid out, so a row of chips that wraps still fits.
-    @State private var contentHeight: Double?
-
-    // The toolbar and home indicator, which the sheet cannot measure before its detent applies.
-    @ScaledMetric(relativeTo: .body) private var barHeight = 70.0
-
-    // About as tall as the content comes out, for the one layout before it is measured.
-    @ScaledMetric(relativeTo: .body) private var estimatedContentHeight = 200.0
-
     /// Creates the sheet.
     ///
     /// - Parameters:
@@ -35,61 +26,23 @@ public struct ScaleSheet: View {
     }
 
     public var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle(title)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        resetButton
-                    }
+        SousSheet(
+            title,
+            content: {
+                number
 
-                    ToolbarItem(placement: .confirmationAction) {
-                        doneButton
-                    }
+                targets
+            },
+            actions: {
+                ToolbarItem(placement: .topBarLeading) {
+                    resetButton
                 }
-        }
-        .presentationDetents([.height(sheetHeight)])
-        .presentationDragIndicator(.hidden)
-    }
 
-    private var sheetHeight: Double {
-        (contentHeight ?? estimatedContentHeight) + barHeight
-    }
-
-    private var content: some View {
-        VStack(spacing: SousSpacing.xLarge) {
-            number
-
-            targets
-        }
-        .sousPagePadding()
-        .onGeometryChange(
-            for: Double.self,
-            of: { $0.size.height },
-            action: { contentHeight = $0 }
+                ToolbarItem(placement: .confirmationAction) {
+                    doneButton
+                }
+            }
         )
-        // The sheet's own ground, so the page behind it is read through nothing but the sheet.
-        .frame(
-            maxWidth: .infinity,
-            maxHeight: .infinity,
-            alignment: .top
-        )
-        .sousPage()
-    }
-
-    private var resetButton: some View {
-        Button(action: presenter.didTapReset) {
-            Label(
-                title: { Text("Reset", bundle: .module) },
-                icon: { Image(systemName: "arrow.counterclockwise") }
-            )
-        }
-        .disabled(scale.isDefault)
-    }
-
-    private var doneButton: some View {
-        Button(role: .confirm, action: { presenter.didChangeIsScaling(false) })
     }
 
     private var number: some View {
@@ -118,6 +71,20 @@ public struct ScaleSheet: View {
                 }
             }
         }
+    }
+
+    private var resetButton: some View {
+        Button(action: presenter.didTapReset) {
+            Label(
+                title: { Text("Reset", bundle: .module) },
+                icon: { Image(systemName: "arrow.counterclockwise") }
+            )
+        }
+        .disabled(scale.isDefault)
+    }
+
+    private var doneButton: some View {
+        Button(role: .confirm, action: { presenter.didChangeIsScaling(false) })
     }
 
     /// What the number comes to on the other targets, which a cook reads rather than sets.

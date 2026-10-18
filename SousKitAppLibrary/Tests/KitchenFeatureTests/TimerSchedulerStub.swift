@@ -15,7 +15,7 @@ struct TimerSchedulerStub: TimerScheduler {
         }
     }
 
-    func start(_: StepTimer) {}
+    func start(_: CookingTimer) {}
 
     func cancel(_: RunningTimer) {}
 }

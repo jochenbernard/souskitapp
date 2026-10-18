@@ -9,7 +9,7 @@ struct CookingFeatureView: View {
     private let presenter: CookingFeaturePresenterProtocol
     private let viewModel: CookingFeatureViewModel
 
-    // Room for a `.title2` countdown beside its step, growing with Dynamic Type.
+    // Room for a `.title2` countdown beside its label, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title2) private var sideTimersWidth = 340.0
 
     // Where the timers stand between their stack and their list, which the blur behind them and the room the steps
@@ -54,10 +54,13 @@ struct CookingFeatureView: View {
                 }
         }
         .runningTimersBlur(motion: motion, isEnabled: isNarrow)
-        .accessibilityHidden(isTimerListOpen)
+        // VoiceOver stays on a full screen cover under a sheet this low, unless the cover is hidden from it.
+        .accessibilityHidden(isTimerListOpen || viewModel.isAddingTimer)
         .sousPage()
         .overlay {
             foldingTimers
+                // Hidden by a modifier of their own, since one around the steps too would undo the steps' own hiding.
+                .accessibilityHidden(viewModel.isAddingTimer)
         }
         .animation(.runningTimers, value: viewModel.runningTimers)
         // Every start is felt, since a timer that joins the stack out of sight shows little of itself.
@@ -68,6 +71,9 @@ struct CookingFeatureView: View {
             actions: { allowTimersButtons },
             message: { allowTimersMessage }
         )
+        .sheet(isPresented: isAddingTimer) {
+            newTimerSheet
+        }
         .task {
             await presenter.viewDidAppear()
         }
@@ -163,6 +169,17 @@ struct CookingFeatureView: View {
         Binding(
             get: { viewModel.isAskingToAllowTimers },
             set: { presenter.didChangeIsAskingToAllowTimers($0) }
+        )
+    }
+
+    private var newTimerSheet: some View {
+        NewTimerSheet(presenter: presenter, entry: viewModel.newTimer)
+    }
+
+    private var isAddingTimer: Binding<Bool> {
+        Binding(
+            get: { viewModel.isAddingTimer },
+            set: { presenter.didChangeIsAddingTimer($0) }
         )
     }
 

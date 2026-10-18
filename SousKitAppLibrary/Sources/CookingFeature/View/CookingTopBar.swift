@@ -1,7 +1,7 @@
 import DesignSystem
 import SwiftUI
 
-/// The cooking screen's bar: the way out, and the recipe's title.
+/// The cooking screen's bar: the way out, the recipe's title, and the way to a new timer.
 struct CookingTopBar: View {
     private let presenter: CookingFeaturePresenterProtocol
     private let title: String
@@ -18,13 +18,15 @@ struct CookingTopBar: View {
     }
 
     var body: some View {
-        exitButton
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .overlay {
-                titleText
-            }
-            .padding(.horizontal, SousSpacing.large)
-            .padding(.bottom, SousSpacing.small)
+        HStack(spacing: SousSpacing.large) {
+            exitButton
+
+            titleText
+
+            newTimerButton
+        }
+        .padding(.horizontal, SousSpacing.large)
+        .padding(.bottom, SousSpacing.small)
     }
 
     private var exitButton: some View {
@@ -49,9 +51,18 @@ struct CookingTopBar: View {
         Text(verbatim: title)
             .font(.headline)
             .lineLimit(1)
-            // Clear of the exit button, and as far from the other side, so the title stays centred.
-            .padding(.horizontal, SousSpacing.page)
+            .frame(maxWidth: .infinity)
             .accessibilityAddTraits(.isHeader)
+    }
+
+    private var newTimerButton: some View {
+        Button(action: presenter.didTapNewTimer) {
+            Label(
+                title: { Text("New timer", bundle: .module) },
+                icon: { Image(systemName: "timer") }
+            )
+        }
+        .buttonStyle(.glassCircle)
     }
 
     private var isConfirmingExitBinding: Binding<Bool> {

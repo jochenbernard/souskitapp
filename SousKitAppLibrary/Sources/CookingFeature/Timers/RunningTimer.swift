@@ -5,8 +5,8 @@ public struct RunningTimer: Identifiable, Hashable, Sendable {
     /// Identifies the timer.
     public let id: UUID
 
-    /// The step's timer this one was started from.
-    public let stepTimer: StepTimer
+    /// The timer this one was started from.
+    public let cookingTimer: CookingTimer
 
     /// When the timer is over.
     public let endDate: Date
@@ -16,16 +16,16 @@ public struct RunningTimer: Identifiable, Hashable, Sendable {
 
     /// When the timer started.
     var startDate: Date {
-        endDate.addingTimeInterval(-stepTimer.seconds)
+        endDate.addingTimeInterval(-cookingTimer.seconds)
     }
 
     /// How much of the timer's time has run out by a date, from 0 when it starts to 1 once it is over.
     func fractionElapsed(at date: Date) -> Double {
-        guard !isRinging, stepTimer.seconds > 0.0 else {
+        guard !isRinging, cookingTimer.seconds > 0.0 else {
             return 1.0
         }
 
         let secondsLeft = endDate.timeIntervalSince(date)
-        return (1.0 - secondsLeft / stepTimer.seconds).clamped(to: 0.0...1.0)
+        return (1.0 - secondsLeft / cookingTimer.seconds).clamped(to: 0.0...1.0)
     }
 }
