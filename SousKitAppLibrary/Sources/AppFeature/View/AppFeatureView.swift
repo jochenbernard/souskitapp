@@ -55,13 +55,17 @@ struct AppFeatureView: View {
             onboardingFeature.makeView()
 
         case .kitchen(let kitchenFeature, _):
-            NavigationStack {
+            NavigationStack(path: kitchenFeature.path) {
                 kitchenFeature.makeView()
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             SettingsButton(action: presenter.didTapSettings)
                         }
                     }
+            }
+            // The recipe a cold start opens again is there at once, rather than pushed over a list never shown.
+            .transaction(value: kitchenFeature.isRestoring) { transaction in
+                transaction.disablesAnimations = true
             }
         }
     }
