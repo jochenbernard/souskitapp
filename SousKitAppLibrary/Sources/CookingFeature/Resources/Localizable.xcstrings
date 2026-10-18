@@ -162,6 +162,23 @@
         }
       }
     },
+    "Delete" : {
+      "comment" : "The keypad key that removes the last digit typed, as VoiceOver reads it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wis"
+          }
+        }
+      }
+    },
     "Done" : {
       "localizations" : {
         "en" : {
@@ -178,18 +195,36 @@
         }
       }
     },
-    "Hours" : {
+    "Double zero" : {
+      "comment" : "The keypad key that types two zeros, as VoiceOver reads it.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hours"
+            "value" : "Double zero"
           }
         },
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uren"
+            "value" : "Dubbele nul"
+          }
+        }
+      }
+    },
+    "h" : {
+      "comment" : "Hours, after their number in the length of a new timer.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "h"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "u"
           }
         }
       }
@@ -258,18 +293,19 @@
         }
       }
     },
-    "Minutes" : {
+    "min" : {
+      "comment" : "Minutes, after their number in the length of a new timer.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Minutes"
+            "value" : "min"
           }
         },
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Minuten"
+            "value" : "min"
           }
         }
       }
@@ -306,18 +342,19 @@
         }
       }
     },
-    "Seconds" : {
+    "s" : {
+      "comment" : "Seconds, after their number in the length of a new timer.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Seconds"
+            "value" : "s"
           }
         },
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Seconden"
+            "value" : "s"
           }
         }
       }
