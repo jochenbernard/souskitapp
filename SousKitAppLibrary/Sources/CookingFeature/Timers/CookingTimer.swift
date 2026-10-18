@@ -9,7 +9,7 @@ public enum CookingTimer: Hashable, Codable, Sendable {
     case custom(Duration)
 
     /// The language the screen is written in, which is the one it reads a length of time in.
-    private static let displayLocale = Locale(
+    static let displayLocale = Locale(
         identifier: Bundle.module.preferredLocalizations.first ?? "en"
     )
 
