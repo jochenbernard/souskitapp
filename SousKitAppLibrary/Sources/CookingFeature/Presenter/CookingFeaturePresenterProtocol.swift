@@ -19,13 +19,10 @@ protocol CookingFeaturePresenterProtocol {
     func didChangeIsAddingTimer(_ isAdding: Bool)
 
     @MainActor
-    func didChangeNewTimerText(_ text: String)
+    func didTapNewTimerDigits(_ digits: String)
 
     @MainActor
-    func didStepNewTimer(by steps: Double)
-
-    @MainActor
-    func didTapNewTimerUnit(_ unit: TimerUnit)
+    func didTapDeleteNewTimerDigit()
 
     @MainActor
     func didTapStartNewTimer() async
