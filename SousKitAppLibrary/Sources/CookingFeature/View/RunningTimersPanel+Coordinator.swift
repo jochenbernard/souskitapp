@@ -84,7 +84,6 @@ extension RunningTimersPanel {
             )
             scrollView.isHittable = { [weak self] point in self?.isHittable(point) ?? true }
             scrollView.onSizeChange = { [weak self] size in self?.regionDidChange(size) }
-            scrollView.onWindowChange = { [weak self] in self?.attachHostingController() }
 
             hostingController.view.backgroundColor = .clear
             hostingController.safeAreaRegions = []
@@ -103,31 +102,6 @@ extension RunningTimersPanel {
                 onContentHeightChange: { [weak self] height in self?.scrolling.contentHeightDidChange(height) },
                 onListOpenChange: { [weak self] isOpen in self?.listOpenDidChange(isOpen) ?? 0.0 }
             )
-        }
-
-        // Presenting from the content, a confirmation included, takes a place among the screen's view controllers.
-        private func attachHostingController() {
-            guard scrollView.window != nil, hostingController.parent == nil else {
-                return
-            }
-
-            var responder: UIResponder? = scrollView
-
-            while let next = responder?.next {
-                if let parent = next as? UIViewController {
-                    parent.addChild(hostingController)
-                    hostingController.didMove(toParent: parent)
-                    return
-                }
-
-                responder = next
-            }
-        }
-
-        // A panel taken away lets its place go, or it stays a child of the screen and its content lives on.
-        func detachHostingController() {
-            hostingController.willMove(toParent: nil)
-            hostingController.removeFromParent()
         }
 
         private func regionDidChange(_ size: CGSize) {

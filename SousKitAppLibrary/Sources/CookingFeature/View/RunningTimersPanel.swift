@@ -76,10 +76,6 @@ struct RunningTimersPanel: UIViewRepresentable {
         context.coordinator.topInset = topInset
     }
 
-    static func dismantleUIView(_: RunningTimersScrollView, coordinator: Coordinator) {
-        coordinator.detachHostingController()
-    }
-
     func sizeThatFits(
         _ proposal: ProposedViewSize,
         uiView _: RunningTimersScrollView,

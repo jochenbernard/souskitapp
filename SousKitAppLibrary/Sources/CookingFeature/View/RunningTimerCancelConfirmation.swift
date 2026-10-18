@@ -3,8 +3,7 @@ import SwiftUI
 
 /// The question whether to cancel a running timer, pointing at the timer's cancel button.
 ///
-/// The screen asks it rather than the timer's row, which a switch of the layout takes away and builds anew: a
-/// question of each row's own would close and open again on every switch, and fail to open while the last one closes.
+/// The screen asks it rather than the timer's row, since a switch of the layout builds the rows anew.
 struct RunningTimerCancelConfirmation: View {
     private let presenter: CookingFeaturePresenterProtocol
     private let timer: RunningTimer?
