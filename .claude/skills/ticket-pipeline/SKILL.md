@@ -11,18 +11,21 @@ The orchestrator (you) never writes the fix itself. It sets up each ticket, laun
 
 1. Read the tickets with the Linear tools (`list_issues` by project and state, `get_issue`). Use the ticket's `gitBranchName` as the branch.
 2. Move each ticket to In Progress before its first agent starts.
-3. Pick the base: `origin/main`, or the branch of an open PR when the fix builds on that PR's unmerged code (ask the user once if it is a judgement call). A stacked PR targets its parent's branch.
+3. Pick the base: `origin/main` wherever the fix can be built there. When it needs an open PR's unmerged code, ask the user first whether that PR can merge now, and stack only if not: every later change to a parent has to be merged into each child and checked again. A stacked PR targets its parent's branch.
 4. Create a worktree and two simulators per ticket:
    ```
    git worktree add --no-track -b <branch> ../souskitapp-sou-<n> <base>
    xcrun simctl create "iPhone 18 Pro - SOU-<n>" "iPhone 18 Pro" com.apple.CoreSimulator.SimRuntime.iOS-27-0
    xcrun simctl create "iPad Pro 11-inch (M5) - SOU-<n>" "iPad Pro 11-inch (M5)" com.apple.CoreSimulator.SimRuntime.iOS-27-0
+   <this skill's directory>/mute-simulators.sh <iPhone UDID> <iPad UDID>
    ```
    The agents of one ticket run one after another, so they share its worktree and simulators. Agents of different tickets never share either.
+5. Build each base once, before the first agent starts: a `git archive` copy of the base commit, built with `tools/build.sh build` into `<scratchpad>/shared/<short sha>/`, and for a ticket whose checks need running timers a second copy with `tools/patches/apply-standin-timers.sh` into `<scratchpad>/shared/<short sha>-standin/`. Every agent gets those paths as its "before" builds and builds only its own change.
+6. Mute every simulator of the run before its first boot, a verifier's included. `mute-simulators.sh` sends a simulator's sound to a silent virtual output device, so VoiceOver, ringing timers and keyboard clicks stay off the user's speakers. It needs the simulator shut down, and `simctl erase` undoes it. If it finds no such device, tell the user, and have the agents keep VoiceOver off and timers from ringing.
 
 ## 2. Three fresh agents per ticket, in sequence
 
-Tickets run in parallel; the stages of one ticket run one after another. Every stage is a new `general-purpose` agent with no context, for objectivity. Never reuse an agent for a later stage.
+Tickets run in parallel, up to the limit below; the stages of one ticket run one after another. Every stage is a new `general-purpose` agent with no context, for objectivity. Never reuse an agent for a later stage.
 
 1. **Implement:** the ticket's full text, the setup below, what to verify, and permission to commit, push and `gh pr create` (base main or the parent branch, title prefixed with its merge-order number, "stacks on #N" in the body when stacked).
 2. **Simplify:** the prompt starts with `/simplify <branch>`, followed by the operational context.
@@ -30,20 +33,34 @@ Tickets run in parallel; the stages of one ticket run one after another. Every s
 
 Start the next stage as soon as the previous agent hands back. Relay each report to the user briefly.
 
+Move the ticket to In Review once all three stages are done and pushed, any fix or verifier agent they led to included.
+
+How many run at once:
+- **Reliability limit, the default:** three agents at a time, verifier, fix and merge agents included, and your own builds and test runs count as one. Beyond that the simulators' input tools stall, simulators shut down mid-run and checks have to be rerun.
+- **The user's maximum:** when the user names one ("max 2 at once"), it counts tickets in development. Keep the tickets furthest along, pause the others (see Pause), and start or resume one each time a ticket's whole pipeline is done and it is In Review. A verifier or fix agent takes a ticket's place, not an extra one.
+- **Maximum lifted:** go back to the reliability limit and start what was waiting. Go past it only when the user names a higher number, and say then that five agents stalled the tools.
+
 ## 3. Operational context for every agent prompt
 
 Agents forget these unless told. Include all of them:
 - Work only in `../souskitapp-sou-<n>`; never touch other worktrees or check out other branches.
 - Review or diff only the branch's own changes: `git diff origin/<base>...HEAD` (three dots). Review tooling defaults to main, so name the base and say not to edit code only the parent branch introduced.
 - Use only the ticket's simulator UDIDs; shut them down and uninstall the app when done.
+- The simulators are muted. Never create or boot another one, and after `simctl erase` shut the simulator down and rerun `mute-simulators.sh` (give its absolute path) before booting it. VoiceOver is read from its cursor and labels; nobody listens to it.
 - Build output and temp files only under `<scratchpad>/sou-<n>-<stage>/`, always with `-derivedDataPath`. The scratchpad is shared.
 - Never kill processes by pattern (`pkill -f`); stop only the PIDs you started.
 - Check every UI, gesture, layout or animation change and finding on the simulator: reproduce on the old code, show it gone on the new with the same script (AXe, `simctl io recordVideo`, ffmpeg per frame; slowed springs or a second AXe process with `--pre-delay` for fast cases). A passing build and tests is not enough.
+- Size the checks to the stage, since checking is where a ticket's hours go:
+  - Implement: the states the ticket names plus a core set (text sizes large, accessibility-medium and the largest; one language unless strings change; the second device only where its layout differs).
+  - Simplify: none unless an executable line changed.
+  - Review: what implement left out, once, in at most five named checks. Text sizes are the smallest, large, accessibility-medium and the largest, not all 12; one language unless strings change; the second device, dark, VoiceOver, restoration, motion frame by frame or a scratch merge with sibling PRs only where the change can affect them.
+  - Every stage: name the checks in the brief, ask for single runs, and give a time budget. What the agent did not get to it lists as "not run" instead of running on.
+- Start from the shared base build and the scripts in `<this skill's directory>/tools/` (give absolute paths); do not rebuild either. A script worth keeping is named in the report, so it can be added there.
 - Temporary instrumentation goes in scratch copies (`git archive`), never in the commit.
 - Build, `swiftlint --strict` on changed files and all tests must pass.
 - The user explicitly asked for every stage to be committed and pushed. Give the commit trailers and PR footer from the session's attribution.
 - Report other bugs only if reproduced with a user-visible effect, with steps, evidence and whether main has it too; do not fix them.
-- Point to earlier agents' scripts and evidence folders for reuse via copies.
+- Point to earlier agents' evidence folders for reuse via copies.
 
 ## 4. Orchestrator duties
 
@@ -51,16 +68,18 @@ Agents forget these unless told. Include all of them:
 - **Blocked actions:** if an agent says a permission prompt blocked it and asks you to do it, do not. Show the user the command to run.
 - **Unverified claims:** never pass on "can't be tested" or an unrun finding as fact. Send a verifier agent.
 - **Commit messages:** check them; fix a HEAD message with `--amend` and `--force-with-lease`.
-- **Parent moved:** when a stacked parent changes, update the child by merging the parent's branch (no rebase once reviewed) and re-check on the simulator.
+- **Parent moved:** when a stacked parent changes, update each child by merging the parent's branch (no rebase once reviewed), run the tests and push. Re-check on the simulator only a child whose own change touches the code the parent changed.
+- **Running long:** when a stage passes its budget, message the agent to finish the check it is on, run the few that matter most and list the rest as "not run".
 - **Stalls:** check the worktree, `simctl list devices | grep Booted` and the agent's scratch folder before calling it stuck; never read its transcript file.
 - **Pause:** `TaskStop` every running agent, shut down this run's simulators, note each worktree's state. **Resume:** `SendMessage` each stopped agent to continue, telling it its simulators were shut down.
 
 ## 5. Newly found bugs
 
-1. A suspected bug is only a suspicion. Send a verifier agent (no fixes, no commits) to reproduce it on the simulator, on the branch and on main, in a temporary detached worktree with its own simulators.
+1. A suspected bug is only a suspicion. Send a verifier agent (no fixes, no commits) to answer two questions on the simulator and no more: is it real, and does main have it. It runs the shared base builds on a finished ticket's simulators, or on new muted ones.
 2. Only on the branch: fix it on that branch's PR with a fix agent.
 3. On main too: log a Linear ticket in the same project, labels App and Bug, assigned to the user, in the user's style (first sentence is the point, 1 to 3 sentences, acceptance criteria). Put it in Todo, or start its pipeline right away when the user allowed that and the fix needs no input from them.
 4. Not reproduced, or not visible to a user: no ticket. Say so.
+5. Bugs in one component share a ticket and a PR. Before logging, look for a ticket of this run in the same file: add the bug to it while it is still in implement, and log bugs found together as one ticket, so they share one pipeline.
 
 ## 6. Merging in order
 
@@ -72,4 +91,4 @@ Agents forget these unless told. Include all of them:
 
 ## 7. Wrap-up
 
-End with a table of PRs (number, ticket, head, base, state), how conflicts were resolved, what to test per PR, Linear changes, and open questions.
+End with a table of PRs (number, ticket, head, base, state), how conflicts were resolved, what to test per PR, the checks each PR's agents listed as not run, Linear changes, and open questions.
