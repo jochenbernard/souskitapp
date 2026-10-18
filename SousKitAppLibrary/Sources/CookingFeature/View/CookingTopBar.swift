@@ -1,11 +1,14 @@
 import DesignSystem
 import SwiftUI
 
-/// The cooking screen's bar: the way out, and the recipe's title.
+/// The cooking screen's bar: the way out, the recipe's title, and the way to a new timer.
 struct CookingTopBar: View {
     private let presenter: CookingFeaturePresenterProtocol
     private let title: String
     private let isConfirmingExit: Bool
+
+    // The room the system takes at the bar's leading corner, for the controls of an iPad window.
+    @State private var leadingCornerInset = 0.0
 
     init(
         presenter: CookingFeaturePresenterProtocol,
@@ -18,13 +21,21 @@ struct CookingTopBar: View {
     }
 
     var body: some View {
-        exitButton
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .overlay {
-                titleText
-            }
-            .padding(.horizontal, SousSpacing.large)
-            .padding(.bottom, SousSpacing.small)
+        HStack(spacing: SousSpacing.large) {
+            exitButton
+                .padding(.leading, leadingCornerInset)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            titleText
+
+            newTimerButton
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .padding(.horizontal, SousSpacing.large)
+        .padding(.bottom, SousSpacing.small)
+        .onGeometryChange(for: CGFloat.self, of: \.containerCornerInsets.topLeading.width) { width in
+            leadingCornerInset = width
+        }
     }
 
     private var exitButton: some View {
@@ -49,9 +60,19 @@ struct CookingTopBar: View {
         Text(verbatim: title)
             .font(.headline)
             .lineLimit(1)
-            // Clear of the exit button, and as far from the other side, so the title stays centred.
-            .padding(.horizontal, SousSpacing.page)
+            // The buttons share what the title leaves evenly, which centres it until one of them runs out of room.
+            .layoutPriority(1.0)
             .accessibilityAddTraits(.isHeader)
+    }
+
+    private var newTimerButton: some View {
+        Button(action: presenter.didTapNewTimer) {
+            Label(
+                title: { Text("New timer", bundle: .module) },
+                icon: { Image(systemName: "timer") }
+            )
+        }
+        .buttonStyle(.glassCircle)
     }
 
     private var isConfirmingExitBinding: Binding<Bool> {

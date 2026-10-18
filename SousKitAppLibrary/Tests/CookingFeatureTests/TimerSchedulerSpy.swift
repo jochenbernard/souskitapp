@@ -3,7 +3,7 @@
 /// Records the timers the cooking feature starts and cancels, and yields the running timers it is given.
 @MainActor
 final class TimerSchedulerSpy: TimerScheduler {
-    private(set) var startedTimers: [StepTimer] = []
+    private(set) var startedTimers: [CookingTimer] = []
     private(set) var cancelledTimers: [RunningTimer] = []
     private let runningTimerUpdates: [[RunningTimer]]
     private let startError: Error?
@@ -29,7 +29,7 @@ final class TimerSchedulerSpy: TimerScheduler {
         }
     }
 
-    func start(_ timer: StepTimer) throws {
+    func start(_ timer: CookingTimer) throws {
         if let startError {
             throw startError
         }

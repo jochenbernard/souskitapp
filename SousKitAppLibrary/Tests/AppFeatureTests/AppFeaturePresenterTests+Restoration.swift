@@ -10,10 +10,12 @@ extension AppFeaturePresenterTests {
     private var runningTimer: RunningTimer {
         RunningTimer(
             id: UUID(),
-            stepTimer: StepTimer(
-                stepNumber: 1,
-                text: "2 min",
-                duration: .seconds(120)
+            cookingTimer: .step(
+                StepTimer(
+                    stepNumber: 1,
+                    text: "2 min",
+                    duration: .seconds(120)
+                )
             ),
             endDate: .now.addingTimeInterval(120.0),
             isRinging: false

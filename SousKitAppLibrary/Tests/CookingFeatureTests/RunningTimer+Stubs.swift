@@ -6,7 +6,7 @@ extension RunningTimer {
     static func stubbed(isRinging: Bool = false) -> Self {
         Self(
             id: UUID(),
-            stepTimer: .stubbed(),
+            cookingTimer: .step(.stubbed()),
             endDate: .now.addingTimeInterval(900.0),
             isRinging: isRinging
         )
