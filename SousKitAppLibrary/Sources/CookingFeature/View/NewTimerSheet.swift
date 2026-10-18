@@ -39,6 +39,8 @@ struct NewTimerSheet: View {
                 }
             }
         )
+        // Stops growing, bar included, at the first accessibility size, where the keypad still fits on an iPhone.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .onAppear {
             isLengthFocused = true
         }
@@ -54,8 +56,6 @@ struct NewTimerSheet: View {
 
             keypad
         }
-        // Stops growing at the first accessibility size, where the keypad still fits under the length on an iPhone.
-        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
         .frame(maxWidth: Self.maxWidth)
         .background {
             VoiceOverHandoff()
