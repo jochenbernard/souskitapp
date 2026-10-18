@@ -49,6 +49,7 @@ struct RunningTimerCancelConfirmation: View {
 
         return Color.clear
             .frame(width: frame.width, height: frame.height)
+            .background(PopoverSourceTracking(sourceFrame: frame))
             .confirmationDialog(
                 question,
                 isPresented: isPresented,
