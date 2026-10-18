@@ -114,15 +114,6 @@ struct NewTimerSheet: View {
         }
     }
 
-    private var deleteKey: some View {
-        NewTimerKey(action: presenter.didTapDeleteNewTimerDigit) {
-            Image(systemName: "delete.backward")
-        }
-        .disabled(entry.digits.isEmpty)
-        .buttonRepeatBehavior(.enabled)
-        .accessibilityLabel(Text("Delete", bundle: .module))
-    }
-
     private func start() {
         Task {
             await presenter.didTapStartNewTimer()
@@ -151,6 +142,15 @@ struct NewTimerSheet: View {
             action: { presenter.didTapNewTimerDigits(digits) },
             label: { Text(verbatim: digits) }
         )
+    }
+
+    private var deleteKey: some View {
+        NewTimerKey(action: presenter.didTapDeleteNewTimerDigit) {
+            Image(systemName: "delete.backward")
+        }
+        .disabled(entry.digits.isEmpty)
+        .buttonRepeatBehavior(.enabled)
+        .accessibilityLabel(Text("Delete", bundle: .module))
     }
 
     private func lengthDigit(at position: Int) -> some View {
