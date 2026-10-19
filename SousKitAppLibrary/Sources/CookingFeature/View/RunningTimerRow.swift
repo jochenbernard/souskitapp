@@ -13,9 +13,9 @@ struct RunningTimerRow: View {
 
     private let presenter: CookingFeaturePresenterProtocol
     private let timer: RunningTimer
-    private let isConfirmingCancel: Bool
     private let contentWidth: CGFloat?
     private let contentFade: RunningTimersMotionFade
+    private let onCancelButtonFrameChange: ((CGRect) -> Void)?
 
     @LineContainerRadius private var radius
 
@@ -24,18 +24,20 @@ struct RunningTimerRow: View {
     ///     fill the box.
     ///   - contentFade: How the timer shows what it is and its time, down to only its box, as it shows stacked
     ///     behind another.
+    ///   - onCancelButtonFrameChange: Reports where the cancel button stands on the screen, which the question
+    ///     whether to cancel the timer points at.
     init(
         presenter: CookingFeaturePresenterProtocol,
         timer: RunningTimer,
-        isConfirmingCancel: Bool,
         contentWidth: CGFloat? = nil,
-        contentFade: RunningTimersMotionFade = .disabled
+        contentFade: RunningTimersMotionFade = .disabled,
+        onCancelButtonFrameChange: ((CGRect) -> Void)? = nil
     ) {
         self.presenter = presenter
         self.timer = timer
-        self.isConfirmingCancel = isConfirmingCancel
         self.contentWidth = contentWidth
         self.contentFade = contentFade
+        self.onCancelButtonFrameChange = onCancelButtonFrameChange
     }
 
     var body: some View {
@@ -65,7 +67,7 @@ struct RunningTimerRow: View {
 
     private var content: some View {
         HStack(spacing: SousSpacing.medium) {
-            // The cancel button stays out of the choice, so a timer changing shape keeps its button and dialog.
+            // The cancel button stays out of the choice, so a timer changing shape keeps its button.
             ViewThatFits(in: .horizontal) {
                 sideBySide
 
@@ -112,11 +114,10 @@ struct RunningTimerRow: View {
         .accessibilityLabel(Self.cancelTitle(isRinging: timer.isRinging))
         // Read after the timer's time, which lies lower than the button where it is under the label.
         .accessibilitySortPriority(-1.0)
-        .confirmationDialog(
-            cancelQuestion,
-            isPresented: isConfirmingCancelBinding,
-            titleVisibility: .visible,
-            actions: { confirmCancelButtons }
+        .onGeometryChange(
+            for: CGRect.self,
+            of: { $0.frame(in: .global) },
+            action: { frame in onCancelButtonFrameChange?(frame) }
         )
     }
 
@@ -176,36 +177,6 @@ struct RunningTimerRow: View {
         timer.cookingTimer.seconds >= 3_600.0 ? .hourMinuteSecond : .minuteSecond
     }
 
-    private var cancelQuestion: Text {
-        switch timer.cookingTimer {
-        case .step(let stepTimer):
-            Text("Cancel the \(stepTimer.text) timer from step \(stepTimer.stepNumber)?", bundle: .module)
-
-        case .custom:
-            Text("Cancel the custom \(timer.cookingTimer.text) timer?", bundle: .module)
-        }
-    }
-
-    @ViewBuilder
-    private var confirmCancelButtons: some View {
-        Button(role: .destructive, action: presenter.didConfirmCancelTimer) {
-            Text("Cancel timer", bundle: .module)
-        }
-
-        Button(
-            role: .cancel,
-            action: {},
-            label: { Text("Keep timer", bundle: .module) }
-        )
-    }
-
-    private var isConfirmingCancelBinding: Binding<Bool> {
-        Binding(
-            get: { isConfirmingCancel },
-            set: { presenter.didChangeIsConfirmingCancelTimer($0) }
-        )
-    }
-
     private func cancel() {
         presenter.didTapCancelTimer(timer)
     }
@@ -223,8 +194,7 @@ struct RunningTimerRow: View {
         ForEach(RunningTimersPreview.timers() + [longTimer]) { timer in
             RunningTimerRow(
                 presenter: CookingFeaturePresenterStub(),
-                timer: timer,
-                isConfirmingCancel: false
+                timer: timer
             )
         }
     }
