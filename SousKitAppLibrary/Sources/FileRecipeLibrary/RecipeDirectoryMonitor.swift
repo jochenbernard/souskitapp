@@ -4,7 +4,8 @@ import RecipeLibrary
 /// The recipes in a directory and in the directories inside it, read once and read again on every change to them.
 @MainActor
 final class RecipeDirectoryMonitor {
-    private let reader: RecipeDirectoryReader
+    private let listDirectory: @Sendable () throws -> RecipeDirectoryListing
+    private let present: @Sendable (URL, @escaping @Sendable () -> Void) -> DirectoryPresenter?
     private let recipeDirectory: RecipeDirectory
     private let settleDelay: Duration
     private let summarizer: RecipeSummarizer
@@ -29,15 +30,25 @@ final class RecipeDirectoryMonitor {
     ///   - summarizer: What the recipes' summaries come from.
     ///   - settleDelay: How long a burst of changes is given to finish before the directory is
     ///     read again.
+    ///   - listDirectory: Lists the directory with the reader handed to it.
+    ///   - present: Presents the directory at the URL, calling the closure on every change, or presents nothing.
     nonisolated init(
         recipeDirectory: RecipeDirectory,
         summarizer: RecipeSummarizer,
-        settleDelay: Duration = .milliseconds(150)
+        settleDelay: Duration = .milliseconds(150),
+        listDirectory: @escaping @Sendable (RecipeDirectoryReader) throws -> RecipeDirectoryListing = { reader in
+            try reader.readListing()
+        },
+        present: @escaping @Sendable (URL, @escaping @Sendable () -> Void) -> DirectoryPresenter? = { url, onChange in
+            DirectoryPresenter(directoryURL: url, onChange: onChange)
+        }
     ) {
+        let reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory)
         self.recipeDirectory = recipeDirectory
         self.summarizer = summarizer
         self.settleDelay = settleDelay
-        self.reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory)
+        self.listDirectory = { try listDirectory(reader) }
+        self.present = present
     }
 
     /// Lets go of what outlives a released monitor: `NSFileCoordinator` retains a file presenter,
@@ -88,7 +99,7 @@ final class RecipeDirectoryMonitor {
         isScoped = url.startAccessingSecurityScopedResource()
 
         // iCloud writes through file coordination, heard at any depth, and other apps do not, so both are watched.
-        presenter = DirectoryPresenter(directoryURL: url, onChange: makeOnChange())
+        presenter = present(url, makeOnChange())
         watch(directoriesAt: [""])
 
         read(afterSettling: false)
@@ -106,13 +117,19 @@ final class RecipeDirectoryMonitor {
     /// those no longer listed.
     ///
     /// - Parameter directoryPaths: Where the directories sit inside the recipe directory, empty for itself.
-    private func watch(directoriesAt directoryPaths: Set<String>) {
+    /// - Returns: Whether a directory is watched that was not before.
+    @discardableResult
+    private func watch(directoriesAt directoryPaths: Set<String>) -> Bool {
         eventSources = eventSources.filter({ directoryPaths.contains($0.key) })
+        var watchesNewDirectory = false
 
         for path in directoryPaths where eventSources[path] == nil {
             let url = path.isEmpty ? recipeDirectory.url : recipeDirectory.url.appending(path: path)
             eventSources[path] = DirectoryEventSource(directoryURL: url, onChange: makeOnChange())
+            watchesNewDirectory = watchesNewDirectory || eventSources[path] != nil
         }
+
+        return watchesNewDirectory
     }
 
     private func stop() {
@@ -155,16 +172,24 @@ final class RecipeDirectoryMonitor {
         readTask?.cancel()
 
         let delay = afterSettling ? settleDelay : .zero
-        let directoryReader = reader
 
-        readTask = Task { [weak self, summarizer] in
+        readTask = Task { [weak self, listDirectory, summarizer] in
             try? await Task.sleep(for: delay)
 
             guard !Task.isCancelled else {
                 return
             }
 
-            let result = await Self.readListing(with: directoryReader)
+            var result = await Self.readListing(with: listDirectory)
+
+            // A change to a directory between its listing and its watch goes unheard, so a new watch lists again.
+            while
+                !Task.isCancelled,
+                case .success(let listing) = result,
+                self?.didList(listing) == true
+            {
+                result = await Self.readListing(with: listDirectory)
+            }
 
             guard !Task.isCancelled else {
                 return
@@ -172,7 +197,6 @@ final class RecipeDirectoryMonitor {
 
             switch result {
             case .success(let listing):
-                self?.didList(listing)
                 await Self.readSummaries(
                     of: listing.recipeFiles,
                     with: summarizer,
@@ -189,9 +213,9 @@ final class RecipeDirectoryMonitor {
     /// Reads off the main actor, where a directory in iCloud can take a while to answer.
     @concurrent
     nonisolated private static func readListing(
-        with reader: RecipeDirectoryReader
+        with listDirectory: @Sendable () throws -> RecipeDirectoryListing
     ) async -> Result<RecipeDirectoryListing, Error> {
-        Result(catching: { try reader.readListing() })
+        Result(catching: listDirectory)
     }
 
     /// Yields the recipes with the summaries the cache holds, then reads those it has none for, yielding the recipes
@@ -232,9 +256,11 @@ final class RecipeDirectoryMonitor {
     }
 
     /// Keeps a listing, watching the directories it holds and giving up on the fetches of files it no longer holds.
-    private func didList(_ listing: RecipeDirectoryListing) {
+    ///
+    /// - Returns: Whether a directory is watched that was not before.
+    private func didList(_ listing: RecipeDirectoryListing) -> Bool {
         recipeFiles = listing.recipeFiles
-        watch(directoriesAt: listing.directoryPaths)
+        let watchesNewDirectory = watch(directoriesAt: listing.directoryPaths)
 
         let paths = Set(recipeFiles.map(\.path))
 
@@ -242,6 +268,8 @@ final class RecipeDirectoryMonitor {
             fetch.cancel()
             fetches[path] = nil
         }
+
+        return watchesNewDirectory
     }
 
     /// Fetches each file in iCloud on its own, so one that never arrives holds up no other, leaving alone those
