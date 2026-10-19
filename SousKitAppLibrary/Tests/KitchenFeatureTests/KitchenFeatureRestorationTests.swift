@@ -100,10 +100,7 @@ struct KitchenFeatureRestorationTests {
     @MainActor
     @Test("what the recipe screen reports is reported beside the recipe")
     func recipeReportIsPassedOn() {
-        let restoration = RecipeFeatureRestoration(
-            scale: RecipeScale(target: .multiplier, value: 2.0),
-            isScaling: true
-        )
+        let restoration = RecipeFeatureRestoration(scale: RecipeScale(target: .multiplier, value: 2.0))
         let handler = KitchenFeatureHandlerStub()
         let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
 
@@ -119,7 +116,7 @@ struct KitchenFeatureRestorationTests {
         let handler = KitchenFeatureHandlerStub()
 
         makePresenter(viewModel: makeViewModel(), handler: handler).recipeFeatureDidChangeRestoration(
-            RecipeFeatureRestoration(scale: nil, isScaling: true)
+            RecipeFeatureRestoration(scale: nil)
         )
 
         #expect(handler.restoration == nil)

@@ -59,7 +59,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         }
 
         if restores {
-            restore()
+            resumeCooking()
         }
     }
 
@@ -73,7 +73,6 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
 
     func didTapScale() {
         viewModel.isScaling = true
-        reportRestoration()
     }
 
     func didChangeIsScaling(_ isScaling: Bool) {
@@ -83,8 +82,6 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         if !isScaling {
             writeField()
         }
-
-        reportRestoration()
     }
 
     func didChangeScaleText(_ text: String) {
@@ -157,19 +154,19 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         )
     }
 
-    /// Opens again what the screen had open when it was left, now that the recipe it opens over is read.
+    /// Opens cooking again where it was open when the screen was left, now that the recipe it opens over is read.
     @MainActor
-    private func restore() {
-        guard case .recipe(let recipe) = viewModel.recipeContent else {
+    private func resumeCooking() {
+        guard
+            resumesCooking,
+            case .recipe(let recipe) = viewModel.recipeContent,
+            // A file edited down to no steps since has nothing to cook, as its screen offers no button to start.
+            !recipe.scaled.steps.isEmpty
+        else {
             return
         }
 
-        // A file edited down to no steps since has nothing to cook, as its screen offers no button to start.
-        if resumesCooking, !recipe.scaled.steps.isEmpty {
-            handler.recipeFeatureDidResumeCooking(recipe: recipe.scaled)
-        } else if restoration?.isScaling == true {
-            viewModel.isScaling = true
-        }
+        handler.recipeFeatureDidResumeCooking(recipe: recipe.scaled)
     }
 
     @MainActor
@@ -178,12 +175,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             return
         }
 
-        handler.recipeFeatureDidChangeRestoration(
-            RecipeFeatureRestoration(
-                scale: chosenScale(of: recipe),
-                isScaling: viewModel.isScaling
-            )
-        )
+        handler.recipeFeatureDidChangeRestoration(RecipeFeatureRestoration(scale: chosenScale(of: recipe)))
     }
 
     /// The scale a cook chose, or `nil` at the recipe's default scale.
