@@ -31,6 +31,10 @@ final class RecipeSearchIndex {
     ///   - folderPath: The names of the folders leading down to the folder searched, or none for the top.
     /// - Returns: The recipes, or none where no word is searched for.
     func results(matching queryWords: [String], below folderPath: [String]) -> [RecipeEntry] {
+        guard !queryWords.isEmpty else {
+            return []
+        }
+
         let matches = indexed()
             .filter({ $0.entry.folderPath.starts(with: folderPath) })
             .compactMap { recipe in
