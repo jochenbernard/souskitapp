@@ -61,4 +61,83 @@ struct TimerListTests {
 
         #expect(viewModel.isTimerListOpen)
     }
+
+    @MainActor
+    @Test("folding the timers with a cancel confirmation open opens the list")
+    func foldingWhileConfirmingOpensTheList() {
+        let viewModel = makeViewModel()
+        let timer = RunningTimer.stubbed()
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[RunningTimer.stubbed(), timer]])
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+
+        presenter.didTapCancelTimer(timer)
+        presenter.didFoldTimers()
+
+        #expect(viewModel.isTimerListOpen)
+        #expect(viewModel.timerConfirmingCancel == timer)
+    }
+
+    @MainActor
+    @Test("folding the timers with no confirmation open leaves the list closed")
+    func foldingLeavesTheListClosed() {
+        let viewModel = makeViewModel()
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[RunningTimer.stubbed(), RunningTimer.stubbed()]])
+
+        CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler).didFoldTimers()
+
+        #expect(!viewModel.isTimerListOpen)
+    }
+
+    @MainActor
+    @Test("folding a lone timer with its cancel confirmation open leaves the list closed")
+    func foldingALoneTimerLeavesTheListClosed() {
+        let viewModel = makeViewModel()
+        let timer = RunningTimer.stubbed()
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[timer]])
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+
+        presenter.didTapCancelTimer(timer)
+        presenter.didFoldTimers()
+
+        #expect(!viewModel.isTimerListOpen)
+    }
+
+    @MainActor
+    @Test(
+        "answering a cancel confirmation folds the list that folding the timers opened for it",
+        arguments: [true, false]
+    )
+    func answeringFoldsTheListTheConfirmationOpened(cancels: Bool) {
+        let viewModel = makeViewModel()
+        let timer = RunningTimer.stubbed()
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[RunningTimer.stubbed(), timer]])
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+
+        presenter.didTapCancelTimer(timer)
+        presenter.didFoldTimers()
+
+        if cancels {
+            presenter.didConfirmCancelTimer()
+        } else {
+            presenter.didChangeIsConfirmingCancelTimer(false)
+        }
+
+        #expect(!viewModel.isTimerListOpen)
+    }
+
+    @MainActor
+    @Test("a list the cook opened stays open once a cancel confirmation folded under is answered")
+    func answeringKeepsTheListTheCookOpened() {
+        let viewModel = makeViewModel()
+        let timer = RunningTimer.stubbed()
+        let timerScheduler = TimerSchedulerSpy(runningTimerUpdates: [[RunningTimer.stubbed(), timer]])
+        let presenter = CookingFeaturePresenter.stubbed(viewModel: viewModel, timerScheduler: timerScheduler)
+
+        presenter.didOpenTimerList()
+        presenter.didTapCancelTimer(timer)
+        presenter.didFoldTimers()
+        presenter.didChangeIsConfirmingCancelTimer(false)
+
+        #expect(viewModel.isTimerListOpen)
+    }
 }

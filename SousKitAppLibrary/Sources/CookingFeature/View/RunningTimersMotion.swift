@@ -36,6 +36,9 @@ final class RunningTimersMotion {
     /// How tall the stack stands, which the steps keep clear of.
     var stackHeight: CGFloat = 0.0
 
+    /// Where each timer's cancel button stands on the screen, which the question whether to cancel it points at.
+    var cancelButtonFrames: [RunningTimer.ID: CGRect] = [:]
+
     nonisolated init() {}
 
     /// Where the stack stands, across the bottom of a region.
