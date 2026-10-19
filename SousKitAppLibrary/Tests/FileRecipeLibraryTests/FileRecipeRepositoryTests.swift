@@ -170,7 +170,7 @@ final class FileRecipeRepositoryTests: Sendable {
             filling: CGSize(width: 400.0, height: 300.0)
         )
 
-        #expect(thumbnail.width == 480)
+        #expect(thumbnail.width == 481)
         #expect(thumbnail.height == 300)
         #expect(try FileManager.default.contentsOfDirectory(atPath: directory.thumbnailCacheURL.path()).count == 1)
         #expect(try FileManager.default.contentsOfDirectory(atPath: directory.url.path()) == ["gratin-dauphinois.png"])
@@ -186,7 +186,22 @@ final class FileRecipeRepositoryTests: Sendable {
 
         let thumbnail = try await makeRepository().readThumbnail(of: picture, filling: box)
 
-        #expect(thumbnail.width == 480)
+        #expect(thumbnail.width == 481)
+    }
+
+    @Test("a box resized a little is read from the thumbnail kept for it before, without its file")
+    func resizedBox() async throws {
+        try writeGratin(width: 1_600, height: 1_000)
+        let picture = try picture(at: "gratin-dauphinois.png")
+        _ = try await makeRepository().readThumbnail(of: picture, filling: CGSize(width: 400.0, height: 300.0))
+        try FileManager.default.removeItem(at: directory.url.appending(path: "gratin-dauphinois.png"))
+
+        let thumbnail = try await makeRepository().readThumbnail(
+            of: picture,
+            filling: CGSize(width: 420.0, height: 290.0)
+        )
+
+        #expect(thumbnail.width == 465)
     }
 
     @Test("a picture replaced since it was read is read again")
