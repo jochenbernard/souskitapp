@@ -41,14 +41,6 @@ protocol KitchenFeaturePresenterProtocol {
     /// - Parameters:
     ///   - picture: The picture.
     ///   - pixelSize: The box the card shows the picture in, in pixels.
-    /// - Returns: The picture scaled to fill the box, or `nil` where it cannot be read.
     @MainActor
-    func thumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async -> CGImage?
-
-    /// The picture a card shows at once, before reading it at its size: the one read last for the picture as it is now.
-    ///
-    /// - Parameter picture: The picture.
-    /// - Returns: The picture, at whatever size it was read, or `nil` where it has not been read as it is now.
-    @MainActor
-    func lastThumbnail(of picture: RecipePicture) -> CGImage?
+    func pictureDidAppear(_ picture: RecipePicture, filling pixelSize: CGSize) async
 }

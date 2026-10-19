@@ -70,22 +70,25 @@ struct FileRecipeRepository: RecipeRepository {
         return parser.parseRecipe(contents.text)
     }
 
-    /// Reads and scales off the caller's actor, from the thumbnail kept where there is one.
+    /// Reads and scales off the caller's actor, from the thumbnail kept where there is one; one is made for the kept
+    /// size holding the box.
     @concurrent
     func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage {
         if let thumbnail = thumbnailCache.thumbnail(of: picture, filling: pixelSize) {
             return thumbnail
         }
 
-        let thumbnail = try await pictureReader.read(picture) { url in
-            try RecipeThumbnailMaker.thumbnail(ofImageAt: url, filling: pixelSize)
+        let keptSize = RecipeThumbnailCache.keptSize(holding: pixelSize)
+        let keptThumbnail = try await pictureReader.read(picture) { url in
+            try RecipeThumbnailMaker.thumbnail(ofImageAt: url, filling: keptSize)
         }
         thumbnailCache.save(
-            thumbnail,
+            keptThumbnail,
             of: picture,
             filling: pixelSize
         )
 
-        return thumbnail
+        // Read back from the kept file, so the first read shows the picture as every later one does.
+        return thumbnailCache.thumbnail(of: picture, filling: pixelSize) ?? keptThumbnail
     }
 }

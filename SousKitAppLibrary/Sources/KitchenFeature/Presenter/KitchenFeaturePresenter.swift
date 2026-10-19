@@ -15,7 +15,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
     private let searchIndex = RecipeSearchIndex()
-    private let thumbnailMemory = RecipeThumbnailMemory()
+    private let thumbnailMemory: RecipeThumbnailMemory
     private let viewModel: KitchenFeatureViewModel
 
     @MainActor
@@ -35,6 +35,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             restoration: restoration,
             handler: handler
         )
+        self.thumbnailMemory = RecipeThumbnailMemory(shownThumbnails: viewModel.thumbnails)
         self.viewModel = viewModel
     }
 
@@ -101,27 +102,23 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         closeCooking()
     }
 
-    func thumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async -> CGImage? {
-        // One read for a larger card serves a smaller one as sharply.
-        if
-            let kept = thumbnailMemory.thumbnail(of: picture),
-            Double(kept.width) >= pixelSize.width,
-            Double(kept.height) >= pixelSize.height
-        {
-            return kept
+    func pictureDidAppear(_ picture: RecipePicture, filling pixelSize: CGSize) async {
+        guard !thumbnailMemory.holdsThumbnail(of: picture, filling: pixelSize) else {
+            return
         }
 
-        guard let thumbnail = try? await recipeRepository.readThumbnail(of: picture, filling: pixelSize) else {
-            return nil
+        let thumbnail = try? await recipeRepository.readThumbnail(of: picture, filling: pixelSize)
+
+        // A card scrolled away or resized meanwhile reads again, so a read for a smaller box never lands over a larger.
+        guard !Task.isCancelled else {
+            return
         }
 
-        thumbnailMemory.keep(thumbnail, of: picture)
-
-        return thumbnail
-    }
-
-    func lastThumbnail(of picture: RecipePicture) -> CGImage? {
-        thumbnailMemory.thumbnail(of: picture)
+        if let thumbnail {
+            thumbnailMemory.keep(thumbnail, of: picture)
+        } else {
+            thumbnailMemory.forget(picture)
+        }
     }
 
     func recipeFeatureDidStartCooking(recipe: Recipe) {

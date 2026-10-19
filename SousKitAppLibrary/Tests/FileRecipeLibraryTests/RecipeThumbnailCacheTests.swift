@@ -91,18 +91,40 @@ final class RecipeThumbnailCacheTests {
         #expect(try FileManager.default.contentsOfDirectory(atPath: directory.thumbnailCacheURL.path()).count == 1)
     }
 
-    @Test("a picture's thumbnails at other sizes stay while its contents do")
+    @Test("a picture keeps its thumbnails at the two sizes kept last while its contents stay")
     func otherSizes() throws {
-        let smallerSize = CGSize(width: 240.0, height: 180.0)
-        try keep(gray: 0.2, modifiedAt: modificationDate)
-        try keep(
-            gray: 0.2,
-            modifiedAt: modificationDate,
-            filling: smallerSize
-        )
+        let sizes = [
+            CGSize(width: 240.0, height: 180.0),
+            CGSize(width: 288.0, height: 216.0),
+            CGSize(width: 342.0, height: 256.0)
+        ]
 
-        #expect(kept(modifiedAt: modificationDate) != nil)
-        #expect(kept(modifiedAt: modificationDate, filling: smallerSize) != nil)
+        for size in sizes {
+            try keep(
+                gray: 0.2,
+                modifiedAt: modificationDate,
+                filling: size
+            )
+        }
+
+        #expect(sizes.map({ kept(modifiedAt: modificationDate, filling: $0) != nil }) == [false, true, true])
+    }
+
+    @Test("a box is kept at the smallest of a few sizes holding it, so a box resized a little keeps the same size")
+    func keptSize() {
+        let keptSizes = [
+            CGSize(width: 362.0, height: 272.0),
+            CGSize(width: 363.0, height: 273.0),
+            CGSize(width: 400.0, height: 300.0),
+            CGSize(width: 431.0, height: 304.0)
+        ].map(RecipeThumbnailCache.keptSize(holding:))
+
+        #expect(keptSizes == [
+            CGSize(width: 362.0, height: 304.0),
+            CGSize(width: 431.0, height: 304.0),
+            CGSize(width: 431.0, height: 304.0),
+            CGSize(width: 431.0, height: 304.0)
+        ])
     }
 
     @Test("removing the thumbnails of the pictures not named keeps only those of the named pictures as they are now")

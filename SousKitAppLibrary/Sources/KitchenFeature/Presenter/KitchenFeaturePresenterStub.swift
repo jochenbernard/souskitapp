@@ -14,11 +14,5 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didDismissCooking() {}
 
-    func thumbnail(of _: RecipePicture, filling _: CGSize) -> CGImage? {
-        nil
-    }
-
-    func lastThumbnail(of _: RecipePicture) -> CGImage? {
-        nil
-    }
+    func pictureDidAppear(_: RecipePicture, filling _: CGSize) {}
 }

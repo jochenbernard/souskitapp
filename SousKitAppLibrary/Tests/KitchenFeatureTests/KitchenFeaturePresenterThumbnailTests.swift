@@ -39,9 +39,12 @@ struct KitchenFeaturePresenterThumbnailTests {
     }
 
     @MainActor
-    private func makePresenter(recipeRepository: RecipeRepositorySpy) -> KitchenFeaturePresenter {
+    private func makePresenter(
+        recipeRepository: RecipeRepositorySpy,
+        viewModel: KitchenFeatureViewModel
+    ) -> KitchenFeaturePresenter {
         .stubbed(
-            viewModel: KitchenFeatureViewModel(recipeRepositoryName: "Recipes"),
+            viewModel: viewModel,
             parser: parser,
             recipeRepository: recipeRepository
         )
@@ -51,14 +54,18 @@ struct KitchenFeaturePresenterThumbnailTests {
     @Test("a card's picture is read from the repository at the card's size, and shown at once the next time")
     func readPicture() async throws {
         let recipeRepository = RecipeRepositorySpy()
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
         let image = try thumbnail(width: 480, height: 360)
         recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": image]
-        let presenter = makePresenter(recipeRepository: recipeRepository)
+        let presenter = makePresenter(recipeRepository: recipeRepository, viewModel: viewModel)
         let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
 
-        #expect(presenter.lastThumbnail(of: picture(modifiedAt: date)) == nil)
-        #expect(await presenter.thumbnail(of: picture(modifiedAt: date), filling: box) === image)
-        #expect(presenter.lastThumbnail(of: picture(modifiedAt: date)) === image)
+        #expect(viewModel.thumbnails[picture(modifiedAt: date)] == nil)
+
+        await presenter.pictureDidAppear(picture(modifiedAt: date), filling: box)
+        await presenter.pictureDidAppear(picture(modifiedAt: date), filling: box)
+
+        #expect(viewModel.thumbnails[picture(modifiedAt: date)] === image)
         #expect(recipeRepository.thumbnailReads == [picture(modifiedAt: date)])
     }
 
@@ -66,66 +73,123 @@ struct KitchenFeaturePresenterThumbnailTests {
     @Test("a picture read for a card serves a box it covers without reading it again, and a larger box reads it")
     func coveredBox() async throws {
         let recipeRepository = RecipeRepositorySpy()
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
         let image = try thumbnail(width: 480, height: 360)
         recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": image]
-        let presenter = makePresenter(recipeRepository: recipeRepository)
+        let presenter = makePresenter(recipeRepository: recipeRepository, viewModel: viewModel)
         let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
-        _ = await presenter.thumbnail(of: picture(modifiedAt: date), filling: box)
+        await presenter.pictureDidAppear(picture(modifiedAt: date), filling: box)
 
-        let fanThumbnail = await presenter.thumbnail(
-            of: picture(modifiedAt: date),
-            filling: CGSize(width: 240.0, height: 223.0)
-        )
+        await presenter.pictureDidAppear(picture(modifiedAt: date), filling: CGSize(width: 240.0, height: 223.0))
 
-        #expect(fanThumbnail === image)
+        #expect(viewModel.thumbnails[picture(modifiedAt: date)] === image)
         #expect(recipeRepository.thumbnailReads.count == 1)
 
-        _ = await presenter.thumbnail(of: picture(modifiedAt: date), filling: CGSize(width: 640.0, height: 480.0))
+        await presenter.pictureDidAppear(picture(modifiedAt: date), filling: CGSize(width: 640.0, height: 480.0))
 
         #expect(recipeRepository.thumbnailReads.count == 2)
     }
 
     @MainActor
-    @Test("a picture replaced since it was read is not shown as it was")
+    @Test("a picture replaced since it was read shows as it was until it is read again, then as it is")
     func replacedPicture() async throws {
         let recipeRepository = RecipeRepositorySpy()
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        let replacement = try thumbnail(width: 480, height: 360)
         recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": try thumbnail(width: 480, height: 360)]
-        let presenter = makePresenter(recipeRepository: recipeRepository)
+        let presenter = makePresenter(recipeRepository: recipeRepository, viewModel: viewModel)
         let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
+        let replacedPicture = picture(modifiedAt: date.addingTimeInterval(60.0))
+        await presenter.pictureDidAppear(picture(modifiedAt: date), filling: box)
+        recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": replacement]
 
-        _ = await presenter.thumbnail(of: picture(modifiedAt: date), filling: box)
+        #expect(viewModel.thumbnails[replacedPicture] != nil)
 
-        #expect(presenter.lastThumbnail(of: picture(modifiedAt: date.addingTimeInterval(60.0))) == nil)
+        await presenter.pictureDidAppear(replacedPicture, filling: box)
+
+        #expect(viewModel.thumbnails[replacedPicture] === replacement)
+        #expect(recipeRepository.thumbnailReads.count == 2)
     }
 
     @MainActor
-    @Test("a picture that cannot be read shows none")
-    func unreadablePicture() async {
-        let presenter = makePresenter(recipeRepository: RecipeRepositorySpy())
+    @Test("a picture telling no date is read again each time a card shows it, and shows what was read last")
+    func undatedPicture() async throws {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        let replacement = try thumbnail(width: 480, height: 360)
+        recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": try thumbnail(width: 480, height: 360)]
+        let presenter = makePresenter(recipeRepository: recipeRepository, viewModel: viewModel)
+        await presenter.pictureDidAppear(picture(modifiedAt: nil), filling: box)
+        recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": replacement]
 
-        #expect(await presenter.thumbnail(of: picture(modifiedAt: nil), filling: box) == nil)
-        #expect(presenter.lastThumbnail(of: picture(modifiedAt: nil)) == nil)
+        await presenter.pictureDidAppear(picture(modifiedAt: nil), filling: box)
+
+        #expect(viewModel.thumbnails[picture(modifiedAt: nil)] === replacement)
+        #expect(recipeRepository.thumbnailReads.count == 2)
     }
 
     @MainActor
-    @Test("the thumbnails read longest ago are let go once they hold more than the budget")
+    @Test("a picture that cannot be read shows none, not what was read of it before")
+    func unreadablePicture() async throws {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": try thumbnail(width: 480, height: 360)]
+        let presenter = makePresenter(recipeRepository: recipeRepository, viewModel: viewModel)
+        await presenter.pictureDidAppear(picture(modifiedAt: nil), filling: box)
+        recipeRepository.thumbnails = [:]
+
+        await presenter.pictureDidAppear(picture(modifiedAt: nil), filling: box)
+
+        #expect(viewModel.thumbnails[picture(modifiedAt: nil)] == nil)
+    }
+
+    @MainActor
+    @Test("a card that leaves before its picture is read shows nothing of it")
+    func cancelledRead() async throws {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": try thumbnail(width: 480, height: 360)]
+        let presenter = makePresenter(recipeRepository: recipeRepository, viewModel: viewModel)
+        let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
+        let task = Task {
+            await presenter.pictureDidAppear(picture(modifiedAt: date), filling: box)
+        }
+
+        task.cancel()
+        await task.value
+
+        #expect(viewModel.thumbnails[picture(modifiedAt: date)] == nil)
+    }
+
+    @MainActor
+    @Test("the thumbnails read longest ago are let go once they hold more than the budget, and no longer shown")
     func memoryBudget() throws {
         let image = try thumbnail(width: 100, height: 100)
-        let memory = RecipeThumbnailMemory(byteBudget: image.bytesPerRow * image.height * 2)
-        let pictures = ["brioche", "crepes", "madeleines"].map({ picture($0) })
+        let thumbnails = KitchenThumbnails()
+        let memory = RecipeThumbnailMemory(
+            shownThumbnails: thumbnails,
+            byteBudget: image.bytesPerRow * image.height * 2
+        )
+        let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
+        let pictures = ["brioche", "crepes", "madeleines"].map({ picture($0, modifiedAt: date) })
 
         pictures.forEach({ memory.keep(image, of: $0) })
 
-        #expect(pictures.map({ memory.thumbnail(of: $0) != nil }) == [false, true, true])
+        #expect(pictures.map({ thumbnails[$0] != nil }) == [false, true, true])
+        #expect(!memory.holdsThumbnail(of: pictures[0], filling: CGSize(width: 100.0, height: 100.0)))
     }
 
     @MainActor
     @Test("a picture landing from iCloud shows what was read of it before")
     func landedPicture() throws {
         let image = try thumbnail(width: 100, height: 100)
-        let memory = RecipeThumbnailMemory()
-        memory.keep(image, of: picture("crepes"))
+        let thumbnails = KitchenThumbnails()
+        let memory = RecipeThumbnailMemory(shownThumbnails: thumbnails)
+        let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
+        let landedPicture = picture("crepes", modifiedAt: date)
+        memory.keep(image, of: picture("crepes", modifiedAt: date, availability: .notDownloaded))
 
-        #expect(memory.thumbnail(of: picture("crepes", availability: .notDownloaded)) === image)
+        #expect(memory.holdsThumbnail(of: landedPicture, filling: CGSize(width: 100.0, height: 100.0)))
+        #expect(thumbnails[landedPicture] === image)
     }
 }
