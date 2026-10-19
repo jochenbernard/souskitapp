@@ -1,8 +1,11 @@
-struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
+final class CookingFeaturePresenter: CookingFeaturePresenterProtocol {
     private let handler: CookingFeatureHandler
     private let idleTimer: IdleTimer
     private let timerScheduler: TimerScheduler
     private let viewModel: CookingFeatureViewModel
+
+    /// Whether the list is open only for a cancel confirmation that the timers folded under.
+    private var isTimerListOpenForCancelConfirmation = false
 
     @MainActor
     init(
@@ -92,10 +95,20 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
 
     func didOpenTimerList() {
         viewModel.isTimerListOpen = true
+        isTimerListOpenForCancelConfirmation = false
     }
 
     func didCloseTimerList() {
         viewModel.isTimerListOpen = false
+        isTimerListOpenForCancelConfirmation = false
+    }
+
+    // A confirmation points at its timer's row, and only the open list shows every row.
+    func didFoldTimers() {
+        if viewModel.timerConfirmingCancel != nil, viewModel.canOpenTimerList, !viewModel.isTimerListOpen {
+            viewModel.isTimerListOpen = true
+            isTimerListOpenForCancelConfirmation = true
+        }
     }
 
     func didTapCancelTimer(_ timer: RunningTimer) {
@@ -114,7 +127,7 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
 
     func didChangeIsConfirmingCancelTimer(_ isConfirming: Bool) {
         if !isConfirming {
-            viewModel.timerConfirmingCancel = nil
+            closeCancelConfirmation()
         }
     }
 
@@ -123,7 +136,7 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
             return
         }
 
-        viewModel.timerConfirmingCancel = nil
+        closeCancelConfirmation()
         cancel(timer)
     }
 
@@ -185,7 +198,18 @@ struct CookingFeaturePresenter: CookingFeaturePresenterProtocol {
         }
 
         if !viewModel.runningTimers.contains(where: { $0.id == timer.id && !$0.isRinging }) {
-            viewModel.timerConfirmingCancel = nil
+            closeCancelConfirmation()
+        }
+    }
+
+    /// Closes the cancel confirmation, and folds the list again where the confirmation alone had it open.
+    @MainActor
+    private func closeCancelConfirmation() {
+        viewModel.timerConfirmingCancel = nil
+
+        if isTimerListOpenForCancelConfirmation {
+            isTimerListOpenForCancelConfirmation = false
+            viewModel.isTimerListOpen = false
         }
     }
 
