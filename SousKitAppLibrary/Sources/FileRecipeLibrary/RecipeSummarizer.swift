@@ -10,17 +10,13 @@ actor RecipeSummarizer {
         let summary: RecipeSummary
     }
 
-    /// What reading a file returns: its text, and when the contents read last changed.
-    private struct Contents {
-        let text: String
-        let modificationDate: Date?
-    }
-
     private let cache: RecipeSummaryCache
     private let parser: SousParser
-    private let queue: OperationQueue
-    private let recipeDirectory: RecipeDirectory
-    private let startDownloading: @Sendable (URL) throws -> Void
+    private let saveInterval: Duration
+    private let textReader: RecipeTextReader
+
+    private var lastSave: ContinuousClock.Instant?
+    private var pendingSave: Task<Void, Never>?
 
     private lazy var summaries: [String: Summary] = cache.load().mapValues { record in
         Summary(record: record, summary: record.summary(parsedWith: parser))
@@ -29,27 +25,20 @@ actor RecipeSummarizer {
     /// Creates a summarizer.
     ///
     /// - Parameters:
-    ///   - recipeDirectory: The directory the recipes sit in.
     ///   - cache: Where the summaries are kept between launches.
     ///   - parser: What the recipes are read with.
-    ///   - startDownloading: Asks iCloud for a file's contents, returning before they arrive.
+    ///   - textReader: What the recipes' files are read with.
+    ///   - saveInterval: The shortest time between two writes of the cache, so a burst of reads writes it once.
     init(
-        recipeDirectory: RecipeDirectory,
         cache: RecipeSummaryCache,
         parser: SousParser,
-        startDownloading: @escaping @Sendable (URL) throws -> Void = { url in
-            try FileManager.default.startDownloadingUbiquitousItem(at: url)
-        }
+        textReader: RecipeTextReader,
+        saveInterval: Duration = .seconds(1)
     ) {
-        let readQueue = OperationQueue()
-        readQueue.maxConcurrentOperationCount = 1
-        readQueue.qualityOfService = .utility
-
-        self.recipeDirectory = recipeDirectory
         self.cache = cache
         self.parser = parser
-        self.queue = readQueue
-        self.startDownloading = startDownloading
+        self.textReader = textReader
+        self.saveInterval = saveInterval
     }
 
     /// The entries for files as they are listed now, each with the summary the cache holds for it, if any.
@@ -94,7 +83,9 @@ actor RecipeSummarizer {
         var hasRead = false
 
         for file in files {
-            guard let contents = await contents(of: file) else {
+            guard
+                let contents = try? await textReader.read(fileName: file.path, availability: file.availability)
+            else {
                 continue
             }
 
@@ -115,27 +106,30 @@ actor RecipeSummarizer {
         }
     }
 
-    private func contents(of file: RecipeFile) async -> Contents? {
-        let url = recipeDirectory.url.appending(path: file.path)
+    /// Writes the summaries now, or once `saveInterval` has passed since the last write, taking along whatever is read
+    /// meanwhile.
+    private func save() {
+        guard pendingSave == nil else {
+            return
+        }
 
-        return await recipeDirectory.url.withSecurityScope {
-            if file.availability != .downloaded {
-                // The coordinated read waits for the fetch, and reports one that cannot start.
-                try? startDownloading(url)
-            }
+        guard let lastSave, ContinuousClock.now < lastSave.advanced(by: saveInterval) else {
+            write()
+            return
+        }
 
-            return try? await CancellableFileCoordination.read(at: url, queue: queue) { coordinatedURL in
-                Contents(
-                    text: try String(contentsOf: coordinatedURL, encoding: .utf8),
-                    modificationDate: try? coordinatedURL.resourceValues(
-                        forKeys: [.contentModificationDateKey]
-                    ).contentModificationDate
-                )
-            }
+        let deadline = lastSave.advanced(by: saveInterval)
+
+        // Holding the summarizer, so what was read is written even after the directory is let go.
+        pendingSave = Task {
+            try? await Task.sleep(until: deadline)
+            write()
         }
     }
 
-    private func save() {
+    private func write() {
+        pendingSave = nil
+        lastSave = .now
         cache.save(summaries.mapValues(\.record))
     }
 }

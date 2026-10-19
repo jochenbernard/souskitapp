@@ -51,6 +51,28 @@ final class RecipeSummaryCacheTests {
         #expect(directory.summaryCache.load().isEmpty)
     }
 
+    @Test("a cache made for another directory since leaves this one writing nothing")
+    func replacedByOtherDirectory() throws {
+        let other = try TemporaryDirectory(named: "RecipeSummaryCacheTests")
+        let cache = directory.summaryCache
+        let otherCache = RecipeSummaryCache(recipeDirectory: other.recipeDirectory, fileURL: directory.summaryCacheURL)
+        otherCache.save(["brioche.sous": record(title: "Brioche")])
+
+        cache.save(["crepes.sous": record(title: "Crepes")])
+
+        #expect(otherCache.load() == ["brioche.sous": record(title: "Brioche")])
+    }
+
+    @Test("a cache made for the same directory since leaves this one writing")
+    func replacedBySameDirectory() {
+        let cache = directory.summaryCache
+        _ = directory.summaryCache
+
+        cache.save(["crepes.sous": record(title: "Crepes")])
+
+        #expect(directory.summaryCache.load() == ["crepes.sous": record(title: "Crepes")])
+    }
+
     @Test("a cache the system cleared loads as nothing")
     func cleared() throws {
         directory.summaryCache.save(["crepes.sous": record(title: "Crepes")])

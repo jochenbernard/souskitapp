@@ -18,10 +18,15 @@ final class RecipeSummarizerTests {
 
     private func makeSummarizer() -> RecipeSummarizer {
         RecipeSummarizer(
-            recipeDirectory: directory.recipeDirectory,
             cache: directory.summaryCache,
             parser: parser,
-            startDownloading: downloads.startDownloading
+            textReader: RecipeTextReader(
+                recipeDirectory: directory.recipeDirectory,
+                qualityOfService: .utility,
+                startDownloading: downloads.startDownloading
+            ),
+            // Every read written at once, so the cache can be checked right after.
+            saveInterval: .zero
         )
     }
 
@@ -53,6 +58,26 @@ final class RecipeSummarizerTests {
             modificationDate: modificationDate
         )
         directory.summaryCache.save(["crepes.sous": record])
+    }
+
+    @Test("reading on for a directory left for another writes nothing over the other's summaries")
+    func leftDirectory() async throws {
+        try writeCrepes()
+        let summarizer = makeSummarizer()
+        let files = try listedFiles()
+        _ = await summarizer.recipeEntries(for: files)
+
+        let other = try TemporaryDirectory(named: "RecipeSummarizerTests")
+        let otherCache = RecipeSummaryCache(recipeDirectory: other.recipeDirectory, fileURL: directory.summaryCacheURL)
+        let brioche = RecipeSummaryRecord(
+            recipe: parser.parseRecipe("---\ntitle: Brioche\n---").value,
+            modificationDate: date
+        )
+        otherCache.save(["brioche.sous": brioche])
+
+        await summarizer.read(files)
+
+        #expect(otherCache.load() == ["brioche.sous": brioche])
     }
 
     @Test("a file the cache holds nothing for is read, and its summary kept")

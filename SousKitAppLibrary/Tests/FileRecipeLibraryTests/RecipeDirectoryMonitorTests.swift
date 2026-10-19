@@ -16,12 +16,43 @@ final class RecipeDirectoryMonitorTests: Sendable {
         RecipeDirectoryMonitor(
             recipeDirectory: directory.recipeDirectory,
             summarizer: RecipeSummarizer(
-                recipeDirectory: directory.recipeDirectory,
                 cache: directory.summaryCache,
-                parser: SousParser()
+                parser: SousParser(),
+                textReader: RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .utility)
             ),
             settleDelay: .milliseconds(20)
         )
+    }
+
+    /// A monitor over `count` recipes all in iCloud, which the stub fetches.
+    private func makeICloudMonitor(
+        count: Int,
+        iCloud: (([String: String]) -> ICloudStub),
+        cacheWrites: CacheWriteSpy
+    ) throws -> (RecipeDirectoryMonitor, ICloudStub) {
+        let fileNames = (1...count).map({ "recipe-\($0).sous" })
+        try fileNames.forEach({ try directory.writeFile(named: ".\($0).icloud") })
+        let stub = iCloud(Dictionary(uniqueKeysWithValues: fileNames.map({ ($0, "---\ntitle: \($0)\n---") })))
+
+        let monitor = RecipeDirectoryMonitor(
+            recipeDirectory: directory.recipeDirectory,
+            summarizer: RecipeSummarizer(
+                cache: RecipeSummaryCache(
+                    recipeDirectory: directory.recipeDirectory,
+                    fileURL: directory.summaryCacheURL,
+                    write: cacheWrites.write
+                ),
+                parser: SousParser(),
+                textReader: RecipeTextReader(
+                    recipeDirectory: directory.recipeDirectory,
+                    qualityOfService: .utility,
+                    startDownloading: stub.startDownloading
+                )
+            ),
+            settleDelay: .milliseconds(20)
+        )
+
+        return (monitor, stub)
     }
 
     /// Whether the monitor reaches the given names, reading on until it does or the suite's time
@@ -174,6 +205,53 @@ final class RecipeDirectoryMonitorTests: Sendable {
         let result = await firstResult(from: makeMonitor())
 
         #expect(try #require(result).get().map(\.title) == ["Crepes Suzette"])
+    }
+
+    @MainActor
+    @Test("a first launch over recipes in iCloud fetches each once, and writes the cache once a second at most")
+    func iCloudLaunch() async throws {
+        let cacheWrites = CacheWriteSpy()
+        let (monitor, iCloud) = try makeICloudMonitor(
+            count: 50,
+            iCloud: { ICloudStub(texts: $0, interval: 0.06) },
+            cacheWrites: cacheWrites
+        )
+        let start = ContinuousClock.now
+
+        for await result in monitor.recipeEntries() where try result.get().allSatisfy({ $0.summary != nil }) {
+            break
+        }
+
+        let seconds = Int((ContinuousClock.now - start) / .seconds(1))
+
+        #expect(iCloud.requests.count == 50)
+        #expect(iCloud.requests.values.allSatisfy({ $0 == 1 }))
+        #expect(cacheWrites.count <= seconds + 2)
+    }
+
+    @MainActor
+    @Test("the summaries of recipes landing from iCloud are kept within a second, while the rest are on their way")
+    func iCloudLaunchKeepsWhatLanded() async throws {
+        let (monitor, _) = try makeICloudMonitor(
+            count: 50,
+            iCloud: { ICloudStub(texts: $0, interval: 0.06) },
+            cacheWrites: CacheWriteSpy()
+        )
+        var landed = 0
+        var kept = 0
+
+        for await result in monitor.recipeEntries() {
+            landed = try result.get().count(where: { $0.summary != nil })
+
+            if landed >= 10 {
+                try await Task.sleep(for: .seconds(1.2))
+                kept = directory.summaryCache.load().count
+                break
+            }
+        }
+
+        #expect(kept >= landed)
+        #expect(kept < 50)
     }
 
     @MainActor

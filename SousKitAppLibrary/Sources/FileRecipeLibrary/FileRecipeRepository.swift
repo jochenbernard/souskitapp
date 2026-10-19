@@ -27,14 +27,14 @@ struct FileRecipeRepository: RecipeRepository {
         self.monitor = RecipeDirectoryMonitor(
             recipeDirectory: recipeDirectory,
             summarizer: RecipeSummarizer(
-                recipeDirectory: recipeDirectory,
                 cache: RecipeSummaryCache(recipeDirectory: recipeDirectory, fileURL: summaryCacheURL),
-                parser: parser
+                parser: parser,
+                textReader: RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .utility)
             )
         )
         self.parser = parser
         self.recipeDirectory = recipeDirectory
-        self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory)
+        self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
     }
 
     func recipeEntries() async -> AsyncStream<Result<[RecipeEntry], Error>> {
@@ -48,8 +48,8 @@ struct FileRecipeRepository: RecipeRepository {
     /// Reads off the caller's actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
     func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe> {
-        let text = try textReader.readText(of: entry)
+        let contents = try await textReader.read(fileName: entry.fileName, availability: entry.availability)
 
-        return parser.parseRecipe(text)
+        return parser.parseRecipe(contents.text)
     }
 }
