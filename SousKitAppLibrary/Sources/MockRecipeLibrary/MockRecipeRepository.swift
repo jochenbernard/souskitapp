@@ -14,6 +14,8 @@ import SousKit
 public final class MockRecipeRepository: RecipeRepository {
     private let fetchDuration: Duration
     private let parser: SousParser
+    // By path, so listing many recipes looks each one's picture up at once.
+    private let pictureFiles: [String: MockRecipe]
     private let summaries: [String: RecipeSummary]
     private let ingredientNames: [String: [String]]
 
@@ -36,6 +38,9 @@ public final class MockRecipeRepository: RecipeRepository {
     ) {
         self.parser = parser
         self.fetchDuration = fetchDuration
+        self.pictureFiles = Dictionary(
+            uniqueKeysWithValues: MockRecipe.all.filter(\.isPicture).map({ ($0.id, $0) })
+        )
         let recipes = MockRecipe.all.reduce(into: [String: Recipe]()) { recipes, mockRecipe in
             recipes[mockRecipe.id] = mockRecipe.text.map({ parser.parseRecipe($0).value })
         }
@@ -66,7 +71,7 @@ public final class MockRecipeRepository: RecipeRepository {
 
     @MainActor
     public func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage {
-        guard let file = MockRecipe.all.first(where: { $0.isPicture && $0.id == picture.id }) else {
+        guard let file = pictureFiles[picture.id] else {
             throw CocoaError(.fileReadNoSuchFile)
         }
 
@@ -119,9 +124,10 @@ public final class MockRecipeRepository: RecipeRepository {
 
     /// The picture a recipe's header names, where the folder holds a file there.
     private func picture(of recipe: MockRecipe) -> RecipePicture? {
-        let path = summaries[recipe.id]?.imagePath(inFolder: recipe.folderPath)
-
-        guard let file = MockRecipe.all.first(where: { $0.isPicture && $0.id == path }) else {
+        guard
+            let path = summaries[recipe.id]?.imagePath(inFolder: recipe.folderPath),
+            let file = pictureFiles[path]
+        else {
             return nil
         }
 
