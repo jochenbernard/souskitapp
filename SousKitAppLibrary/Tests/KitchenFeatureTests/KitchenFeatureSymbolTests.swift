@@ -13,40 +13,27 @@ struct KitchenFeatureSymbolTests {
     /// `Baking/crepes.sous`, read, with `symbol` picked for it, or none.
     private func crepes(picking symbol: String? = nil) throws -> ListedRecipe {
         let recipe = parser.parseRecipe("---\ntitle: Crepes\n---\nWhisk @{200 g} flour@.").value
-        let listed = ListedRecipe(
+        let symbolPick = try symbol.map { symbol in
+            RecipeSymbolPick(
+                symbol: symbol,
+                input: try #require(RecipeSymbolInput(listedRecipe: try crepes())),
+                promptVersion: 1
+            )
+        }
+
+        return ListedRecipe(
             entry: RecipeEntry(
                 id: "Baking/crepes.sous",
                 name: "crepes",
                 availability: .downloaded,
-                summary: RecipeSummary(recipe: recipe, parser: parser),
-                folderPath: ["Baking"]
-            ),
-            ingredientNames: recipe.foodIngredientNames
-        )
-
-        guard let symbol else {
-            return listed
-        }
-
-        let pick = RecipeSymbolPick(
-            symbol: symbol,
-            input: try #require(RecipeSymbolInput(listedRecipe: listed)),
-            promptVersion: 1
-        )
-
-        return ListedRecipe(
-            entry: RecipeEntry(
-                id: listed.entry.id,
-                name: listed.entry.name,
-                availability: .downloaded,
                 summary: RecipeSummary(
                     metadata: recipe.metadata,
                     parser: parser,
-                    symbolPick: pick
+                    symbolPick: symbolPick
                 ),
                 folderPath: ["Baking"]
             ),
-            ingredientNames: listed.ingredientNames
+            ingredientNames: recipe.foodIngredientNames
         )
     }
 

@@ -8,7 +8,6 @@ public struct RecipeSymbolInput: Sendable, Hashable {
     private static let ingredientNameLimit = 20
     private static let fieldSeparator = "\u{1F}"
     private static let itemSeparator = "\u{1E}"
-    private static let hexDigits = Array("0123456789abcdef")
 
     /// The title the recipe shows.
     public let title: String
@@ -43,34 +42,14 @@ public struct RecipeSymbolInput: Sendable, Hashable {
         self.cuisine = metadata["cuisine"].flatMap({ $0.isEmpty ? nil : $0 })
         self.ingredientNames = Array(listedRecipe.ingredientNames.prefix(Self.ingredientNameLimit))
         // Made once, since every listing compares every recipe's input with its pick.
-        self.digest = Self.digest(
-            title: title,
-            tags: tags,
-            course: course,
-            cuisine: cuisine,
-            ingredientNames: ingredientNames
-        )
-    }
-
-    private static func digest(
-        title: String,
-        tags: [String],
-        course: String?,
-        cuisine: String?,
-        ingredientNames: [String]
-    ) -> String {
         let text = [
             title,
-            tags.joined(separator: itemSeparator),
+            tags.joined(separator: Self.itemSeparator),
             course ?? "",
             cuisine ?? "",
-            ingredientNames.joined(separator: itemSeparator)
+            ingredientNames.joined(separator: Self.itemSeparator)
         ]
-        .joined(separator: fieldSeparator)
-        let hex = SHA256.hash(data: Data(text.utf8)).flatMap { byte in
-            [hexDigits[Int(byte >> 4)], hexDigits[Int(byte & 0x0F)]]
-        }
-
-        return String(hex)
+        .joined(separator: Self.fieldSeparator)
+        self.digest = SHA256.hash(data: Data(text.utf8)).map({ String(format: "%02x", $0) }).joined()
     }
 }

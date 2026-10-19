@@ -85,15 +85,15 @@ public final class RecipeSymbolQueue {
         at generation: Int,
         into streamContinuation: AsyncStream<Listing>.Continuation
     ) {
+        let picked = listing.map(withPicks)
+        streamContinuation.yield(picked)
+
         // A stream already replaced still sends on what it was sent, but no longer decides what is picked.
         guard generation == self.generation else {
-            streamContinuation.yield(listing.map(withPicks))
             return
         }
 
-        let picked = listing.map(withPicks)
         self.listing = listing
-        streamContinuation.yield(picked)
         requests = Self.requests(for: (try? picked.get()) ?? [], promptVersion: picker.promptVersion)
         watchAvailability()
         startPicking()
