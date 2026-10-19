@@ -58,8 +58,7 @@ extension View {
 
         RunningTimerRow(
             presenter: CookingFeaturePresenterStub(),
-            timer: timer,
-            isConfirmingCancel: false
+            timer: timer
         )
         .runningTimerSwipeOffset(
             offset,

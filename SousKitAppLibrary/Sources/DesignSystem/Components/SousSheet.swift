@@ -2,7 +2,8 @@ import SwiftUI
 
 /// A sheet that sets one thing, under a bar holding its title and actions.
 ///
-/// The sheet sits low, as tall as what it holds, so the screen it opens over stays in view above it.
+/// The sheet sits low, as tall as what it holds, so the screen it opens over stays in view above it. It scrolls what
+/// it has no room for.
 public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
     private let title: Text
     private let content: Content
@@ -47,24 +48,20 @@ public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
     }
 
     private var measuredContent: some View {
-        VStack(spacing: SousSpacing.xLarge) {
-            content
+        ScrollView {
+            VStack(spacing: SousSpacing.xLarge) {
+                content
+            }
+            .sousPagePadding()
+            .frame(maxWidth: .infinity)
         }
-        .sousPagePadding()
-        // As tall as the content needs whatever the detent offers, so the sheet grows where a line starts to wrap.
-        .fixedSize(horizontal: false, vertical: true)
+        // Content the sheet can hold stays still under a finger.
+        .scrollBounceBehavior(.basedOnSize)
         // Only once the content sits under the bar: earlier layouts are at other widths, where it wraps differently.
-        .onGeometryChange(
+        .onScrollGeometryChange(
             for: Double?.self,
-            of: { $0.safeAreaInsets.top > 0.0 ? $0.size.height : nil },
-            action: { contentHeight = $0 ?? contentHeight }
-        )
-        // No taller than the detent offers, so content it cannot hold runs off the bottom and not up under the bar.
-        .frame(
-            maxWidth: .infinity,
-            minHeight: 0.0,
-            maxHeight: .infinity,
-            alignment: .top
+            of: { $0.contentInsets.top > 0.0 ? $0.contentSize.height : nil },
+            action: { _, height in contentHeight = height ?? contentHeight }
         )
         // The sheet's own ground, so the page behind it is read through nothing but the sheet.
         .sousPage()

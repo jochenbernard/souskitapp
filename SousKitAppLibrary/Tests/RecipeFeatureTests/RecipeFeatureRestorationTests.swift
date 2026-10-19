@@ -49,7 +49,7 @@ struct RecipeFeatureRestorationTests {
         let presenter = makePresenter(
             viewModel: viewModel,
             handler: RecipeFeatureHandlerSpy(),
-            restoration: RecipeFeatureRestoration(scale: eightServings, isScaling: false)
+            restoration: RecipeFeatureRestoration(scale: eightServings)
         )
 
         await presenter.viewDidAppear()
@@ -65,7 +65,7 @@ struct RecipeFeatureRestorationTests {
         let presenter = makePresenter(
             viewModel: viewModel,
             handler: RecipeFeatureHandlerSpy(),
-            restoration: RecipeFeatureRestoration(scale: eightServings, isScaling: false)
+            restoration: RecipeFeatureRestoration(scale: eightServings)
         )
 
         await presenter.viewDidAppear()
@@ -76,30 +76,13 @@ struct RecipeFeatureRestorationTests {
     }
 
     @MainActor
-    @Test("a restored scale sheet opens once the recipe is read, and not before")
-    func restoredScaleSheet() async {
-        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
-        let presenter = makePresenter(
-            viewModel: viewModel,
-            handler: RecipeFeatureHandlerSpy(),
-            restoration: RecipeFeatureRestoration(scale: nil, isScaling: true)
-        )
-
-        #expect(!viewModel.isScaling)
-
-        await presenter.viewDidAppear()
-
-        #expect(viewModel.isScaling)
-    }
-
-    @MainActor
     @Test("restored cooking resumes once the recipe is read, at the restored scale")
     func restoredCooking() async {
         let handler = RecipeFeatureHandlerSpy()
         let presenter = makePresenter(
             viewModel: RecipeFeatureViewModel(recipeEntry: crepes),
             handler: handler,
-            restoration: RecipeFeatureRestoration(scale: eightServings, isScaling: false),
+            restoration: RecipeFeatureRestoration(scale: eightServings),
             resumesCooking: true
         )
 
@@ -129,11 +112,9 @@ struct RecipeFeatureRestorationTests {
     @Test("a recipe that cannot be read resumes nothing")
     func unreadableRecipeResumesNothing() async {
         let handler = RecipeFeatureHandlerSpy()
-        let viewModel = RecipeFeatureViewModel(recipeEntry: crepes)
         let presenter = makePresenter(
-            viewModel: viewModel,
+            viewModel: RecipeFeatureViewModel(recipeEntry: crepes),
             handler: handler,
-            restoration: RecipeFeatureRestoration(scale: nil, isScaling: true),
             resumesCooking: true,
             text: nil
         )
@@ -141,7 +122,6 @@ struct RecipeFeatureRestorationTests {
         await presenter.viewDidAppear()
 
         #expect(handler.resumedRecipes.isEmpty)
-        #expect(!viewModel.isScaling)
     }
 
     @MainActor
@@ -176,7 +156,7 @@ struct RecipeFeatureRestorationTests {
     }
 
     @MainActor
-    @Test("opening the scale sheet, scaling and closing it each report what the screen has open")
+    @Test("scaling in the scale sheet reports the scale, and opening or closing the sheet reports nothing")
     func scalingReports() async {
         let handler = RecipeFeatureHandlerSpy()
         let presenter = makePresenter(viewModel: RecipeFeatureViewModel(recipeEntry: crepes), handler: handler)
@@ -186,13 +166,7 @@ struct RecipeFeatureRestorationTests {
         presenter.didChangeScaleText("8")
         presenter.didChangeIsScaling(false)
 
-        #expect(
-            handler.restorations == [
-                RecipeFeatureRestoration(scale: nil, isScaling: true),
-                RecipeFeatureRestoration(scale: eightServings, isScaling: true),
-                RecipeFeatureRestoration(scale: eightServings, isScaling: false)
-            ]
-        )
+        #expect(handler.restorations == [RecipeFeatureRestoration(scale: eightServings)])
     }
 
     @MainActor
@@ -205,7 +179,7 @@ struct RecipeFeatureRestorationTests {
         presenter.didStepScale(by: 1.0)
         presenter.didTapReset()
 
-        #expect(handler.restorations.last == RecipeFeatureRestoration(scale: nil, isScaling: false))
+        #expect(handler.restorations.last == RecipeFeatureRestoration(scale: nil))
     }
 
     @MainActor

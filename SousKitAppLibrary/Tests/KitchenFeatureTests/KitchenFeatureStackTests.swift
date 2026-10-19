@@ -3,6 +3,7 @@ import Observation
 import os
 import RecipeLibrary
 import SousKit
+import SwiftUI
 import Testing
 
 @Suite("Kitchen feature stack", .timeLimit(.minutes(1)))
@@ -287,5 +288,40 @@ struct KitchenFeatureStackTests {
 
         #expect(viewModel.openCooking != nil)
         #expect(viewModel.openCooking?.id != firstVisit)
+    }
+
+    @MainActor
+    @Test("the stack's path holds the pushed recipe, and holds nothing on the list")
+    func pathHoldsThePushedRecipe() {
+        let crepes = recipeEntry(named: "crepes")
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+        let feature = KitchenFeature(
+            presenter: presenter,
+            viewModel: viewModel
+        )
+
+        #expect(feature.path.wrappedValue.isEmpty)
+
+        presenter.didChangePushedScreen(.recipe(crepes))
+
+        #expect(feature.path.wrappedValue == NavigationPath([KitchenScreen.recipe(crepes)]))
+    }
+
+    @MainActor
+    @Test("the stack popping its path pops the recipe")
+    func poppingThePathPopsTheRecipe() {
+        let crepes = recipeEntry(named: "crepes")
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+        let feature = KitchenFeature(
+            presenter: presenter,
+            viewModel: viewModel
+        )
+
+        presenter.didChangePushedScreen(.recipe(crepes))
+        feature.path.wrappedValue = NavigationPath()
+
+        #expect(viewModel.pushedScreen == nil)
     }
 }

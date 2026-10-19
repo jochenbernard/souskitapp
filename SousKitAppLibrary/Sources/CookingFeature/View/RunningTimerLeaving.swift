@@ -52,8 +52,7 @@ extension AnyTransition {
         if isShown {
             RunningTimerRow(
                 presenter: CookingFeaturePresenterStub(),
-                timer: RunningTimersPreview.timers()[1],
-                isConfirmingCancel: false
+                timer: RunningTimersPreview.timers()[1]
             )
             .transition(.runningTimerLeaving)
         }

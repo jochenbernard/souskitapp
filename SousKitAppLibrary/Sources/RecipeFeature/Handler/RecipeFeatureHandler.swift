@@ -14,9 +14,9 @@ public protocol RecipeFeatureHandler {
     @MainActor
     func recipeFeatureDidResumeCooking(recipe: Recipe)
 
-    /// What the screen has open changed, for a cold start to restore.
+    /// How the screen stands changed, for a cold start to restore.
     ///
-    /// - Parameter restoration: What the screen has open now.
+    /// - Parameter restoration: How the screen stands now.
     @MainActor
     func recipeFeatureDidChangeRestoration(_ restoration: RecipeFeatureRestoration)
 }

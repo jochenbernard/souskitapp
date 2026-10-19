@@ -23,12 +23,8 @@ struct KitchenFeatureView: View {
 
     var body: some View {
         recipeListScreen
-            .navigationDestination(item: pushedScreen) { screen in
+            .navigationDestination(for: KitchenScreen.self) { screen in
                 screenView(for: screen)
-            }
-            // The recipe a cold start opens again is there at once, rather than pushed over a list never shown.
-            .transaction(value: viewModel.isRestoring) { transaction in
-                transaction.disablesAnimations = true
             }
             // Over the whole kitchen rather than pushed on it, zooming out of the button that starts it, and never
             // swiped or pinched away: its own exit is the only way out.
@@ -185,13 +181,6 @@ struct KitchenFeatureView: View {
                     presenter.didDismissCooking()
                 }
             }
-        )
-    }
-
-    private var pushedScreen: Binding<KitchenScreen?> {
-        Binding(
-            get: { viewModel.pushedScreen },
-            set: { presenter.didChangePushedScreen($0) }
         )
     }
 }

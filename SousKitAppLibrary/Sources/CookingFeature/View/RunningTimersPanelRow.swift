@@ -29,7 +29,6 @@ struct RunningTimersPanelRow: View {
     private let timer: RunningTimer
     private let depth: Int
     private let width: CGFloat
-    private let isConfirmingCancel: Bool
     private let isListed: Bool
     private let opensOnTap: Bool
     private let isSwooping: Bool
@@ -51,7 +50,6 @@ struct RunningTimersPanelRow: View {
         timer: RunningTimer,
         depth: Int,
         width: CGFloat,
-        isConfirmingCancel: Bool,
         isListed: Bool,
         opensOnTap: Bool,
         isSwooping: Bool,
@@ -63,7 +61,6 @@ struct RunningTimersPanelRow: View {
         self.timer = timer
         self.depth = depth
         self.width = width
-        self.isConfirmingCancel = isConfirmingCancel
         self.isListed = isListed
         self.opensOnTap = opensOnTap
         self.isSwooping = isSwooping
@@ -75,13 +72,13 @@ struct RunningTimersPanelRow: View {
         RunningTimerRow(
             presenter: presenter,
             timer: timer,
-            isConfirmingCancel: isConfirmingCancel,
             contentWidth: width,
             contentFade: RunningTimersMotionFade(
                 motion: motion,
                 over: Self.contentFadeStart...Self.contentFadeEnd,
                 isEnabled: depth > 0 && !isSwooping
-            )
+            ),
+            onCancelButtonFrameChange: { frame in motion.cancelButtonFrames[timer.id] = frame }
         )
         .mask {
             scrollFade
@@ -162,7 +159,6 @@ struct RunningTimersPanelRow: View {
         timer: RunningTimersPreview.timers()[1],
         depth: 0,
         width: 370.0,
-        isConfirmingCancel: false,
         isListed: false,
         opensOnTap: true,
         isSwooping: false,
