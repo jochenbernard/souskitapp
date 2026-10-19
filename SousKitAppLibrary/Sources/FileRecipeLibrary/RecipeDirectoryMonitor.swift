@@ -87,8 +87,7 @@ final class RecipeDirectoryMonitor {
         let url = recipeDirectory.url
         isScoped = url.startAccessingSecurityScopedResource()
 
-        // iCloud writes through file coordination and other apps on the device do not, so both are watched. A
-        // presenter hears the directories inside its own as well.
+        // iCloud writes through file coordination, heard at any depth, and other apps do not, so both are watched.
         presenter = DirectoryPresenter(directoryURL: url, onChange: makeOnChange())
         watch(directoriesAt: [""])
 

@@ -1,11 +1,13 @@
 import Foundation
 import RecipeLibrary
 
-/// Reads the recipes in a directory and in every directory inside it, leaving hidden ones and what they hold alone.
+/// Reads the recipes in a directory and in every directory inside it, leaving hidden ones, packages and what they hold
+/// alone.
 struct RecipeDirectoryReader: Sendable {
     private static let resourceKeys: Set<URLResourceKey> = [
         .contentModificationDateKey,
         .isDirectoryKey,
+        .isPackageKey,
         .isUbiquitousItemKey,
         .ubiquitousItemDownloadingStatusKey,
         .ubiquitousItemIsDownloadingKey
@@ -36,7 +38,11 @@ struct RecipeDirectoryReader: Sendable {
         return try url.withSecurityScope {
             try NSFileCoordinator.coordinateReading(at: url) { coordinatedURL in
                 var listing = RecipeDirectoryListing(recipeFiles: [], directoryPaths: [])
-                try Self.read(directoryAt: coordinatedURL, path: "", into: &listing)
+                try Self.read(
+                    directoryAt: coordinatedURL,
+                    path: "",
+                    into: &listing
+                )
                 listing.recipeFiles.sort(by: { $0.path.localizedStandardCompare($1.path) == .orderedAscending })
 
                 return listing
@@ -75,12 +81,20 @@ struct RecipeDirectoryReader: Sendable {
                 let url = entry.deletingLastPathComponent().appending(path: name)
                 placeholders.append(placeholderFile(at: joined(path, name), url: url))
             } else if !entryName.hasPrefix(".") {
-                guard let values = try? entry.resourceValues(forKeys: resourceKeys) else {
+                // A package is one document in Files, so nothing inside it is listed.
+                guard
+                    let values = try? entry.resourceValues(forKeys: resourceKeys),
+                    values.isPackage != true
+                else {
                     continue
                 }
 
                 if values.isDirectory == true {
-                    try? read(directoryAt: entry, path: joined(path, entryName), into: &listing)
+                    try? read(
+                        directoryAt: entry,
+                        path: joined(path, entryName),
+                        into: &listing
+                    )
                 } else if isRecipeFileName(entryName) {
                     // A file iCloud evicted in place keeps the dates of the contents it stands in for.
                     recipeFiles.append(

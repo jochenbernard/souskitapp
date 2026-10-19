@@ -111,6 +111,15 @@ final class RecipeDirectoryReaderTests {
         #expect(try readListing().directoryPaths == [""])
     }
 
+    @Test("a package and everything in it are left out")
+    func package() throws {
+        try directory.makeDirectory(named: "Notes.rtfd")
+        try directory.writeFile(named: "Notes.rtfd/crepes.sous")
+
+        #expect(try readPaths().isEmpty)
+        #expect(try readListing().directoryPaths == [""])
+    }
+
     @Test("recipes are ordered by name")
     func ordering() throws {
         try directory.writeFile(named: "vinaigrette.sous")
