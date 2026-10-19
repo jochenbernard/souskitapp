@@ -1,7 +1,7 @@
 import Foundation
 import RecipeLibrary
 
-/// The recipes in a directory, read once and read again on every change to it.
+/// The recipes in a directory and in the directories inside it, read once and read again on every change to them.
 @MainActor
 final class RecipeDirectoryMonitor {
     private let reader: RecipeDirectoryReader
@@ -10,7 +10,8 @@ final class RecipeDirectoryMonitor {
     private let summarizer: RecipeSummarizer
 
     private var continuation: AsyncStream<Result<[RecipeEntry], Error>>.Continuation?
-    private var eventSource: DirectoryEventSource?
+    // By path: an event source hears its own directory's entries alone, so each directory listed has one.
+    private var eventSources: [String: DirectoryEventSource] = [:]
     // By path, and left running by a new read of the directory: a landing file changes the directory.
     private var fetches: [String: Task<Void, Never>] = [:]
     private var generation = 0
@@ -86,17 +87,34 @@ final class RecipeDirectoryMonitor {
         let url = recipeDirectory.url
         isScoped = url.startAccessingSecurityScopedResource()
 
-        let onChange: @Sendable () -> Void = { [weak self] in
+        // iCloud writes through file coordination and other apps on the device do not, so both are watched. A
+        // presenter hears the directories inside its own as well.
+        presenter = DirectoryPresenter(directoryURL: url, onChange: makeOnChange())
+        watch(directoriesAt: [""])
+
+        read(afterSettling: false)
+    }
+
+    private func makeOnChange() -> @Sendable () -> Void {
+        { [weak self] in
             Task { @MainActor in
                 self?.read(afterSettling: true)
             }
         }
+    }
 
-        // iCloud writes through file coordination and other apps on the device do not, so both are watched.
-        presenter = DirectoryPresenter(directoryURL: url, onChange: onChange)
-        eventSource = DirectoryEventSource(directoryURL: url, onChange: onChange)
+    /// Watches the directories listed for the changes that reach them without file coordination, and stops watching
+    /// those no longer listed.
+    ///
+    /// - Parameter directoryPaths: Where the directories sit inside the recipe directory, empty for itself.
+    private func watch(directoriesAt directoryPaths: [String]) {
+        let paths = Set(directoryPaths)
+        eventSources = eventSources.filter({ paths.contains($0.key) })
 
-        read(afterSettling: false)
+        for path in paths where eventSources[path] == nil {
+            let url = path.isEmpty ? recipeDirectory.url : recipeDirectory.url.appending(path: path)
+            eventSources[path] = DirectoryEventSource(directoryURL: url, onChange: makeOnChange())
+        }
     }
 
     private func stop() {
@@ -105,7 +123,7 @@ final class RecipeDirectoryMonitor {
         fetches.values.forEach({ $0.cancel() })
         fetches = [:]
         recipeFiles = []
-        eventSource = nil
+        eventSources = [:]
         presenter?.stopPresenting()
         presenter = nil
         lastRecipeEntries = nil
@@ -148,17 +166,17 @@ final class RecipeDirectoryMonitor {
                 return
             }
 
-            let result = await Self.readRecipeFiles(with: directoryReader)
+            let result = await Self.readListing(with: directoryReader)
 
             guard !Task.isCancelled else {
                 return
             }
 
             switch result {
-            case .success(let recipeFiles):
-                self?.didList(recipeFiles)
+            case .success(let listing):
+                self?.didList(listing)
                 await Self.readSummaries(
-                    of: recipeFiles,
+                    of: listing.recipeFiles,
                     with: summarizer,
                     yield: { [weak self] recipeEntries in self?.yield(.success(recipeEntries)) },
                     fetch: { [weak self] filesToRead in self?.fetch(filesToRead) ?? [] }
@@ -172,10 +190,10 @@ final class RecipeDirectoryMonitor {
 
     /// Reads off the main actor, where a directory in iCloud can take a while to answer.
     @concurrent
-    nonisolated private static func readRecipeFiles(
+    nonisolated private static func readListing(
         with reader: RecipeDirectoryReader
-    ) async -> Result<[RecipeFile], Error> {
-        Result(catching: { try reader.readRecipeFiles() })
+    ) async -> Result<RecipeDirectoryListing, Error> {
+        Result(catching: { try reader.readListing() })
     }
 
     /// Yields the recipes with the summaries the cache holds, then reads those it has none for, yielding the recipes
@@ -215,9 +233,10 @@ final class RecipeDirectoryMonitor {
         }
     }
 
-    /// Keeps a listing, giving up on the fetches of files it no longer holds.
-    private func didList(_ recipeFiles: [RecipeFile]) {
-        self.recipeFiles = recipeFiles
+    /// Keeps a listing, watching the directories it holds and giving up on the fetches of files it no longer holds.
+    private func didList(_ listing: RecipeDirectoryListing) {
+        recipeFiles = listing.recipeFiles
+        watch(directoriesAt: listing.directoryPaths)
 
         let paths = Set(recipeFiles.map(\.path))
 

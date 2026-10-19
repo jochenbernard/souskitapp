@@ -18,7 +18,7 @@ struct RecipeFile: Sendable, Hashable {
     /// - Returns: The entry.
     func recipeEntry(summary: RecipeSummary?) -> RecipeEntry {
         RecipeEntry(
-            fileName: path,
+            path: path,
             availability: availability,
             summary: summary
         )

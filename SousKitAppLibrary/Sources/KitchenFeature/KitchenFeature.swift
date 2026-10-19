@@ -18,13 +18,9 @@ public struct KitchenFeature {
     @MainActor
     public var path: Binding<NavigationPath> {
         Binding(
-            get: { NavigationPath(viewModel.pushedScreen.map({ [$0] }) ?? []) },
-            set: { path in
-                // The kitchen pushes from its own rows, so the stack only ever changes the path by popping it.
-                if path.isEmpty {
-                    presenter.didChangePushedScreen(nil)
-                }
-            }
+            get: { NavigationPath(viewModel.pushedScreens) },
+            // The kitchen pushes from its own rows, so the stack only ever changes the path by popping it.
+            set: { path in presenter.didPop(toCount: path.count) }
         )
     }
 

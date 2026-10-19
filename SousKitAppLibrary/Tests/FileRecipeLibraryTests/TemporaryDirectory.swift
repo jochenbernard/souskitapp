@@ -51,7 +51,7 @@ final class TemporaryDirectory: Sendable {
     func writeFile(named fileName: String, _ text: String) throws -> RecipeEntry {
         try Data(text.utf8).write(to: url.appending(path: fileName))
 
-        return RecipeEntry(fileName: fileName, availability: .downloaded)
+        return RecipeEntry(path: fileName, availability: .downloaded)
     }
 
     /// The cache keeping the summaries of the directory's recipes.

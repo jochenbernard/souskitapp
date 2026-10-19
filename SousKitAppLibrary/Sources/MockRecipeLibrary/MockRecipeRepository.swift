@@ -4,9 +4,9 @@ import SousKit
 
 /// Recipes kept in the app, for trying it where no folder can be picked, such as on a simulator.
 ///
-/// Some of the recipes start out in iCloud, and reading one fetches it first, as a folder in iCloud Drive does. One
-/// of them never arrives. Every recipe with a text is listed with its summary, as a folder lists the recipes it read
-/// on an earlier launch.
+/// They sit in folders as a folder's recipes do, some of them sharing a file name. Some of the recipes start out in
+/// iCloud, and reading one fetches it first, as a folder in iCloud Drive does. One of them never arrives. Every recipe
+/// with a text is listed with its summary, as a folder lists the recipes it read on an earlier launch.
 @MainActor
 public final class MockRecipeRepository: RecipeRepository {
     private let fetchDuration: Duration
@@ -62,7 +62,7 @@ public final class MockRecipeRepository: RecipeRepository {
 
     @MainActor
     public func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe> {
-        guard let recipe = MockRecipe.all.first(where: { $0.id == entry.id }) else {
+        guard let recipe = MockRecipe.all.first(where: { $0.isListed && $0.id == entry.id }) else {
             throw CocoaError(.fileReadNoSuchFile)
         }
 
@@ -80,12 +80,13 @@ public final class MockRecipeRepository: RecipeRepository {
     }
 
     private var entries: [RecipeEntry] {
-        MockRecipe.all.map { recipe in
+        MockRecipe.all.filter(\.isListed).map { recipe in
             RecipeEntry(
                 id: recipe.id,
                 name: recipe.name,
                 availability: availability(of: recipe),
-                summary: summaries[recipe.id]
+                summary: summaries[recipe.id],
+                folderPath: recipe.folderPath
             )
         }
     }

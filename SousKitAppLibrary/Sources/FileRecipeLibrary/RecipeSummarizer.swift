@@ -84,7 +84,7 @@ actor RecipeSummarizer {
 
         for file in files {
             guard
-                let contents = try? await textReader.read(fileName: file.path, availability: file.availability)
+                let contents = try? await textReader.read(path: file.path, availability: file.availability)
             else {
                 continue
             }

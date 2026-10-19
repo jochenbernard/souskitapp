@@ -44,12 +44,12 @@ struct RecipeTextReader: Sendable {
     /// takes as long as that fetch does. Cancelling the task gives up on the read.
     ///
     /// - Parameters:
-    ///   - fileName: The file's name inside the recipe directory, extension included.
+    ///   - path: Where the file sits inside the recipe directory, extension included.
     ///   - availability: Whether the file's contents are on the device.
     /// - Returns: The recipe's contents.
     /// - Throws: Whatever fetching or reading the file throws, or `CancellationError` when the task is cancelled.
-    func read(fileName: String, availability: RecipeAvailability) async throws -> Contents {
-        let url = recipeDirectory.url.appending(path: fileName)
+    func read(path: String, availability: RecipeAvailability) async throws -> Contents {
+        let url = recipeDirectory.url.appending(path: path)
 
         return try await recipeDirectory.url.withSecurityScope {
             if availability != .downloaded {

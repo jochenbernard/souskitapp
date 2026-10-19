@@ -3,7 +3,6 @@ import Observation
 import os
 import RecipeLibrary
 import SousKit
-import SwiftUI
 import Testing
 
 @Suite("Kitchen feature stack", .timeLimit(.minutes(1)))
@@ -60,9 +59,9 @@ struct KitchenFeatureStackTests {
         let crepes = recipeEntry(named: "crepes")
         let viewModel = makeViewModel()
 
-        makePresenter(viewModel: viewModel).didChangePushedScreen(.recipe(crepes))
+        makePresenter(viewModel: viewModel).didPush(.recipe(crepes), from: nil)
 
-        #expect(viewModel.pushedScreen == .recipe(crepes))
+        #expect(viewModel.pushedScreens == [.recipe(crepes)])
         #expect(viewModel.openRecipe?.recipeEntry == crepes)
     }
 
@@ -73,10 +72,10 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
-        presenter.didChangePushedScreen(nil)
+        presenter.didPush(.recipe(crepes), from: nil)
+        presenter.didPop(toCount: 0)
 
-        #expect(viewModel.pushedScreen == nil)
+        #expect(viewModel.pushedScreens.isEmpty)
         #expect(viewModel.openRecipe?.recipeEntry == crepes)
     }
 
@@ -88,9 +87,9 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
-        presenter.didChangePushedScreen(nil)
-        presenter.didChangePushedScreen(.recipe(brioche))
+        presenter.didPush(.recipe(crepes), from: nil)
+        presenter.didPop(toCount: 0)
+        presenter.didPush(.recipe(brioche), from: nil)
 
         #expect(viewModel.openRecipe?.recipeEntry == brioche)
     }
@@ -102,10 +101,10 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
 
         #expect(!replaces(\.openRecipe, in: viewModel) {
-            presenter.didChangePushedScreen(.recipe(crepes))
+            presenter.didPush(.recipe(crepes), from: nil)
         })
     }
 
@@ -116,11 +115,11 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
-        presenter.didChangePushedScreen(nil)
+        presenter.didPush(.recipe(crepes), from: nil)
+        presenter.didPop(toCount: 0)
 
         #expect(replaces(\.openRecipe, in: viewModel) {
-            presenter.didChangePushedScreen(.recipe(crepes))
+            presenter.didPush(.recipe(crepes), from: nil)
         })
         #expect(viewModel.openRecipe?.recipeEntry == crepes)
     }
@@ -137,16 +136,16 @@ struct KitchenFeatureStackTests {
         )
 
         handler.kitchenFeatureIsCovered = true
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
 
-        #expect(viewModel.pushedScreen == nil)
+        #expect(viewModel.pushedScreens.isEmpty)
         #expect(viewModel.openRecipe == nil)
         #expect(handler.restoration == nil)
 
         handler.kitchenFeatureIsCovered = false
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
 
-        #expect(viewModel.pushedScreen == .recipe(crepes))
+        #expect(viewModel.pushedScreens == [.recipe(crepes)])
     }
 
     @MainActor
@@ -161,14 +160,14 @@ struct KitchenFeatureStackTests {
             handler: handler
         )
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         let whileCooking = handler.restoration
 
-        #expect(replaces(\.pushedScreen, in: viewModel) {
-            presenter.didChangePushedScreen(nil)
+        #expect(replaces(\.pushedScreens, in: viewModel) {
+            presenter.didPop(toCount: 0)
         })
-        #expect(viewModel.pushedScreen == .recipe(crepes))
+        #expect(viewModel.pushedScreens == [.recipe(crepes)])
         #expect(viewModel.openRecipe?.recipeEntry == crepes)
         #expect(viewModel.openCooking != nil)
         #expect(whileCooking?.cooking != nil)
@@ -186,13 +185,13 @@ struct KitchenFeatureStackTests {
             handler: handler
         )
 
-        presenter.didChangePushedScreen(.recipe(recipeEntry(named: "crepes")))
+        presenter.didPush(.recipe(recipeEntry(named: "crepes")), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
-        presenter.didChangePushedScreen(nil)
+        presenter.didPop(toCount: 0)
         presenter.cookingFeatureDidExit()
-        presenter.didChangePushedScreen(nil)
+        presenter.didPop(toCount: 0)
 
-        #expect(viewModel.pushedScreen == nil)
+        #expect(viewModel.pushedScreens.isEmpty)
         #expect(handler.restoration == nil)
     }
 
@@ -204,10 +203,10 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
-        #expect(viewModel.pushedScreen == .recipe(crepes))
+        #expect(viewModel.pushedScreens == [.recipe(crepes)])
         #expect(viewModel.openCooking != nil)
     }
 
@@ -219,7 +218,7 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
         #expect(!replaces(\.openCooking, in: viewModel) {
@@ -247,14 +246,14 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
         #expect(!replaces(\.openRecipe, in: viewModel) {
             presenter.cookingFeatureDidExit()
         })
         #expect(viewModel.openCooking == nil)
-        #expect(viewModel.pushedScreen == .recipe(crepes))
+        #expect(viewModel.pushedScreens == [.recipe(crepes)])
     }
 
     @MainActor
@@ -265,7 +264,7 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         presenter.didDismissCooking()
 
@@ -280,7 +279,7 @@ struct KitchenFeatureStackTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         let firstVisit = viewModel.openCooking?.id
         presenter.cookingFeatureDidExit()
@@ -288,40 +287,5 @@ struct KitchenFeatureStackTests {
 
         #expect(viewModel.openCooking != nil)
         #expect(viewModel.openCooking?.id != firstVisit)
-    }
-
-    @MainActor
-    @Test("the stack's path holds the pushed recipe, and holds nothing on the list")
-    func pathHoldsThePushedRecipe() {
-        let crepes = recipeEntry(named: "crepes")
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-        let feature = KitchenFeature(
-            presenter: presenter,
-            viewModel: viewModel
-        )
-
-        #expect(feature.path.wrappedValue.isEmpty)
-
-        presenter.didChangePushedScreen(.recipe(crepes))
-
-        #expect(feature.path.wrappedValue == NavigationPath([KitchenScreen.recipe(crepes)]))
-    }
-
-    @MainActor
-    @Test("the stack popping its path pops the recipe")
-    func poppingThePathPopsTheRecipe() {
-        let crepes = recipeEntry(named: "crepes")
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-        let feature = KitchenFeature(
-            presenter: presenter,
-            viewModel: viewModel
-        )
-
-        presenter.didChangePushedScreen(.recipe(crepes))
-        feature.path.wrappedValue = NavigationPath()
-
-        #expect(viewModel.pushedScreen == nil)
     }
 }

@@ -8,8 +8,19 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didBecomeActive() async
 
+    /// A row on a screen of the kitchen was pressed.
+    ///
+    /// - Parameters:
+    ///   - screen: The screen the row pushes.
+    ///   - origin: The screen the row is on, or `nil` for the kitchen's own.
     @MainActor
-    func didChangePushedScreen(_ screen: KitchenScreen?)
+    func didPush(_ screen: KitchenScreen, from origin: KitchenScreen?)
+
+    /// The stack popped screens.
+    ///
+    /// - Parameter count: How many screens are left on it.
+    @MainActor
+    func didPop(toCount count: Int)
 
     @MainActor
     func didDismissCooking()

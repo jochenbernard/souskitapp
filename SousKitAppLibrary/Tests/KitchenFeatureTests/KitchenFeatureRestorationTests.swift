@@ -80,7 +80,7 @@ struct KitchenFeatureRestorationTests {
     func pushReportsTheRecipe() {
         let handler = KitchenFeatureHandlerStub()
 
-        makePresenter(viewModel: makeViewModel(), handler: handler).didChangePushedScreen(.recipe(crepes))
+        makePresenter(viewModel: makeViewModel(), handler: handler).didPush(.recipe(crepes), from: nil)
 
         #expect(handler.restoration == KitchenFeatureRestoration(recipeID: crepes.id))
     }
@@ -91,8 +91,8 @@ struct KitchenFeatureRestorationTests {
         let handler = KitchenFeatureHandlerStub()
         let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
-        presenter.didChangePushedScreen(nil)
+        presenter.didPush(.recipe(crepes), from: nil)
+        presenter.didPop(toCount: 0)
 
         #expect(handler.restoration == nil)
     }
@@ -104,7 +104,7 @@ struct KitchenFeatureRestorationTests {
         let handler = KitchenFeatureHandlerStub()
         let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidChangeRestoration(restoration)
 
         #expect(handler.restoration?.recipe == restoration)
@@ -129,7 +129,7 @@ struct KitchenFeatureRestorationTests {
         let handler = KitchenFeatureHandlerStub()
         let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
 
         #expect(handler.restoration?.cooking == CookingFeatureRestoration())
@@ -146,7 +146,7 @@ struct KitchenFeatureRestorationTests {
         let handler = KitchenFeatureHandlerStub()
         let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: recipe)
         presenter.didDismissCooking()
 
@@ -160,7 +160,7 @@ struct KitchenFeatureRestorationTests {
         let handler = KitchenFeatureHandlerStub()
         let presenter = makePresenter(viewModel: makeViewModel(), handler: handler)
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: parser.parseRecipe("Whisk it.").value)
         presenter.cookingFeatureDidChangeRestoration(cooking)
 
@@ -183,7 +183,7 @@ struct KitchenFeatureRestorationTests {
 
         let kitchen = await restore(restoration, listing: [.success([listedCrepes])])
 
-        #expect(kitchen.viewModel.pushedScreen == .recipe(listedCrepes))
+        #expect(kitchen.viewModel.pushedScreens == [.recipe(listedCrepes)])
         #expect(kitchen.viewModel.openRecipe?.recipeEntry == listedCrepes)
         #expect(kitchen.viewModel.openCooking == nil)
         #expect(!kitchen.viewModel.isRestoring)
@@ -198,7 +198,7 @@ struct KitchenFeatureRestorationTests {
 
         let kitchen = await restore(restoration, listing: [.success([]), .success([crepes])])
 
-        #expect(kitchen.viewModel.pushedScreen == nil)
+        #expect(kitchen.viewModel.pushedScreens.isEmpty)
         #expect(kitchen.viewModel.openRecipe == nil)
         #expect(!kitchen.viewModel.isRestoring)
         #expect(kitchen.handler.restoreCount == 0)
@@ -213,7 +213,7 @@ struct KitchenFeatureRestorationTests {
             listing: [.failure(CocoaError(.fileReadNoSuchFile)), .success([crepes])]
         )
 
-        #expect(kitchen.viewModel.pushedScreen == nil)
+        #expect(kitchen.viewModel.pushedScreens.isEmpty)
         #expect(kitchen.handler.restoreCount == 0)
         #expect(kitchen.handler.restoration == nil)
     }
@@ -235,7 +235,7 @@ struct KitchenFeatureRestorationTests {
         recipeRepository.finish()
         await presenter.viewDidAppear()
 
-        #expect(viewModel.pushedScreen == nil)
+        #expect(viewModel.pushedScreens.isEmpty)
         #expect(viewModel.openRecipe == nil)
         #expect(handler.restoreCount == 0)
     }
@@ -254,7 +254,7 @@ struct KitchenFeatureRestorationTests {
             listing: [.success([crepes]), .success([renamedCrepes])]
         )
 
-        #expect(kitchen.viewModel.pushedScreen == .recipe(crepes))
+        #expect(kitchen.viewModel.pushedScreens == [.recipe(crepes)])
         #expect(kitchen.viewModel.openRecipe?.recipeEntry == crepes)
         #expect(kitchen.handler.restoreCount == 1)
     }
@@ -292,7 +292,7 @@ struct KitchenFeatureRestorationTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel, handler: KitchenFeatureHandlerStub())
 
-        presenter.didChangePushedScreen(.recipe(crepes))
+        presenter.didPush(.recipe(crepes), from: nil)
         presenter.recipeFeatureDidStartCooking(recipe: parser.parseRecipe("Whisk it.").value)
 
         #expect(viewModel.openCooking?.isResumed == false)

@@ -1,6 +1,6 @@
 /// What ``KitchenFeature`` reports out of the kitchen to.
 public protocol KitchenFeatureHandler {
-    /// Whether something is open over the kitchen, which pushes no recipe under it.
+    /// Whether something is open over the kitchen, which pushes no screen under it.
     @MainActor
     var kitchenFeatureIsCovered: Bool { get }
 

@@ -54,12 +54,12 @@ struct KitchenFeaturePresenterTests {
         recipeRepository.finish()
         await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
 
-        guard case .recipes(let cards) = viewModel.recipeList else {
+        guard case .recipes(let folder) = viewModel.recipeList else {
             Issue.record("The recipe list did not list recipes.")
             return []
         }
 
-        return cards
+        return folder.cards
     }
 
     /// Whether the view model reaches the given names, waiting until it does or the suite's time
@@ -68,8 +68,8 @@ struct KitchenFeaturePresenterTests {
     private func names(reach expected: [String], in viewModel: KitchenFeatureViewModel) async -> Bool {
         while !Task.isCancelled {
             if
-                case .recipes(let cards) = viewModel.recipeList,
-                cards.map(\.recipeEntry.name) == expected
+                case .recipes(let folder) = viewModel.recipeList,
+                folder.cards.map(\.recipeEntry.name) == expected
             {
                 return true
             }
@@ -172,6 +172,54 @@ struct KitchenFeaturePresenterTests {
 
         #expect(cards.map(\.placeholderColor) == colors)
         #expect(cards.map(\.placeholderSymbol) == ["fork.knife", "fork.knife", "fork.knife"])
+    }
+
+    @MainActor
+    @Test("a recipe the repository lists later in a folder reaches that folder")
+    func addedRecipeInAFolderReachesIt() async {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
+        let task = Task {
+            await presenter.viewDidAppear()
+        }
+        defer {
+            task.cancel()
+        }
+        let brioche = RecipeEntry(
+            id: "Baking/brioche.sous",
+            name: "brioche",
+            availability: .downloaded,
+            folderPath: ["Baking"]
+        )
+        let madeleines = RecipeEntry(
+            id: "Baking/madeleines.sous",
+            name: "madeleines",
+            availability: .downloaded,
+            folderPath: ["Baking"]
+        )
+
+        recipeRepository.send(.success([brioche]))
+        recipeRepository.send(.success([brioche, madeleines]))
+
+        while !Task.isCancelled {
+            if
+                case .recipes(let folder) = viewModel.recipeList,
+                folder.folder(at: ["Baking"])?.cards.map(\.id) == [brioche.id, madeleines.id]
+            {
+                break
+            }
+
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+
+        guard case .recipes(let folder) = viewModel.recipeList else {
+            Issue.record("The recipe list did not list recipes.")
+            return
+        }
+
+        #expect(folder.cards.isEmpty)
+        #expect(folder.folders.map(\.name) == ["Baking"])
     }
 
     @MainActor

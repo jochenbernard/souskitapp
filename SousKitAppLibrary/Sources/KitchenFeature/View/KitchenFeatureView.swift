@@ -28,7 +28,7 @@ struct KitchenFeatureView: View {
     }
 
     var body: some View {
-        recipeListScreen
+        topScreen
             .navigationDestination(for: KitchenScreen.self) { screen in
                 screenView(for: screen)
             }
@@ -50,48 +50,52 @@ struct KitchenFeatureView: View {
             }
     }
 
-    private var recipeListScreen: some View {
+    private var topScreen: some View {
+        folderPage(at: [])
+            .navigationTitle(viewModel.recipeRepositoryName)
+            .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
+            .task {
+                await presenter.viewDidAppear()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                switch phase {
+                case .active:
+                    Task {
+                        await presenter.didBecomeActive()
+                    }
+
+                case .background, .inactive:
+                    break
+
+                @unknown default:
+                    break
+                }
+            }
+    }
+
+    private func folderPage(at path: [String]) -> some View {
         ScrollView {
-            // A blank page, rather than a list the restored recipe covers a moment later.
+            // A blank page, rather than a list the restored screens cover a moment later.
             if !viewModel.isRestoring {
-                recipeList
+                folderContents(at: path)
                     .sousPagePadding()
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .sousPage()
-        .navigationTitle(viewModel.recipeRepositoryName)
-        .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
-        .task {
-            await presenter.viewDidAppear()
-        }
-        .onChange(of: scenePhase) { _, phase in
-            switch phase {
-            case .active:
-                Task {
-                    await presenter.didBecomeActive()
-                }
-
-            case .background, .inactive:
-                break
-
-            @unknown default:
-                break
-            }
-        }
     }
 
     @ViewBuilder
-    private var recipeList: some View {
+    private func folderContents(at path: [String]) -> some View {
         switch viewModel.recipeList {
         case .reading:
             readingNote
 
-        case .recipes(let cards):
-            if cards.isEmpty {
-                emptyNote
+        case .recipes(let topFolder):
+            if let folder = topFolder.folder(at: path), !folder.isEmpty {
+                folderView(folder)
             } else {
-                recipeCards(cards)
+                emptyNote
             }
 
         case .failure(let message):
@@ -105,27 +109,59 @@ struct KitchenFeatureView: View {
         }
     }
 
-    private var emptyNote: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.small) {
-            Text("Nothing here yet", bundle: .module)
+    private func folderView(_ folder: KitchenFolder) -> some View {
+        // The screen showing the folder, which its rows push over.
+        let origin = folder.path.isEmpty ? nil : KitchenScreen.folder(folder.path)
 
-            Text("Put .sous files in this folder and they are listed here.", bundle: .module)
-                .foregroundStyle(.secondary)
+        return VStack(alignment: .leading, spacing: SousSpacing.medium) {
+            if !folder.folders.isEmpty {
+                folderRows(folder.folders, origin: origin)
+            }
+
+            if !folder.cards.isEmpty {
+                recipeCards(folder.cards, origin: origin)
+            }
         }
     }
 
-    private func recipeCards(_ cards: [KitchenRecipeCard]) -> some View {
+    // A plain stand-in until folders are designed.
+    private func folderRows(_ folders: [KitchenFolder], origin: KitchenScreen?) -> some View {
+        VStack(alignment: .leading, spacing: SousSpacing.small) {
+            ForEach(folders) { folder in
+                Button(
+                    action: { presenter.didPush(.folder(folder.path), from: origin) },
+                    label: {
+                        Label(folder.name, systemImage: "folder")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .sousRow()
+                    }
+                )
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func recipeCards(_ cards: [KitchenRecipeCard], origin: KitchenScreen?) -> some View {
         RecipeCardGrid(
             minimumColumnWidth: dynamicTypeSize.isAccessibilitySize ? scaledCardWidth : Self.minimumCardWidth,
             spacing: SousSpacing.medium
         ) {
             ForEach(cards) { card in
                 Button(
-                    action: { presenter.didChangePushedScreen(.recipe(card.recipeEntry)) },
+                    action: { presenter.didPush(.recipe(card.recipeEntry), from: origin) },
                     label: { RecipeCard(card) }
                 )
                 .buttonStyle(.plain)
             }
+        }
+    }
+
+    private var emptyNote: some View {
+        VStack(alignment: .leading, spacing: SousSpacing.small) {
+            Text("Nothing here yet", bundle: .module)
+
+            Text("Put .sous files in this folder and they are listed here.", bundle: .module)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -136,9 +172,17 @@ struct KitchenFeatureView: View {
     @ViewBuilder
     private func screenView(for screen: KitchenScreen) -> some View {
         switch screen {
+        case .folder(let path):
+            folderScreen(at: path)
+
         case .recipe(let recipeEntry):
             recipeScreen(for: recipeEntry)
         }
+    }
+
+    private func folderScreen(at path: [String]) -> some View {
+        folderPage(at: path)
+            .navigationTitle(path.last ?? viewModel.recipeRepositoryName)
     }
 
     @ViewBuilder
@@ -172,60 +216,80 @@ private func previewViewModel(
     return viewModel
 }
 
-/// A card for a recipe whose header is `header`, or one not read yet where there is none.
-private func previewCard(
-    _ id: String,
+/// A recipe whose header is `header`, or one not read yet where there is none.
+private func previewEntry(
+    _ path: String,
     _ availability: RecipeAvailability,
     header: String? = nil
-) -> KitchenRecipeCard {
+) -> RecipeEntry {
     let parser = SousParser()
+    let components = path.split(separator: "/").map(String.init)
 
-    return KitchenFeaturePresenter.card(
-        for: RecipeEntry(
-            id: id,
-            name: id.replacing("-", with: " "),
-            availability: availability,
-            summary: header.map({ RecipeSummary(recipe: parser.parseRecipe($0).value, parser: parser) })
-        )
+    return RecipeEntry(
+        id: path,
+        name: (components.last ?? path).replacing("-", with: " "),
+        availability: availability,
+        summary: header.map({ RecipeSummary(recipe: parser.parseRecipe($0).value, parser: parser) }),
+        folderPath: Array(components.dropLast())
     )
 }
 
-private func previewCards() -> [KitchenRecipeCard] {
-    [
-        previewCard(
-            "boeuf-bourguignon",
-            .downloaded,
-            header: "---\ntitle: Boeuf Bourguignon\nprep-time: 30 min\ncook-time: 3 h\n---"
-        ),
-        previewCard(
-            "bouillabaisse",
-            .downloaded,
-            header: "---\ntitle: Bouillabaisse\nprep-time: 40 min\ncook-time: 50 min\n---"
-        ),
-        previewCard(
-            "crepes",
-            .notDownloaded,
-            header: "---\ntitle: Crepes\nprep-time: 10 min\ncook-time: 25 min\n---"
-        ),
-        previewCard(
-            "gratin-dauphinois",
-            .downloading,
-            header: "---\ntitle: Gratin Dauphinois\nprep-time: 30 min\ncook-time: 1 h 30 min\n---"
-        ),
-        previewCard("steps-only", .downloaded),
-        previewCard(
-            "vinaigrette",
-            .downloaded,
-            header: "---\ntitle: Vinaigrette\nyield: [125 ml]\n---"
-        )
-    ]
+private func previewFolder() -> KitchenFolder {
+    KitchenFolderTree.folder(
+        at: [],
+        holding: [
+            previewEntry(
+                "boeuf-bourguignon",
+                .downloaded,
+                header: "---\ntitle: Boeuf Bourguignon\nprep-time: 30 min\ncook-time: 3 h\n---"
+            ),
+            previewEntry(
+                "Dinner/Provencal/bouillabaisse",
+                .downloaded,
+                header: "---\ntitle: Bouillabaisse\nprep-time: 40 min\ncook-time: 50 min\n---"
+            ),
+            previewEntry(
+                "Baking/crepes",
+                .notDownloaded,
+                header: "---\ntitle: Crepes\nprep-time: 10 min\ncook-time: 25 min\n---"
+            ),
+            previewEntry(
+                "Baking/brioche",
+                .downloaded,
+                header: "---\ntitle: Brioche\nprep-time: 40 min\ncook-time: 55 min\n---"
+            ),
+            previewEntry(
+                "gratin-dauphinois",
+                .downloading,
+                header: "---\ntitle: Gratin Dauphinois\nprep-time: 30 min\ncook-time: 1 h 30 min\n---"
+            ),
+            previewEntry("steps-only", .downloaded),
+            previewEntry(
+                "vinaigrette",
+                .downloaded,
+                header: "---\ntitle: Vinaigrette\nyield: [125 ml]\n---"
+            )
+        ]
+    )
 }
 
 #Preview("Kitchen") {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(.recipes(previewCards()))
+            viewModel: previewViewModel(.recipes(previewFolder()))
+        )
+    }
+}
+
+#Preview("Kitchen, inside a folder") {
+    let viewModel = previewViewModel(.recipes(previewFolder()))
+    viewModel.pushedScreens = [.folder(["Baking"])]
+
+    return NavigationStack(path: .constant(NavigationPath(viewModel.pushedScreens))) {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: viewModel
         )
     }
 }
@@ -234,7 +298,7 @@ private func previewCards() -> [KitchenRecipeCard] {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(.recipes(previewCards()))
+            viewModel: previewViewModel(.recipes(previewFolder()))
         )
     }
     .dynamicTypeSize(.accessibility5)
@@ -262,7 +326,7 @@ private func previewCards() -> [KitchenRecipeCard] {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(.recipes([]))
+            viewModel: previewViewModel(.recipes(KitchenFolderTree.folder(at: [], holding: [])))
         )
     }
 }

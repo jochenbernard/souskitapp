@@ -2,7 +2,7 @@ import Foundation
 import RecipeLibrary
 import SousKit
 
-/// The recipes sitting directly in a directory, fetched from iCloud where they are not on the device.
+/// The recipes in a directory and in the directories inside it, fetched from iCloud where they are not on the device.
 struct FileRecipeRepository: RecipeRepository {
     private let monitor: RecipeDirectoryMonitor
     private let parser: SousParser
@@ -48,7 +48,7 @@ struct FileRecipeRepository: RecipeRepository {
     /// Reads off the caller's actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
     func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe> {
-        let contents = try await textReader.read(fileName: entry.fileName, availability: entry.availability)
+        let contents = try await textReader.read(path: entry.path, availability: entry.availability)
 
         return parser.parseRecipe(contents.text)
     }

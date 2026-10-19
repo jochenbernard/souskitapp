@@ -12,6 +12,9 @@ public struct RecipeEntry: Sendable, Hashable, Identifiable {
     /// What the repository knows of the recipe's contents, or `nil` where it has not read them.
     public let summary: RecipeSummary?
 
+    /// The names of the folders holding the recipe, from the outermost down, or none where it sits at the top.
+    public let folderPath: [String]
+
     /// Creates an entry.
     ///
     /// - Parameters:
@@ -19,15 +22,18 @@ public struct RecipeEntry: Sendable, Hashable, Identifiable {
     ///   - name: The recipe's name where its header gives no title.
     ///   - availability: Whether the recipe's contents are on the device.
     ///   - summary: What the repository knows of the recipe's contents, or `nil` where it has not read them.
+    ///   - folderPath: The names of the folders holding the recipe, from the outermost down.
     public init(
         id: String,
         name: String,
         availability: RecipeAvailability,
-        summary: RecipeSummary? = nil
+        summary: RecipeSummary? = nil,
+        folderPath: [String] = []
     ) {
         self.id = id
         self.name = name
         self.availability = availability
         self.summary = summary
+        self.folderPath = folderPath
     }
 }

@@ -1,0 +1,82 @@
+@testable import KitchenFeature
+import RecipeLibrary
+import Testing
+
+@Suite("Kitchen folder tree")
+struct KitchenFolderTreeTests {
+    private func recipeEntry(_ path: String) -> RecipeEntry {
+        let components = path.split(separator: "/").map(String.init)
+
+        return RecipeEntry(
+            id: path,
+            name: components.last ?? path,
+            availability: .downloaded,
+            folderPath: Array(components.dropLast())
+        )
+    }
+
+    private func top(holding paths: [String]) -> KitchenFolder {
+        KitchenFolderTree.folder(at: [], holding: paths.map(recipeEntry))
+    }
+
+    @Test("recipes at the top are its cards, and each folder holds its own")
+    func topAndFolders() {
+        let folder = top(holding: ["crepes", "Baking/brioche", "Baking/madeleines"])
+
+        #expect(folder.cards.map(\.id) == ["crepes"])
+        #expect(folder.folders.map(\.path) == [["Baking"]])
+        #expect(folder.folders.first?.cards.map(\.id) == ["Baking/brioche", "Baking/madeleines"])
+    }
+
+    @Test("a folder holding only folders lists them and no cards")
+    func folderOfFolders() throws {
+        let folder = top(holding: ["French/Classic/quiche-lorraine", "French/Comfort food/gratin-dauphinois"])
+        let french = try #require(folder.folder(at: ["French"]))
+
+        #expect(folder.cards.isEmpty)
+        #expect(french.cards.isEmpty)
+        #expect(french.folders.map(\.name) == ["Classic", "Comfort food"])
+        #expect(!french.isEmpty)
+    }
+
+    @Test("folders nest at any depth, each found by the names leading down to it")
+    func depth() throws {
+        let folder = top(holding: ["Dinner/French/Provencal/Classic/bouillabaisse"])
+
+        let deepest = try #require(folder.folder(at: ["Dinner", "French", "Provencal", "Classic"]))
+
+        #expect(deepest.cards.map(\.id) == ["Dinner/French/Provencal/Classic/bouillabaisse"])
+        #expect(deepest.name == "Classic")
+    }
+
+    @Test("folders are ordered by name, numbers by value")
+    func folderOrder() {
+        let folder = top(
+            holding: ["lunch/croque-monsieur", "Baking 10/brioche", "Baking 2/madeleines", "dinner/brioche"]
+        )
+
+        #expect(folder.folders.map(\.name) == ["Baking 2", "Baking 10", "dinner", "lunch"])
+    }
+
+    @Test("recipes sharing a file name in two folders are two cards, one in each")
+    func sameFileNameInTwoFolders() {
+        let folder = top(holding: ["vinaigrette", "Sauce/vinaigrette"])
+
+        #expect(folder.cards.map(\.id) == ["vinaigrette"])
+        #expect(folder.folder(at: ["Sauce"])?.cards.map(\.id) == ["Sauce/vinaigrette"])
+    }
+
+    @Test("a folder no longer listed is not found")
+    func missingFolder() {
+        let folder = top(holding: ["Baking/brioche"])
+
+        #expect(folder.folder(at: ["Dinner"]) == nil)
+        #expect(folder.folder(at: ["Baking", "Classic"]) == nil)
+        #expect(folder.folder(at: []) == folder)
+    }
+
+    @Test("no recipes make an empty top")
+    func empty() {
+        #expect(top(holding: []).isEmpty)
+    }
+}
