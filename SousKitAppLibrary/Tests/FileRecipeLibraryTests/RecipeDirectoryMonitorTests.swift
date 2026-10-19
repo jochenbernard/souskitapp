@@ -7,6 +7,7 @@ import Testing
 @Suite("Recipe directory monitor", .timeLimit(.minutes(1)))
 final class RecipeDirectoryMonitorTests: Sendable {
     let directory: TemporaryDirectory
+    private let iCloudFileNames = (1...50).map({ "recipe-\($0).sous" })
 
     init() throws {
         self.directory = try TemporaryDirectory(named: "RecipeDirectoryMonitorTests")
@@ -32,15 +33,15 @@ final class RecipeDirectoryMonitorTests: Sendable {
         )
     }
 
-    /// A monitor over `count` recipes all in iCloud, which the stub fetches.
+    /// A monitor over the recipes in `iCloudFileNames`, all in iCloud, which the stub fetches, writing the cache on
+    /// `clock`.
     private func makeICloudMonitor(
-        count: Int,
-        iCloud: (([String: String]) -> ICloudStub),
+        clock: TestClock,
         cacheWrites: CacheWriteSpy
     ) throws -> (RecipeDirectoryMonitor, ICloudStub) {
-        let fileNames = (1...count).map({ "recipe-\($0).sous" })
-        try fileNames.forEach({ try directory.writeFile(named: ".\($0).icloud") })
-        let stub = iCloud(Dictionary(uniqueKeysWithValues: fileNames.map({ ($0, "---\ntitle: \($0)\n---") })))
+        try iCloudFileNames.forEach({ try directory.writeFile(named: ".\($0).icloud") })
+        let texts = Dictionary(uniqueKeysWithValues: iCloudFileNames.map({ ($0, "---\ntitle: \($0)\n---") }))
+        let stub = ICloudStub(texts: texts)
 
         let monitor = RecipeDirectoryMonitor(
             recipeDirectory: directory.recipeDirectory,
@@ -55,7 +56,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
                     recipeDirectory: directory.recipeDirectory,
                     qualityOfService: .utility,
                     startDownloading: stub.startDownloading
-                )
+                ),
+                clock: clock
             ),
             settleDelay: .milliseconds(20)
         )
@@ -82,6 +84,20 @@ final class RecipeDirectoryMonitorTests: Sendable {
         }
 
         return false
+    }
+
+    /// Reads on until the monitor reaches `count` recipes with their summaries, or the suite's time limit ends the
+    /// test.
+    @MainActor
+    private func summaries(
+        reach count: Int,
+        in results: inout AsyncStream<Result<[RecipeEntry], Error>>.Iterator
+    ) async throws {
+        while let result = await results.next(isolation: #isolation) {
+            if try result.get().count(where: { $0.summary != nil }) == count {
+                return
+            }
+        }
     }
 
     /// The first result the monitor reaches.
@@ -218,48 +234,44 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @MainActor
     @Test("a first launch over recipes in iCloud fetches each once, and writes the cache once a second at most")
     func iCloudLaunch() async throws {
+        let clock = TestClock()
         let cacheWrites = CacheWriteSpy()
-        let (monitor, iCloud) = try makeICloudMonitor(
-            count: 50,
-            iCloud: { ICloudStub(texts: $0, interval: 0.06) },
-            cacheWrites: cacheWrites
-        )
-        let start = ContinuousClock.now
+        let (monitor, iCloud) = try makeICloudMonitor(clock: clock, cacheWrites: cacheWrites)
+        var results = monitor.recipeEntries().makeAsyncIterator()
 
-        for await result in monitor.recipeEntries() where try result.get().allSatisfy({ $0.summary != nil }) {
-            break
+        // Ten land each second: the first read is written at once, and the rest once that second is over.
+        for second in 0..<5 {
+            iCloud.land(Array(iCloudFileNames[(second * 10)..<((second + 1) * 10)]))
+            try await summaries(reach: (second + 1) * 10, in: &results)
+
+            #expect(cacheWrites.count == second + 1)
+
+            clock.advance(by: .seconds(1))
+            await cacheWrites.waitForWrites(second + 2)
+
+            #expect(directory.summaryCache.load().count == (second + 1) * 10)
         }
 
-        let seconds = Int((ContinuousClock.now - start) / .seconds(1))
-
-        #expect(iCloud.requests.count == 50)
+        #expect(cacheWrites.count == 6)
+        #expect(iCloud.requests.count == iCloudFileNames.count)
         #expect(iCloud.requests.values.allSatisfy({ $0 == 1 }))
-        #expect(cacheWrites.count <= seconds + 2)
     }
 
     @MainActor
     @Test("the summaries of recipes landing from iCloud are kept within a second, while the rest are on their way")
     func iCloudLaunchKeepsWhatLanded() async throws {
-        let (monitor, _) = try makeICloudMonitor(
-            count: 50,
-            iCloud: { ICloudStub(texts: $0, interval: 0.06) },
-            cacheWrites: CacheWriteSpy()
-        )
-        var landed = 0
-        var kept = 0
+        let clock = TestClock()
+        let cacheWrites = CacheWriteSpy()
+        let (monitor, iCloud) = try makeICloudMonitor(clock: clock, cacheWrites: cacheWrites)
+        var results = monitor.recipeEntries().makeAsyncIterator()
+        let landed = Array(iCloudFileNames.prefix(10))
 
-        for await result in monitor.recipeEntries() {
-            landed = try result.get().count(where: { $0.summary != nil })
+        iCloud.land(landed)
+        try await summaries(reach: landed.count, in: &results)
+        clock.advance(by: .seconds(1))
+        await cacheWrites.waitForWrites(2)
 
-            if landed >= 10 {
-                try await Task.sleep(for: .seconds(1.2))
-                kept = directory.summaryCache.load().count
-                break
-            }
-        }
-
-        #expect(kept >= landed)
-        #expect(kept < 50)
+        #expect(Set(directory.summaryCache.load().keys) == Set(landed))
     }
 
     @MainActor
