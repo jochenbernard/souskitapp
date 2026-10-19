@@ -14,10 +14,9 @@ struct RecipeCardPicture: View {
     }
 
     @State private var size = CGSize.zero
-    // What the card read last, which it keeps showing while a replaced picture is read.
-    @State private var thumbnail: CGImage?
 
     private let card: KitchenRecipeCard
+    private let thumbnails: KitchenThumbnails
     private let presenter: KitchenFeaturePresenterProtocol
     private let readSize: CGSize?
 
@@ -25,10 +24,12 @@ struct RecipeCardPicture: View {
     ///   card, or `nil` for the box it is shown in.
     init(
         _ card: KitchenRecipeCard,
+        thumbnails: KitchenThumbnails,
         presenter: KitchenFeaturePresenterProtocol,
         readSize: CGSize? = nil
     ) {
         self.card = card
+        self.thumbnails = thumbnails
         self.presenter = presenter
         self.readSize = readSize
     }
@@ -43,7 +44,7 @@ struct RecipeCardPicture: View {
                 size = newSize
             }
             .task(id: request) {
-                await read(request)
+                await show(request)
             }
     }
 
@@ -59,11 +60,7 @@ struct RecipeCardPicture: View {
     }
 
     private var shownImage: CGImage? {
-        guard let picture = card.recipeEntry.picture else {
-            return nil
-        }
-
-        return thumbnail ?? presenter.lastThumbnail(of: picture)
+        card.recipeEntry.picture.flatMap({ thumbnails[$0] })
     }
 
     private var request: Request {
@@ -78,24 +75,16 @@ struct RecipeCardPicture: View {
         )
     }
 
-    private func read(_ request: Request) async {
-        guard let picture = request.picture else {
-            thumbnail = nil
+    private func show(_ request: Request) async {
+        guard
+            let picture = request.picture,
+            request.pixelSize.width > 0.0,
+            request.pixelSize.height > 0.0
+        else {
             return
         }
 
-        guard request.pixelSize.width > 0.0, request.pixelSize.height > 0.0 else {
-            return
-        }
-
-        let readThumbnail = await presenter.thumbnail(of: picture, filling: request.pixelSize)
-
-        // A card scrolled away or resized meanwhile reads again, or never shows what was read.
-        guard !Task.isCancelled else {
-            return
-        }
-
-        thumbnail = readThumbnail
+        await presenter.pictureDidAppear(picture, filling: request.pixelSize)
     }
 }
 
@@ -110,6 +99,7 @@ struct RecipeCardPicture: View {
                         availability: .downloaded
                     )
                 ),
+                thumbnails: KitchenThumbnails(),
                 presenter: KitchenFeaturePresenterStub()
             )
             .aspectRatio(4.0 / 3.0, contentMode: .fit)

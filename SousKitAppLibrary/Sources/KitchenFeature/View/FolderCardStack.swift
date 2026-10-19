@@ -16,10 +16,16 @@ struct FolderCardStack: View {
     private static let fanRise = 4.0
 
     private let cards: [KitchenRecipeCard]
+    private let thumbnails: KitchenThumbnails
     private let presenter: KitchenFeaturePresenterProtocol
 
-    init(_ cards: [KitchenRecipeCard], presenter: KitchenFeaturePresenterProtocol) {
+    init(
+        _ cards: [KitchenRecipeCard],
+        thumbnails: KitchenThumbnails,
+        presenter: KitchenFeaturePresenterProtocol
+    ) {
         self.cards = cards
+        self.thumbnails = thumbnails
         self.presenter = presenter
     }
 
@@ -54,6 +60,7 @@ struct FolderCardStack: View {
     private func picture(of card: KitchenRecipeCard, readSize: CGSize) -> some View {
         RecipeCardPicture(
             card,
+            thumbnails: thumbnails,
             presenter: presenter,
             readSize: readSize
         )
@@ -81,7 +88,11 @@ private func previewCards(_ count: Int) -> [KitchenRecipeCard] {
 #Preview("Folder card stacks") {
     VStack(spacing: SousSpacing.medium) {
         ForEach(1...4, id: \.self) { count in
-            FolderCardStack(previewCards(count), presenter: KitchenFeaturePresenterStub())
+            FolderCardStack(
+                previewCards(count),
+                thumbnails: KitchenThumbnails(),
+                presenter: KitchenFeaturePresenterStub()
+            )
                 .aspectRatio(4.0 / 3.0, contentMode: .fit)
         }
     }

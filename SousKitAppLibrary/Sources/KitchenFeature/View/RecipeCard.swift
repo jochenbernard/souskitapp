@@ -18,15 +18,18 @@ struct RecipeCard: View {
     private static let displayLocale = Locale(identifier: Bundle.module.preferredLocalizations.first ?? "en")
 
     private let card: KitchenRecipeCard
+    private let thumbnails: KitchenThumbnails
     private let presenter: KitchenFeaturePresenterProtocol
     private let detail: Detail
 
     init(
         _ card: KitchenRecipeCard,
+        thumbnails: KitchenThumbnails,
         presenter: KitchenFeaturePresenterProtocol,
         detail: Detail = .totalTime
     ) {
         self.card = card
+        self.thumbnails = thumbnails
         self.presenter = presenter
         self.detail = detail
     }
@@ -35,7 +38,11 @@ struct RecipeCard: View {
         KitchenCard(
             title: card.recipeEntry.title,
             picture: {
-                RecipeCardPicture(card, presenter: presenter)
+                RecipeCardPicture(
+                    card,
+                    thumbnails: thumbnails,
+                    presenter: presenter
+                )
                     .overlay(alignment: .topTrailing) {
                         RecipeAvailabilityBadge(card.recipeEntry.availability)
                             .padding(SousSpacing.small)
@@ -126,7 +133,11 @@ private func previewCards() -> [KitchenRecipeCard] {
     ScrollView {
         RecipeCardGrid(minimumColumnWidth: 160.0, spacing: SousSpacing.medium) {
             ForEach(previewCards()) { card in
-                RecipeCard(card, presenter: KitchenFeaturePresenterStub())
+                RecipeCard(
+                    card,
+                    thumbnails: KitchenThumbnails(),
+                    presenter: KitchenFeaturePresenterStub()
+                )
             }
         }
         .sousPagePadding()
@@ -139,12 +150,14 @@ private func previewCards() -> [KitchenRecipeCard] {
         RecipeCardGrid(minimumColumnWidth: 160.0, spacing: SousSpacing.medium) {
             RecipeCard(
                 previewCards()[0],
+                thumbnails: KitchenThumbnails(),
                 presenter: KitchenFeaturePresenterStub(),
                 detail: .folder(["Recipes", "French", "Classic"])
             )
 
             RecipeCard(
                 previewCards()[2],
+                thumbnails: KitchenThumbnails(),
                 presenter: KitchenFeaturePresenterStub(),
                 detail: .folder(["Baking"])
             )
@@ -158,7 +171,11 @@ private func previewCards() -> [KitchenRecipeCard] {
     ScrollView {
         RecipeCardGrid(minimumColumnWidth: 400.0, spacing: SousSpacing.medium) {
             ForEach(previewCards()) { card in
-                RecipeCard(card, presenter: KitchenFeaturePresenterStub())
+                RecipeCard(
+                    card,
+                    thumbnails: KitchenThumbnails(),
+                    presenter: KitchenFeaturePresenterStub()
+                )
             }
         }
         .sousPagePadding()
