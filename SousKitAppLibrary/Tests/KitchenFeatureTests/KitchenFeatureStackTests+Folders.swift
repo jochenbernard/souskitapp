@@ -1,37 +1,9 @@
 @testable import KitchenFeature
 import RecipeLibrary
-import SousKit
 import SwiftUI
 import Testing
 
-@Suite("Kitchen feature stack of folders", .timeLimit(.minutes(1)))
-struct KitchenFeatureFolderStackTests {
-    private let parser = SousParser()
-
-    private func recipeEntry(named name: String) -> RecipeEntry {
-        RecipeEntry(
-            id: name,
-            name: name,
-            availability: .downloaded
-        )
-    }
-
-    private func makeViewModel() -> KitchenFeatureViewModel {
-        KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
-    }
-
-    @MainActor
-    private func makePresenter(
-        viewModel: KitchenFeatureViewModel,
-        handler: KitchenFeatureHandlerStub = KitchenFeatureHandlerStub()
-    ) -> KitchenFeaturePresenter {
-        .stubbed(
-            viewModel: viewModel,
-            parser: parser,
-            handler: handler
-        )
-    }
-
+extension KitchenFeatureStackTests {
     @MainActor
     @Test("a folder pushed from the top, then one inside it, then a recipe in that, stack in that order")
     func pushingDownFolders() {

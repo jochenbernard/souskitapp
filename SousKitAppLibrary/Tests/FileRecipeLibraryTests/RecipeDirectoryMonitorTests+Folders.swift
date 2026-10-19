@@ -1,29 +1,9 @@
 @testable import FileRecipeLibrary
 import Foundation
 import RecipeLibrary
-import SousKit
 import Testing
 
-@Suite("Recipe directory monitor, directories inside", .timeLimit(.minutes(1)))
-final class RecipeDirectoryMonitorFolderTests: Sendable {
-    private let directory: TemporaryDirectory
-
-    init() throws {
-        self.directory = try TemporaryDirectory(named: "RecipeDirectoryMonitorFolderTests")
-    }
-
-    private func makeMonitor() -> RecipeDirectoryMonitor {
-        RecipeDirectoryMonitor(
-            recipeDirectory: directory.recipeDirectory,
-            summarizer: RecipeSummarizer(
-                cache: directory.summaryCache,
-                parser: SousParser(),
-                textReader: RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .utility)
-            ),
-            settleDelay: .milliseconds(20)
-        )
-    }
-
+extension RecipeDirectoryMonitorTests {
     /// Whether the monitor reaches the given names, making the changes in turn once it has first listed the directory,
     /// each a while after the one before, so a change lands in a directory already watched.
     @MainActor

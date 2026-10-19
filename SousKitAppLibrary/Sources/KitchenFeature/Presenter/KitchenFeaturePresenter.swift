@@ -41,11 +41,11 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             case .success(let recipeEntries):
                 let folder = KitchenFolderTree.folder(at: [], holding: recipeEntries)
                 viewModel.recipeList = .recipes(folder)
-                restore(in: folder, from: recipeEntries)
+                restore(in: folder)
 
             case .failure(let error):
                 viewModel.recipeList = .failure(error.localizedDescription)
-                restore(in: nil, from: [])
+                restore(in: nil)
             }
         }
     }
@@ -167,11 +167,9 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// Opens what the kitchen was built to open again, as far down as its folders are still listed, and its recipe
     /// where every folder and the recipe still are. What is no longer listed is forgotten.
     ///
-    /// - Parameters:
-    ///   - folder: The top of the repository as it is listed now, or `nil` where it could not be read.
-    ///   - recipeEntries: The recipes listed now.
+    /// - Parameter folder: The top of the repository as it is listed now, or `nil` where it could not be read.
     @MainActor
-    private func restore(in folder: KitchenFolder?, from recipeEntries: [RecipeEntry]) {
+    private func restore(in folder: KitchenFolder?) {
         guard viewModel.isRestoring else {
             return
         }
@@ -187,9 +185,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             .map({ Array(restoration.folderPath.prefix(through: $0)) })
             .prefix(while: { folder.folder(at: $0) != nil })
             .map(KitchenScreen.folder)
-        let recipeEntry = folderScreens.count == restoration.folderPath.count
-            ? recipeEntries.first(where: { $0.id == restoration.recipeID })
-            : nil
+        let card = folder.folder(at: restoration.folderPath)?.cards.first(where: { $0.id == restoration.recipeID })
+        let recipeEntry = card?.recipeEntry
         let pushedScreens = folderScreens + (recipeEntry.map({ [KitchenScreen.recipe($0)] }) ?? [])
 
         guard !pushedScreens.isEmpty else {

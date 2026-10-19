@@ -4,16 +4,9 @@ import SousKit
 import SwiftUI
 
 /// A recipe in the kitchen's grid: a picture of it, its title, and how long it takes.
-///
-/// It fills the height the grid offers, so the cards sharing a row end level.
 struct RecipeCard: View {
-    private static let pictureAspectRatio = 4.0 / 3.0
-    private static let titleLineLimit = 3
-
     // The language the screen is written in, which is the one it reads a length of time in.
     private static let displayLocale = Locale(identifier: Bundle.module.preferredLocalizations.first ?? "en")
-
-    @LineContainerRadius private var radius
 
     private let card: KitchenRecipeCard
 
@@ -22,43 +15,17 @@ struct RecipeCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0.0) {
-            picture
-                // Read after the title, which names the card.
-                .accessibilitySortPriority(-1.0)
-
-            caption
-        }
-        .frame(maxHeight: .infinity, alignment: .top)
-        .sousRowSurface()
-        .clipShape(.rect(cornerRadius: radius))
-        .contentShape(.rect(cornerRadius: radius))
-        .accessibilityElement(children: .combine)
-    }
-
-    private var picture: some View {
-        Color.clear
-            .aspectRatio(Self.pictureAspectRatio, contentMode: .fit)
-            .background {
+        KitchenCard(
+            title: card.recipeEntry.title,
+            picture: {
                 RecipeCardPlaceholder(symbol: card.placeholderSymbol, color: card.placeholderColor)
-            }
-            .overlay(alignment: .topTrailing) {
-                RecipeAvailabilityBadge(card.recipeEntry.availability)
-                    .padding(SousSpacing.small)
-            }
-    }
-
-    private var caption: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
-            Text(verbatim: card.recipeEntry.title)
-                .lineLimit(Self.titleLineLimit)
-
-            totalTime
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(SousSpacing.medium)
+                    .overlay(alignment: .topTrailing) {
+                        RecipeAvailabilityBadge(card.recipeEntry.availability)
+                            .padding(SousSpacing.small)
+                    }
+            },
+            detail: { totalTime }
+        )
     }
 
     @ViewBuilder

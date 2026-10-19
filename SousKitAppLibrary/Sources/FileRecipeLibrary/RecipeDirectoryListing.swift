@@ -3,7 +3,6 @@ struct RecipeDirectoryListing: Sendable, Hashable {
     /// The recipe files, ordered by path.
     var recipeFiles: [RecipeFile]
 
-    /// Where each directory read sits inside the recipe directory, ordered, the recipe directory itself as an empty
-    /// path.
-    var directoryPaths: [String]
+    /// Where each directory read sits inside the recipe directory, the recipe directory itself as an empty path.
+    var directoryPaths: Set<String>
 }

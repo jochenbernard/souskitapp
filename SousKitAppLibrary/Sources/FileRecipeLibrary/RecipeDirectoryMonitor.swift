@@ -107,11 +107,10 @@ final class RecipeDirectoryMonitor {
     /// those no longer listed.
     ///
     /// - Parameter directoryPaths: Where the directories sit inside the recipe directory, empty for itself.
-    private func watch(directoriesAt directoryPaths: [String]) {
-        let paths = Set(directoryPaths)
-        eventSources = eventSources.filter({ paths.contains($0.key) })
+    private func watch(directoriesAt directoryPaths: Set<String>) {
+        eventSources = eventSources.filter({ directoryPaths.contains($0.key) })
 
-        for path in paths where eventSources[path] == nil {
+        for path in directoryPaths where eventSources[path] == nil {
             let url = path.isEmpty ? recipeDirectory.url : recipeDirectory.url.appending(path: path)
             eventSources[path] = DirectoryEventSource(directoryURL: url, onChange: makeOnChange())
         }

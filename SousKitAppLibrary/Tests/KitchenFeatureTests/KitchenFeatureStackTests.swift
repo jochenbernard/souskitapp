@@ -7,9 +7,9 @@ import Testing
 
 @Suite("Kitchen feature stack", .timeLimit(.minutes(1)))
 struct KitchenFeatureStackTests {
-    private let parser = SousParser()
+    let parser = SousParser()
 
-    private func recipeEntry(named name: String) -> RecipeEntry {
+    func recipeEntry(named name: String) -> RecipeEntry {
         RecipeEntry(
             id: name,
             name: name,
@@ -17,12 +17,12 @@ struct KitchenFeatureStackTests {
         )
     }
 
-    private func makeViewModel() -> KitchenFeatureViewModel {
+    func makeViewModel() -> KitchenFeatureViewModel {
         KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
     }
 
     @MainActor
-    private func makePresenter(
+    func makePresenter(
         viewModel: KitchenFeatureViewModel,
         handler: KitchenFeatureHandlerStub = KitchenFeatureHandlerStub()
     ) -> KitchenFeaturePresenter {

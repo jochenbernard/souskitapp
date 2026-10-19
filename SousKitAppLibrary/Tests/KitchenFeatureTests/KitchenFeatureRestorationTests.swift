@@ -10,7 +10,7 @@ import Testing
 @Suite("Kitchen feature restoration", .timeLimit(.minutes(1)))
 struct KitchenFeatureRestorationTests {
     /// A kitchen built to open a restoration again, with what it reported.
-    private struct RestoredKitchen {
+    struct RestoredKitchen {
         let viewModel: KitchenFeatureViewModel
         let presenter: KitchenFeaturePresenter
         let handler: KitchenFeatureHandlerStub
@@ -46,7 +46,7 @@ struct KitchenFeatureRestorationTests {
 
     /// Builds a kitchen to open the restoration again, whose repository lists each of the results in turn.
     @MainActor
-    private func restore(
+    func restore(
         _ restoration: KitchenFeatureRestoration,
         listing results: [Result<[RecipeEntry], Error>]
     ) async -> RestoredKitchen {

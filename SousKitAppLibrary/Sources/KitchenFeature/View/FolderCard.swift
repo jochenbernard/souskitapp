@@ -4,14 +4,7 @@ import SwiftUI
 
 /// A folder in the kitchen's grid, as large as a recipe's card: a stack of the recipes in it, its name, and how many
 /// recipes it holds.
-///
-/// It fills the height the grid offers, so the cards sharing a row end level.
 struct FolderCard: View {
-    private static let pictureAspectRatio = 4.0 / 3.0
-    private static let nameLineLimit = 3
-
-    @LineContainerRadius private var radius
-
     private let folder: KitchenFolder
 
     init(_ folder: KitchenFolder) {
@@ -19,38 +12,12 @@ struct FolderCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0.0) {
-            picture
-
-            caption
-        }
-        .frame(maxHeight: .infinity, alignment: .top)
-        .sousRowSurface()
-        .clipShape(.rect(cornerRadius: radius))
-        .contentShape(.rect(cornerRadius: radius))
-        .accessibilityElement(children: .combine)
-    }
-
-    private var picture: some View {
-        Color.clear
-            .aspectRatio(Self.pictureAspectRatio, contentMode: .fit)
-            .background {
-                FolderCardStack(folder.stackedCards)
-            }
-            .clipped()
-    }
-
-    private var caption: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
-            Text(verbatim: folder.name)
-                .lineLimit(Self.nameLineLimit)
-
-            Text("\(folder.recipeCount) recipes", bundle: .module)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(SousSpacing.medium)
+        KitchenCard(
+            title: folder.name,
+            // Clipped, as the fan reaches past the picture's edges.
+            picture: { FolderCardStack(folder.stackedCards).clipped() },
+            detail: { Text("\(folder.recipeCount) recipes", bundle: .module) }
+        )
     }
 }
 

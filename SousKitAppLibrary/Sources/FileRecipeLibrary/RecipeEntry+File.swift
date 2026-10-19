@@ -19,19 +19,17 @@ extension RecipeEntry {
         availability: RecipeAvailability,
         summary: RecipeSummary? = nil
     ) {
-        let components = path.split(separator: "/").map(String.init)
-
         self.init(
             id: path,
-            name: Self.name(forFileNamed: components.last ?? path),
+            name: Self.name(forFileAt: path),
             availability: availability,
             summary: summary,
-            folderPath: Array(components.dropLast())
+            folderPath: path.split(separator: "/").dropLast().map(String.init)
         )
     }
 
-    private static func name(forFileNamed fileName: String) -> String {
-        let stem = URL(filePath: fileName).deletingPathExtension().lastPathComponent
+    private static func name(forFileAt path: String) -> String {
+        let stem = URL(filePath: path).deletingPathExtension().lastPathComponent
         let words = stem.split(whereSeparator: isSeparator)
 
         guard !words.isEmpty else {

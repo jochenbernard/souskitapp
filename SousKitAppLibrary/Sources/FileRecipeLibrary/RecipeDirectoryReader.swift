@@ -37,11 +37,9 @@ struct RecipeDirectoryReader: Sendable {
             try NSFileCoordinator.coordinateReading(at: url) { coordinatedURL in
                 var listing = RecipeDirectoryListing(recipeFiles: [], directoryPaths: [])
                 try Self.read(directoryAt: coordinatedURL, path: "", into: &listing)
+                listing.recipeFiles.sort(by: { $0.path.localizedStandardCompare($1.path) == .orderedAscending })
 
-                return RecipeDirectoryListing(
-                    recipeFiles: listing.recipeFiles.sorted(by: { Self.isOrderedBefore($0.path, $1.path) }),
-                    directoryPaths: listing.directoryPaths.sorted(by: Self.isOrderedBefore)
-                )
+                return listing
             }
         }
     }
@@ -63,7 +61,7 @@ struct RecipeDirectoryReader: Sendable {
             options: []
         )
 
-        listing.directoryPaths.append(path)
+        listing.directoryPaths.insert(path)
 
         var recipeFiles: [RecipeFile] = []
         var placeholders: [RecipeFile] = []
@@ -104,10 +102,6 @@ struct RecipeDirectoryReader: Sendable {
     /// The path of an entry inside the directory at `path`.
     private static func joined(_ path: String, _ entryName: String) -> String {
         path.isEmpty ? entryName : "\(path)/\(entryName)"
-    }
-
-    private static func isOrderedBefore(_ lhs: String, _ rhs: String) -> Bool {
-        lhs.localizedStandardCompare(rhs) == .orderedAscending
     }
 
     /// The recipe an iCloud placeholder entry stands in for, or `nil` where it stands in for none.

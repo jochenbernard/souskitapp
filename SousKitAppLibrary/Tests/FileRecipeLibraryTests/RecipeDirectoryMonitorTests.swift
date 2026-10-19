@@ -6,13 +6,13 @@ import Testing
 
 @Suite("Recipe directory monitor", .timeLimit(.minutes(1)))
 final class RecipeDirectoryMonitorTests: Sendable {
-    private let directory: TemporaryDirectory
+    let directory: TemporaryDirectory
 
     init() throws {
         self.directory = try TemporaryDirectory(named: "RecipeDirectoryMonitorTests")
     }
 
-    private func makeMonitor() -> RecipeDirectoryMonitor {
+    func makeMonitor() -> RecipeDirectoryMonitor {
         RecipeDirectoryMonitor(
             recipeDirectory: directory.recipeDirectory,
             summarizer: RecipeSummarizer(

@@ -4,19 +4,8 @@ import Testing
 
 @Suite("Kitchen folder tree")
 struct KitchenFolderTreeTests {
-    private func recipeEntry(_ path: String) -> RecipeEntry {
-        let components = path.split(separator: "/").map(String.init)
-
-        return RecipeEntry(
-            id: path,
-            name: components.last ?? path,
-            availability: .downloaded,
-            folderPath: Array(components.dropLast())
-        )
-    }
-
     private func top(holding paths: [String]) -> KitchenFolder {
-        KitchenFolderTree.folder(at: [], holding: paths.map(recipeEntry))
+        KitchenFolderTree.folder(at: [], holding: paths.map(RecipeEntry.stubbed(at:)))
     }
 
     @Test("recipes at the top are its cards, and each folder holds its own")

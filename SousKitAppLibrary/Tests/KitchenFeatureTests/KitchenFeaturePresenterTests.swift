@@ -62,14 +62,18 @@ struct KitchenFeaturePresenterTests {
         return folder.cards
     }
 
-    /// Whether the view model reaches the given names, waiting until it does or the suite's time
-    /// limit ends the test.
+    /// Whether the view model reaches the given names in the folder at the path, the top by default, waiting until it
+    /// does or the suite's time limit ends the test.
     @MainActor
-    private func names(reach expected: [String], in viewModel: KitchenFeatureViewModel) async -> Bool {
+    private func names(
+        reach expected: [String],
+        in viewModel: KitchenFeatureViewModel,
+        at path: [String] = []
+    ) async -> Bool {
         while !Task.isCancelled {
             if
                 case .recipes(let folder) = viewModel.recipeList,
-                folder.cards.map(\.recipeEntry.name) == expected
+                folder.folder(at: path)?.cards.map(\.recipeEntry.name) == expected
             {
                 return true
             }
@@ -202,16 +206,7 @@ struct KitchenFeaturePresenterTests {
         recipeRepository.send(.success([brioche]))
         recipeRepository.send(.success([brioche, madeleines]))
 
-        while !Task.isCancelled {
-            if
-                case .recipes(let folder) = viewModel.recipeList,
-                folder.folder(at: ["Baking"])?.cards.map(\.id) == [brioche.id, madeleines.id]
-            {
-                break
-            }
-
-            try? await Task.sleep(for: .milliseconds(10))
-        }
+        #expect(await names(reach: ["brioche", "madeleines"], in: viewModel, at: ["Baking"]))
 
         guard case .recipes(let folder) = viewModel.recipeList else {
             Issue.record("The recipe list did not list recipes.")
