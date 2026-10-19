@@ -47,12 +47,6 @@ public struct ScaleSheet: View {
 
     private var number: some View {
         VStack(spacing: SousSpacing.small) {
-            scale.target.label
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                // The number field carries it as its own name.
-                .accessibilityHidden(true)
-
             ScaleNumberField(
                 presenter: presenter,
                 target: scale.target,

@@ -1,7 +1,7 @@
 import DesignSystem
 import SwiftUI
 
-/// The number a cook scales by, with a minus and a plus that step it.
+/// The number a cook scales by, under what it counts, with a minus and a plus that step it.
 ///
 /// The minus and the plus repeat while they are held, on the timing the system gives a stepper. A number the steps
 /// pause on is announced to VoiceOver.
@@ -9,6 +9,9 @@ struct ScaleNumberField: View {
     private let presenter: ScaleSheetPresenterProtocol
     private let target: ScaleTarget
     private let text: String
+
+    // Edits typed into the field, which bring it back into view where a step or a chip setting it would not.
+    @State private var keyPresses = 0
 
     // Room to spare around a number at `.largeTitle`, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var fieldWidth = 148.0
@@ -36,6 +39,19 @@ struct ScaleNumberField: View {
     }
 
     var body: some View {
+        VStack(spacing: SousSpacing.small) {
+            target.label
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                // The field carries it as its own name.
+                .accessibilityHidden(true)
+
+            numberRow
+        }
+        .scrollsIntoView(onChangeOf: keyPresses)
+    }
+
+    private var numberRow: some View {
         ScaleNumberFieldLayout(spacing: SousSpacing.large) {
             stepButton(
                 -1.0,
@@ -91,7 +107,17 @@ struct ScaleNumberField: View {
 
     private var field: some View {
         TextField(
-            text: Binding(get: { text }, set: { presenter.didChangeScaleText($0) }),
+            text: Binding(
+                get: { text },
+                set: { newText in
+                    // A write that keeps the number is no key press.
+                    if newText != text {
+                        keyPresses += 1
+                    }
+
+                    presenter.didChangeScaleText(newText)
+                }
+            ),
             prompt: nil,
             label: { target.label }
         )
