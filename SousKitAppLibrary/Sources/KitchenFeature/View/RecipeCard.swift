@@ -10,6 +10,9 @@ struct RecipeCard: View {
     private static let pictureAspectRatio = 4.0 / 3.0
     private static let titleLineLimit = 3
 
+    // The language the screen is written in, which is the one it reads a length of time in.
+    private static let displayLocale = Locale(identifier: Bundle.module.preferredLocalizations.first ?? "en")
+
     @LineContainerRadius private var radius
 
     private let card: KitchenRecipeCard
@@ -51,6 +54,8 @@ struct RecipeCard: View {
                 .lineLimit(Self.titleLineLimit)
 
             totalTime
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(SousSpacing.medium)
@@ -61,14 +66,10 @@ struct RecipeCard: View {
         switch card.totalTime {
         case .duration(let duration):
             Text(verbatim: Self.text(of: duration, width: .abbreviated))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
                 .accessibilityLabel(Text(verbatim: Self.text(of: duration, width: .wide)))
 
         case .written(let text):
             Text(verbatim: text)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
 
         case nil:
             EmptyView()
@@ -77,9 +78,7 @@ struct RecipeCard: View {
 
     /// A duration in hours and minutes, in the language the screen is shown in.
     private static func text(of duration: Duration, width: Duration.UnitsFormatStyle.UnitWidth) -> String {
-        let locale = Locale(identifier: Bundle.module.preferredLocalizations.first ?? "en")
-
-        return duration.formatted(.units(allowed: [.hours, .minutes], width: width).locale(locale))
+        duration.formatted(.units(allowed: [.hours, .minutes], width: width).locale(displayLocale))
     }
 }
 
@@ -89,18 +88,14 @@ private func previewCard(
     availability: RecipeAvailability = .downloaded
 ) -> KitchenRecipeCard {
     let parser = SousParser()
-    let summary = RecipeSummary(recipe: parser.parseRecipe(header).value)
 
-    return KitchenRecipeCard(
-        recipeEntry: RecipeEntry(
+    return KitchenFeaturePresenter.card(
+        for: RecipeEntry(
             id: id,
             name: id.replacing("-", with: " "),
             availability: availability,
-            summary: summary
-        ),
-        totalTime: TotalTime(metadata: summary.metadata, parser: parser),
-        placeholderSymbol: "fork.knife",
-        placeholderColor: PlaceholderColorPick.color(forTitle: summary.metadata.title ?? id)
+            summary: RecipeSummary(recipe: parser.parseRecipe(header).value, parser: parser)
+        )
     )
 }
 

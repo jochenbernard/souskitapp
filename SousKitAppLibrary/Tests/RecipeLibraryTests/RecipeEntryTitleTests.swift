@@ -11,6 +11,16 @@ struct RecipeEntryTitleTests {
         availability: .downloaded
     )
 
+    /// The entry with the summary of `text`.
+    private func summarized(_ text: String) -> RecipeEntry {
+        RecipeEntry(
+            id: entry.id,
+            name: entry.name,
+            availability: entry.availability,
+            summary: RecipeSummary(recipe: parser.parseRecipe(text).value, parser: parser)
+        )
+    }
+
     @Test("a recipe with a title shows it")
     func titledRecipe() {
         let recipe = parser.parseRecipe("---\ntitle: Vinaigrette\n---\nWhisk it.").value
@@ -34,26 +44,12 @@ struct RecipeEntryTitleTests {
 
     @Test("an entry whose summary gives a title shows it")
     func titledSummary() {
-        let summarized = RecipeEntry(
-            id: "vinaigrette.sous",
-            name: "vinaigrette",
-            availability: .downloaded,
-            summary: RecipeSummary(recipe: parser.parseRecipe("---\ntitle: Vinaigrette\n---\nWhisk it.").value)
-        )
-
-        #expect(summarized.title == "Vinaigrette")
+        #expect(summarized("---\ntitle: Vinaigrette\n---\nWhisk it.").title == "Vinaigrette")
     }
 
     @Test("an entry whose summary gives no title shows its name")
     func untitledSummary() {
-        let summarized = RecipeEntry(
-            id: "vinaigrette.sous",
-            name: "vinaigrette",
-            availability: .downloaded,
-            summary: RecipeSummary(recipe: parser.parseRecipe("---\ntitle:\n---\nWhisk it.").value)
-        )
-
-        #expect(summarized.title == "vinaigrette")
+        #expect(summarized("---\ntitle:\n---\nWhisk it.").title == "vinaigrette")
     }
 
     @Test("an entry not read yet shows its name")

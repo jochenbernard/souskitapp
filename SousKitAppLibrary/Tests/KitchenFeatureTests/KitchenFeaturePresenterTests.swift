@@ -16,6 +16,16 @@ struct KitchenFeaturePresenterTests {
         )
     }
 
+    /// An entry named after its file, with the header `header` already read.
+    private func recipeEntry(id: String, header: String) -> RecipeEntry {
+        RecipeEntry(
+            id: id,
+            name: id.replacing("-", with: " "),
+            availability: .downloaded,
+            summary: RecipeSummary(recipe: parser.parseRecipe(header).value, parser: parser)
+        )
+    }
+
     private func makeViewModel() -> KitchenFeatureViewModel {
         KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
     }
@@ -32,6 +42,24 @@ struct KitchenFeaturePresenterTests {
             handler: handler,
             recipeRepository: recipeRepository
         )
+    }
+
+    /// The cards the view model holds once the repository lists `recipeEntries` and ends.
+    @MainActor
+    private func cards(listing recipeEntries: [RecipeEntry]) async -> [KitchenRecipeCard] {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = makeViewModel()
+
+        recipeRepository.send(.success(recipeEntries))
+        recipeRepository.finish()
+        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+
+        guard case .recipes(let cards) = viewModel.recipeList else {
+            Issue.record("The recipe list did not list recipes.")
+            return []
+        }
+
+        return cards
     }
 
     /// Whether the view model reaches the given names, waiting until it does or the suite's time
@@ -64,17 +92,7 @@ struct KitchenFeaturePresenterTests {
     @MainActor
     @Test("the recipes the repository lists reach the view model")
     func recipesReachTheViewModel() async {
-        let recipeRepository = RecipeRepositorySpy()
-        let viewModel = makeViewModel()
-
-        recipeRepository.send(.success([recipeEntry(named: "boeuf bourguignon"), recipeEntry(named: "crepes")]))
-        recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
-
-        guard case .recipes(let cards) = viewModel.recipeList else {
-            Issue.record("The recipe list did not list recipes.")
-            return
-        }
+        let cards = await cards(listing: [recipeEntry(named: "boeuf bourguignon"), recipeEntry(named: "crepes")])
 
         #expect(cards.map(\.recipeEntry.name) == ["boeuf bourguignon", "crepes"])
     }
@@ -101,35 +119,15 @@ struct KitchenFeaturePresenterTests {
         #expect(await names(reach: ["brioche", "crepes"], in: viewModel))
     }
 
-    /// An entry named after its file, with the header `header` already read.
-    private func recipeEntry(id: String, header: String) -> RecipeEntry {
-        RecipeEntry(
-            id: id,
-            name: id.replacing("-", with: " "),
-            availability: .downloaded,
-            summary: RecipeSummary(recipe: parser.parseRecipe(header).value)
-        )
-    }
-
     @MainActor
     @Test("the recipes are listed by the title their rows show, the name where the header gives none")
     func sortedByTitle() async {
-        let recipeRepository = RecipeRepositorySpy()
-        let viewModel = makeViewModel()
-
-        recipeRepository.send(.success([
+        let cards = await cards(listing: [
             recipeEntry(id: "a-gratin", header: "---\ntitle: Gratin Dauphinois\n---"),
             recipeEntry(id: "boeuf-bourguignon", header: "---\ntitle: Boeuf Bourguignon\n---"),
             recipeEntry(id: "crepes", header: "Whisk @{200 g} flour@."),
             recipeEntry(id: "zz-brioche", header: "---\ntitle: Brioche\n---")
-        ]))
-        recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
-
-        guard case .recipes(let cards) = viewModel.recipeList else {
-            Issue.record("The recipe list did not list recipes.")
-            return
-        }
+        ])
 
         #expect(cards.map(\.recipeEntry.title) == ["Boeuf Bourguignon", "Brioche", "crepes", "Gratin Dauphinois"])
     }
@@ -137,41 +135,13 @@ struct KitchenFeaturePresenterTests {
     @MainActor
     @Test("recipes sharing a title are listed in the order of their ids")
     func sharedTitles() async {
-        let recipeRepository = RecipeRepositorySpy()
-        let viewModel = makeViewModel()
-
-        recipeRepository.send(.success([
+        let cards = await cards(listing: [
             recipeEntry(id: "vinaigrette-2", header: "---\ntitle: Vinaigrette\n---"),
             recipeEntry(id: "header-only", header: "---\ntitle: Vinaigrette\n---"),
             recipeEntry(id: "vinaigrette", header: "---\ntitle: Vinaigrette\n---")
-        ]))
-        recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
-
-        guard case .recipes(let cards) = viewModel.recipeList else {
-            Issue.record("The recipe list did not list recipes.")
-            return
-        }
+        ])
 
         #expect(cards.map(\.id) == ["header-only", "vinaigrette", "vinaigrette-2"])
-    }
-
-    /// The cards the view model holds once the repository lists `recipeEntries` and ends.
-    @MainActor
-    private func cards(listing recipeEntries: [RecipeEntry]) async -> [KitchenRecipeCard] {
-        let recipeRepository = RecipeRepositorySpy()
-        let viewModel = makeViewModel()
-
-        recipeRepository.send(.success(recipeEntries))
-        recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
-
-        guard case .recipes(let cards) = viewModel.recipeList else {
-            Issue.record("The recipe list did not list recipes.")
-            return []
-        }
-
-        return cards
     }
 
     @MainActor

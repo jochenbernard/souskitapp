@@ -179,19 +179,14 @@ private func previewCard(
     header: String? = nil
 ) -> KitchenRecipeCard {
     let parser = SousParser()
-    let summary = header.map({ RecipeSummary(recipe: parser.parseRecipe($0).value) })
-    let recipeEntry = RecipeEntry(
-        id: id,
-        name: id.replacing("-", with: " "),
-        availability: availability,
-        summary: summary
-    )
 
-    return KitchenRecipeCard(
-        recipeEntry: recipeEntry,
-        totalTime: summary.flatMap({ TotalTime(metadata: $0.metadata, parser: parser) }),
-        placeholderSymbol: "fork.knife",
-        placeholderColor: PlaceholderColorPick.color(forTitle: recipeEntry.title)
+    return KitchenFeaturePresenter.card(
+        for: RecipeEntry(
+            id: id,
+            name: id.replacing("-", with: " "),
+            availability: availability,
+            summary: header.map({ RecipeSummary(recipe: parser.parseRecipe($0).value, parser: parser) })
+        )
     )
 }
 

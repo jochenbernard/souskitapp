@@ -33,7 +33,9 @@ public final class MockRecipeRepository: RecipeRepository {
         self.parser = parser
         self.fetchDuration = fetchDuration
         self.summaries = MockRecipe.all.reduce(into: [:]) { summaries, recipe in
-            summaries[recipe.id] = recipe.text.map({ RecipeSummary(recipe: parser.parseRecipe($0).value) })
+            summaries[recipe.id] = recipe.text.map { text in
+                RecipeSummary(recipe: parser.parseRecipe(text).value, parser: parser)
+            }
         }
     }
 

@@ -22,8 +22,9 @@ actor RecipeSummarizer {
     private let recipeDirectory: RecipeDirectory
     private let startDownloading: @Sendable (URL) throws -> Void
 
-    private var isLoaded = false
-    private var summaries: [String: Summary] = [:]
+    private lazy var summaries: [String: Summary] = cache.load().mapValues { record in
+        Summary(record: record, summary: record.summary(parsedWith: parser))
+    }
 
     /// Creates a summarizer.
     ///
@@ -59,8 +60,6 @@ actor RecipeSummarizer {
     /// - Parameter files: The files the directory lists.
     /// - Returns: The entries, in the order of `files`.
     func recipeEntries(for files: [RecipeFile]) -> [RecipeEntry] {
-        loadIfNeeded()
-
         let paths = Set(files.map(\.path))
         let removedPaths = summaries.keys.filter({ !paths.contains($0) })
 
@@ -77,9 +76,7 @@ actor RecipeSummarizer {
     /// - Parameter files: The files the directory lists.
     /// - Returns: The files to read, in the order of `files`.
     func filesToRead(in files: [RecipeFile]) -> [RecipeFile] {
-        loadIfNeeded()
-
-        return files.filter { file in
+        files.filter { file in
             guard let summary = summaries[file.path] else {
                 return true
             }
@@ -94,8 +91,6 @@ actor RecipeSummarizer {
     ///
     /// - Parameter files: The files to read.
     func read(_ files: [RecipeFile]) async {
-        loadIfNeeded()
-
         var hasRead = false
 
         for file in files {
@@ -111,7 +106,7 @@ actor RecipeSummarizer {
             }
 
             let record = RecipeSummaryRecord(recipe: recipe, modificationDate: modificationDate)
-            summaries[file.path] = Summary(record: record, summary: RecipeSummary(recipe: recipe))
+            summaries[file.path] = Summary(record: record, summary: RecipeSummary(recipe: recipe, parser: parser))
             hasRead = true
         }
 
@@ -121,38 +116,22 @@ actor RecipeSummarizer {
     }
 
     private func contents(of file: RecipeFile) async -> Contents? {
-        let directoryURL = recipeDirectory.url
-        let url = directoryURL.appending(path: file.path)
-        let isScoped = directoryURL.startAccessingSecurityScopedResource()
-        defer {
-            if isScoped {
-                directoryURL.stopAccessingSecurityScopedResource()
+        let url = recipeDirectory.url.appending(path: file.path)
+
+        return await recipeDirectory.url.withSecurityScope {
+            if file.availability != .downloaded {
+                // The coordinated read waits for the fetch, and reports one that cannot start.
+                try? startDownloading(url)
             }
-        }
 
-        if file.availability != .downloaded {
-            // The coordinated read waits for the fetch, and reports one that cannot start.
-            try? startDownloading(url)
-        }
-
-        return try? await CancellableFileCoordination.read(at: url, queue: queue) { coordinatedURL in
-            Contents(
-                text: try String(contentsOf: coordinatedURL, encoding: .utf8),
-                modificationDate: try? coordinatedURL.resourceValues(
-                    forKeys: [.contentModificationDateKey]
-                ).contentModificationDate
-            )
-        }
-    }
-
-    private func loadIfNeeded() {
-        guard !isLoaded else {
-            return
-        }
-
-        isLoaded = true
-        summaries = cache.load().mapValues { record in
-            Summary(record: record, summary: record.summary(parsedWith: parser))
+            return try? await CancellableFileCoordination.read(at: url, queue: queue) { coordinatedURL in
+                Contents(
+                    text: try String(contentsOf: coordinatedURL, encoding: .utf8),
+                    modificationDate: try? coordinatedURL.resourceValues(
+                        forKeys: [.contentModificationDateKey]
+                    ).contentModificationDate
+                )
+            }
         }
     }
 

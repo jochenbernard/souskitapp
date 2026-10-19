@@ -1,5 +1,5 @@
 import DesignSystem
-import Foundation
+import SousKit
 
 /// Picks the color a recipe without a picture is drawn in from its title.
 ///
@@ -31,8 +31,7 @@ enum PlaceholderColorPick {
     }
 
     private static func normalized(_ title: String) -> String {
-        title
-            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
+        Normalization.normalized(title)
             .split(whereSeparator: \.isWhitespace)
             .joined(separator: " ")
     }

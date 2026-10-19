@@ -10,7 +10,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
     private let cookingFeatureFactory: CookingFeatureFactory
     private let handler: KitchenFeatureHandler
-    private let parser: SousParser
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
@@ -20,7 +19,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     init(
         cookingFeatureFactory: CookingFeatureFactory,
         handler: KitchenFeatureHandler,
-        parser: SousParser,
         recipeFeatureFactory: RecipeFeatureFactory,
         recipeRepository: RecipeRepository,
         restoration: KitchenFeatureRestoration?,
@@ -28,7 +26,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     ) {
         self.cookingFeatureFactory = cookingFeatureFactory
         self.handler = handler
-        self.parser = parser
         self.recipeFeatureFactory = recipeFeatureFactory
         self.recipeRepository = recipeRepository
         self.restorationKeeper = KitchenRestorationKeeper(
@@ -42,7 +39,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         for await result in await recipeRepository.recipeEntries() {
             switch result {
             case .success(let recipeEntries):
-                viewModel.recipeList = .recipes(recipeEntries.sorted(by: Self.isOrderedBefore).map(makeCard))
+                viewModel.recipeList = .recipes(recipeEntries.sorted(by: Self.isOrderedBefore).map(Self.card(for:)))
                 restore(from: recipeEntries)
 
             case .failure(let error):
@@ -199,10 +196,14 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         restorationKeeper.update({ $0.cooking = nil })
     }
 
-    private func makeCard(_ recipeEntry: RecipeEntry) -> KitchenRecipeCard {
+    /// The card a recipe is listed as.
+    ///
+    /// - Parameter recipeEntry: The recipe.
+    /// - Returns: The card.
+    static func card(for recipeEntry: RecipeEntry) -> KitchenRecipeCard {
         KitchenRecipeCard(
             recipeEntry: recipeEntry,
-            totalTime: recipeEntry.summary.flatMap({ TotalTime(metadata: $0.metadata, parser: parser) }),
+            totalTime: recipeEntry.summary?.totalTime,
             placeholderSymbol: Self.placeholderSymbol,
             placeholderColor: PlaceholderColorPick.color(forTitle: recipeEntry.title)
         )

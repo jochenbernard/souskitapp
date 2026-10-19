@@ -149,15 +149,10 @@ final class RecipeDirectoryMonitor {
 
             switch result {
             case .success(let recipeFiles):
-                let yieldRecipeEntries: @MainActor ([RecipeEntry]) -> Void = { [weak self] recipeEntries in
-                    self?.yield(.success(recipeEntries))
-                }
-
-                yieldRecipeEntries(await summarizer.recipeEntries(for: recipeFiles))
                 await Self.readSummaries(
                     of: recipeFiles,
                     with: summarizer,
-                    yield: yieldRecipeEntries
+                    yield: { [weak self] recipeEntries in self?.yield(.success(recipeEntries)) }
                 )
 
             case .failure(let error):
@@ -174,7 +169,8 @@ final class RecipeDirectoryMonitor {
         Result(catching: { try reader.readRecipeFiles() })
     }
 
-    /// Reads the summaries the cache has none for, yielding the recipes again as they land.
+    /// Yields the recipes with the summaries the cache holds, then reads those it has none for, yielding the recipes
+    /// again as they land.
     ///
     /// The files on the device are read together, and each one fetched from iCloud on its own, so one that never
     /// arrives holds up no other. Holding no monitor, it leaves a released one free to go.
@@ -183,10 +179,6 @@ final class RecipeDirectoryMonitor {
         with summarizer: RecipeSummarizer,
         yield: @escaping @MainActor ([RecipeEntry]) -> Void
     ) async {
-        let filesToRead = await summarizer.filesToRead(in: recipeFiles)
-        let filesOnDevice = filesToRead.filter({ $0.availability == .downloaded })
-        let filesInICloud = filesToRead.filter({ $0.availability != .downloaded })
-
         let yieldSummaries = {
             let recipeEntries = await summarizer.recipeEntries(for: recipeFiles)
 
@@ -194,6 +186,12 @@ final class RecipeDirectoryMonitor {
                 yield(recipeEntries)
             }
         }
+
+        await yieldSummaries()
+
+        let filesToRead = await summarizer.filesToRead(in: recipeFiles)
+        let filesOnDevice = filesToRead.filter({ $0.availability == .downloaded })
+        let filesInICloud = filesToRead.filter({ $0.availability != .downloaded })
 
         if !filesOnDevice.isEmpty {
             await summarizer.read(filesOnDevice)
