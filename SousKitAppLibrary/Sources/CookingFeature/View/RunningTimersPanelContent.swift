@@ -133,7 +133,6 @@ struct RunningTimersPanelContent: View {
             timer: timer,
             depth: depth,
             width: rowWidth,
-            isConfirmingCancel: timer.id == viewModel.timerConfirmingCancel?.id,
             isListed: kind == .column || isListOpen,
             opensOnTap: kind == .folding && depth == 0 && !isListOpen && viewModel.canOpenTimerList,
             isSwooping: swoop != nil,
@@ -251,7 +250,9 @@ struct RunningTimersPanelContent: View {
         from oldTimers: [RunningTimer],
         to newTimers: [RunningTimer]
     ) {
-        rowHeights = rowHeights.filter({ id, _ in newTimers.contains(where: { $0.id == id }) })
+        let ids = Set(newTimers.map(\.id))
+        rowHeights = rowHeights.filter({ id, _ in ids.contains(id) })
+        motion.cancelButtonFrames = motion.cancelButtonFrames.filter({ id, _ in ids.contains(id) })
 
         if kind == .folding, !isListOpen {
             arrival.timersDidChange(from: oldTimers, to: newTimers)

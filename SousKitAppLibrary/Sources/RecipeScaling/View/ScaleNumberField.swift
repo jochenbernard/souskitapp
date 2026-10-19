@@ -1,13 +1,17 @@
 import DesignSystem
 import SwiftUI
 
-/// The number a cook scales by, with a minus and a plus that step it.
+/// The number a cook scales by, under what it counts, with a minus and a plus that step it.
 ///
-/// The minus and the plus repeat while they are held, on the timing the system gives a stepper.
+/// The minus and the plus repeat while they are held, on the timing the system gives a stepper. A number the steps
+/// pause on is announced to VoiceOver.
 struct ScaleNumberField: View {
     private let presenter: ScaleSheetPresenterProtocol
     private let target: ScaleTarget
     private let text: String
+
+    // Edits typed into the field, which bring it back into view where a step or a chip setting it would not.
+    @State private var keyPresses = 0
 
     // Room to spare around a number at `.largeTitle`, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .largeTitle) private var fieldWidth = 148.0
@@ -17,6 +21,12 @@ struct ScaleNumberField: View {
 
     // A target big enough to hit with a wet hand where the row has room, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .title3) private var stepDiameter = 48.0
+
+    // What the field held before the steps not yet announced, or `nil` where none are waiting.
+    @State private var textBeforeSteps: String?
+
+    // Restarts the wait on a step that changes no number, which would otherwise leave typing after it to be announced.
+    @State private var stepCount = 0
 
     init(
         presenter: ScaleSheetPresenterProtocol,
@@ -29,6 +39,19 @@ struct ScaleNumberField: View {
     }
 
     var body: some View {
+        VStack(spacing: SousSpacing.small) {
+            target.label
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                // The field carries it as its own name.
+                .accessibilityHidden(true)
+
+            numberRow
+        }
+        .scrollsIntoView(onChangeOf: keyPresses)
+    }
+
+    private var numberRow: some View {
         ScaleNumberFieldLayout(spacing: SousSpacing.large) {
             stepButton(
                 -1.0,
@@ -47,6 +70,10 @@ struct ScaleNumberField: View {
             measuredNumber
         }
         .accessibilityElement(children: .contain)
+        // The number follows its step by an update, so the wait for the steps to pause restarts on either.
+        .task(id: [stepCount, text] as [AnyHashable]) {
+            await announceSteps()
+        }
     }
 
     private func stepButton(
@@ -55,7 +82,7 @@ struct ScaleNumberField: View {
         label: LocalizedStringKey
     ) -> some View {
         Button(
-            action: { presenter.didStepScale(by: steps) },
+            action: { step(by: steps) },
             label: {
                 Image(systemName: systemImage)
                     .font(.title3)
@@ -80,7 +107,17 @@ struct ScaleNumberField: View {
 
     private var field: some View {
         TextField(
-            text: Binding(get: { text }, set: { presenter.didChangeScaleText($0) }),
+            text: Binding(
+                get: { text },
+                set: { newText in
+                    // A write that keeps the number is no key press.
+                    if newText != text {
+                        keyPresses += 1
+                    }
+
+                    presenter.didChangeScaleText(newText)
+                }
+            ),
             prompt: nil,
             label: { target.label }
         )
@@ -112,6 +149,33 @@ struct ScaleNumberField: View {
             .monospacedDigit()
             .hidden()
             .accessibilityHidden(true)
+    }
+
+    private func announceSteps() async {
+        // A step as the wait ends gets here before its number does, so it is left to the wait that step restarts.
+        let stepCountBeforeWait = stepCount
+
+        // Held, a button steps up to twenty times a second, so only a number the steps pause on is said.
+        guard
+            let textBeforeSteps,
+            (try? await Task.sleep(for: .milliseconds(300))) != nil,
+            stepCount == stepCountBeforeWait
+        else {
+            return
+        }
+
+        self.textBeforeSteps = nil
+
+        // A step at either end of the range leaves the number as it is, which is nothing to say.
+        if text != textBeforeSteps {
+            AccessibilityNotification.Announcement(text).post()
+        }
+    }
+
+    private func step(by steps: Double) {
+        textBeforeSteps = textBeforeSteps ?? text
+        stepCount += 1
+        presenter.didStepScale(by: steps)
     }
 }
 

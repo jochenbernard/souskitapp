@@ -2,7 +2,8 @@ import SwiftUI
 
 /// A sheet that sets one thing, under a bar holding its title and actions.
 ///
-/// The sheet sits low, as tall as what it holds, so the screen it opens over stays in view above it.
+/// The sheet sits low, as tall as what it holds, so the screen it opens over stays in view above it. It scrolls what
+/// it has no room for.
 public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
     private let title: Text
     private let content: Content
@@ -11,10 +12,10 @@ public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
     // What the sheet holds, measured as it is laid out, so content that wraps still fits.
     @State private var contentHeight: Double?
 
-    // The toolbar and home indicator, which the sheet cannot measure before its detent applies.
-    @ScaledMetric(relativeTo: .body) private var barHeight = 70.0
+    // The toolbar, which keeps its height at every text size and cannot be measured before the detent applies.
+    private let barHeight = 70.0
 
-    // About as tall as the content comes out, for the one layout before it is measured.
+    // About as tall as the content comes out, for the layouts before it is measured.
     @ScaledMetric(relativeTo: .body) private var estimatedContentHeight = 200.0
 
     /// Creates the sheet.
@@ -47,21 +48,22 @@ public struct SousSheet<Content: View, Actions: ToolbarContent>: View {
     }
 
     private var measuredContent: some View {
-        VStack(spacing: SousSpacing.xLarge) {
-            content
+        ScrollView {
+            VStack(spacing: SousSpacing.xLarge) {
+                content
+            }
+            .sousPagePadding()
+            .frame(maxWidth: .infinity)
         }
-        .sousPagePadding()
-        .onGeometryChange(
-            for: Double.self,
-            of: { $0.size.height },
-            action: { contentHeight = $0 }
+        // Content the sheet can hold stays still under a finger.
+        .scrollBounceBehavior(.basedOnSize)
+        // Only once the content sits under the bar: earlier layouts are at other widths, where it wraps differently.
+        .onScrollGeometryChange(
+            for: Double?.self,
+            of: { $0.contentInsets.top > 0.0 ? $0.contentSize.height : nil },
+            action: { _, height in contentHeight = height ?? contentHeight }
         )
         // The sheet's own ground, so the page behind it is read through nothing but the sheet.
-        .frame(
-            maxWidth: .infinity,
-            maxHeight: .infinity,
-            alignment: .top
-        )
         .sousPage()
     }
 
