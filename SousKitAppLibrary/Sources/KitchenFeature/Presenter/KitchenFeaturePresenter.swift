@@ -203,7 +203,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     static func card(for recipeEntry: RecipeEntry) -> KitchenRecipeCard {
         KitchenRecipeCard(
             recipeEntry: recipeEntry,
-            totalTime: recipeEntry.summary?.totalTime,
             placeholderSymbol: Self.placeholderSymbol,
             placeholderColor: PlaceholderColorPick.color(forTitle: recipeEntry.title)
         )

@@ -63,7 +63,7 @@ struct RecipeCard: View {
 
     @ViewBuilder
     private var totalTime: some View {
-        switch card.totalTime {
+        switch card.recipeEntry.summary?.totalTime {
         case .duration(let duration):
             Text(verbatim: Self.text(of: duration, width: .abbreviated))
                 .accessibilityLabel(Text(verbatim: Self.text(of: duration, width: .wide)))

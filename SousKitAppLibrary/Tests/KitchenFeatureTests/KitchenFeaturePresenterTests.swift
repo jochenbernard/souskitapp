@@ -156,7 +156,7 @@ struct KitchenFeaturePresenterTests {
             recipeEntry(named: "unreachable")
         ])
 
-        #expect(cards.map(\.totalTime) == [.duration(.seconds(12_600.0)), nil, nil])
+        #expect(cards.map(\.recipeEntry.summary?.totalTime) == [.duration(.seconds(12_600.0)), nil, nil])
     }
 
     @MainActor

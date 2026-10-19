@@ -6,9 +6,6 @@ struct KitchenRecipeCard: Identifiable, Hashable {
     /// The recipe the card opens.
     let recipeEntry: RecipeEntry
 
-    /// How long the recipe takes, or `nil` where its header does not say.
-    let totalTime: TotalTime?
-
     /// The symbol standing in for a picture of the recipe.
     let placeholderSymbol: String
 
