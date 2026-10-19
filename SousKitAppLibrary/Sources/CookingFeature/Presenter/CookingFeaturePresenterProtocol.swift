@@ -34,6 +34,9 @@ protocol CookingFeaturePresenterProtocol {
     func didCloseTimerList()
 
     @MainActor
+    func didFoldTimers()
+
+    @MainActor
     func didTapCancelTimer(_ timer: RunningTimer)
 
     @MainActor

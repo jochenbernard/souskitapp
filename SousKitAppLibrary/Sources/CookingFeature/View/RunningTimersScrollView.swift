@@ -11,9 +11,6 @@ final class RunningTimersScrollView: UIScrollView {
     /// Called with the bounds' size whenever it changes.
     var onSizeChange: ((CGSize) -> Void)?
 
-    /// Called once the scroll view is in a window, or out of one.
-    var onWindowChange: (() -> Void)?
-
     /// Where the last finger to touch the scroll view came down, in the window.
     private(set) var touchDownLocation: CGPoint?
 
@@ -84,10 +81,5 @@ final class RunningTimersScrollView: UIScrollView {
         }
 
         return super.gestureRecognizerShouldBegin(gestureRecognizer)
-    }
-
-    override func didMoveToWindow() {
-        super.didMoveToWindow()
-        onWindowChange?()
     }
 }
