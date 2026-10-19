@@ -28,9 +28,12 @@ struct KitchenFolderPage: View {
     }
 
     var body: some View {
-        ScrollView {
-            // A blank page, rather than a list the restored screens cover a moment later.
-            if !viewModel.isRestoring {
+        // A blank page, rather than a list and a search field the restored screens cover a moment later.
+        if viewModel.isRestoring {
+            Color.clear
+                .sousPage()
+        } else {
+            ScrollView {
                 VStack(alignment: .leading, spacing: SousSpacing.medium) {
                     // Left out under a search that found nothing, whose note it would run into.
                     if !path.isEmpty, emptySearch == nil {
@@ -42,20 +45,25 @@ struct KitchenFolderPage: View {
                 .sousPagePadding()
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-        }
-        // Over the page rather than in it, so it stays centered in what the field and the keyboard leave visible.
-        .overlay {
-            if let emptySearch {
-                ContentUnavailableView.search(text: emptySearch)
+            // Over the page rather than in it, so it stays centered in what the field and the keyboard leave visible.
+            .overlay {
+                if let emptySearch {
+                    emptySearchNote(emptySearch)
+                }
             }
+            .sousPage()
+            .searchable(text: searchText, prompt: searchPrompt)
         }
-        .sousPage()
-        .searchable(text: searchText, prompt: searchPrompt)
     }
 
-    /// The text of a search that found nothing, or `nil` where none did.
+    /// The text of a search that found nothing among the recipes listed, or `nil` where none did.
     private var emptySearch: String? {
-        guard let search = viewModel.searches[path], search.isSearching, search.results.isEmpty else {
+        guard
+            case .recipes = viewModel.recipeList,
+            let search = viewModel.searches[path],
+            search.isSearching,
+            search.results.isEmpty
+        else {
             return nil
         }
 
@@ -168,6 +176,19 @@ struct KitchenFolderPage: View {
         SousFailureNote(Text("This folder could not be read", bundle: .module), message: message)
     }
 
+    private func emptySearchNote(_ text: String) -> some View {
+        // Smaller text where the keyboard leaves too little room, rather than a scroll view the large title follows.
+        ViewThatFits(in: .vertical) {
+            ContentUnavailableView.search(text: text)
+
+            ContentUnavailableView.search(text: text)
+                .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+
+            ContentUnavailableView.search(text: text)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        }
+    }
+
     private var searchText: Binding<String> {
         Binding(
             get: { viewModel.searches[path]?.text ?? "" },
@@ -184,19 +205,22 @@ struct KitchenFolderPage: View {
     }
 }
 
+/// A recipe at `path`, its folders and file name separated by slashes.
+private func previewEntry(_ path: String) -> RecipeEntry {
+    let components = path.split(separator: "/").map(String.init)
+
+    return RecipeEntry(
+        id: path,
+        name: components.last ?? path,
+        availability: .downloaded,
+        folderPath: Array(components.dropLast())
+    )
+}
+
 @MainActor
 private func previewViewModel() -> KitchenFeatureViewModel {
     let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
-    let entries = ["Baking/brioche", "Baking/madeleines", "Baking/Classic/crepes", "vinaigrette"].map { path in
-        let components = path.split(separator: "/").map(String.init)
-
-        return RecipeEntry(
-            id: path,
-            name: components.last ?? path,
-            availability: .downloaded,
-            folderPath: Array(components.dropLast())
-        )
-    }
+    let entries = ["Baking/brioche", "Baking/madeleines", "Baking/Classic/crepes", "vinaigrette"].map(previewEntry)
     viewModel.recipeList = .recipes(KitchenFolderTree.folder(at: [], holding: entries))
 
     return viewModel
@@ -232,18 +256,7 @@ private func previewSearch(
     finding recipePaths: [String]
 ) -> KitchenFeatureViewModel {
     let viewModel = previewViewModel()
-    let results = recipePaths.map { recipePath in
-        let components = recipePath.split(separator: "/").map(String.init)
-
-        return KitchenFeaturePresenter.card(
-            for: RecipeEntry(
-                id: recipePath,
-                name: components.last ?? recipePath,
-                availability: .downloaded,
-                folderPath: Array(components.dropLast())
-            )
-        )
-    }
+    let results = recipePaths.map({ KitchenFeaturePresenter.card(for: previewEntry($0)) })
     viewModel.searches[path] = KitchenSearch(text: text, isSearching: true, results: results)
 
     return viewModel
