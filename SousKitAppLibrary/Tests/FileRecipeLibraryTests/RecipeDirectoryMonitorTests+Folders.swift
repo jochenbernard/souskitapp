@@ -84,4 +84,58 @@ extension RecipeDirectoryMonitorTests {
 
         #expect(reached)
     }
+
+    // With no presenter: on a simulator a presenter hears writes made without file coordination, on a device not.
+    @MainActor
+    @Test("a recipe written into a new directory between its listing and its watch arrives")
+    func recipeWrittenWhileANewDirectoryIsListed() async throws {
+        try directory.writeFile(named: "crepes.sous")
+        let listingSpy = ListingSpy(changingAfterListing: "Baking") {
+            try self.directory.writeFile(named: "Baking/madeleines.sous")
+        }
+        let monitor = makeMonitor(listingSpy: listingSpy, presentsDirectory: false)
+
+        let reached = try await names(
+            reach: ["madeleines", "crepes"],
+            from: monitor,
+            afterListing: [{ try self.directory.makeDirectory(named: "Baking") }]
+        )
+
+        #expect(reached)
+    }
+
+    @MainActor
+    @Test("a read finding no directory it did not watch lists once")
+    func listingWithoutNewDirectory() async throws {
+        try directory.writeFile(named: "crepes.sous")
+        let listingSpy = ListingSpy()
+        let monitor = makeMonitor(listingSpy: listingSpy)
+
+        let reached = try await names(
+            reach: ["crepes"],
+            from: monitor,
+            afterListing: []
+        )
+
+        #expect(reached)
+        #expect(listingSpy.count == 1)
+    }
+
+    @MainActor
+    @Test("a read finding a directory it did not watch lists again once watching it")
+    func listingWithNewDirectory() async throws {
+        try directory.makeDirectory(named: "Baking")
+        try directory.writeFile(named: "Baking/madeleines.sous")
+        let listingSpy = ListingSpy()
+        let monitor = makeMonitor(listingSpy: listingSpy)
+
+        let reached = try await names(
+            reach: ["madeleines"],
+            from: monitor,
+            afterListing: []
+        )
+
+        #expect(reached)
+        #expect(listingSpy.count == 2)
+    }
 }

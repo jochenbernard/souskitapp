@@ -48,14 +48,18 @@ struct KitchenFolderPage: View {
     /// Where a folder sits, under its title: the repository's name, then the folders leading down to it.
     private var pathAbove: some View {
         // In the page, not the navigation subtitle, which shrinks the title of a screen pushed from one without.
-        Text(verbatim: pathText(Array(path.dropLast())))
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+        pathLine(Array(path.dropLast()))
     }
 
-    /// The repository's name, then the names of folders leading down from it.
-    private func pathText(_ folderNames: [String]) -> String {
-        ([viewModel.recipeRepositoryName] + folderNames).joined(separator: " \u{203A} ")
+    /// The repository's name, then the names of the folders leading down from it.
+    private func pathLine(_ folderNames: [String]) -> some View {
+        let names = [viewModel.recipeRepositoryName] + folderNames
+
+        return Text(verbatim: names.joined(separator: " \u{203A} "))
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            // A pause between the names, where VoiceOver would otherwise read out the separator.
+            .accessibilityLabel(Text(verbatim: names.joined(separator: ", ")))
     }
 
     @ViewBuilder
@@ -151,9 +155,7 @@ struct KitchenFolderPage: View {
             Text(verbatim: card.recipeEntry.title)
 
             // The folder the recipe is in.
-            Text(verbatim: pathText(card.recipeEntry.folderPath))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            pathLine(card.recipeEntry.folderPath)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .sousRow()
