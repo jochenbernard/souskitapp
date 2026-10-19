@@ -6,14 +6,16 @@ import SousKit
 ///
 /// They sit in folders as a folder's recipes do, some of them sharing a file name. Some of the recipes start out in
 /// iCloud, and reading one fetches it first, as a folder in iCloud Drive does. One of them never arrives. Every recipe
-/// with a text is listed with its summary, as a folder lists the recipes it read on an earlier launch.
+/// with a text is listed with its summary and ingredient names, as a folder lists the recipes it read on an earlier
+/// launch.
 @MainActor
 public final class MockRecipeRepository: RecipeRepository {
     private let fetchDuration: Duration
     private let parser: SousParser
     private let summaries: [String: RecipeSummary]
+    private let ingredientNames: [String: [String]]
 
-    private var continuation: AsyncStream<Result<[RecipeEntry], Error>>.Continuation?
+    private var continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation?
     private var downloadTask: Task<Void, Never>?
     private var fetchedIDs: Set<String> = []
 
@@ -32,11 +34,11 @@ public final class MockRecipeRepository: RecipeRepository {
     ) {
         self.parser = parser
         self.fetchDuration = fetchDuration
-        self.summaries = MockRecipe.all.reduce(into: [:]) { summaries, recipe in
-            summaries[recipe.id] = recipe.text.map { text in
-                RecipeSummary(recipe: parser.parseRecipe(text).value, parser: parser)
-            }
+        let recipes = MockRecipe.all.reduce(into: [String: Recipe]()) { recipes, mockRecipe in
+            recipes[mockRecipe.id] = mockRecipe.text.map({ parser.parseRecipe($0).value })
         }
+        self.summaries = recipes.mapValues({ RecipeSummary(recipe: $0, parser: parser) })
+        self.ingredientNames = recipes.mapValues(\.foodIngredientNames)
     }
 
     deinit {
@@ -44,15 +46,15 @@ public final class MockRecipeRepository: RecipeRepository {
         continuation?.finish()
     }
 
-    public func recipeEntries() -> AsyncStream<Result<[RecipeEntry], Error>> {
+    public func listedRecipes() -> AsyncStream<Result<[ListedRecipe], Error>> {
         continuation?.finish()
 
         let (stream, streamContinuation) = AsyncStream.makeStream(
-            of: Result<[RecipeEntry], Error>.self,
+            of: Result<[ListedRecipe], Error>.self,
             bufferingPolicy: .bufferingNewest(1)
         )
         continuation = streamContinuation
-        streamContinuation.yield(.success(entries))
+        streamContinuation.yield(.success(listing))
         finishDownloads()
 
         return stream
@@ -79,14 +81,17 @@ public final class MockRecipeRepository: RecipeRepository {
         return parser.parseRecipe(text)
     }
 
-    private var entries: [RecipeEntry] {
+    private var listing: [ListedRecipe] {
         MockRecipe.all.filter(\.isListed).map { recipe in
-            RecipeEntry(
-                id: recipe.id,
-                name: recipe.name,
-                availability: availability(of: recipe),
-                summary: summaries[recipe.id],
-                folderPath: recipe.folderPath
+            ListedRecipe(
+                entry: RecipeEntry(
+                    id: recipe.id,
+                    name: recipe.name,
+                    availability: availability(of: recipe),
+                    summary: summaries[recipe.id],
+                    folderPath: recipe.folderPath
+                ),
+                ingredientNames: ingredientNames[recipe.id] ?? []
             )
         }
     }
@@ -116,6 +121,6 @@ public final class MockRecipeRepository: RecipeRepository {
         }
 
         fetchedIDs.formUnion(ids)
-        continuation?.yield(.success(entries))
+        continuation?.yield(.success(listing))
     }
 }

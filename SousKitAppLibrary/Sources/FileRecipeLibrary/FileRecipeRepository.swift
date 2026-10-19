@@ -37,8 +37,8 @@ struct FileRecipeRepository: RecipeRepository {
         self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
     }
 
-    func recipeEntries() async -> AsyncStream<Result<[RecipeEntry], Error>> {
-        await monitor.recipeEntries()
+    func listedRecipes() async -> AsyncStream<Result<[ListedRecipe], Error>> {
+        await monitor.listedRecipes()
     }
 
     func refresh() async {

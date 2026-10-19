@@ -9,7 +9,7 @@ final class RecipeDirectoryMonitor {
     private let settleDelay: Duration
     private let summarizer: RecipeSummarizer
 
-    private var continuation: AsyncStream<Result<[RecipeEntry], Error>>.Continuation?
+    private var continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation?
     // By path: an event source hears its own directory's entries alone, so each directory listed has one.
     private var eventSources: [String: DirectoryEventSource] = [:]
     // By path, and left running by a new read of the directory: a landing file changes the directory.
@@ -17,7 +17,7 @@ final class RecipeDirectoryMonitor {
     private var generation = 0
     private var isScoped = false
     // swiftlint:disable:next discouraged_optional_collection
-    private var lastRecipeEntries: [RecipeEntry]?
+    private var lastListedRecipes: [ListedRecipe]?
     private var presenter: DirectoryPresenter?
     private var readTask: Task<Void, Never>?
     private var recipeFiles: [RecipeFile] = []
@@ -61,7 +61,7 @@ final class RecipeDirectoryMonitor {
     /// reference back. One stream runs at a time; a second call ends the first.
     ///
     /// - Returns: The stream.
-    func recipeEntries() -> AsyncStream<Result<[RecipeEntry], Error>> {
+    func listedRecipes() -> AsyncStream<Result<[ListedRecipe], Error>> {
         stop()
         generation += 1
         let startedAt = generation
@@ -124,7 +124,7 @@ final class RecipeDirectoryMonitor {
         eventSources = [:]
         presenter?.stopPresenting()
         presenter = nil
-        lastRecipeEntries = nil
+        lastListedRecipes = nil
         continuation?.finish()
         continuation = nil
 
@@ -176,7 +176,7 @@ final class RecipeDirectoryMonitor {
                 await Self.readSummaries(
                     of: listing.recipeFiles,
                     with: summarizer,
-                    yield: { [weak self] recipeEntries in self?.yield(.success(recipeEntries)) },
+                    yield: { [weak self] listedRecipes in self?.yield(.success(listedRecipes)) },
                     fetch: { [weak self] filesToRead in self?.fetch(filesToRead) ?? [] }
                 )
 
@@ -204,14 +204,14 @@ final class RecipeDirectoryMonitor {
     private static func readSummaries(
         of recipeFiles: [RecipeFile],
         with summarizer: RecipeSummarizer,
-        yield: @escaping @MainActor ([RecipeEntry]) -> Void,
+        yield: @escaping @MainActor ([ListedRecipe]) -> Void,
         fetch: @MainActor ([RecipeFile]) -> [RecipeFile]
     ) async {
         let yieldSummaries = {
-            let recipeEntries = await summarizer.recipeEntries(for: recipeFiles)
+            let listedRecipes = await summarizer.listedRecipes(for: recipeFiles)
 
             if !Task.isCancelled {
-                yield(recipeEntries)
+                yield(listedRecipes)
             }
         }
 
@@ -266,10 +266,10 @@ final class RecipeDirectoryMonitor {
                     return
                 }
 
-                let recipeEntries = await summarizer.recipeEntries(for: listedFiles)
+                let listedRecipes = await summarizer.listedRecipes(for: listedFiles)
 
                 if !Task.isCancelled {
-                    self?.yield(.success(recipeEntries))
+                    self?.yield(.success(listedRecipes))
                 }
             }
         }
@@ -278,17 +278,17 @@ final class RecipeDirectoryMonitor {
     }
 
     /// Sends a result on, dropping a list matching the one sent last.
-    private func yield(_ result: Result<[RecipeEntry], Error>) {
+    private func yield(_ result: Result<[ListedRecipe], Error>) {
         switch result {
-        case .success(let recipeEntries):
-            guard recipeEntries != lastRecipeEntries else {
+        case .success(let listedRecipes):
+            guard listedRecipes != lastListedRecipes else {
                 return
             }
 
-            lastRecipeEntries = recipeEntries
+            lastListedRecipes = listedRecipes
 
         case .failure:
-            lastRecipeEntries = nil
+            lastListedRecipes = nil
         }
 
         continuation?.yield(result)

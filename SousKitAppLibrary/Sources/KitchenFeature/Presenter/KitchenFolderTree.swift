@@ -57,7 +57,7 @@ enum KitchenFolderTree {
 
     /// Whether one recipe is listed before another: by the title its card shows, then by what the repository finds it
     /// by, so recipes sharing a title keep one order.
-    private static func isOrderedBefore(_ lhs: RecipeEntry, _ rhs: RecipeEntry) -> Bool {
+    static func isOrderedBefore(_ lhs: RecipeEntry, _ rhs: RecipeEntry) -> Bool {
         switch lhs.title.localizedStandardCompare(rhs.title) {
         case .orderedAscending:
             true

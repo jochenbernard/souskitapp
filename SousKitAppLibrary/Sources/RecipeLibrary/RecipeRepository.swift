@@ -11,12 +11,12 @@ public protocol RecipeRepository: Sendable {
     /// time; a second call ends the first.
     ///
     /// - Returns: The stream.
-    func recipeEntries() async -> AsyncStream<Result<[RecipeEntry], Error>>
+    func listedRecipes() async -> AsyncStream<Result<[ListedRecipe], Error>>
 
     /// Reads the recipes again, for the changes that reach the app no other way: a sync that landed while the app
     /// was in the background.
     ///
-    /// The recipes read arrive on the stream from ``recipeEntries()``, not by the time the call returns.
+    /// The recipes read arrive on the stream from ``listedRecipes()``, not by the time the call returns.
     func refresh() async
 
     /// Reads a recipe and parses it.

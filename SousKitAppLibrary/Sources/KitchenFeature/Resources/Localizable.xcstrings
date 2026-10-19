@@ -76,6 +76,22 @@
         }
       }
     },
+    "No recipes found" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No recipes found"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geen recepten gevonden"
+          }
+        }
+      }
+    },
     "Nothing here yet" : {
       "localizations" : {
         "en" : {
@@ -120,6 +136,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "De map wordt gelezen."
+          }
+        }
+      }
+    },
+    "Search recipes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search recipes"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek recepten"
           }
         }
       }

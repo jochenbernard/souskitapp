@@ -49,12 +49,12 @@ final class FileRecipeRepositoryTests: Sendable {
     }
 
     @Test("the recipes in the directory are listed")
-    func recipeEntries() async throws {
+    func listedRecipes() async throws {
         try directory.writeFile(named: "crepes.sous")
         let repository = makeRepository()
 
-        for await result in await repository.recipeEntries() {
-            #expect(try result.get().map(\.name) == ["crepes"])
+        for await result in await repository.listedRecipes() {
+            #expect(try result.get().map(\.entry.name) == ["crepes"])
             return
         }
 

@@ -7,5 +7,7 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didPop(toCount _: Int) {}
 
+    func didChangeSearchText(_: String) {}
+
     func didDismissCooking() {}
 }

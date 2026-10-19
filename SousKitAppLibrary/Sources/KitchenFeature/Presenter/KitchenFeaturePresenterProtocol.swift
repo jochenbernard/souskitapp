@@ -22,6 +22,12 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didPop(toCount count: Int)
 
+    /// The text searched for changed.
+    ///
+    /// - Parameter text: The text, which may be empty.
+    @MainActor
+    func didChangeSearchText(_ text: String)
+
     @MainActor
     func didDismissCooking()
 }

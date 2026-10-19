@@ -6,6 +6,8 @@ final class KitchenFeatureViewModel {
     let recipeRepositoryName: String
     var recipeList: KitchenRecipeList = .reading
     var isRestoring = false
+    var searchText = ""
+    var search = KitchenSearch.idle
     var pushedScreens: [KitchenScreen] = []
     var openRecipe: OpenRecipe?
     var openCooking: OpenCooking?

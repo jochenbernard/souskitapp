@@ -48,9 +48,14 @@ struct KitchenFolderPage: View {
     /// Where a folder sits, under its title: the repository's name, then the folders leading down to it.
     private var pathAbove: some View {
         // In the page, not the navigation subtitle, which shrinks the title of a screen pushed from one without.
-        Text(verbatim: ([viewModel.recipeRepositoryName] + path.dropLast()).joined(separator: " \u{203A} "))
+        Text(verbatim: pathText(Array(path.dropLast())))
             .font(.subheadline)
             .foregroundStyle(.secondary)
+    }
+
+    /// The repository's name, then the names of folders leading down from it.
+    private func pathText(_ folderNames: [String]) -> String {
+        ([viewModel.recipeRepositoryName] + folderNames).joined(separator: " \u{203A} ")
     }
 
     @ViewBuilder
@@ -60,11 +65,7 @@ struct KitchenFolderPage: View {
             readingNote
 
         case .recipes(let topFolder):
-            if let folder = topFolder.folder(at: path), !folder.isEmpty {
-                folderView(folder)
-            } else {
-                emptyNote
-            }
+            recipesView(topFolder)
 
         case .failure(let message):
             failureNote(message)
@@ -74,6 +75,22 @@ struct KitchenFolderPage: View {
     private var readingNote: some View {
         SousActivityNote {
             Text("Reading the folder.", bundle: .module)
+        }
+    }
+
+    /// The folder's contents, or on the top screen what a search found.
+    @ViewBuilder
+    private func recipesView(_ topFolder: KitchenFolder) -> some View {
+        switch path.isEmpty ? viewModel.search : .idle {
+        case .idle:
+            if let folder = topFolder.folder(at: path), !folder.isEmpty {
+                folderView(folder)
+            } else {
+                emptyNote
+            }
+
+        case .results(let cards):
+            searchResultsView(cards)
         }
     }
 
@@ -110,6 +127,37 @@ struct KitchenFolderPage: View {
             Text("Put .sous files in this folder and they are listed here.", bundle: .module)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    @ViewBuilder
+    private func searchResultsView(_ cards: [KitchenRecipeCard]) -> some View {
+        if cards.isEmpty {
+            Text("No recipes found", bundle: .module)
+        } else {
+            VStack(alignment: .leading, spacing: SousSpacing.small) {
+                ForEach(cards) { card in
+                    Button(
+                        action: { presenter.didPush(.recipe(card.recipeEntry), from: nil) },
+                        label: { searchResultRow(card) }
+                    )
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func searchResultRow(_ card: KitchenRecipeCard) -> some View {
+        VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
+            Text(verbatim: card.recipeEntry.title)
+
+            // The folder the recipe is in.
+            Text(verbatim: pathText(card.recipeEntry.folderPath))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .sousRow()
+        .accessibilityElement(children: .combine)
     }
 
     private func failureNote(_ message: String) -> some View {
@@ -154,5 +202,46 @@ private func previewViewModel() -> KitchenFeatureViewModel {
             viewModel: previewViewModel()
         )
         .navigationTitle("Baking")
+    }
+}
+
+#Preview("Folder page, search results") {
+    let viewModel = previewViewModel()
+    viewModel.searchText = "b"
+    viewModel.search = .results(
+        ["Baking/brioche", "Baking/Classic/crepes"].map { path in
+            KitchenFeaturePresenter.card(
+                for: RecipeEntry(
+                    id: path,
+                    name: path.split(separator: "/").last.map(String.init) ?? path,
+                    availability: .downloaded,
+                    folderPath: path.split(separator: "/").dropLast().map(String.init)
+                )
+            )
+        }
+    )
+
+    return NavigationStack {
+        KitchenFolderPage(
+            path: [],
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: viewModel
+        )
+        .navigationTitle("Recipes")
+    }
+}
+
+#Preview("Folder page, no search results") {
+    let viewModel = previewViewModel()
+    viewModel.searchText = "mussels"
+    viewModel.search = .results([])
+
+    return NavigationStack {
+        KitchenFolderPage(
+            path: [],
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: viewModel
+        )
+        .navigationTitle("Recipes")
     }
 }

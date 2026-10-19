@@ -13,6 +13,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
+    private let searchIndex = RecipeSearchIndex()
     private let viewModel: KitchenFeatureViewModel
 
     @MainActor
@@ -36,11 +37,13 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func stackDidAppear() async {
-        for await result in await recipeRepository.recipeEntries() {
+        for await result in await recipeRepository.listedRecipes() {
             switch result {
-            case .success(let recipeEntries):
-                let folder = KitchenFolderTree.folder(at: [], holding: recipeEntries)
+            case .success(let listedRecipes):
+                let folder = KitchenFolderTree.folder(at: [], holding: listedRecipes.map(\.entry))
+                searchIndex.update(listedRecipes)
                 viewModel.recipeList = .recipes(folder)
+                showSearchResults()
                 restore(in: folder)
 
             case .failure(let error):
@@ -87,6 +90,11 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         changePushedScreens(to: Array(viewModel.pushedScreens.prefix(count)))
     }
 
+    func didChangeSearchText(_ text: String) {
+        viewModel.searchText = text
+        showSearchResults()
+    }
+
     func didDismissCooking() {
         closeCooking()
     }
@@ -109,6 +117,19 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
     func cookingFeatureDidChangeRestoration(_ restoration: CookingFeatureRestoration) {
         restorationKeeper.update({ $0.cooking = restoration })
+    }
+
+    /// Shows the recipes matching the search text, from the summaries listed, or none while nothing is searched for.
+    @MainActor
+    private func showSearchResults() {
+        let queryWords = RecipeSearchTerms.words(of: viewModel.searchText)
+
+        guard !queryWords.isEmpty else {
+            viewModel.search = .idle
+            return
+        }
+
+        viewModel.search = .results(searchIndex.results(matching: queryWords).map(Self.card(for:)))
     }
 
     /// Writes the pushed screens again, so the stack pushes the recipe it already slid away at once, under cooking.
@@ -185,8 +206,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             .map({ Array(restoration.folderPath.prefix(through: $0)) })
             .prefix(while: { folder.folder(at: $0) != nil })
             .map(KitchenScreen.folder)
-        let card = folder.folder(at: restoration.folderPath)?.cards.first(where: { $0.id == restoration.recipeID })
-        let recipeEntry = card?.recipeEntry
+        // Anywhere below the folders, since a search opens a recipe of any folder over the top one.
+        let recipeEntry = folder.folder(at: restoration.folderPath).flatMap { restoredFolder in
+            restoration.recipeID.flatMap({ Self.recipeEntry(withID: $0, in: restoredFolder) })
+        }
         let pushedScreens = folderScreens + (recipeEntry.map({ [KitchenScreen.recipe($0)] }) ?? [])
 
         guard !pushedScreens.isEmpty else {
@@ -207,6 +230,11 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         }
 
         handler.kitchenFeatureDidRestore()
+    }
+
+    private static func recipeEntry(withID id: String, in folder: KitchenFolder) -> RecipeEntry? {
+        folder.cards.first(where: { $0.id == id })?.recipeEntry
+            ?? folder.folders.lazy.compactMap({ recipeEntry(withID: id, in: $0) }).first
     }
 
     @MainActor

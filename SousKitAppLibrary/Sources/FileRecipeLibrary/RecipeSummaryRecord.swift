@@ -10,7 +10,7 @@ struct RecipeSummaryRecord: Sendable, Hashable, Codable {
     /// The recipe's header as Sous source text, since `Metadata` has no coding of its own.
     let header: String
 
-    /// The names of the recipe's ingredients, in the order the recipe first calls for them, each once.
+    /// The names of the ingredients the recipe is made of, in the order it first calls for them, each once.
     let ingredientNames: [String]
 
     /// Creates the record of a recipe read.
@@ -24,8 +24,7 @@ struct RecipeSummaryRecord: Sendable, Hashable, Codable {
 
         self.modificationDate = modificationDate
         self.header = headerOnly.serialized()
-        var seen: Set<String> = []
-        self.ingredientNames = recipe.ingredients.map(\.name).filter({ seen.insert($0).inserted })
+        self.ingredientNames = recipe.foodIngredientNames
     }
 
     /// Whether the summary still holds for a file as it is listed now.
