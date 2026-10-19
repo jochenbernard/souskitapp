@@ -47,10 +47,14 @@ struct KitchenFolderPage: View {
 
     /// Where a folder sits, under its title: the repository's name, then the folders leading down to it.
     private var pathAbove: some View {
+        let names = [viewModel.recipeRepositoryName] + path.dropLast()
+
         // In the page, not the navigation subtitle, which shrinks the title of a screen pushed from one without.
-        Text(verbatim: ([viewModel.recipeRepositoryName] + path.dropLast()).joined(separator: " \u{203A} "))
+        return Text(verbatim: names.joined(separator: " \u{203A} "))
             .font(.subheadline)
             .foregroundStyle(.secondary)
+            // A pause between the names, where VoiceOver would otherwise read out the separator.
+            .accessibilityLabel(Text(verbatim: names.joined(separator: ", ")))
     }
 
     @ViewBuilder
