@@ -1,5 +1,4 @@
-import CoreGraphics
-import Foundation
+import UIKit
 
 /// A picture drawn in code where a folder would hold a photo, so no picture ships with the app.
 ///
@@ -73,25 +72,12 @@ struct MockPicture: Sendable {
 
     /// The picture's hue at a saturation and brightness, each from 0 to 1.
     private func color(saturation: Double, brightness: Double) -> CGColor {
-        let sector = (hue - hue.rounded(.down)) * 6.0
-        let fraction = sector - sector.rounded(.down)
-        let low = brightness * (1.0 - saturation)
-        let falling = brightness * (1.0 - saturation * fraction)
-        let rising = brightness * (1.0 - saturation * (1.0 - fraction))
-        let components: [Double] = switch Int(sector) {
-        case 0: [brightness, rising, low]
-        case 1: [falling, brightness, low]
-        case 2: [low, brightness, rising]
-        case 3: [low, falling, brightness]
-        case 4: [rising, low, brightness]
-        default: [brightness, low, falling]
-        }
-
-        return CGColor(
-            srgbRed: components[0],
-            green: components[1],
-            blue: components[2],
+        UIColor(
+            hue: hue,
+            saturation: saturation,
+            brightness: brightness,
             alpha: 1.0
         )
+        .cgColor
     }
 }
