@@ -24,7 +24,8 @@ struct AppFeatureFactory {
     init() {
         // One parser for the whole app, handed down to everything that reads Sous.
         let parser = SousParser()
-        let store = FileRecipeRepositoryStore(parser: parser)
+        let symbolPicker = LanguageModelRecipeSymbolPicker()
+        let store = FileRecipeRepositoryStore(parser: parser, symbolPicker: symbolPicker)
         let scaleStore = UserDefaultsPreferredScaleStore()
         // One scheduler for the whole app, so what decides a cold start sees the timers cooking runs.
         let scheduler = AlarmTimerScheduler()
@@ -33,7 +34,7 @@ struct AppFeatureFactory {
             preferredScaleStore: scaleStore,
             timerScheduler: scheduler
         )
-        self.mockRecipeRepository = MockRecipeRepository(parser: parser)
+        self.mockRecipeRepository = MockRecipeRepository(parser: parser, symbolPicker: symbolPicker)
         self.onboardingFeatureFactory = OnboardingFeatureFactory(recipeRepositoryStore: store)
         self.preferredScaleStore = scaleStore
         self.recipeRepositoryKindStore = RecipeRepositoryKindStore()

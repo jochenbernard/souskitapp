@@ -123,14 +123,49 @@ actor RecipeSummarizer {
                 continue
             }
 
-            let record = RecipeSummaryRecord(recipe: recipe, modificationDate: modificationDate)
-            summaries[file.path] = Summary(record: record, summary: RecipeSummary(recipe: recipe, parser: parser))
+            // The pick stays until the queue finds it was made from something the recipe no longer says.
+            let record = RecipeSummaryRecord(
+                recipe: recipe,
+                modificationDate: modificationDate,
+                symbolPick: summaries[file.path]?.record.symbolPick
+            )
+            summaries[file.path] = Summary(
+                record: record,
+                summary: RecipeSummary(
+                    metadata: recipe.metadata,
+                    parser: parser,
+                    symbolPick: record.symbolPick
+                )
+            )
             hasRead = true
         }
 
         if hasRead {
             save()
         }
+    }
+
+    /// Keeps the symbol picked for a recipe with its summary, unless the recipe has no summary any more.
+    ///
+    /// - Parameters:
+    ///   - symbolPick: The pick.
+    ///   - path: Where the recipe's file sits inside the directory.
+    func keep(_ symbolPick: RecipeSymbolPick, forRecipeAt path: String) {
+        guard let summary = summaries[path] else {
+            return
+        }
+
+        var record = summary.record
+        record.symbolPick = symbolPick
+        summaries[path] = Summary(
+            record: record,
+            summary: RecipeSummary(
+                metadata: summary.summary.metadata,
+                parser: parser,
+                symbolPick: symbolPick
+            )
+        )
+        save()
     }
 
     /// Writes the summaries now, or once `saveInterval` has passed since the last write, taking along whatever is read

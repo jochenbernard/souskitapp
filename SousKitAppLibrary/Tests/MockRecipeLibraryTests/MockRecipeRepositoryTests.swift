@@ -9,9 +9,16 @@ import Testing
 struct MockRecipeRepositoryTests {
     private let parser = SousParser()
 
+    /// A repository picking no symbols unless given a picker that can.
     @MainActor
-    private func makeRepository() -> MockRecipeRepository {
-        MockRecipeRepository(parser: parser, fetchDuration: .zero)
+    private func makeRepository(
+        symbolPicker: RecipeSymbolPicker = RecipeSymbolPickerStub(isAvailable: false)
+    ) -> MockRecipeRepository {
+        MockRecipeRepository(
+            parser: parser,
+            symbolPicker: symbolPicker,
+            fetchDuration: .zero
+        )
     }
 
     /// The first list a new stream from the repository yields, which is the recipes as they are now.
@@ -230,5 +237,30 @@ struct MockRecipeRepositoryTests {
         await #expect(throws: CocoaError.self) {
             try await repository.readThumbnail(of: croqueMonsieur, filling: box)
         }
+    }
+
+    @MainActor
+    @Test("the recipes are listed with the symbols picked for them as they land, and keep them in a new stream")
+    func symbols() async throws {
+        let picker = RecipeSymbolPickerStub()
+        picker.symbols = ["Bouillabaisse": "fish", "Vinaigrette": "drop"]
+        let repository = makeRepository(symbolPicker: picker)
+        var iterator = repository.listedRecipes().makeAsyncIterator()
+
+        while
+            let listing = await iterator.next(),
+            try listing.get().first(where: { $0.entry.id == "vinaigrette.sous" })?.entry.summary?.symbolPick == nil
+        {
+            continue
+        }
+
+        let entries = try await currentRecipeEntries(of: repository)
+        let symbols = entries.reduce(into: [String: String]()) { symbols, entry in
+            symbols[entry.id] = entry.summary?.symbolPick?.symbol
+        }
+
+        #expect(symbols["bouillabaisse.sous"] == "fish")
+        #expect(symbols["vinaigrette.sous"] == "drop")
+        #expect(symbols["brioche.sous"] == nil)
     }
 }

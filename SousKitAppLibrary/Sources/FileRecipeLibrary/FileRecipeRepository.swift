@@ -3,12 +3,14 @@ import Foundation
 import RecipeLibrary
 import SousKit
 
-/// The recipes in a directory and in the directories inside it, fetched from iCloud where they are not on the device.
+/// The recipes in a directory and in the directories inside it, fetched from iCloud where they are not on the device,
+/// each with the symbol picked for it.
 struct FileRecipeRepository: RecipeRepository {
     private let monitor: RecipeDirectoryMonitor
     private let parser: SousParser
     private let pictureReader: RecipePictureReader
     private let recipeDirectory: RecipeDirectory
+    private let symbolQueue: RecipeSymbolQueue
     private let textReader: RecipeTextReader
     private let thumbnailCache: RecipeThumbnailCache
 
@@ -21,33 +23,39 @@ struct FileRecipeRepository: RecipeRepository {
     /// - Parameters:
     ///   - parser: What the recipes are read with.
     ///   - recipeDirectory: The directory the recipes sit in.
+    ///   - symbolPicker: What the recipes' symbols are picked with.
     ///   - summaryCacheURL: Where the recipes' summaries are kept between launches, outside the directory.
     ///   - thumbnailCacheURL: Where the thumbnails of the recipes' pictures are kept, outside the directory.
     init(
         parser: SousParser,
         recipeDirectory: RecipeDirectory,
+        symbolPicker: RecipeSymbolPicker,
         summaryCacheURL: URL,
         thumbnailCacheURL: URL
     ) {
         let cache = RecipeThumbnailCache(recipeDirectory: recipeDirectory, folderURL: thumbnailCacheURL)
+        let summarizer = RecipeSummarizer(
+            cache: RecipeSummaryCache(recipeDirectory: recipeDirectory, fileURL: summaryCacheURL),
+            parser: parser,
+            textReader: RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .utility)
+        )
         self.monitor = RecipeDirectoryMonitor(
             recipeDirectory: recipeDirectory,
-            summarizer: RecipeSummarizer(
-                cache: RecipeSummaryCache(recipeDirectory: recipeDirectory, fileURL: summaryCacheURL),
-                parser: parser,
-                textReader: RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .utility)
-            ),
+            summarizer: summarizer,
             thumbnailCache: cache
         )
         self.parser = parser
         self.pictureReader = RecipePictureReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
         self.recipeDirectory = recipeDirectory
+        self.symbolQueue = RecipeSymbolQueue(picker: symbolPicker) { path, symbolPick in
+            await summarizer.keep(symbolPick, forRecipeAt: path)
+        }
         self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
         self.thumbnailCache = cache
     }
 
     func listedRecipes() async -> AsyncStream<Result<[ListedRecipe], Error>> {
-        await monitor.listedRecipes()
+        await symbolQueue.listedRecipes(following: monitor.listedRecipes())
     }
 
     func refresh() async {

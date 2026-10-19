@@ -9,7 +9,7 @@ import SousKit
 /// iCloud, and reading one fetches it first, as a folder in iCloud Drive does. One of them never arrives. Every recipe
 /// with a text is listed with its summary and ingredient names, as a folder lists the recipes it read on an earlier
 /// launch, and with the picture its header names where the folder holds it. A picture in iCloud lands a fetch's time
-/// after the recipes are first listed.
+/// after the recipes are first listed. Symbols are picked as a folder's are, and kept until the repository goes.
 @MainActor
 public final class MockRecipeRepository: RecipeRepository {
     private let fetchDuration: Duration
@@ -18,6 +18,7 @@ public final class MockRecipeRepository: RecipeRepository {
     private let pictureFiles: [String: MockRecipe]
     private let summaries: [String: RecipeSummary]
     private let ingredientNames: [String: [String]]
+    private let symbolQueue: RecipeSymbolQueue
 
     private var continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation?
     private var downloadTask: Task<Void, Never>?
@@ -31,12 +32,15 @@ public final class MockRecipeRepository: RecipeRepository {
     ///
     /// - Parameters:
     ///   - parser: What the recipes are read with.
+    ///   - symbolPicker: What the recipes' symbols are picked with.
     ///   - fetchDuration: How long a recipe takes to come down from iCloud.
     nonisolated public init(
         parser: SousParser,
+        symbolPicker: RecipeSymbolPicker,
         fetchDuration: Duration = .seconds(3)
     ) {
         self.parser = parser
+        self.symbolQueue = RecipeSymbolQueue(picker: symbolPicker)
         self.fetchDuration = fetchDuration
         self.pictureFiles = Dictionary(
             uniqueKeysWithValues: MockRecipe.all.filter(\.isPicture).map({ ($0.id, $0) })
@@ -64,7 +68,7 @@ public final class MockRecipeRepository: RecipeRepository {
         streamContinuation.yield(.success(listing))
         finishDownloads()
 
-        return stream
+        return symbolQueue.listedRecipes(following: stream)
     }
 
     public func refresh() {}

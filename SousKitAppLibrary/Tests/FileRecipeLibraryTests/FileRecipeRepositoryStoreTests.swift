@@ -23,6 +23,15 @@ final class FileRecipeRepositoryStoreTests {
         userDefaults.removePersistentDomain(forName: suiteName)
     }
 
+    /// A store remembering its directory in this suite's defaults.
+    private func makeStore() -> FileRecipeRepositoryStore {
+        FileRecipeRepositoryStore(
+            parser: parser,
+            symbolPicker: RecipeSymbolPickerStub(),
+            userDefaults: userDefaults
+        )
+    }
+
     /// The path a URL points at, with the symlinks in front of a temporary directory taken out.
     private func resolvedPath(of url: URL) -> [String] {
         url.resolvingSymlinksInPath().pathComponents
@@ -30,7 +39,7 @@ final class FileRecipeRepositoryStoreTests {
 
     @Test("nothing is remembered before a directory is connected")
     func emptyStore() {
-        let store = FileRecipeRepositoryStore(parser: parser, userDefaults: userDefaults)
+        let store = makeStore()
 
         #expect(store.recipeDirectory == nil)
         #expect(store.makeRecipeRepository() == nil)
@@ -38,7 +47,7 @@ final class FileRecipeRepositoryStoreTests {
 
     @Test("connecting a directory returns a repository named after it")
     func connecting() throws {
-        let store = FileRecipeRepositoryStore(parser: parser, userDefaults: userDefaults)
+        let store = makeStore()
 
         let recipeRepository = try store.connectRecipeDirectory(at: directory.url)
 
@@ -47,13 +56,9 @@ final class FileRecipeRepositoryStoreTests {
 
     @Test("a directory connected is read back by a store built later")
     func roundTrip() throws {
-        _ = try FileRecipeRepositoryStore(
-            parser: parser,
-            userDefaults: userDefaults
-        )
-        .connectRecipeDirectory(at: directory.url)
+        _ = try makeStore().connectRecipeDirectory(at: directory.url)
 
-        let store = FileRecipeRepositoryStore(parser: parser, userDefaults: userDefaults)
+        let store = makeStore()
         let remembered = try #require(store.recipeDirectory)
         #expect(resolvedPath(of: remembered.url) == resolvedPath(of: directory.url))
         #expect(store.makeRecipeRepository()?.name == suiteName)
@@ -61,7 +66,7 @@ final class FileRecipeRepositoryStoreTests {
 
     @Test("the last directory connected is the one remembered")
     func lastOneWins() throws {
-        let store = FileRecipeRepositoryStore(parser: parser, userDefaults: userDefaults)
+        let store = makeStore()
         let other = directory.url.appending(path: "Elsewhere")
         try FileManager.default.createDirectory(at: other, withIntermediateDirectories: true)
 
@@ -73,7 +78,7 @@ final class FileRecipeRepositoryStoreTests {
 
     @Test("clearing forgets the directory")
     func clearing() throws {
-        let store = FileRecipeRepositoryStore(parser: parser, userDefaults: userDefaults)
+        let store = makeStore()
         _ = try store.connectRecipeDirectory(at: directory.url)
 
         store.clear()
@@ -83,7 +88,7 @@ final class FileRecipeRepositoryStoreTests {
 
     @Test("a bookmark that no longer resolves reads back as nothing remembered")
     func unresolvableBookmark() throws {
-        let store = FileRecipeRepositoryStore(parser: parser, userDefaults: userDefaults)
+        let store = makeStore()
         let removed = directory.url.appending(path: "Removed")
         try FileManager.default.createDirectory(at: removed, withIntermediateDirectories: true)
         _ = try store.connectRecipeDirectory(at: removed)

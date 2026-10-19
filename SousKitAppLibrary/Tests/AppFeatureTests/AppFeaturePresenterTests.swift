@@ -48,6 +48,7 @@ final class AppFeaturePresenterTests {
     func makeRecipeRepositoryStore() -> FileRecipeRepositoryStore {
         FileRecipeRepositoryStore(
             parser: parser,
+            symbolPicker: RecipeSymbolPickerStub(),
             userDefaults: userDefaults
         )
     }
@@ -64,7 +65,7 @@ final class AppFeaturePresenterTests {
                 preferredScaleStore: preferredScaleStore,
                 timerScheduler: TimerSchedulerStub()
             ),
-            mockRecipeRepository: MockRecipeRepository(parser: parser),
+            mockRecipeRepository: MockRecipeRepository(parser: parser, symbolPicker: RecipeSymbolPickerStub()),
             onboardingFeatureFactory: OnboardingFeatureFactory(recipeRepositoryStore: recipeRepositoryStore),
             preferredScaleStore: preferredScaleStore,
             recipeRepositoryKindStore: recipeRepositoryKindStore,

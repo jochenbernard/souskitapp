@@ -6,7 +6,7 @@ import RecipeLibrary
 import SousKit
 
 struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
-    // One symbol for every recipe, until summaries name their own.
+    // For a recipe no symbol has been picked for, such as where Apple Intelligence is unavailable.
     private static let placeholderSymbol = "fork.knife"
 
     private let cookingFeatureFactory: CookingFeatureFactory
@@ -335,7 +335,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     static func card(for recipeEntry: RecipeEntry) -> KitchenRecipeCard {
         KitchenRecipeCard(
             recipeEntry: recipeEntry,
-            placeholderSymbol: Self.placeholderSymbol,
+            placeholderSymbol: recipeEntry.summary?.symbolPick?.symbol ?? Self.placeholderSymbol,
             placeholderColor: PlaceholderColorPick.color(forTitle: recipeEntry.title)
         )
     }
