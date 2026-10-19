@@ -1,8 +1,11 @@
-/// What the kitchen's top screen shows for the text in its search field.
-enum KitchenSearch: Hashable {
-    /// No word is searched for, so the screen shows the top folder.
-    case idle
+/// The text in a folder screen's search field, and the recipes it finds in that folder and the folders below it.
+struct KitchenSearch: Hashable {
+    /// The text in the field.
+    let text: String
 
-    /// The recipes in every folder matching each word searched for, in the order shown, which may be none.
-    case results([KitchenRecipeCard])
+    /// Whether the text holds a word to search for, so the screen shows what it finds rather than its folder.
+    let isSearching: Bool
+
+    /// The recipes matching every word searched for, in the order shown, which may be none.
+    let results: [KitchenRecipeCard]
 }

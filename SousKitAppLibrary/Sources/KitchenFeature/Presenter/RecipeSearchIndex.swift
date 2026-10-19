@@ -21,13 +21,16 @@ final class RecipeSearchIndex {
         }
     }
 
-    /// The recipes matching every word searched for, those matching by title first, then by tag, then by ingredient,
-    /// each by title.
+    /// The recipes in a folder and the folders below it matching every word searched for, those matching by title
+    /// first, then by tag, then by ingredient, each by title.
     ///
-    /// - Parameter queryWords: The words searched for, from ``RecipeSearchTerms/words(of:)``.
+    /// - Parameters:
+    ///   - queryWords: The words searched for, from ``RecipeSearchTerms/words(of:)``.
+    ///   - folderPath: The names of the folders leading down to the folder searched, or none for the top.
     /// - Returns: The recipes, or none where no word is searched for.
-    func results(matching queryWords: [String]) -> [RecipeEntry] {
+    func results(matching queryWords: [String], below folderPath: [String] = []) -> [RecipeEntry] {
         recipes
+            .filter({ $0.entry.folderPath.starts(with: folderPath) })
             .compactMap { recipe in
                 recipe.terms.match(queryWords).map({ (match: $0, entry: recipe.entry) })
             }

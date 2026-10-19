@@ -13,9 +13,20 @@ extension KitchenFeatureRestorationTests {
 
         #expect(kitchen.viewModel.pushedScreens == [.recipe(bourguignon)])
         #expect(kitchen.viewModel.openRecipe?.recipeEntry == bourguignon)
-        #expect(kitchen.viewModel.searchText.isEmpty)
-        #expect(kitchen.viewModel.search == .idle)
+        #expect(kitchen.viewModel.searches.isEmpty)
         #expect(kitchen.handler.restoration == restoration)
+    }
+
+    @MainActor
+    @Test("a kitchen restored on a recipe a folder's search opened pushes the folders, then the recipe")
+    func restoreARecipeOpenedFromAFolderSearch() async {
+        let croque = RecipeEntry.stubbed(at: "Lunch/French/Classic/croque-monsieur")
+        let restoration = KitchenFeatureRestoration(folderPath: ["Lunch", "French"], recipeID: croque.id)
+
+        let kitchen = await restore(restoration, listing: [.success([croque])])
+
+        #expect(kitchen.viewModel.pushedScreens == [.folder(["Lunch"]), .folder(["Lunch", "French"]), .recipe(croque)])
+        #expect(kitchen.viewModel.searches.isEmpty)
     }
 
     @MainActor

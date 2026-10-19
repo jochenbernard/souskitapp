@@ -168,6 +168,20 @@ struct RecipeSearchIndexTests {
     }
 
     @MainActor
+    @Test("a search below a folder finds only the recipes in it and the folders below it")
+    func belowAFolder() {
+        let index = RecipeSearchIndex()
+        index.update([crepes, bourguignon, quiche, gratin])
+
+        let found = index.results(matching: ["nutmeg"], below: ["French"]).map(\.id)
+
+        #expect(found == ["French/Comfort food/gratin-dauphinois"])
+        #expect(index.results(matching: ["classic"], below: ["French", "Classic"]).map(\.id) == [
+            "French/Classic/boeuf-bourguignon"
+        ])
+    }
+
+    @MainActor
     @Test("recipes sharing a title are ordered by where they sit")
     func sameTitle() {
         let top = listedRecipe("quiche-lorraine", header: "---\ntitle: Quiche Lorraine\n---")

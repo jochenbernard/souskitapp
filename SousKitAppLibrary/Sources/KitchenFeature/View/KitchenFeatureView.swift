@@ -47,7 +47,6 @@ struct KitchenFeatureView: View {
     private var topScreen: some View {
         folderPage(at: [])
             .navigationTitle(viewModel.recipeRepositoryName)
-            .searchable(text: searchText, prompt: Text("Search recipes", bundle: .module))
             .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
@@ -70,13 +69,6 @@ struct KitchenFeatureView: View {
             path: path,
             presenter: presenter,
             viewModel: viewModel
-        )
-    }
-
-    private var searchText: Binding<String> {
-        Binding(
-            get: { viewModel.searchText },
-            set: { text in presenter.didChangeSearchText(text) }
         )
     }
 

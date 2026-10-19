@@ -25,9 +25,23 @@ struct KitchenFeatureSearchTests {
         ingredientNames: ["flour", "lardons", "cream"]
     )
 
-    /// A search finding the recipes, in the order given.
-    private func results(_ listedRecipes: ListedRecipe...) -> KitchenSearch {
-        .results(listedRecipes.map({ KitchenFeaturePresenter.card(for: $0.entry) }))
+    private let croque = ListedRecipe(
+        entry: .stubbed(at: "Lunch/French/Classic/croque-monsieur"),
+        ingredientNames: ["pain de mie", "ham", "gruyere", "butter"]
+    )
+
+    private let gratin = ListedRecipe(
+        entry: .stubbed(at: "French/Comfort food/gratin-dauphinois"),
+        ingredientNames: ["potatoes", "milk", "cream", "nutmeg"]
+    )
+
+    /// A search for the text finding the recipes, in the order given.
+    private func search(_ text: String, finding listedRecipes: ListedRecipe...) -> KitchenSearch {
+        KitchenSearch(
+            text: text,
+            isSearching: true,
+            results: listedRecipes.map({ KitchenFeaturePresenter.card(for: $0.entry) })
+        )
     }
 
     /// Builds a kitchen whose repository lists the recipes, then ends.
@@ -60,8 +74,7 @@ struct KitchenFeatureSearchTests {
     func noSearchAtFirst() async {
         let kitchen = await kitchen(listing: [bourguignon, quiche])
 
-        #expect(kitchen.viewModel.searchText.isEmpty)
-        #expect(kitchen.viewModel.search == .idle)
+        #expect(kitchen.viewModel.searches.isEmpty)
     }
 
     @MainActor
@@ -69,11 +82,9 @@ struct KitchenFeatureSearchTests {
     func resultsReachTheViewModel() async {
         let kitchen = await kitchen(listing: [bourguignon, quiche])
 
-        kitchen.presenter.didChangeSearchText("lardons")
+        kitchen.presenter.didChangeSearchText("lardons", in: [])
 
-        #expect(kitchen.viewModel.searchText == "lardons")
-        #expect(kitchen.viewModel.search == results(bourguignon, quiche))
-        #expect(bourguignon.entry.folderPath == ["French", "Classic"])
+        #expect(kitchen.viewModel.searches == [[]: search("lardons", finding: bourguignon, quiche)])
     }
 
     @MainActor
@@ -81,13 +92,17 @@ struct KitchenFeatureSearchTests {
     func noResultsThenCleared() async {
         let kitchen = await kitchen(listing: [bourguignon, quiche])
 
-        kitchen.presenter.didChangeSearchText("mussels")
+        kitchen.presenter.didChangeSearchText("mussels", in: [])
 
-        #expect(kitchen.viewModel.search == .results([]))
+        #expect(kitchen.viewModel.searches[[]] == search("mussels"))
 
-        kitchen.presenter.didChangeSearchText("  ")
+        kitchen.presenter.didChangeSearchText("  ", in: [])
 
-        #expect(kitchen.viewModel.search == .idle)
+        #expect(kitchen.viewModel.searches[[]] == KitchenSearch(text: "  ", isSearching: false, results: []))
+
+        kitchen.presenter.didChangeSearchText("", in: [])
+
+        #expect(kitchen.viewModel.searches.isEmpty)
     }
 
     @MainActor
@@ -96,7 +111,8 @@ struct KitchenFeatureSearchTests {
         let kitchen = await kitchen(listing: [bourguignon, quiche])
 
         for text in ["l", "la", "lardons", "red wine", "quiche", "mussels", ""] {
-            kitchen.presenter.didChangeSearchText(text)
+            kitchen.presenter.didChangeSearchText(text, in: [])
+            kitchen.presenter.didChangeSearchText(text, in: ["French"])
         }
 
         #expect(kitchen.recipeRepository.readCount == 0)
@@ -113,13 +129,13 @@ struct KitchenFeatureSearchTests {
             recipeRepository: recipeRepository
         )
 
-        presenter.didChangeSearchText("lardons")
+        presenter.didChangeSearchText("lardons", in: [])
         recipeRepository.send([bourguignon])
         recipeRepository.send([bourguignon, quiche])
         recipeRepository.finish()
         await presenter.stackDidAppear()
 
-        #expect(viewModel.search == results(bourguignon, quiche))
+        #expect(viewModel.searches[[]] == search("lardons", finding: bourguignon, quiche))
     }
 
     @MainActor
@@ -127,7 +143,7 @@ struct KitchenFeatureSearchTests {
     func backToTheResults() async {
         let kitchen = await kitchen(listing: [bourguignon, quiche])
 
-        kitchen.presenter.didChangeSearchText("lardons")
+        kitchen.presenter.didChangeSearchText("lardons", in: [])
         kitchen.presenter.didPush(.recipe(bourguignon.entry), from: nil)
 
         #expect(kitchen.viewModel.pushedScreens == [.recipe(bourguignon.entry)])
@@ -135,8 +151,7 @@ struct KitchenFeatureSearchTests {
         kitchen.presenter.didPop(toCount: 0)
 
         #expect(kitchen.viewModel.pushedScreens.isEmpty)
-        #expect(kitchen.viewModel.searchText == "lardons")
-        #expect(kitchen.viewModel.search == results(bourguignon, quiche))
+        #expect(kitchen.viewModel.searches[[]] == search("lardons", finding: bourguignon, quiche))
     }
 
     @MainActor
@@ -144,9 +159,63 @@ struct KitchenFeatureSearchTests {
     func resultReportsTheRecipeAlone() async {
         let kitchen = await kitchen(listing: [bourguignon, quiche])
 
-        kitchen.presenter.didChangeSearchText("lardons")
+        kitchen.presenter.didChangeSearchText("lardons", in: [])
         kitchen.presenter.didPush(.recipe(bourguignon.entry), from: nil)
 
         #expect(kitchen.handler.restoration == KitchenFeatureRestoration(recipeID: bourguignon.entry.id))
+    }
+
+    @MainActor
+    @Test("a folder's search finds only the recipes in it and the folders below it")
+    func folderSearch() async {
+        let kitchen = await kitchen(listing: [bourguignon, quiche, croque, gratin])
+
+        kitchen.presenter.didPush(.folder(["French"]), from: nil)
+        kitchen.presenter.didChangeSearchText("cream", in: ["French"])
+
+        #expect(kitchen.viewModel.searches[["French"]] == search("cream", finding: gratin))
+        #expect(kitchen.viewModel.searches[[]] == nil)
+
+        kitchen.presenter.didPush(.folder(["Lunch"]), from: nil)
+        kitchen.presenter.didPush(.folder(["Lunch", "French"]), from: .folder(["Lunch"]))
+        kitchen.presenter.didChangeSearchText("classic", in: ["Lunch", "French"])
+
+        #expect(kitchen.viewModel.searches[["Lunch", "French"]]?.results.isEmpty == true)
+
+        kitchen.presenter.didChangeSearchText("gruyere", in: ["Lunch", "French"])
+
+        #expect(kitchen.viewModel.searches[["Lunch", "French"]] == search("gruyere", finding: croque))
+    }
+
+    @MainActor
+    @Test("a recipe opened from a folder's results goes back to them, and is reported under that folder")
+    func backToTheFolderResults() async {
+        let kitchen = await kitchen(listing: [bourguignon, quiche, croque, gratin])
+
+        kitchen.presenter.didPush(.folder(["French"]), from: nil)
+        kitchen.presenter.didChangeSearchText("lardons", in: ["French"])
+        kitchen.presenter.didPush(.recipe(bourguignon.entry), from: .folder(["French"]))
+
+        #expect(
+            kitchen.handler.restoration
+                == KitchenFeatureRestoration(folderPath: ["French"], recipeID: bourguignon.entry.id)
+        )
+
+        kitchen.presenter.didPop(toCount: 1)
+
+        #expect(kitchen.viewModel.searches[["French"]] == search("lardons", finding: bourguignon))
+    }
+
+    @MainActor
+    @Test("a folder popped forgets its search, and the top keeps its own")
+    func poppedFolderForgetsItsSearch() async {
+        let kitchen = await kitchen(listing: [bourguignon, quiche, croque, gratin])
+
+        kitchen.presenter.didChangeSearchText("lardons", in: [])
+        kitchen.presenter.didPush(.folder(["French"]), from: nil)
+        kitchen.presenter.didChangeSearchText("nutmeg", in: ["French"])
+        kitchen.presenter.didPop(toCount: 0)
+
+        #expect(Array(kitchen.viewModel.searches.keys) == [[]])
     }
 }

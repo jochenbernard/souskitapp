@@ -90,9 +90,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         changePushedScreens(to: Array(viewModel.pushedScreens.prefix(count)))
     }
 
-    func didChangeSearchText(_ text: String) {
-        viewModel.searchText = text
-        showSearchResults()
+    func didChangeSearchText(_ text: String, in folderPath: [String]) {
+        viewModel.searches[folderPath] = text.isEmpty ? nil : search(for: text, below: folderPath)
     }
 
     func didDismissCooking() {
@@ -119,17 +118,28 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         restorationKeeper.update({ $0.cooking = restoration })
     }
 
-    /// Shows the recipes matching the search text, from the summaries listed, or none while nothing is searched for.
+    /// Searches every folder screen's text again, in the recipes as they are listed now.
     @MainActor
     private func showSearchResults() {
-        let queryWords = RecipeSearchTerms.words(of: viewModel.searchText)
-
-        guard !queryWords.isEmpty else {
-            viewModel.search = .idle
+        guard !viewModel.searches.isEmpty else {
             return
         }
 
-        viewModel.search = .results(searchIndex.results(matching: queryWords).map(Self.card(for:)))
+        viewModel.searches = Dictionary(
+            uniqueKeysWithValues: viewModel.searches.map({ ($0.key, search(for: $0.value.text, below: $0.key)) })
+        )
+    }
+
+    /// What a search for the text finds in a folder and the folders below it, from the summaries listed alone.
+    @MainActor
+    private func search(for text: String, below folderPath: [String]) -> KitchenSearch {
+        let queryWords = RecipeSearchTerms.words(of: text)
+
+        return KitchenSearch(
+            text: text,
+            isSearching: !queryWords.isEmpty,
+            results: searchIndex.results(matching: queryWords, below: folderPath).map(Self.card(for:))
+        )
     }
 
     /// Writes the pushed screens again, so the stack pushes the recipe it already slid away at once, under cooking.
@@ -155,12 +165,25 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
         let previousTop = viewModel.pushedScreens.last
         viewModel.pushedScreens = pushedScreens
+        forgetSearches(offScreen: pushedScreens)
 
         if case .recipe(let recipeEntry) = pushedScreens.last, pushedScreens.last != previousTop {
             viewModel.openRecipe = makeOpenRecipe(recipeEntry)
         }
 
         restorationKeeper.save(Self.restoration(of: pushedScreens))
+    }
+
+    /// Forgets what was searched on folder screens no longer on the stack, so a folder pushed again opens unsearched.
+    @MainActor
+    private func forgetSearches(offScreen pushedScreens: [KitchenScreen]) {
+        let searches = viewModel.searches.filter { folderPath, _ in
+            folderPath.isEmpty || pushedScreens.contains(.folder(folderPath))
+        }
+
+        if searches.count != viewModel.searches.count {
+            viewModel.searches = searches
+        }
     }
 
     /// What a cold start opens again for the screens on the stack, as a push opened them, or `nil` for none.
