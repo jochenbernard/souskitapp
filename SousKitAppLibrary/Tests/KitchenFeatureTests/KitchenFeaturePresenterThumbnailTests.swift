@@ -63,6 +63,29 @@ struct KitchenFeaturePresenterThumbnailTests {
     }
 
     @MainActor
+    @Test("a picture read for a card serves a box it covers without reading it again, and a larger box reads it")
+    func coveredBox() async throws {
+        let recipeRepository = RecipeRepositorySpy()
+        let image = try thumbnail(width: 480, height: 360)
+        recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": image]
+        let presenter = makePresenter(recipeRepository: recipeRepository)
+        let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
+        _ = await presenter.thumbnail(of: picture(modifiedAt: date), filling: box)
+
+        let fanThumbnail = await presenter.thumbnail(
+            of: picture(modifiedAt: date),
+            filling: CGSize(width: 240.0, height: 223.0)
+        )
+
+        #expect(fanThumbnail === image)
+        #expect(recipeRepository.thumbnailReads.count == 1)
+
+        _ = await presenter.thumbnail(of: picture(modifiedAt: date), filling: CGSize(width: 640.0, height: 480.0))
+
+        #expect(recipeRepository.thumbnailReads.count == 2)
+    }
+
+    @MainActor
     @Test("a picture replaced since it was read is not shown as it was")
     func replacedPicture() async throws {
         let recipeRepository = RecipeRepositorySpy()

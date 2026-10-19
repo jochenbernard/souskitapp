@@ -19,10 +19,18 @@ struct RecipeCardPicture: View {
 
     private let card: KitchenRecipeCard
     private let presenter: KitchenFeaturePresenterProtocol
+    private let readSize: CGSize?
 
-    init(_ card: KitchenRecipeCard, presenter: KitchenFeaturePresenterProtocol) {
+    /// - Parameter readSize: The box the picture is read to fill, where it is shown smaller than on the recipe's own
+    ///   card, or `nil` for the box it is shown in.
+    init(
+        _ card: KitchenRecipeCard,
+        presenter: KitchenFeaturePresenterProtocol,
+        readSize: CGSize? = nil
+    ) {
         self.card = card
         self.presenter = presenter
+        self.readSize = readSize
     }
 
     var body: some View {
@@ -59,11 +67,13 @@ struct RecipeCardPicture: View {
     }
 
     private var request: Request {
-        Request(
+        let boxSize = readSize ?? size
+
+        return Request(
             picture: card.recipeEntry.picture,
             pixelSize: CGSize(
-                width: (size.width * displayScale).rounded(.up),
-                height: (size.height * displayScale).rounded(.up)
+                width: (boxSize.width * displayScale).rounded(.up),
+                height: (boxSize.height * displayScale).rounded(.up)
             )
         )
     }

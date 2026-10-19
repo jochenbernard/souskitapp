@@ -27,7 +27,7 @@ struct FolderCardStack: View {
         GeometryReader { geometry in
             ZStack {
                 ForEach(Array(cards.enumerated().reversed()), id: \.element.id) { index, card in
-                    picture(of: card)
+                    picture(of: card, readSize: geometry.size)
                         .frame(
                             width: geometry.size.width * Self.cardWidthShare,
                             height: geometry.size.height * Self.cardHeightShare
@@ -50,9 +50,13 @@ struct FolderCardStack: View {
         .accessibilityHidden(true)
     }
 
-    // What the recipe's own card shows above its title.
-    private func picture(of card: KitchenRecipeCard) -> some View {
-        RecipeCardPicture(card, presenter: presenter)
+    // What the recipe's own card shows above its title, read at that card's size so both share one thumbnail.
+    private func picture(of card: KitchenRecipeCard, readSize: CGSize) -> some View {
+        RecipeCardPicture(
+            card,
+            presenter: presenter,
+            readSize: readSize
+        )
             .background(.secondaryGroupedBackground)
     }
 

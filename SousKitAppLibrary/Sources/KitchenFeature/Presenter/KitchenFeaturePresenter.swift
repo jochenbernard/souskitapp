@@ -102,6 +102,15 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func thumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async -> CGImage? {
+        // One read for a larger card serves a smaller one as sharply.
+        if
+            let kept = thumbnailMemory.thumbnail(of: picture),
+            Double(kept.width) >= pixelSize.width,
+            Double(kept.height) >= pixelSize.height
+        {
+            return kept
+        }
+
         guard let thumbnail = try? await recipeRepository.readThumbnail(of: picture, filling: pixelSize) else {
             return nil
         }
