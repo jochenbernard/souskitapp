@@ -46,7 +46,7 @@ struct RecipeFeatureView: View {
 
     private var navigationTitle: String {
         guard case .recipe(let recipe) = viewModel.recipeContent else {
-            return viewModel.recipeEntry.name
+            return viewModel.recipeEntry.title
         }
 
         return viewModel.recipeEntry.title(of: recipe.scaled)

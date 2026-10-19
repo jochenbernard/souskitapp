@@ -7,6 +7,7 @@ final class RecipeDirectoryMonitor {
     private let reader: RecipeDirectoryReader
     private let recipeDirectory: RecipeDirectory
     private let settleDelay: Duration
+    private let summarizer: RecipeSummarizer
 
     private var continuation: AsyncStream<Result<[RecipeEntry], Error>>.Continuation?
     private var eventSource: DirectoryEventSource?
@@ -21,13 +22,16 @@ final class RecipeDirectoryMonitor {
     ///
     /// - Parameters:
     ///   - recipeDirectory: The directory recipes are read from.
+    ///   - summarizer: What the recipes' summaries come from.
     ///   - settleDelay: How long a burst of changes is given to finish before the directory is
     ///     read again.
     nonisolated init(
         recipeDirectory: RecipeDirectory,
+        summarizer: RecipeSummarizer,
         settleDelay: Duration = .milliseconds(150)
     ) {
         self.recipeDirectory = recipeDirectory
+        self.summarizer = summarizer
         self.settleDelay = settleDelay
         self.reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory)
     }
@@ -46,9 +50,10 @@ final class RecipeDirectoryMonitor {
 
     /// The recipes in the directory, yielded once now and again after every change to it.
     ///
-    /// Watching starts here and stops when the stream ends, which cancelling the task iterating
-    /// it or releasing the monitor does. The stream holds no reference back. One stream runs at a
-    /// time; a second call ends the first.
+    /// Each read yields the recipes with the summaries already cached first, then again as the summaries of new or
+    /// changed files are read, so a launch lists them before reading any file. Watching starts here and stops when
+    /// the stream ends, which cancelling the task iterating it or releasing the monitor does. The stream holds no
+    /// reference back. One stream runs at a time; a second call ends the first.
     ///
     /// - Returns: The stream.
     func recipeEntries() -> AsyncStream<Result<[RecipeEntry], Error>> {
@@ -129,29 +134,83 @@ final class RecipeDirectoryMonitor {
         let delay = afterSettling ? settleDelay : .zero
         let directoryReader = reader
 
-        readTask = Task { [weak self] in
+        readTask = Task { [weak self, summarizer] in
             try? await Task.sleep(for: delay)
 
             guard !Task.isCancelled else {
                 return
             }
 
-            let result = await Self.readRecipeEntries(with: directoryReader)
+            let result = await Self.readRecipeFiles(with: directoryReader)
 
             guard !Task.isCancelled else {
                 return
             }
 
-            self?.yield(result)
+            switch result {
+            case .success(let recipeFiles):
+                let yieldRecipeEntries: @MainActor ([RecipeEntry]) -> Void = { [weak self] recipeEntries in
+                    self?.yield(.success(recipeEntries))
+                }
+
+                yieldRecipeEntries(await summarizer.recipeEntries(for: recipeFiles))
+                await Self.readSummaries(
+                    of: recipeFiles,
+                    with: summarizer,
+                    yield: yieldRecipeEntries
+                )
+
+            case .failure(let error):
+                self?.yield(.failure(error))
+            }
         }
     }
 
     /// Reads off the main actor, where a directory in iCloud can take a while to answer.
     @concurrent
-    nonisolated private static func readRecipeEntries(
+    nonisolated private static func readRecipeFiles(
         with reader: RecipeDirectoryReader
-    ) async -> Result<[RecipeEntry], Error> {
-        Result(catching: { try reader.readRecipeEntries() })
+    ) async -> Result<[RecipeFile], Error> {
+        Result(catching: { try reader.readRecipeFiles() })
+    }
+
+    /// Reads the summaries the cache has none for, yielding the recipes again as they land.
+    ///
+    /// The files on the device are read together, and each one fetched from iCloud on its own, so one that never
+    /// arrives holds up no other. Holding no monitor, it leaves a released one free to go.
+    private static func readSummaries(
+        of recipeFiles: [RecipeFile],
+        with summarizer: RecipeSummarizer,
+        yield: @escaping @MainActor ([RecipeEntry]) -> Void
+    ) async {
+        let filesToRead = await summarizer.filesToRead(in: recipeFiles)
+        let filesOnDevice = filesToRead.filter({ $0.availability == .downloaded })
+        let filesInICloud = filesToRead.filter({ $0.availability != .downloaded })
+
+        let yieldSummaries = {
+            let recipeEntries = await summarizer.recipeEntries(for: recipeFiles)
+
+            if !Task.isCancelled {
+                yield(recipeEntries)
+            }
+        }
+
+        if !filesOnDevice.isEmpty {
+            await summarizer.read(filesOnDevice)
+            await yieldSummaries()
+        }
+
+        await withTaskGroup(of: Void.self) { group in
+            for file in filesInICloud {
+                group.addTask {
+                    await summarizer.read([file])
+                }
+            }
+
+            for await _ in group {
+                await yieldSummaries()
+            }
+        }
     }
 
     /// Sends a result on, dropping a list matching the one sent last.

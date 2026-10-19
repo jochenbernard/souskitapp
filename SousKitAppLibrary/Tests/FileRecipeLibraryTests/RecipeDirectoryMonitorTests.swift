@@ -1,6 +1,7 @@
 @testable import FileRecipeLibrary
 import Foundation
 import RecipeLibrary
+import SousKit
 import Testing
 
 @Suite("Recipe directory monitor", .timeLimit(.minutes(1)))
@@ -14,6 +15,11 @@ final class RecipeDirectoryMonitorTests: Sendable {
     private func makeMonitor() -> RecipeDirectoryMonitor {
         RecipeDirectoryMonitor(
             recipeDirectory: directory.recipeDirectory,
+            summarizer: RecipeSummarizer(
+                recipeDirectory: directory.recipeDirectory,
+                cache: directory.summaryCache,
+                parser: SousParser()
+            ),
             settleDelay: .milliseconds(20)
         )
     }
@@ -132,6 +138,42 @@ final class RecipeDirectoryMonitorTests: Sendable {
         }
 
         #expect(reached)
+    }
+
+    @MainActor
+    @Test("a launch lists the recipes before reading any, then again with what was read")
+    func coldCache() async throws {
+        try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes\n---")
+        let monitor = makeMonitor()
+        var titles: [[String]] = []
+
+        for await result in monitor.recipeEntries() {
+            titles.append(try result.get().map(\.title))
+
+            if titles.count == 2 {
+                break
+            }
+        }
+
+        #expect(titles == [["crepes"], ["Crepes"]])
+    }
+
+    @MainActor
+    @Test("a launch with the summaries kept lists them first, reading nothing")
+    func warmCache() async throws {
+        let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
+        try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes\n---")
+        try directory.setModificationDate(date, ofFileNamed: "crepes.sous")
+        directory.summaryCache.save([
+            "crepes.sous": RecipeSummaryRecord(
+                recipe: SousParser().parseRecipe("---\ntitle: Crepes Suzette\n---").value,
+                modificationDate: date
+            )
+        ])
+
+        let result = await firstResult(from: makeMonitor())
+
+        #expect(try #require(result).get().map(\.title) == ["Crepes Suzette"])
     }
 
     @MainActor

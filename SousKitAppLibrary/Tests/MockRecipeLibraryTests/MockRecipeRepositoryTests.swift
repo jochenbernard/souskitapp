@@ -43,6 +43,17 @@ struct MockRecipeRepositoryTests {
     }
 
     @MainActor
+    @Test("every recipe with a text is listed with its summary, the ones in iCloud included")
+    func summaries() async throws {
+        let entries = try await currentRecipeEntries(of: makeRepository())
+
+        #expect(entries.filter({ $0.summary == nil }).map(\.id) == ["unreachable"])
+        #expect(entries.first(where: { $0.id == "crepes" })?.title == "Crepes")
+        #expect(entries.first(where: { $0.id == "crepes" })?.availability == .notDownloaded)
+        #expect(entries.first(where: { $0.id == "steps-only" })?.title == "steps only")
+    }
+
+    @MainActor
     @Test("every listed recipe reads but the unreachable one")
     func everyRecipeReads() async throws {
         let repository = makeRepository()

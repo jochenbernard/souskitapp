@@ -36,7 +36,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         for await result in await recipeRepository.recipeEntries() {
             switch result {
             case .success(let recipeEntries):
-                viewModel.recipeList = .recipes(recipeEntries)
+                viewModel.recipeList = .recipes(recipeEntries.sorted(by: Self.isOrderedBefore))
                 restore(from: recipeEntries)
 
             case .failure(let error):
@@ -191,5 +191,20 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private func closeCooking() {
         viewModel.openCooking = nil
         restorationKeeper.update({ $0.cooking = nil })
+    }
+
+    /// Whether one recipe is listed before another: by the title its row shows, then by what the repository finds it
+    /// by, so recipes sharing a title keep one order.
+    private static func isOrderedBefore(_ lhs: RecipeEntry, _ rhs: RecipeEntry) -> Bool {
+        switch lhs.title.localizedStandardCompare(rhs.title) {
+        case .orderedAscending:
+            true
+
+        case .orderedDescending:
+            false
+
+        case .orderedSame:
+            lhs.id.localizedStandardCompare(rhs.id) == .orderedAscending
+        }
     }
 }

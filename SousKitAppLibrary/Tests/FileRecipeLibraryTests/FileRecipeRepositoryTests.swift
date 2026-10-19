@@ -15,7 +15,11 @@ final class FileRecipeRepositoryTests: Sendable {
     }
 
     private func makeRepository() -> FileRecipeRepository {
-        FileRecipeRepository(parser: parser, recipeDirectory: directory.recipeDirectory)
+        FileRecipeRepository(
+            parser: parser,
+            recipeDirectory: directory.recipeDirectory,
+            summaryCacheURL: directory.summaryCacheURL
+        )
     }
 
     private func readRecipe(of recipeEntry: RecipeEntry) async throws -> Recipe {

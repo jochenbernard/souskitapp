@@ -7,6 +7,9 @@ import SousKit
 public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     private static let key = "FileRecipeRepositoryStore.bookmark"
 
+    // Caches, not the recipe directory: the summaries are rebuilt from the recipes wherever the system clears them.
+    private static let summaryCacheURL = URL.cachesDirectory.appending(path: "RecipeSummaries.json")
+
     private let parser: SousParser
     private let userDefaults: UserDefaults
 
@@ -46,17 +49,25 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     }
 
     public func makeRecipeRepository() -> RecipeRepository? {
-        recipeDirectory.map({ FileRecipeRepository(parser: parser, recipeDirectory: $0) })
+        recipeDirectory.map(makeRecipeRepository(reading:))
     }
 
     public func connectRecipeDirectory(at url: URL) throws -> RecipeRepository {
         try rememberRecipeDirectory(at: url)
 
-        return FileRecipeRepository(parser: parser, recipeDirectory: RecipeDirectory(url: url))
+        return makeRecipeRepository(reading: RecipeDirectory(url: url))
     }
 
     public func clear() {
         userDefaults.removeObject(forKey: Self.key)
+    }
+
+    private func makeRecipeRepository(reading recipeDirectory: RecipeDirectory) -> FileRecipeRepository {
+        FileRecipeRepository(
+            parser: parser,
+            recipeDirectory: recipeDirectory,
+            summaryCacheURL: Self.summaryCacheURL
+        )
     }
 
     private func rememberRecipeDirectory(at url: URL) throws {

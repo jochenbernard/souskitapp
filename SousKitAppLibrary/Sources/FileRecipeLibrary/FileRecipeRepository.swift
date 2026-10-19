@@ -1,3 +1,4 @@
+import Foundation
 import RecipeLibrary
 import SousKit
 
@@ -12,11 +13,25 @@ struct FileRecipeRepository: RecipeRepository {
         recipeDirectory.name
     }
 
+    /// Creates a repository.
+    ///
+    /// - Parameters:
+    ///   - parser: What the recipes are read with.
+    ///   - recipeDirectory: The directory the recipes sit in.
+    ///   - summaryCacheURL: Where the recipes' summaries are kept between launches, outside the directory.
     init(
         parser: SousParser,
-        recipeDirectory: RecipeDirectory
+        recipeDirectory: RecipeDirectory,
+        summaryCacheURL: URL
     ) {
-        self.monitor = RecipeDirectoryMonitor(recipeDirectory: recipeDirectory)
+        self.monitor = RecipeDirectoryMonitor(
+            recipeDirectory: recipeDirectory,
+            summarizer: RecipeSummarizer(
+                recipeDirectory: recipeDirectory,
+                cache: RecipeSummaryCache(recipeDirectory: recipeDirectory, fileURL: summaryCacheURL),
+                parser: parser
+            )
+        )
         self.parser = parser
         self.recipeDirectory = recipeDirectory
         self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory)

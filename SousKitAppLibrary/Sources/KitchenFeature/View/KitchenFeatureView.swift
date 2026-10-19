@@ -126,7 +126,7 @@ struct KitchenFeatureView: View {
 
     private func recipeRow(_ recipeEntry: RecipeEntry) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
-            Text(verbatim: recipeEntry.name)
+            Text(verbatim: recipeEntry.title)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             availabilityBadge(recipeEntry.availability)

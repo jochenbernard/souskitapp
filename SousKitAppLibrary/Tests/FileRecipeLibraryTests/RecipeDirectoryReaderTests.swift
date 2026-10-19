@@ -11,9 +11,13 @@ final class RecipeDirectoryReaderTests {
         self.directory = try TemporaryDirectory(named: "RecipeDirectoryReaderTests")
     }
 
-    private func readRecipeEntries() throws -> [RecipeEntry] {
+    private func readRecipeFiles() throws -> [RecipeFile] {
         let reader = RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory)
-        return try reader.readRecipeEntries()
+        return try reader.readRecipeFiles()
+    }
+
+    private func readRecipeEntries() throws -> [RecipeEntry] {
+        try readRecipeFiles().map({ $0.recipeEntry(summary: nil) })
     }
 
     private func readNames() throws -> [String] {
@@ -109,6 +113,22 @@ final class RecipeDirectoryReaderTests {
 
         #expect(recipeEntries.map(\.name) == ["Crepes"])
         #expect(recipeEntries.map(\.availability) == [.downloaded])
+    }
+
+    @Test("a file on disk is listed with the date its contents last changed")
+    func modificationDate() throws {
+        let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
+        try directory.writeFile(named: "crepes.sous")
+        try directory.setModificationDate(date, ofFileNamed: "crepes.sous")
+
+        #expect(try readRecipeFiles().map(\.modificationDate) == [date])
+    }
+
+    @Test("a placeholder is listed without its own date, which is not the recipe's")
+    func placeholderModificationDate() throws {
+        try directory.writeFile(named: ".Crepes.sous.icloud")
+
+        #expect(try readRecipeFiles().map(\.modificationDate) == [nil])
     }
 
     @Test("a placeholder for something that is not a recipe is left out")

@@ -12,11 +12,17 @@ extension RecipeEntry {
     /// - Parameters:
     ///   - fileName: The file's name inside the directory, extension included.
     ///   - availability: Whether the file's contents are on the device.
-    init(fileName: String, availability: RecipeAvailability) {
+    ///   - summary: What is known of the file's contents, or `nil` where they have not been read.
+    init(
+        fileName: String,
+        availability: RecipeAvailability,
+        summary: RecipeSummary? = nil
+    ) {
         self.init(
             id: fileName,
             name: Self.name(forFileNamed: fileName),
-            availability: availability
+            availability: availability,
+            summary: summary
         )
     }
 

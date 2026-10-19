@@ -31,4 +31,33 @@ struct RecipeEntryTitleTests {
 
         #expect(entry.title(of: recipe) == "vinaigrette")
     }
+
+    @Test("an entry whose summary gives a title shows it")
+    func titledSummary() {
+        let summarized = RecipeEntry(
+            id: "vinaigrette.sous",
+            name: "vinaigrette",
+            availability: .downloaded,
+            summary: RecipeSummary(recipe: parser.parseRecipe("---\ntitle: Vinaigrette\n---\nWhisk it.").value)
+        )
+
+        #expect(summarized.title == "Vinaigrette")
+    }
+
+    @Test("an entry whose summary gives no title shows its name")
+    func untitledSummary() {
+        let summarized = RecipeEntry(
+            id: "vinaigrette.sous",
+            name: "vinaigrette",
+            availability: .downloaded,
+            summary: RecipeSummary(recipe: parser.parseRecipe("---\ntitle:\n---\nWhisk it.").value)
+        )
+
+        #expect(summarized.title == "vinaigrette")
+    }
+
+    @Test("an entry not read yet shows its name")
+    func unreadEntry() {
+        #expect(entry.title == "vinaigrette")
+    }
 }
