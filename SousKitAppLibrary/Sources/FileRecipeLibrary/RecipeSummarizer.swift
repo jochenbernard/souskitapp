@@ -10,12 +10,26 @@ actor RecipeSummarizer {
         let summary: RecipeSummary
     }
 
+    /// A clock read as the time since the summarizer was made, so no instant of its type is kept.
+    private struct Timeline: Sendable {
+        let now: @Sendable () -> Duration
+        let sleep: @Sendable (Duration) async throws -> Void
+
+        init<C: Clock<Duration>>(clock: C) {
+            let start = clock.now
+
+            self.now = { start.duration(to: clock.now) }
+            self.sleep = { try await clock.sleep(until: start.advanced(by: $0), tolerance: nil) }
+        }
+    }
+
     private let cache: RecipeSummaryCache
     private let parser: SousParser
     private let saveInterval: Duration
     private let textReader: RecipeTextReader
+    private let timeline: Timeline
 
-    private var lastSave: ContinuousClock.Instant?
+    private var lastSave: Duration?
     private var pendingSave: Task<Void, Never>?
 
     private lazy var summaries: [String: Summary] = cache.load().mapValues { record in
@@ -29,16 +43,19 @@ actor RecipeSummarizer {
     ///   - parser: What the recipes are read with.
     ///   - textReader: What the recipes' files are read with.
     ///   - saveInterval: The shortest time between two writes of the cache, so a burst of reads writes it once.
-    init(
+    ///   - clock: What `saveInterval` is measured on.
+    init<C: Clock<Duration>>(
         cache: RecipeSummaryCache,
         parser: SousParser,
         textReader: RecipeTextReader,
-        saveInterval: Duration = .seconds(1)
+        saveInterval: Duration = .seconds(1),
+        clock: C = ContinuousClock()
     ) {
         self.cache = cache
         self.parser = parser
         self.textReader = textReader
         self.saveInterval = saveInterval
+        self.timeline = Timeline(clock: clock)
     }
 
     /// The recipes for files as they are listed now, each with the summary and ingredient names the cache holds for
@@ -121,23 +138,23 @@ actor RecipeSummarizer {
             return
         }
 
-        guard let lastSave, ContinuousClock.now < lastSave.advanced(by: saveInterval) else {
+        guard let lastSave, timeline.now() < lastSave + saveInterval else {
             write()
             return
         }
 
-        let deadline = lastSave.advanced(by: saveInterval)
+        let deadline = lastSave + saveInterval
 
         // Holding the summarizer, so what was read is written even after the directory is let go.
         pendingSave = Task {
-            try? await Task.sleep(until: deadline)
+            try? await timeline.sleep(deadline)
             write()
         }
     }
 
     private func write() {
         pendingSave = nil
-        lastSave = .now
+        lastSave = timeline.now()
         cache.save(summaries.mapValues(\.record))
     }
 }
