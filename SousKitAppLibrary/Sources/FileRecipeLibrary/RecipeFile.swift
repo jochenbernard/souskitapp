@@ -1,7 +1,7 @@
 import Foundation
 import RecipeLibrary
 
-/// A recipe file as its directory lists it, before anything reads it.
+/// A recipe file, or a picture a recipe can name, as its directory lists it, before anything reads it.
 struct RecipeFile: Sendable, Hashable {
     /// Where the file sits inside the recipe directory, extension included.
     let path: String
@@ -14,13 +14,16 @@ struct RecipeFile: Sendable, Hashable {
 
     /// The entry listing the file.
     ///
-    /// - Parameter summary: What is known of the file's contents, or `nil` where they have not been read.
+    /// - Parameters:
+    ///   - summary: What is known of the file's contents, or `nil` where they have not been read.
+    ///   - pictures: The pictures in the directory, by where each sits inside it.
     /// - Returns: The entry.
-    func recipeEntry(summary: RecipeSummary?) -> RecipeEntry {
+    func recipeEntry(summary: RecipeSummary?, pictures: [String: RecipePicture]) -> RecipeEntry {
         RecipeEntry(
             path: path,
             availability: availability,
-            summary: summary
+            summary: summary,
+            pictures: pictures
         )
     }
 }

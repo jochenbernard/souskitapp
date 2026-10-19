@@ -1,4 +1,5 @@
 import CookingFeature
+import CoreGraphics
 import Foundation
 import RecipeFeature
 import RecipeLibrary
@@ -14,6 +15,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
     private let searchIndex = RecipeSearchIndex()
+    private let thumbnailMemory = RecipeThumbnailMemory()
     private let viewModel: KitchenFeatureViewModel
 
     @MainActor
@@ -97,6 +99,20 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
     func didDismissCooking() {
         closeCooking()
+    }
+
+    func thumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async -> CGImage? {
+        guard let thumbnail = try? await recipeRepository.readThumbnail(of: picture, filling: pixelSize) else {
+            return nil
+        }
+
+        thumbnailMemory.keep(thumbnail, of: picture)
+
+        return thumbnail
+    }
+
+    func lastThumbnail(of picture: RecipePicture) -> CGImage? {
+        thumbnailMemory.thumbnail(of: picture)
     }
 
     func recipeFeatureDidStartCooking(recipe: Recipe) {

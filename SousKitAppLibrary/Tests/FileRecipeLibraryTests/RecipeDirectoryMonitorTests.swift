@@ -15,7 +15,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
     /// A monitor over the directory, presenting it unless `presentsDirectory` is false.
     func makeMonitor(
         listingSpy: ListingSpy = ListingSpy(),
-        presentsDirectory: Bool = true
+        presentsDirectory: Bool = true,
+        pictureDownloads: DownloadSpy = DownloadSpy()
     ) -> RecipeDirectoryMonitor {
         RecipeDirectoryMonitor(
             recipeDirectory: directory.recipeDirectory,
@@ -28,7 +29,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
             listDirectory: listingSpy.list,
             present: { url, onChange in
                 presentsDirectory ? DirectoryPresenter(directoryURL: url, onChange: onChange) : nil
-            }
+            },
+            startDownloadingPicture: pictureDownloads.startDownloading
         )
     }
 

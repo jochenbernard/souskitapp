@@ -8,6 +8,9 @@ extension MockRecipe {
     /// way the format allows, timed in seconds, or all ten examples in one. The folders under them hold examples again,
     /// down to three levels deep, under the same file names as those at the top. One folder holds only folders, one
     /// holds no recipe, and one is hidden.
+    ///
+    /// The pictures sit in `images` folders beside the recipes naming them. One cannot be read, one starts out in
+    /// iCloud, and some recipes name one that is missing, out of the folder, or on the web.
     static let all: [MockRecipe] = [
         MockRecipe(path: ".archive/vinaigrette.sous", text: MockRecipes.vinaigrette),
         MockRecipe(path: "Baking/brioche.sous", text: MockRecipes.brioche),
@@ -16,6 +19,7 @@ extension MockRecipe {
             text: MockRecipes.crepes,
             availability: .notDownloaded
         ),
+        MockRecipe(path: "Baking/images/brioche.jpg", picture: MockPicture(hue: 0.11, aspectRatio: 1.0)),
         MockRecipe(path: "Baking/madeleines.sous", text: MockRecipes.madeleines),
         MockRecipe(
             path: """
@@ -37,6 +41,10 @@ extension MockRecipe {
         MockRecipe(path: "Dinner/Provencal/bouillabaisse.sous", text: MockRecipes.bouillabaisse),
         MockRecipe(path: "empty.sous", text: MockRecipes.empty),
         MockRecipe(path: "French/Classic/boeuf-bourguignon.sous", text: MockRecipes.boeufBourguignon),
+        MockRecipe(
+            path: "French/Classic/images/boeuf-bourguignon.jpg",
+            picture: MockPicture(hue: 0.97, aspectRatio: 4.0 / 3.0)
+        ),
         MockRecipe(path: "French/Classic/quiche-lorraine.sous", text: MockRecipes.quicheLorraine),
         MockRecipe(
             path: "French/Comfort food/gratin-dauphinois.sous",
@@ -44,12 +52,27 @@ extension MockRecipe {
             availability: .downloading
         ),
         MockRecipe(
+            path: "French/Comfort food/images/gratin-dauphinois.jpg",
+            picture: MockPicture(hue: 0.14, aspectRatio: 4.0 / 3.0)
+        ),
+        MockRecipe(
             path: "gratin-dauphinois.sous",
             text: MockRecipes.gratinDauphinois,
             availability: .downloading
         ),
         MockRecipe(path: "header-only.sous", text: MockRecipes.headerOnly),
-        MockRecipe(path: "images/gratin-dauphinois.jpg", text: nil),
+        MockRecipe(path: "images/boeuf-bourguignon.jpg", picture: MockPicture(hue: 0.02, aspectRatio: 16.0 / 9.0)),
+        MockRecipe(path: "images/bouillabaisse.jpg", picture: MockPicture(hue: 0.06, aspectRatio: 4.0 / 3.0)),
+        MockRecipe(path: "images/brioche.jpg", picture: MockPicture(hue: 0.1, aspectRatio: 3.0 / 4.0)),
+        MockRecipe(path: "images/crepes.jpg", picture: MockPicture(hue: 0.16, aspectRatio: 3.0 / 2.0)),
+        MockRecipe(path: "images/croque-monsieur.jpg", picture: nil),
+        MockRecipe(
+            path: "images/gratin-dauphinois.jpg",
+            picture: MockPicture(hue: 0.13, aspectRatio: 4.0 / 3.0),
+            availability: .notDownloaded
+        ),
+        MockRecipe(path: "images/moules-marinieres.jpg", picture: MockPicture(hue: 0.62, aspectRatio: 4.0 / 3.0)),
+        MockRecipe(path: "images/vinaigrette.jpg", picture: MockPicture(hue: 0.3, aspectRatio: 1.0)),
         MockRecipe(path: "Lunch/French/Classic/croque-monsieur.sous", text: MockRecipes.croqueMonsieur),
         MockRecipe(path: "madeleines.sous", text: MockRecipes.madeleines),
         MockRecipe(path: "malformed.sous", text: MockRecipes.malformed),

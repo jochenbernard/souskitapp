@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import RecipeLibrary
 import SousKit
@@ -13,6 +14,10 @@ struct EmptyRecipeRepository: RecipeRepository {
     func refresh() {}
 
     func readRecipe(of _: RecipeEntry) throws -> Parsed<Recipe> {
+        throw CocoaError(.fileReadNoSuchFile)
+    }
+
+    func readThumbnail(of _: RecipePicture, filling _: CGSize) throws -> CGImage {
         throw CocoaError(.fileReadNoSuchFile)
     }
 }

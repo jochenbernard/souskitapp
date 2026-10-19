@@ -6,16 +6,18 @@ import SwiftUI
 /// recipes it holds.
 struct FolderCard: View {
     private let folder: KitchenFolder
+    private let presenter: KitchenFeaturePresenterProtocol
 
-    init(_ folder: KitchenFolder) {
+    init(_ folder: KitchenFolder, presenter: KitchenFeaturePresenterProtocol) {
         self.folder = folder
+        self.presenter = presenter
     }
 
     var body: some View {
         KitchenCard(
             title: folder.name,
             // Clipped, as the fan reaches past the picture's edges.
-            picture: { FolderCardStack(folder.stackedCards).clipped() },
+            picture: { FolderCardStack(folder.stackedCards, presenter: presenter).clipped() },
             detail: { Text("\(folder.recipeCount) recipes", bundle: .module) }
         )
     }
@@ -38,13 +40,13 @@ private func previewFolder(_ path: [String], recipeCount: Int) -> KitchenFolder 
 #Preview("Folder cards") {
     ScrollView {
         RecipeCardGrid(minimumColumnWidth: 160.0, spacing: SousSpacing.medium) {
-            FolderCard(previewFolder(["Baking"], recipeCount: 5))
+            FolderCard(previewFolder(["Baking"], recipeCount: 5), presenter: KitchenFeaturePresenterStub())
 
-            FolderCard(previewFolder(["Comfort food"], recipeCount: 1))
+            FolderCard(previewFolder(["Comfort food"], recipeCount: 1), presenter: KitchenFeaturePresenterStub())
 
-            FolderCard(previewFolder(["Dinner"], recipeCount: 2))
+            FolderCard(previewFolder(["Dinner"], recipeCount: 2), presenter: KitchenFeaturePresenterStub())
 
-            FolderCard(previewFolder(["French", "Classic"], recipeCount: 3))
+            FolderCard(previewFolder(["French", "Classic"], recipeCount: 3), presenter: KitchenFeaturePresenterStub())
         }
         .sousPagePadding()
     }
@@ -54,9 +56,9 @@ private func previewFolder(_ path: [String], recipeCount: Int) -> KitchenFolder 
 #Preview("Folder cards, largest text") {
     ScrollView {
         RecipeCardGrid(minimumColumnWidth: 400.0, spacing: SousSpacing.medium) {
-            FolderCard(previewFolder(["Baking"], recipeCount: 5))
+            FolderCard(previewFolder(["Baking"], recipeCount: 5), presenter: KitchenFeaturePresenterStub())
 
-            FolderCard(previewFolder(["Comfort food"], recipeCount: 1))
+            FolderCard(previewFolder(["Comfort food"], recipeCount: 1), presenter: KitchenFeaturePresenterStub())
         }
         .sousPagePadding()
     }

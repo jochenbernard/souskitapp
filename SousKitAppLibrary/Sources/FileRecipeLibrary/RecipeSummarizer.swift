@@ -47,9 +47,11 @@ actor RecipeSummarizer {
     /// A summary read from contents that have changed since stands in until they are read again. Summaries of files
     /// no longer listed are dropped.
     ///
-    /// - Parameter files: The files the directory lists.
+    /// - Parameters:
+    ///   - files: The files the directory lists.
+    ///   - pictures: The pictures the directory lists, by where each sits inside it.
     /// - Returns: The recipes, in the order of `files`.
-    func listedRecipes(for files: [RecipeFile]) -> [ListedRecipe] {
+    func listedRecipes(for files: [RecipeFile], pictures: [String: RecipePicture]) -> [ListedRecipe] {
         let paths = Set(files.map(\.path))
         let removedPaths = summaries.keys.filter({ !paths.contains($0) })
 
@@ -62,7 +64,7 @@ actor RecipeSummarizer {
             let summary = summaries[file.path]
 
             return ListedRecipe(
-                entry: file.recipeEntry(summary: summary?.summary),
+                entry: file.recipeEntry(summary: summary?.summary, pictures: pictures),
                 ingredientNames: summary?.record.ingredientNames ?? []
             )
         }

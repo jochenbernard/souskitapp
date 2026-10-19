@@ -1,3 +1,6 @@
+import CoreGraphics
+import RecipeLibrary
+
 struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
     func stackDidAppear() {}
 
@@ -10,4 +13,12 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
     func didChangeSearchText(_: String, in _: [String]) {}
 
     func didDismissCooking() {}
+
+    func thumbnail(of _: RecipePicture, filling _: CGSize) -> CGImage? {
+        nil
+    }
+
+    func lastThumbnail(of _: RecipePicture) -> CGImage? {
+        nil
+    }
 }

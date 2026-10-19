@@ -4,7 +4,7 @@
 /// The recipes ``MockRecipeRepository`` lists, as the specification's examples write them.
 ///
 /// Every one is a complete, cookable version of a classic French dish, and between them they cover every construct
-/// the format has.
+/// the format has. Their headers name pictures in every way a header can, some of them missing or out of reach.
 enum MockRecipes {
     /// A braise, with a header, four steps, precise timers, and two staples.
     static let boeufBourguignon = """
@@ -15,6 +15,7 @@ enum MockRecipes {
     cook-time: 3 h
     tags: [dinner, classic, french]
     allergens: [gluten, dairy]
+    image: images/boeuf-bourguignon.jpg
     ---
 
     Cut @{1.2 kg} beef@ into large cubes and pat them dry. Brown @{150 g} lardons@ in a
@@ -41,6 +42,7 @@ enum MockRecipes {
     cook-time: 10 min
     tags: [dinner, quick, french]
     allergens: [molluscs, dairy]
+    image: /images/moules-marinieres.jpg
     ---
 
     Scrub @{2 kg} mussels@ under cold water, pull away the beards, and discard any
@@ -68,6 +70,7 @@ enum MockRecipes {
     cook-time: 50 min
     tags: [lunch, classic, french]
     allergens: [gluten, dairy, eggs]
+    image: https://example.com/quiche-lorraine.jpg
     ---
 
     ## Pastry
@@ -129,6 +132,7 @@ enum MockRecipes {
     prep-time: 5 min
     tags: [sauce, classic, french]
     allergens: [mustard]
+    image: images/vinaigrette.jpg
     ---
 
     Whisk @{1 tsp} dijon mustard@ into @{2 tbsp} red wine vinegar@ with
@@ -148,6 +152,7 @@ enum MockRecipes {
     cook-time: 50 min
     tags: [dinner, french, provencal]
     allergens: [fish, gluten, eggs]
+    image: ../../images/bouillabaisse.jpg
     ---
 
     ## Court-Bouillon
@@ -175,6 +180,7 @@ enum MockRecipes {
     cook-time: 15 min
     tags: [french, lunch, classic]
     allergens: [gluten, dairy]
+    image: images/croque-monsieur.jpg
     ---
 
     Butter @{8 slices} pain de mie@ with @{40 g} butter@ and toast them in a
@@ -197,6 +203,7 @@ enum MockRecipes {
     cook-time: 55 min
     tags: [baking, classic, french]
     allergens: [gluten, dairy, eggs]
+    image: images/brioche.jpg
     ---
 
     Mix @{500 g} flour@, @{60 g} caster sugar@, @{10 g} salt@:staple, and
@@ -221,6 +228,7 @@ enum MockRecipes {
     cook-time: 25 min
     tags: [dessert, classic, french]
     allergens: [gluten, dairy, eggs]
+    image: ../images/crepes.jpg
     ---
 
     Whisk @{200 g} flour@ into a batter with @{4} eggs@, @{500 ml} milk@,
@@ -240,6 +248,7 @@ enum MockRecipes {
     cook-time: 10 min
     tags: [baking, classic, french]
     allergens: [gluten, dairy, eggs]
+    image: images/madeleines.jpg
     ---
 
     Whisk @{2} eggs@ with @{100 g} caster sugar@ until pale, then fold in

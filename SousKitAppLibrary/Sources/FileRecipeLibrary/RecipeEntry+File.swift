@@ -14,17 +14,23 @@ extension RecipeEntry {
     ///   - path: Where the file sits inside the directory, extension included.
     ///   - availability: Whether the file's contents are on the device.
     ///   - summary: What is known of the file's contents, or `nil` where they have not been read.
+    ///   - pictures: The pictures in the directory, by where each sits inside it, among which the one the summary
+    ///     names is looked for.
     init(
         path: String,
         availability: RecipeAvailability,
-        summary: RecipeSummary? = nil
+        summary: RecipeSummary? = nil,
+        pictures: [String: RecipePicture] = [:]
     ) {
+        let folderPath = path.split(separator: "/").dropLast().map(String.init)
+
         self.init(
             id: path,
             name: Self.name(forFileAt: path),
             availability: availability,
             summary: summary,
-            folderPath: path.split(separator: "/").dropLast().map(String.init)
+            folderPath: folderPath,
+            picture: summary?.imagePath(inFolder: folderPath).flatMap({ pictures[$0] })
         )
     }
 

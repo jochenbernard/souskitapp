@@ -1,10 +1,12 @@
 import Foundation
 import RecipeLibrary
 
-/// The recipes in a directory and in the directories inside it, read once and read again on every change to them.
+/// The recipes in a directory and in the directories inside it, read once and read again on every change to them, with
+/// the pictures they name fetched from iCloud.
 @MainActor
 final class RecipeDirectoryMonitor {
     private let listDirectory: @Sendable () throws -> RecipeDirectoryListing
+    private let pictureFetcher: RecipePictureFetcher
     private let present: @Sendable (URL, @escaping @Sendable () -> Void) -> DirectoryPresenter?
     private let recipeDirectory: RecipeDirectory
     private let settleDelay: Duration
@@ -19,6 +21,7 @@ final class RecipeDirectoryMonitor {
     private var isScoped = false
     // swiftlint:disable:next discouraged_optional_collection
     private var lastListedRecipes: [ListedRecipe]?
+    private var pictures: [String: RecipePicture] = [:]
     private var presenter: DirectoryPresenter?
     private var readTask: Task<Void, Never>?
     private var recipeFiles: [RecipeFile] = []
@@ -32,6 +35,7 @@ final class RecipeDirectoryMonitor {
     ///     read again.
     ///   - listDirectory: Lists the directory with the reader handed to it.
     ///   - present: Presents the directory at the URL, calling the closure on every change, or presents nothing.
+    ///   - startDownloadingPicture: Asks iCloud for a picture's contents, returning before they arrive.
     nonisolated init(
         recipeDirectory: RecipeDirectory,
         summarizer: RecipeSummarizer,
@@ -41,9 +45,19 @@ final class RecipeDirectoryMonitor {
         },
         present: @escaping @Sendable (URL, @escaping @Sendable () -> Void) -> DirectoryPresenter? = { url, onChange in
             DirectoryPresenter(directoryURL: url, onChange: onChange)
+        },
+        startDownloadingPicture: @escaping @Sendable (URL) throws -> Void = { url in
+            try FileManager.default.startDownloadingUbiquitousItem(at: url)
         }
     ) {
         let reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory)
+        self.pictureFetcher = RecipePictureFetcher(
+            reader: RecipePictureReader(
+                recipeDirectory: recipeDirectory,
+                qualityOfService: .utility,
+                startDownloading: startDownloadingPicture
+            )
+        )
         self.recipeDirectory = recipeDirectory
         self.summarizer = summarizer
         self.settleDelay = settleDelay
@@ -137,6 +151,8 @@ final class RecipeDirectoryMonitor {
         readTask = nil
         fetches.values.forEach({ $0.cancel() })
         fetches = [:]
+        pictureFetcher.stop()
+        pictures = [:]
         recipeFiles = []
         eventSources = [:]
         presenter?.stopPresenting()
@@ -198,7 +214,7 @@ final class RecipeDirectoryMonitor {
             switch result {
             case .success(let listing):
                 await Self.readSummaries(
-                    of: listing.recipeFiles,
+                    of: listing,
                     with: summarizer,
                     yield: { [weak self] listedRecipes in self?.yield(.success(listedRecipes)) },
                     fetch: { [weak self] filesToRead in self?.fetch(filesToRead) ?? [] }
@@ -226,13 +242,13 @@ final class RecipeDirectoryMonitor {
     /// - Parameter fetch: Fetches the files in iCloud among those handed to it, returning the files on the device
     ///   that no fetch reads.
     private static func readSummaries(
-        of recipeFiles: [RecipeFile],
+        of listing: RecipeDirectoryListing,
         with summarizer: RecipeSummarizer,
         yield: @escaping @MainActor ([ListedRecipe]) -> Void,
         fetch: @MainActor ([RecipeFile]) -> [RecipeFile]
     ) async {
         let yieldSummaries = {
-            let listedRecipes = await summarizer.listedRecipes(for: recipeFiles)
+            let listedRecipes = await summarizer.listedRecipes(for: listing.recipeFiles, pictures: listing.pictures)
 
             if !Task.isCancelled {
                 yield(listedRecipes)
@@ -241,7 +257,7 @@ final class RecipeDirectoryMonitor {
 
         await yieldSummaries()
 
-        let filesToRead = await summarizer.filesToRead(in: recipeFiles)
+        let filesToRead = await summarizer.filesToRead(in: listing.recipeFiles)
 
         guard !Task.isCancelled else {
             return
@@ -260,6 +276,7 @@ final class RecipeDirectoryMonitor {
     /// - Returns: Whether a directory is watched that was not before.
     private func didList(_ listing: RecipeDirectoryListing) -> Bool {
         recipeFiles = listing.recipeFiles
+        pictures = listing.pictures
         let watchesNewDirectory = watch(directoriesAt: listing.directoryPaths)
 
         let paths = Set(recipeFiles.map(\.path))
@@ -290,11 +307,11 @@ final class RecipeDirectoryMonitor {
 
                 self?.fetches[file.path] = nil
 
-                guard let listedFiles = self?.recipeFiles else {
+                guard let listedFiles = self?.recipeFiles, let listedPictures = self?.pictures else {
                     return
                 }
 
-                let listedRecipes = await summarizer.listedRecipes(for: listedFiles)
+                let listedRecipes = await summarizer.listedRecipes(for: listedFiles, pictures: listedPictures)
 
                 if !Task.isCancelled {
                     self?.yield(.success(listedRecipes))
@@ -305,7 +322,8 @@ final class RecipeDirectoryMonitor {
         return filesToRead.filter({ $0.availability == .downloaded && fetches[$0.path] == nil })
     }
 
-    /// Sends a result on, dropping a list matching the one sent last.
+    /// Sends a result on, dropping a list matching the one sent last, and fetches the pictures its recipes name that
+    /// are not on the device.
     private func yield(_ result: Result<[ListedRecipe], Error>) {
         switch result {
         case .success(let listedRecipes):
@@ -314,6 +332,10 @@ final class RecipeDirectoryMonitor {
             }
 
             lastListedRecipes = listedRecipes
+            // Read again rather than left to a change event, which a landing picture is not sure to send.
+            pictureFetcher.fetchPictures(namedIn: listedRecipes) { [weak self] in
+                self?.read(afterSettling: true)
+            }
 
         case .failure:
             lastListedRecipes = nil

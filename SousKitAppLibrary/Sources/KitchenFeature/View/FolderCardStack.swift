@@ -16,9 +16,11 @@ struct FolderCardStack: View {
     private static let fanRise = 4.0
 
     private let cards: [KitchenRecipeCard]
+    private let presenter: KitchenFeaturePresenterProtocol
 
-    init(_ cards: [KitchenRecipeCard]) {
+    init(_ cards: [KitchenRecipeCard], presenter: KitchenFeaturePresenterProtocol) {
         self.cards = cards
+        self.presenter = presenter
     }
 
     var body: some View {
@@ -50,7 +52,7 @@ struct FolderCardStack: View {
 
     // What the recipe's own card shows above its title.
     private func picture(of card: KitchenRecipeCard) -> some View {
-        RecipeCardPlaceholder(symbol: card.placeholderSymbol, color: card.placeholderColor)
+        RecipeCardPicture(card, presenter: presenter)
             .background(.secondaryGroupedBackground)
     }
 
@@ -75,7 +77,7 @@ private func previewCards(_ count: Int) -> [KitchenRecipeCard] {
 #Preview("Folder card stacks") {
     VStack(spacing: SousSpacing.medium) {
         ForEach(1...4, id: \.self) { count in
-            FolderCardStack(previewCards(count))
+            FolderCardStack(previewCards(count), presenter: KitchenFeaturePresenterStub())
                 .aspectRatio(4.0 / 3.0, contentMode: .fit)
         }
     }

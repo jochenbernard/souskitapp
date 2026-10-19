@@ -1,3 +1,4 @@
+import CoreGraphics
 @testable import FileRecipeLibrary
 import Foundation
 import RecipeLibrary
@@ -18,7 +19,8 @@ final class FileRecipeRepositoryTests: Sendable {
         FileRecipeRepository(
             parser: parser,
             recipeDirectory: directory.recipeDirectory,
-            summaryCacheURL: directory.summaryCacheURL
+            summaryCacheURL: directory.summaryCacheURL,
+            thumbnailCacheURL: directory.thumbnailCacheURL
         )
     }
 
@@ -144,5 +146,74 @@ final class FileRecipeRepositoryTests: Sendable {
         await #expect(throws: (any Error).self) {
             try await readRecipe(of: recipeEntry)
         }
+    }
+
+    private func writeGratin(width: Int, height: Int) throws {
+        try directory.writePicture(
+            named: "gratin-dauphinois.png",
+            width: width,
+            height: height
+        )
+    }
+
+    /// The picture of the file at a path, as the directory lists it now.
+    private func picture(at path: String) throws -> RecipePicture {
+        try #require(RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory).readListing().pictures[path])
+    }
+
+    @Test("a picture is read scaled to fill the box, and its thumbnail is kept outside the directory")
+    func thumbnail() async throws {
+        try writeGratin(width: 1_600, height: 1_000)
+
+        let thumbnail = try await makeRepository().readThumbnail(
+            of: try picture(at: "gratin-dauphinois.png"),
+            filling: CGSize(width: 400.0, height: 300.0)
+        )
+
+        #expect(thumbnail.width == 480)
+        #expect(thumbnail.height == 300)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: directory.thumbnailCacheURL.path()).count == 1)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: directory.url.path()) == ["gratin-dauphinois.png"])
+    }
+
+    @Test("a picture read before is read from its thumbnail, without its file")
+    func keptThumbnail() async throws {
+        try writeGratin(width: 1_600, height: 1_000)
+        let picture = try picture(at: "gratin-dauphinois.png")
+        let box = CGSize(width: 400.0, height: 300.0)
+        _ = try await makeRepository().readThumbnail(of: picture, filling: box)
+        try FileManager.default.removeItem(at: directory.url.appending(path: "gratin-dauphinois.png"))
+
+        let thumbnail = try await makeRepository().readThumbnail(of: picture, filling: box)
+
+        #expect(thumbnail.width == 480)
+    }
+
+    @Test("a picture replaced since it was read is read again")
+    func replacedThumbnail() async throws {
+        let box = CGSize(width: 400.0, height: 300.0)
+        try writeGratin(width: 1_600, height: 1_000)
+        try directory.setModificationDate(.distantPast, ofFileNamed: "gratin-dauphinois.png")
+        _ = try await makeRepository().readThumbnail(of: try picture(at: "gratin-dauphinois.png"), filling: box)
+        try writeGratin(width: 1_000, height: 1_000)
+
+        let replacedPicture = try picture(at: "gratin-dauphinois.png")
+        let thumbnail = try await makeRepository().readThumbnail(of: replacedPicture, filling: box)
+
+        #expect(thumbnail.width == 400)
+        #expect(thumbnail.height == 400)
+    }
+
+    @Test("a file holding no picture fails to read, and nothing is kept for it")
+    func unreadablePicture() async throws {
+        try directory.writeFile(named: "croque-monsieur.jpg", "---\ntitle: Croque Monsieur\n---")
+
+        await #expect(throws: CocoaError.self) {
+            try await self.makeRepository().readThumbnail(
+                of: try self.picture(at: "croque-monsieur.jpg"),
+                filling: CGSize(width: 400.0, height: 300.0)
+            )
+        }
+        #expect(!FileManager.default.fileExists(atPath: directory.thumbnailCacheURL.path()))
     }
 }

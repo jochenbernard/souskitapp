@@ -1,3 +1,4 @@
+import CoreGraphics
 import SousKit
 
 /// The user's recipes, listed and read wherever they are kept.
@@ -28,4 +29,16 @@ public protocol RecipeRepository: Sendable {
     /// - Returns: The recipe, and the diagnostics from parsing it.
     /// - Throws: Whatever reading the recipe throws.
     func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe>
+
+    /// Reads a recipe's picture, scaled down to fill a box.
+    ///
+    /// The picture keeps its proportions, so it reaches past the box on one side, and it is never scaled up. A
+    /// picture not on the device is fetched first.
+    ///
+    /// - Parameters:
+    ///   - picture: The picture, as an entry lists it.
+    ///   - pixelSize: The box, in pixels.
+    /// - Returns: The picture, decoded.
+    /// - Throws: Whatever fetching or reading the picture throws, or what its contents not being a picture does.
+    func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage
 }

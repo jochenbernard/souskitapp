@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import RecipeLibrary
 import SousKit
@@ -6,8 +7,10 @@ import SousKit
 struct FileRecipeRepository: RecipeRepository {
     private let monitor: RecipeDirectoryMonitor
     private let parser: SousParser
+    private let pictureReader: RecipePictureReader
     private let recipeDirectory: RecipeDirectory
     private let textReader: RecipeTextReader
+    private let thumbnailCache: RecipeThumbnailCache
 
     var name: String {
         recipeDirectory.name
@@ -19,10 +22,12 @@ struct FileRecipeRepository: RecipeRepository {
     ///   - parser: What the recipes are read with.
     ///   - recipeDirectory: The directory the recipes sit in.
     ///   - summaryCacheURL: Where the recipes' summaries are kept between launches, outside the directory.
+    ///   - thumbnailCacheURL: Where the thumbnails of the recipes' pictures are kept, outside the directory.
     init(
         parser: SousParser,
         recipeDirectory: RecipeDirectory,
-        summaryCacheURL: URL
+        summaryCacheURL: URL,
+        thumbnailCacheURL: URL
     ) {
         self.monitor = RecipeDirectoryMonitor(
             recipeDirectory: recipeDirectory,
@@ -33,8 +38,10 @@ struct FileRecipeRepository: RecipeRepository {
             )
         )
         self.parser = parser
+        self.pictureReader = RecipePictureReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
         self.recipeDirectory = recipeDirectory
         self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
+        self.thumbnailCache = RecipeThumbnailCache(recipeDirectory: recipeDirectory, folderURL: thumbnailCacheURL)
     }
 
     func listedRecipes() async -> AsyncStream<Result<[ListedRecipe], Error>> {
@@ -51,5 +58,24 @@ struct FileRecipeRepository: RecipeRepository {
         let contents = try await textReader.read(path: entry.path, availability: entry.availability)
 
         return parser.parseRecipe(contents.text)
+    }
+
+    /// Reads and scales off the caller's actor, from the thumbnail kept where there is one.
+    @concurrent
+    func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage {
+        if let thumbnail = thumbnailCache.thumbnail(of: picture, filling: pixelSize) {
+            return thumbnail
+        }
+
+        let thumbnail = try await pictureReader.read(picture) { url in
+            try RecipeThumbnailMaker.thumbnail(ofImageAt: url, filling: pixelSize)
+        }
+        thumbnailCache.save(
+            thumbnail,
+            of: picture,
+            filling: pixelSize
+        )
+
+        return thumbnail
     }
 }

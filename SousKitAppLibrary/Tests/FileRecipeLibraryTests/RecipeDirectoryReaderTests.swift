@@ -20,7 +20,7 @@ final class RecipeDirectoryReaderTests {
     }
 
     private func readRecipeEntries() throws -> [RecipeEntry] {
-        try readRecipeFiles().map({ $0.recipeEntry(summary: nil) })
+        try readRecipeFiles().map({ $0.recipeEntry(summary: nil, pictures: [:]) })
     }
 
     private func readNames() throws -> [String] {
@@ -199,6 +199,42 @@ final class RecipeDirectoryReaderTests {
         try directory.writeFile(named: ".notes.txt.icloud")
 
         #expect(try readNames().isEmpty)
+    }
+
+    @Test("the pictures in every directory are listed by where they sit, and other files are not")
+    func pictures() throws {
+        let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
+        try directory.makeDirectory(named: "French/images")
+        try directory.writeFile(named: "French/images/gratin-dauphinois.jpg")
+        try directory.setModificationDate(date, ofFileNamed: "French/images/gratin-dauphinois.jpg")
+        try directory.writeFile(named: "brioche.PNG")
+        try directory.writeFile(named: "notes.txt")
+        try directory.writeFile(named: ".crepes.jpg")
+
+        let pictures = try readListing().pictures
+
+        #expect(Set(pictures.keys) == ["French/images/gratin-dauphinois.jpg", "brioche.PNG"])
+        #expect(
+            pictures["French/images/gratin-dauphinois.jpg"] == RecipePicture(
+                id: "French/images/gratin-dauphinois.jpg",
+                modificationDate: date,
+                availability: .downloaded
+            )
+        )
+    }
+
+    @Test("a picture's placeholder lists it as not downloaded, and the picture itself wins over a stale placeholder")
+    func picturePlaceholders() throws {
+        try directory.writeFile(named: ".crepes.jpg.icloud")
+        try directory.writeFile(named: ".brioche.jpg.icloud")
+        try directory.writeFile(named: "brioche.jpg")
+
+        let pictures = try readListing().pictures
+
+        #expect(pictures["crepes.jpg"]?.availability == .notDownloaded)
+        #expect(pictures["crepes.jpg"]?.modificationDate == nil)
+        #expect(pictures["brioche.jpg"]?.availability == .downloaded)
+        #expect(try readPaths().isEmpty)
     }
 
     @Test("reading a directory that is gone throws")

@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import RecipeLibrary
 import SousKit
@@ -7,7 +8,8 @@ import SousKit
 /// They sit in folders as a folder's recipes do, some of them sharing a file name. Some of the recipes start out in
 /// iCloud, and reading one fetches it first, as a folder in iCloud Drive does. One of them never arrives. Every recipe
 /// with a text is listed with its summary and ingredient names, as a folder lists the recipes it read on an earlier
-/// launch.
+/// launch, and with the picture its header names where the folder holds it. A picture in iCloud lands a fetch's time
+/// after the recipes are first listed.
 @MainActor
 public final class MockRecipeRepository: RecipeRepository {
     private let fetchDuration: Duration
@@ -63,6 +65,24 @@ public final class MockRecipeRepository: RecipeRepository {
     public func refresh() {}
 
     @MainActor
+    public func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage {
+        guard let file = MockRecipe.all.first(where: { $0.isPicture && $0.id == picture.id }) else {
+            throw CocoaError(.fileReadNoSuchFile)
+        }
+
+        if availability(of: file) != .downloaded {
+            try await Task.sleep(for: fetchDuration)
+            markFetched([file])
+        }
+
+        guard let mockPicture = file.picture else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+
+        return try await Self.draw(mockPicture, filling: pixelSize)
+    }
+
+    @MainActor
     public func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe> {
         guard let recipe = MockRecipe.all.first(where: { $0.isListed && $0.id == entry.id }) else {
             throw CocoaError(.fileReadNoSuchFile)
@@ -89,18 +109,41 @@ public final class MockRecipeRepository: RecipeRepository {
                     name: recipe.name,
                     availability: availability(of: recipe),
                     summary: summaries[recipe.id],
-                    folderPath: recipe.folderPath
+                    folderPath: recipe.folderPath,
+                    picture: picture(of: recipe)
                 ),
                 ingredientNames: ingredientNames[recipe.id] ?? []
             )
         }
     }
 
+    /// The picture a recipe's header names, where the folder holds a file there.
+    private func picture(of recipe: MockRecipe) -> RecipePicture? {
+        let path = summaries[recipe.id]?.imagePath(inFolder: recipe.folderPath)
+
+        guard let file = MockRecipe.all.first(where: { $0.isPicture && $0.id == path }) else {
+            return nil
+        }
+
+        return RecipePicture(
+            id: file.id,
+            modificationDate: nil,
+            availability: availability(of: file)
+        )
+    }
+
+    /// Draws off the main actor, as decoding a photo would be.
+    @concurrent
+    nonisolated private static func draw(_ picture: MockPicture, filling pixelSize: CGSize) async throws -> CGImage {
+        try picture.thumbnail(filling: pixelSize)
+    }
+
     private func availability(of recipe: MockRecipe) -> RecipeAvailability {
         fetchedIDs.contains(recipe.id) ? .downloaded : recipe.availability
     }
 
-    /// Lands the recipes already on their way down a fetch's time after the recipes are first listed.
+    /// Lands the recipes already on their way down, and the pictures in iCloud, a fetch's time after the recipes are
+    /// first listed.
     private func finishDownloads() {
         guard downloadTask == nil else {
             return
@@ -108,7 +151,7 @@ public final class MockRecipeRepository: RecipeRepository {
 
         downloadTask = Task { [weak self, fetchDuration] in
             try? await Task.sleep(for: fetchDuration)
-            self?.markFetched(MockRecipe.all.filter({ $0.availability == .downloading }))
+            self?.markFetched(MockRecipe.all.filter({ $0.availability == .downloading || $0.isPicture }))
         }
     }
 
