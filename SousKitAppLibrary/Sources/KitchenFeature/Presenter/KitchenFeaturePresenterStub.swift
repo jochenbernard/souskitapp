@@ -1,5 +1,5 @@
 struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
-    func viewDidAppear() {}
+    func stackDidAppear() {}
 
     func didBecomeActive() {}
 

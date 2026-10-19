@@ -85,7 +85,7 @@ struct KitchenFeatureView: View {
 
     private func folderScreen(at path: [String]) -> some View {
         folderPage(at: path)
-            .navigationTitle(path.last ?? viewModel.recipeRepositoryName)
+            .navigationTitle(path.last ?? "")
     }
 
     @ViewBuilder

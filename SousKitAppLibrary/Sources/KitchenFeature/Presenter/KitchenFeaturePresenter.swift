@@ -35,7 +35,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         self.viewModel = viewModel
     }
 
-    func viewDidAppear() async {
+    func stackDidAppear() async {
         for await result in await recipeRepository.recipeEntries() {
             switch result {
             case .success(let recipeEntries):

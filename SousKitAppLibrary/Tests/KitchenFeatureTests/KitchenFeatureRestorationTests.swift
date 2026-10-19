@@ -66,7 +66,7 @@ struct KitchenFeatureRestorationTests {
         }
 
         recipeRepository.finish()
-        await presenter.viewDidAppear()
+        await presenter.stackDidAppear()
 
         return RestoredKitchen(
             viewModel: viewModel,
@@ -233,7 +233,7 @@ struct KitchenFeatureRestorationTests {
 
         recipeRepository.send(.success([crepes]))
         recipeRepository.finish()
-        await presenter.viewDidAppear()
+        await presenter.stackDidAppear()
 
         #expect(viewModel.pushedScreens.isEmpty)
         #expect(viewModel.openRecipe == nil)

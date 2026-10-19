@@ -40,4 +40,14 @@ public struct KitchenFeature {
             viewModel: viewModel
         )
     }
+
+    /// Keeps every screen of the kitchen showing the repository's recipes as they change, until the task running it
+    /// is cancelled.
+    ///
+    /// Run it in a task on the navigation stack driven by ``path`` rather than on the view from ``makeView()``, which a
+    /// pushed screen takes off screen, cancelling the tasks on it.
+    @MainActor
+    public func followRecipes() async {
+        await presenter.stackDidAppear()
+    }
 }

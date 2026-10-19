@@ -67,6 +67,10 @@ struct AppFeatureView: View {
             .transaction(value: kitchenFeature.isRestoring) { transaction in
                 transaction.disablesAnimations = true
             }
+            // On the stack, which stays on screen while the kitchen's screens are pushed and popped.
+            .task {
+                await kitchenFeature.followRecipes()
+            }
         }
     }
 

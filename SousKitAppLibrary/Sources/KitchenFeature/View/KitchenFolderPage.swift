@@ -43,10 +43,6 @@ struct KitchenFolderPage: View {
             }
         }
         .sousPage()
-        // On every page, not only the top one, so a folder's page follows changes while it is on screen.
-        .task {
-            await presenter.viewDidAppear()
-        }
     }
 
     /// Where a folder sits, under its title: the repository's name, then the folders leading down to it.

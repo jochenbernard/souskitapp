@@ -52,7 +52,7 @@ struct KitchenFeaturePresenterTests {
 
         recipeRepository.send(.success(recipeEntries))
         recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).stackDidAppear()
 
         guard case .recipes(let folder) = viewModel.recipeList else {
             Issue.record("The recipe list did not list recipes.")
@@ -108,7 +108,7 @@ struct KitchenFeaturePresenterTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
         let task = Task {
-            await presenter.viewDidAppear()
+            await presenter.stackDidAppear()
         }
         defer {
             task.cancel()
@@ -185,7 +185,7 @@ struct KitchenFeaturePresenterTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
         let task = Task {
-            await presenter.viewDidAppear()
+            await presenter.stackDidAppear()
         }
         defer {
             task.cancel()
@@ -225,7 +225,7 @@ struct KitchenFeaturePresenterTests {
 
         recipeRepository.send(.failure(CocoaError(.fileReadNoSuchFile)))
         recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).stackDidAppear()
 
         guard case .failure(let message) = viewModel.recipeList else {
             Issue.record("The recipe list did not fail.")
