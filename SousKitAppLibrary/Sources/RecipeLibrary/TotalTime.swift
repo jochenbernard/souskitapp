@@ -21,12 +21,13 @@ public enum TotalTime: Sendable, Hashable {
     ///   - parser: What the times are read with.
     /// - Returns: The total time, or `nil` where the header gives neither a total nor a part that reads.
     public init?(metadata: Metadata, parser: SousParser) {
-        if let total = metadata[Self.totalKey] {
+        // A key with no value gives no time, so it neither shows as a blank total nor stops the parts adding up.
+        if let total = metadata[Self.totalKey], !total.isEmpty {
             self = Self.duration(of: total, parser: parser).map(Self.duration) ?? .written(total)
             return
         }
 
-        let parts = Self.partKeys.compactMap({ metadata[$0] })
+        let parts = Self.partKeys.compactMap({ metadata[$0] }).filter({ !$0.isEmpty })
         let durations = parts.compactMap({ Self.duration(of: $0, parser: parser) })
 
         guard

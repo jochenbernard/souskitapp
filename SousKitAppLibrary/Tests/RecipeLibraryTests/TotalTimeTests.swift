@@ -45,6 +45,13 @@ struct TotalTimeTests {
         #expect(totalTime(of: "prep-time: 30 min\ncook-time: until golden") == nil)
     }
 
+    @Test("a time key written with no value gives no time")
+    func emptyValue() {
+        #expect(totalTime(of: "total-time:\nprep-time: 30 min\ncook-time: 3 h") == .duration(.seconds(12_600.0)))
+        #expect(totalTime(of: "prep-time:\ncook-time: 3 h") == .duration(.seconds(10_800.0)))
+        #expect(totalTime(of: "total-time:") == nil)
+    }
+
     @Test("a header giving no time gives no total")
     func noTime() {
         #expect(totalTime(of: "title: Vinaigrette\nservings: 4") == nil)
