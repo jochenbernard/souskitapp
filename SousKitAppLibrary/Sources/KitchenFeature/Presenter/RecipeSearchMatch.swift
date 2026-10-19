@@ -1,5 +1,5 @@
 /// Where a search found a recipe, ordered from the closest match to the loosest.
-enum RecipeSearchMatch: Comparable {
+enum RecipeSearchMatch: Comparable, CaseIterable {
     /// Every word searched for begins a word of the title.
     case title
 

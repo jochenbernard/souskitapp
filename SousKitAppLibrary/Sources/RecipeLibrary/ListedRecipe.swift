@@ -11,7 +11,7 @@ public struct ListedRecipe: Sendable, Hashable {
     /// - Parameters:
     ///   - entry: The recipe.
     ///   - ingredientNames: The names of the ingredients the recipe is made of, each once.
-    public init(entry: RecipeEntry, ingredientNames: [String] = []) {
+    public init(entry: RecipeEntry, ingredientNames: [String]) {
         self.entry = entry
         self.ingredientNames = ingredientNames
     }

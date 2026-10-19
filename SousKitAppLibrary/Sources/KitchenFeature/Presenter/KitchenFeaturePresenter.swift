@@ -40,15 +40,16 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         for await result in await recipeRepository.listedRecipes() {
             switch result {
             case .success(let listedRecipes):
-                let folder = KitchenFolderTree.folder(at: [], holding: listedRecipes.map(\.entry))
+                let recipeEntries = listedRecipes.map(\.entry)
+                let folder = KitchenFolderTree.folder(at: [], holding: recipeEntries)
                 searchIndex.update(listedRecipes)
                 viewModel.recipeList = .recipes(folder)
                 showSearchResults()
-                restore(in: folder)
+                restore(in: folder, holding: recipeEntries)
 
             case .failure(let error):
                 viewModel.recipeList = .failure(error.localizedDescription)
-                restore(in: nil)
+                restore(in: nil, holding: [])
             }
         }
     }
@@ -211,9 +212,11 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// Opens what the kitchen was built to open again, as far down as its folders are still listed, and its recipe
     /// where every folder and the recipe still are. What is no longer listed is forgotten.
     ///
-    /// - Parameter folder: The top of the repository as it is listed now, or `nil` where it could not be read.
+    /// - Parameters:
+    ///   - folder: The top of the repository as it is listed now, or `nil` where it could not be read.
+    ///   - recipeEntries: The recipes listed now, in every folder.
     @MainActor
-    private func restore(in folder: KitchenFolder?) {
+    private func restore(in folder: KitchenFolder?, holding recipeEntries: [RecipeEntry]) {
         guard viewModel.isRestoring else {
             return
         }
@@ -230,8 +233,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             .prefix(while: { folder.folder(at: $0) != nil })
             .map(KitchenScreen.folder)
         // Anywhere below the folders, since a search opens a recipe of any folder over the top one.
-        let recipeEntry = folder.folder(at: restoration.folderPath).flatMap { restoredFolder in
-            restoration.recipeID.flatMap({ Self.recipeEntry(withID: $0, in: restoredFolder) })
+        let recipeEntry = recipeEntries.first { listedEntry in
+            listedEntry.id == restoration.recipeID && listedEntry.folderPath.starts(with: restoration.folderPath)
         }
         let pushedScreens = folderScreens + (recipeEntry.map({ [KitchenScreen.recipe($0)] }) ?? [])
 
@@ -253,11 +256,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         }
 
         handler.kitchenFeatureDidRestore()
-    }
-
-    private static func recipeEntry(withID id: String, in folder: KitchenFolder) -> RecipeEntry? {
-        folder.cards.first(where: { $0.id == id })?.recipeEntry
-            ?? folder.folders.lazy.compactMap({ recipeEntry(withID: id, in: $0) }).first
     }
 
     @MainActor

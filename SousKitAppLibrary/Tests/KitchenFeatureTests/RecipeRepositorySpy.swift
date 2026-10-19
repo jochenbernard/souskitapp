@@ -35,7 +35,7 @@ final class RecipeRepositorySpy: RecipeRepository {
     /// Yields recipes listed with no ingredient names, or a failure, to the stream, which keeps it until the stream is
     /// iterated.
     func send(_ result: Result<[RecipeEntry], Error>) {
-        continuation.yield(result.map({ $0.map({ ListedRecipe(entry: $0) }) }))
+        continuation.yield(result.map({ $0.map({ ListedRecipe(entry: $0, ingredientNames: []) }) }))
     }
 
     /// Yields recipes to the stream, which keeps them until the stream is iterated.

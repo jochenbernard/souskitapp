@@ -65,7 +65,7 @@ struct RecipeSearchIndexTests {
         let index = RecipeSearchIndex()
         index.update(listedRecipes)
 
-        return index.results(matching: RecipeSearchTerms.words(of: text)).map(\.id)
+        return index.results(matching: RecipeSearchTerms.words(of: text), below: []).map(\.id)
     }
 
     @MainActor
@@ -134,7 +134,10 @@ struct RecipeSearchIndexTests {
     @MainActor
     @Test("a recipe with no summary read is found by its name alone")
     func unreadRecipe() {
-        let unread = ListedRecipe(entry: RecipeEntry(id: "crepes", name: "crepes", availability: .notDownloaded))
+        let unread = ListedRecipe(
+            entry: RecipeEntry(id: "crepes", name: "crepes", availability: .notDownloaded),
+            ingredientNames: []
+        )
 
         #expect(results(for: "crep", in: [unread]) == ["crepes"])
     }

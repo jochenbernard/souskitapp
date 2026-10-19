@@ -36,16 +36,11 @@ final class RecipeSummarizerTests {
 
     /// Lists the directory and reads what has to be read, as the monitor does, returning the entries after.
     private func summarize(with summarizer: RecipeSummarizer) async throws -> [RecipeEntry] {
-        try await summarizeListing(with: summarizer).map(\.entry)
-    }
-
-    /// Lists the directory and reads what has to be read, as the monitor does, returning the recipes listed after.
-    private func summarizeListing(with summarizer: RecipeSummarizer) async throws -> [ListedRecipe] {
         let files = try listedFiles()
         _ = await summarizer.listedRecipes(for: files)
         await summarizer.read(await summarizer.filesToRead(in: files))
 
-        return await summarizer.listedRecipes(for: files)
+        return await summarizer.listedRecipes(for: files).map(\.entry)
     }
 
     private func writeCrepes(title: String = "Crepes") throws {
@@ -159,7 +154,7 @@ final class RecipeSummarizerTests {
     @Test("a file read is listed with its ingredient names, also on the next launch")
     func ingredientNames() async throws {
         try writeCrepes()
-        _ = try await summarizeListing(with: makeSummarizer())
+        _ = try await summarize(with: makeSummarizer())
 
         let listedRecipes = await makeSummarizer().listedRecipes(for: try listedFiles())
 
