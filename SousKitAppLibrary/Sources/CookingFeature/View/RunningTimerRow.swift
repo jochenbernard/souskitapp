@@ -67,12 +67,12 @@ struct RunningTimerRow: View {
 
     private var content: some View {
         HStack(spacing: SousSpacing.medium) {
-            label
+            // The cancel button stays out of the choice, so a timer changing shape keeps its button.
+            ViewThatFits(in: .horizontal) {
+                sideBySide
 
-            Spacer(minLength: 0.0)
-
-            countdown
-                .font(.title2.weight(.semibold))
+                stacked
+            }
 
             cancelButton
         }
@@ -81,6 +81,44 @@ struct RunningTimerRow: View {
         .background(alignment: .leading) {
             RunningTimerProgress(timer: timer, contentFade: contentFade)
         }
+    }
+
+    /// The timer's label beside its time, where every line of the label fits whole there.
+    private var sideBySide: some View {
+        HStack(spacing: SousSpacing.medium) {
+            label
+                .fixedSize()
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            countdown(reservingWidest: true)
+        }
+    }
+
+    /// The timer's time under its label, where the two do not fit beside each other.
+    private var stacked: some View {
+        VStack(alignment: .leading, spacing: 0.0) {
+            label
+
+            countdown(reservingWidest: false)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var cancelButton: some View {
+        Button(action: cancel) {
+            Image(systemName: "xmark")
+                .fontWeight(.semibold)
+        }
+        .buttonStyle(.glass)
+        .buttonBorderShape(.circle)
+        .accessibilityLabel(Self.cancelTitle(isRinging: timer.isRinging))
+        // Read after the timer's time, which lies lower than the button where it is under the label.
+        .accessibilitySortPriority(-1.0)
+        .onGeometryChange(
+            for: CGRect.self,
+            of: { $0.frame(in: .global) },
+            action: { frame in onCancelButtonFrameChange?(frame) }
+        )
     }
 
     private var label: some View {
@@ -93,30 +131,37 @@ struct RunningTimerRow: View {
         }
     }
 
-    @ViewBuilder
-    private var countdown: some View {
-        if timer.isRinging {
-            Text("Done", bundle: .module)
-                .foregroundStyle(.accent)
-        } else {
-            Text(timerInterval: timer.startDate...timer.endDate, countsDown: true)
-                .monospacedDigit()
-        }
-    }
+    /// The timer's time, or Done once it rings.
+    ///
+    /// - Parameter reservingWidest: Whether it takes the room of the timer's whole time and of Done all along.
+    private func countdown(reservingWidest: Bool) -> some View {
+        ZStack(alignment: .trailing) {
+            if reservingWidest {
+                // So a timer keeps its shape as it counts down and rings.
+                Group {
+                    Text(
+                        Duration.seconds(timer.cookingTimer.seconds.rounded(.up)),
+                        format: .time(pattern: wholeTimePattern)
+                    )
+                    .monospacedDigit()
 
-    private var cancelButton: some View {
-        Button(action: cancel) {
-            Image(systemName: "xmark")
-                .fontWeight(.semibold)
+                    Text("Done", bundle: .module)
+                }
+                .hidden()
+                .accessibilityHidden(true)
+            }
+
+            if timer.isRinging {
+                Text("Done", bundle: .module)
+                    .foregroundStyle(.accent)
+            } else {
+                Text(timerInterval: timer.startDate...timer.endDate, countsDown: true)
+                    .monospacedDigit()
+            }
         }
-        .buttonStyle(.glass)
-        .buttonBorderShape(.circle)
-        .accessibilityLabel(Self.cancelTitle(isRinging: timer.isRinging))
-        .onGeometryChange(
-            for: CGRect.self,
-            of: { $0.frame(in: .global) },
-            action: { frame in onCancelButtonFrameChange?(frame) }
-        )
+        .font(.title2.weight(.semibold))
+        // Never wrapped, whatever room the timer has: its time is what a cook reads at a glance.
+        .fixedSize()
     }
 
     /// Where the timer comes from: the step naming it, or the cook.
@@ -127,14 +172,26 @@ struct RunningTimerRow: View {
         }
     }
 
+    /// How the timer's countdown shows its whole time, with hours only for a timer of an hour or more.
+    private var wholeTimePattern: Duration.TimeFormatStyle.Pattern {
+        timer.cookingTimer.seconds >= 3_600.0 ? .hourMinuteSecond : .minuteSecond
+    }
+
     private func cancel() {
         presenter.didTapCancelTimer(timer)
     }
 }
 
 #Preview("Running timer rows") {
+    let longTimer = RunningTimer(
+        id: UUID(),
+        cookingTimer: .custom(.seconds(9_000)),
+        endDate: .now.addingTimeInterval(8_100.0),
+        isRinging: false
+    )
+
     VStack(spacing: SousSpacing.medium) {
-        ForEach(RunningTimersPreview.timers()) { timer in
+        ForEach(RunningTimersPreview.timers() + [longTimer]) { timer in
             RunningTimerRow(
                 presenter: CookingFeaturePresenterStub(),
                 timer: timer
