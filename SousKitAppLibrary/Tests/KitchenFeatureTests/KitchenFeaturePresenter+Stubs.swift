@@ -20,6 +20,7 @@ extension KitchenFeaturePresenter {
                 timerScheduler: TimerSchedulerStub()
             ),
             handler: handler,
+            parser: parser,
             recipeFeatureFactory: RecipeFeatureFactory(
                 parser: parser,
                 preferredScaleStore: PreferredScaleStoreStub(),

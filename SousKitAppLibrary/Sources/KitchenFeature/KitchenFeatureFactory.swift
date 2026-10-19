@@ -46,6 +46,7 @@ public struct KitchenFeatureFactory: Sendable {
                 timerScheduler: timerScheduler
             ),
             handler: handler,
+            parser: parser,
             recipeFeatureFactory: RecipeFeatureFactory(
                 parser: parser,
                 preferredScaleStore: preferredScaleStore,

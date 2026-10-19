@@ -5,8 +5,12 @@ import RecipeLibrary
 import SousKit
 
 struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
+    // One symbol for every recipe, until summaries name their own.
+    private static let placeholderSymbol = "fork.knife"
+
     private let cookingFeatureFactory: CookingFeatureFactory
     private let handler: KitchenFeatureHandler
+    private let parser: SousParser
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
@@ -16,6 +20,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     init(
         cookingFeatureFactory: CookingFeatureFactory,
         handler: KitchenFeatureHandler,
+        parser: SousParser,
         recipeFeatureFactory: RecipeFeatureFactory,
         recipeRepository: RecipeRepository,
         restoration: KitchenFeatureRestoration?,
@@ -23,6 +28,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     ) {
         self.cookingFeatureFactory = cookingFeatureFactory
         self.handler = handler
+        self.parser = parser
         self.recipeFeatureFactory = recipeFeatureFactory
         self.recipeRepository = recipeRepository
         self.restorationKeeper = KitchenRestorationKeeper(
@@ -36,7 +42,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         for await result in await recipeRepository.recipeEntries() {
             switch result {
             case .success(let recipeEntries):
-                viewModel.recipeList = .recipes(recipeEntries.sorted(by: Self.isOrderedBefore))
+                viewModel.recipeList = .recipes(recipeEntries.sorted(by: Self.isOrderedBefore).map(makeCard))
                 restore(from: recipeEntries)
 
             case .failure(let error):
@@ -191,6 +197,15 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private func closeCooking() {
         viewModel.openCooking = nil
         restorationKeeper.update({ $0.cooking = nil })
+    }
+
+    private func makeCard(_ recipeEntry: RecipeEntry) -> KitchenRecipeCard {
+        KitchenRecipeCard(
+            recipeEntry: recipeEntry,
+            totalTime: recipeEntry.summary.flatMap({ TotalTime(metadata: $0.metadata, parser: parser) }),
+            placeholderSymbol: Self.placeholderSymbol,
+            placeholderColor: PlaceholderColorPick.color(forTitle: recipeEntry.title)
+        )
     }
 
     /// Whether one recipe is listed before another: by the title its row shows, then by what the repository finds it

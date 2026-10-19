@@ -54,11 +54,9 @@ struct RecipeSummaryRecordTests {
 
     @Test("the ingredient names are kept, each once")
     func ingredientNames() {
-        let summary = record(
-            of: "Soften @{2 cloves} garlic@ in @{2 tbsp} olive oil@, then add @{1 clove} garlic@."
-        ).summary(parsedWith: parser)
+        let kept = record(of: "Soften @{2 cloves} garlic@ in @{2 tbsp} olive oil@, then add @{1 clove} garlic@.")
 
-        #expect(summary.ingredientNames == ["garlic", "olive oil"])
+        #expect(kept.ingredientNames == ["garlic", "olive oil"])
     }
 
     @Test("a file modified at the date kept is unchanged")

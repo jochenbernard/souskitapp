@@ -8,7 +8,7 @@ disagrees with this package, this package is right.
 
 | Layer | Type | Use |
 | --- | --- | --- |
-| Color | `Color+Accent`, `Color+System` | The accent and its wash, and the system colors SwiftUI has no name for. |
+| Color | `Color+Accent`, `Color+System`, `SousPlaceholderColor` | The accent and its wash, the system colors SwiftUI has no name for, and the colors a recipe without a picture is drawn in. |
 | Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.body`, `.subheadline`, `.caption2`. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
@@ -26,6 +26,9 @@ disagrees with this package, this package is right.
   or a card, `tertiaryFill` for a control or a chip, `separator` for a border,
   `.primary` and `.secondary` for text. Dark comes with them, and nothing reaches for
   `@Environment(\.colorScheme)` to pick a value.
+- One exception: `SousPlaceholderColor`, eleven muted kitchen colors, each with a light and a dark value, that a
+  recipe without a picture of its own is drawn in. A system color cannot tell eleven recipes apart. They stay out of
+  every other role, and the accent stays out of them, so it keeps meaning live, here, or do.
 - A UIKit color is a static on `Color` in `Color+System`, so a call site never writes
   `Color(.x)`. It is repeated on `ShapeStyle`, as `.groupedBackground` is, unless SwiftUI
   already names a style after it: a second `.separator` there makes both ambiguous, so

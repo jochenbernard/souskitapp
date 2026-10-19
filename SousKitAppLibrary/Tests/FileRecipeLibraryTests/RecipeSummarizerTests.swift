@@ -62,8 +62,8 @@ final class RecipeSummarizerTests {
         let entries = try await summarize(with: makeSummarizer())
 
         #expect(entries.map(\.title) == ["Crepes"])
-        #expect(entries.first?.summary?.ingredientNames == ["flour", "eggs"])
         #expect(directory.summaryCache.load()["crepes.sous"]?.modificationDate == date)
+        #expect(directory.summaryCache.load()["crepes.sous"]?.ingredientNames == ["flour", "eggs"])
     }
 
     @Test("a file unchanged since its summary was kept is listed from the cache, not read")

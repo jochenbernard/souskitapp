@@ -40,8 +40,8 @@ struct KitchenFeaturePresenterTests {
     private func names(reach expected: [String], in viewModel: KitchenFeatureViewModel) async -> Bool {
         while !Task.isCancelled {
             if
-                case .recipes(let recipeEntries) = viewModel.recipeList,
-                recipeEntries.map(\.name) == expected
+                case .recipes(let cards) = viewModel.recipeList,
+                cards.map(\.recipeEntry.name) == expected
             {
                 return true
             }
@@ -71,12 +71,12 @@ struct KitchenFeaturePresenterTests {
         recipeRepository.finish()
         await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
 
-        guard case .recipes(let recipeEntries) = viewModel.recipeList else {
+        guard case .recipes(let cards) = viewModel.recipeList else {
             Issue.record("The recipe list did not list recipes.")
             return
         }
 
-        #expect(recipeEntries.map(\.name) == ["boeuf bourguignon", "crepes"])
+        #expect(cards.map(\.recipeEntry.name) == ["boeuf bourguignon", "crepes"])
     }
 
     @MainActor
@@ -126,12 +126,12 @@ struct KitchenFeaturePresenterTests {
         recipeRepository.finish()
         await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
 
-        guard case .recipes(let recipeEntries) = viewModel.recipeList else {
+        guard case .recipes(let cards) = viewModel.recipeList else {
             Issue.record("The recipe list did not list recipes.")
             return
         }
 
-        #expect(recipeEntries.map(\.title) == ["Boeuf Bourguignon", "Brioche", "crepes", "Gratin Dauphinois"])
+        #expect(cards.map(\.recipeEntry.title) == ["Boeuf Bourguignon", "Brioche", "crepes", "Gratin Dauphinois"])
     }
 
     @MainActor
@@ -148,12 +148,60 @@ struct KitchenFeaturePresenterTests {
         recipeRepository.finish()
         await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
 
-        guard case .recipes(let recipeEntries) = viewModel.recipeList else {
+        guard case .recipes(let cards) = viewModel.recipeList else {
             Issue.record("The recipe list did not list recipes.")
             return
         }
 
-        #expect(recipeEntries.map(\.id) == ["header-only", "vinaigrette", "vinaigrette-2"])
+        #expect(cards.map(\.id) == ["header-only", "vinaigrette", "vinaigrette-2"])
+    }
+
+    /// The cards the view model holds once the repository lists `recipeEntries` and ends.
+    @MainActor
+    private func cards(listing recipeEntries: [RecipeEntry]) async -> [KitchenRecipeCard] {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = makeViewModel()
+
+        recipeRepository.send(.success(recipeEntries))
+        recipeRepository.finish()
+        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+
+        guard case .recipes(let cards) = viewModel.recipeList else {
+            Issue.record("The recipe list did not list recipes.")
+            return []
+        }
+
+        return cards
+    }
+
+    @MainActor
+    @Test("a card shows the total time its recipe's header gives, and none where it gives none")
+    func cardTimes() async {
+        let cards = await cards(listing: [
+            recipeEntry(
+                id: "boeuf-bourguignon",
+                header: "---\ntitle: Boeuf Bourguignon\nprep-time: 30 min\ncook-time: 3 h\n---"
+            ),
+            recipeEntry(id: "crepes", header: "Whisk @{200 g} flour@."),
+            recipeEntry(named: "unreachable")
+        ])
+
+        #expect(cards.map(\.totalTime) == [.duration(.seconds(12_600.0)), nil, nil])
+    }
+
+    @MainActor
+    @Test("a card's placeholder takes the color its title hashes to and the default symbol")
+    func cardPlaceholders() async {
+        let cards = await cards(listing: [
+            recipeEntry(id: "crepes", header: "---\ntitle: Crepes\n---"),
+            recipeEntry(id: "header-only", header: "---\ntitle: Vinaigrette\n---"),
+            recipeEntry(id: "vinaigrette", header: "---\ntitle: Vinaigrette\n---")
+        ])
+
+        let colors = ["Crepes", "Vinaigrette", "Vinaigrette"].map(PlaceholderColorPick.color(forTitle:))
+
+        #expect(cards.map(\.placeholderColor) == colors)
+        #expect(cards.map(\.placeholderSymbol) == ["fork.knife", "fork.knife", "fork.knife"])
     }
 
     @MainActor
