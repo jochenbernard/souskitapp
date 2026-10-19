@@ -2,7 +2,7 @@ import Foundation
 import RecipeLibrary
 
 /// The recipes in a directory and in the directories inside it, read once and read again on every change to them, with
-/// the pictures they name fetched from iCloud.
+/// the pictures they name fetched from iCloud and the thumbnails of those they no longer name removed.
 @MainActor
 final class RecipeDirectoryMonitor {
     private let listDirectory: @Sendable () throws -> RecipeDirectoryListing
@@ -11,6 +11,7 @@ final class RecipeDirectoryMonitor {
     private let recipeDirectory: RecipeDirectory
     private let settleDelay: Duration
     private let summarizer: RecipeSummarizer
+    private let thumbnailCache: RecipeThumbnailCache?
 
     private var continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation?
     // By path: an event source hears its own directory's entries alone, so each directory listed has one.
@@ -19,6 +20,9 @@ final class RecipeDirectoryMonitor {
     private var fetches: [String: Task<Void, Never>] = [:]
     private var generation = 0
     private var isScoped = false
+    // The pictures whose thumbnails were kept when the cache was last cleared of the others.
+    // swiftlint:disable:next discouraged_optional_collection
+    private var keptThumbnailPictures: Set<RecipePicture>?
     // swiftlint:disable:next discouraged_optional_collection
     private var lastListedRecipes: [ListedRecipe]?
     private var pictures: [String: RecipePicture] = [:]
@@ -31,6 +35,7 @@ final class RecipeDirectoryMonitor {
     /// - Parameters:
     ///   - recipeDirectory: The directory recipes are read from.
     ///   - summarizer: What the recipes' summaries come from.
+    ///   - thumbnailCache: Where the thumbnails of the recipes' pictures are kept, or `nil` where none are.
     ///   - settleDelay: How long a burst of changes is given to finish before the directory is
     ///     read again.
     ///   - listDirectory: Lists the directory with the reader handed to it.
@@ -39,6 +44,7 @@ final class RecipeDirectoryMonitor {
     nonisolated init(
         recipeDirectory: RecipeDirectory,
         summarizer: RecipeSummarizer,
+        thumbnailCache: RecipeThumbnailCache? = nil,
         settleDelay: Duration = .milliseconds(150),
         listDirectory: @escaping @Sendable (RecipeDirectoryReader) throws -> RecipeDirectoryListing = { reader in
             try reader.readListing()
@@ -60,6 +66,7 @@ final class RecipeDirectoryMonitor {
         )
         self.recipeDirectory = recipeDirectory
         self.summarizer = summarizer
+        self.thumbnailCache = thumbnailCache
         self.settleDelay = settleDelay
         self.listDirectory = { try listDirectory(reader) }
         self.present = present
@@ -158,6 +165,7 @@ final class RecipeDirectoryMonitor {
         presenter?.stopPresenting()
         presenter = nil
         lastListedRecipes = nil
+        keptThumbnailPictures = nil
         continuation?.finish()
         continuation = nil
 
@@ -322,8 +330,8 @@ final class RecipeDirectoryMonitor {
         return filesToRead.filter({ $0.availability == .downloaded && fetches[$0.path] == nil })
     }
 
-    /// Sends a result on, dropping a list matching the one sent last, and fetches the pictures its recipes name that
-    /// are not on the device.
+    /// Sends a result on, dropping a list matching the one sent last, fetches the pictures its recipes name that are
+    /// not on the device, and removes the thumbnails of those they do not name.
     private func yield(_ result: Result<[ListedRecipe], Error>) {
         switch result {
         case .success(let listedRecipes):
@@ -336,11 +344,27 @@ final class RecipeDirectoryMonitor {
             pictureFetcher.fetchPictures(namedIn: listedRecipes) { [weak self] in
                 self?.read(afterSettling: true)
             }
+            removeThumbnails(unnamedIn: listedRecipes)
 
         case .failure:
             lastListedRecipes = nil
         }
 
         continuation?.yield(result)
+    }
+
+    /// Removes the thumbnails of the pictures the recipes do not name, once for each set of pictures they name.
+    private func removeThumbnails(unnamedIn listedRecipes: [ListedRecipe]) {
+        let namedPictures = Set(listedRecipes.compactMap(\.entry.picture))
+
+        guard let thumbnailCache, namedPictures != keptThumbnailPictures else {
+            return
+        }
+
+        keptThumbnailPictures = namedPictures
+
+        Task {
+            await thumbnailCache.removeThumbnails(keeping: namedPictures)
+        }
     }
 }

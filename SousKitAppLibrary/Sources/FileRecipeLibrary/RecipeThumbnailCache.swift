@@ -8,7 +8,8 @@ import UniformTypeIdentifiers
 /// The thumbnails of one directory's pictures, kept between launches in a folder the system may clear.
 ///
 /// A thumbnail is found by its picture's path, the picture's modification date, and the size it fills, so a picture
-/// replaced in the directory is never shown as it was. A picture telling no date is never kept.
+/// replaced in the directory is never shown as it was. A picture telling no date is never kept, and only the thumbnails
+/// of a picture's latest contents are.
 struct RecipeThumbnailCache: Sendable {
     private static let jpegQuality = 0.85
 
@@ -90,25 +91,62 @@ struct RecipeThumbnailCache: Sendable {
         }
 
         try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
-        try? data.write(to: fileURL, options: .atomic)
+
+        guard
+            (try? data.write(to: fileURL, options: .atomic)) != nil,
+            let prefix = fileNamePrefix(of: picture)
+        else {
+            return
+        }
+
+        let pictureKey = pictureKey(of: picture)
+        removeThumbnails(where: { $0.hasPrefix(pictureKey) && !$0.hasPrefix(prefix) })
+    }
+
+    /// Removes the thumbnails of every picture but those named, as they are now, the other directories' included.
+    ///
+    /// Reads and removes off the caller's actor.
+    ///
+    /// - Parameter pictures: The pictures whose thumbnails stay.
+    @concurrent
+    func removeThumbnails(keeping pictures: Set<RecipePicture>) async {
+        let prefixes = pictures.compactMap({ fileNamePrefix(of: $0) })
+        removeThumbnails(where: { name in !prefixes.contains(where: { name.hasPrefix($0) }) })
+    }
+
+    private func removeThumbnails(where isRemoved: (String) -> Bool) {
+        let path = folderURL.path(percentEncoded: false)
+
+        guard let names = try? FileManager.default.contentsOfDirectory(atPath: path) else {
+            return
+        }
+
+        for name in names where isRemoved(name) {
+            try? FileManager.default.removeItem(at: folderURL.appending(path: name))
+        }
     }
 
     /// Where a picture's thumbnail at a size is kept, or `nil` for a picture telling no date.
     private func fileURL(of picture: RecipePicture, filling pixelSize: CGSize) -> URL? {
-        guard let modificationDate = picture.modificationDate else {
-            return nil
+        fileNamePrefix(of: picture).map { prefix in
+            folderURL.appending(path: "\(prefix)\(Int(pixelSize.width.rounded()))x\(Int(pixelSize.height.rounded()))")
         }
+    }
 
-        let key = [
-            directoryPath,
-            picture.id,
-            String(modificationDate.timeIntervalSinceReferenceDate),
-            String(Int(pixelSize.width.rounded())),
-            String(Int(pixelSize.height.rounded()))
-        ]
-        .joined(separator: "\n")
-        let name = SHA256.hash(data: Data(key.utf8)).map({ String(format: "%02x", $0) }).joined()
+    /// What the names of a picture's thumbnails of its current contents start with, or `nil` for a picture telling no
+    /// date.
+    private func fileNamePrefix(of picture: RecipePicture) -> String? {
+        picture.modificationDate.map { modificationDate in
+            "\(pictureKey(of: picture))\(Self.digest(of: String(modificationDate.timeIntervalSinceReferenceDate)))-"
+        }
+    }
 
-        return folderURL.appending(path: name)
+    // Hashed with the directory, so two directories' pictures at one path never share a thumbnail.
+    private func pictureKey(of picture: RecipePicture) -> String {
+        "\(Self.digest(of: "\(directoryPath)\n\(picture.id)"))-"
+    }
+
+    private static func digest(of text: String) -> String {
+        SHA256.hash(data: Data(text.utf8)).map({ String(format: "%02x", $0) }).joined()
     }
 }

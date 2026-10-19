@@ -202,6 +202,7 @@ final class FileRecipeRepositoryTests: Sendable {
 
         #expect(thumbnail.width == 400)
         #expect(thumbnail.height == 400)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: directory.thumbnailCacheURL.path()).count == 1)
     }
 
     @Test("a file holding no picture fails to read, and nothing is kept for it")

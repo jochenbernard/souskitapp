@@ -29,19 +29,21 @@ struct FileRecipeRepository: RecipeRepository {
         summaryCacheURL: URL,
         thumbnailCacheURL: URL
     ) {
+        let cache = RecipeThumbnailCache(recipeDirectory: recipeDirectory, folderURL: thumbnailCacheURL)
         self.monitor = RecipeDirectoryMonitor(
             recipeDirectory: recipeDirectory,
             summarizer: RecipeSummarizer(
                 cache: RecipeSummaryCache(recipeDirectory: recipeDirectory, fileURL: summaryCacheURL),
                 parser: parser,
                 textReader: RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .utility)
-            )
+            ),
+            thumbnailCache: cache
         )
         self.parser = parser
         self.pictureReader = RecipePictureReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
         self.recipeDirectory = recipeDirectory
         self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
-        self.thumbnailCache = RecipeThumbnailCache(recipeDirectory: recipeDirectory, folderURL: thumbnailCacheURL)
+        self.thumbnailCache = cache
     }
 
     func listedRecipes() async -> AsyncStream<Result<[ListedRecipe], Error>> {

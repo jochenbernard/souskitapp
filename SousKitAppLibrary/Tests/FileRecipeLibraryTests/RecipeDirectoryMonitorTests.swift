@@ -17,7 +17,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
     func makeMonitor(
         listingSpy: ListingSpy = ListingSpy(),
         presentsDirectory: Bool = true,
-        pictureDownloads: DownloadSpy = DownloadSpy()
+        pictureDownloads: DownloadSpy = DownloadSpy(),
+        thumbnailCache: RecipeThumbnailCache? = nil
     ) -> RecipeDirectoryMonitor {
         RecipeDirectoryMonitor(
             recipeDirectory: directory.recipeDirectory,
@@ -26,6 +27,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
                 parser: SousParser(),
                 textReader: RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .utility)
             ),
+            thumbnailCache: thumbnailCache,
             settleDelay: .milliseconds(20),
             listDirectory: listingSpy.list,
             present: { url, onChange in

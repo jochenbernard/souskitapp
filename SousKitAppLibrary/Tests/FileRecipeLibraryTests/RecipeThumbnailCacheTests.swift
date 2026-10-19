@@ -27,7 +27,11 @@ final class RecipeThumbnailCacheTests {
     }
 
     /// Keeps a thumbnail of one shade of gray for the picture as it was modified at a date.
-    private func keep(gray: Double, modifiedAt date: Date?) throws {
+    private func keep(
+        gray: Double,
+        modifiedAt date: Date?,
+        filling size: CGSize? = nil
+    ) throws {
         let thumbnail = try TemporaryDirectory.picture(
             width: 480,
             height: 360,
@@ -37,7 +41,7 @@ final class RecipeThumbnailCacheTests {
         makeCache().save(
             thumbnail,
             of: picture(modifiedAt: date),
-            filling: pixelSize
+            filling: size ?? pixelSize
         )
     }
 
@@ -73,7 +77,7 @@ final class RecipeThumbnailCacheTests {
         #expect(kept(modifiedAt: modificationDate, filling: CGSize(width: 240.0, height: 180.0)) == nil)
     }
 
-    @Test("a picture replaced since is not found under its new date, and its new thumbnail is kept beside")
+    @Test("a picture replaced since is not found under its new date, and its new thumbnail takes the old one's place")
     func replacedPicture() throws {
         let replacedDate = modificationDate.addingTimeInterval(60.0)
         try keep(gray: 0.2, modifiedAt: modificationDate)
@@ -83,7 +87,62 @@ final class RecipeThumbnailCacheTests {
         try keep(gray: 0.9, modifiedAt: replacedDate)
 
         #expect(try shade(of: try #require(kept(modifiedAt: replacedDate))) > 200)
-        #expect(try shade(of: try #require(kept(modifiedAt: modificationDate))) < 100)
+        #expect(kept(modifiedAt: modificationDate) == nil)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: directory.thumbnailCacheURL.path()).count == 1)
+    }
+
+    @Test("a picture's thumbnails at other sizes stay while its contents do")
+    func otherSizes() throws {
+        let smallerSize = CGSize(width: 240.0, height: 180.0)
+        try keep(gray: 0.2, modifiedAt: modificationDate)
+        try keep(
+            gray: 0.2,
+            modifiedAt: modificationDate,
+            filling: smallerSize
+        )
+
+        #expect(kept(modifiedAt: modificationDate) != nil)
+        #expect(kept(modifiedAt: modificationDate, filling: smallerSize) != nil)
+    }
+
+    @Test("removing the thumbnails of the pictures not named keeps only those of the named pictures as they are now")
+    func removedThumbnails() async throws {
+        let otherDirectory = try TemporaryDirectory(named: "RecipeThumbnailCacheTests")
+        let otherCache = RecipeThumbnailCache(
+            recipeDirectory: otherDirectory.recipeDirectory,
+            folderURL: directory.thumbnailCacheURL
+        )
+        let brioche = RecipePicture(
+            id: "images/brioche.jpg",
+            modificationDate: modificationDate,
+            availability: .downloaded
+        )
+        let thumbnail = try TemporaryDirectory.picture(
+            width: 480,
+            height: 360,
+            gray: 0.2
+        )
+        try keep(gray: 0.2, modifiedAt: modificationDate)
+        makeCache().save(
+            thumbnail,
+            of: brioche,
+            filling: pixelSize
+        )
+        otherCache.save(
+            thumbnail,
+            of: picture(modifiedAt: modificationDate),
+            filling: pixelSize
+        )
+
+        await makeCache().removeThumbnails(keeping: [picture(modifiedAt: modificationDate)])
+
+        #expect(kept(modifiedAt: modificationDate) != nil)
+        #expect(makeCache().thumbnail(of: brioche, filling: pixelSize) == nil)
+        #expect(otherCache.thumbnail(of: picture(modifiedAt: modificationDate), filling: pixelSize) == nil)
+
+        await makeCache().removeThumbnails(keeping: [picture(modifiedAt: modificationDate.addingTimeInterval(60.0))])
+
+        #expect(try FileManager.default.contentsOfDirectory(atPath: directory.thumbnailCacheURL.path()).isEmpty)
     }
 
     @Test("a cache the system cleared finds nothing, and keeps thumbnails again")

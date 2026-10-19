@@ -1,3 +1,4 @@
+import CoreGraphics
 @testable import FileRecipeLibrary
 import Foundation
 import RecipeLibrary
@@ -103,5 +104,53 @@ extension RecipeDirectoryMonitorTests {
         )
 
         #expect(pictures["crepes"]??.id == "images/crepes.jpg")
+    }
+
+    @MainActor
+    @Test("the thumbnails of a picture no recipe names any more are removed, and those of a named one stay")
+    func unnamedPictureThumbnails() async throws {
+        let cache = RecipeThumbnailCache(
+            recipeDirectory: directory.recipeDirectory,
+            folderURL: directory.thumbnailCacheURL
+        )
+        let box = CGSize(width: 480.0, height: 360.0)
+        try directory.makeDirectory(named: "images")
+        try writeRecipe(named: "crepes", naming: "images/crepes.jpg")
+        try writeRecipe(named: "brioche", naming: "images/brioche.jpg")
+        try directory.writeFile(named: "images/crepes.jpg")
+        try directory.writeFile(named: "images/brioche.jpg")
+        let monitor = makeMonitor(thumbnailCache: cache)
+
+        let listed = try await pictures(from: monitor) { pictures in
+            pictures["crepes"]??.id != nil && pictures["brioche"]??.id != nil
+        }
+        let crepes = try #require(listed["crepes"] as? RecipePicture)
+        let brioche = try #require(listed["brioche"] as? RecipePicture)
+        let thumbnail = try TemporaryDirectory.picture(
+            width: 480,
+            height: 360,
+            gray: 0.5
+        )
+        cache.save(
+            thumbnail,
+            of: crepes,
+            filling: box
+        )
+        cache.save(
+            thumbnail,
+            of: brioche,
+            filling: box
+        )
+
+        _ = try await pictures(
+            from: monitor,
+            afterListing: { try writeRecipe(named: "brioche", naming: "https://example.com/brioche.jpg") },
+            until: { pictures in pictures["brioche"] == .some(nil) }
+        )
+        // Long enough for the removal, which runs off the main actor, to end.
+        try await Task.sleep(for: .milliseconds(500))
+
+        #expect(cache.thumbnail(of: crepes, filling: box) != nil)
+        #expect(cache.thumbnail(of: brioche, filling: box) == nil)
     }
 }
