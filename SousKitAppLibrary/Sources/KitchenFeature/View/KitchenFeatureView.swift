@@ -6,13 +6,7 @@ import SousKit
 import SwiftUI
 
 struct KitchenFeatureView: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.scenePhase) private var scenePhase
-
-    @ScaledMetric(relativeTo: .body) private var scaledCardWidth = Self.minimumCardWidth
-
-    // Two columns on any iPhone; at accessibility sizes the width grows with the text, which leaves the iPhone one.
-    private static let minimumCardWidth = 160.0
 
     @Namespace private var cookingTransition
 
@@ -54,9 +48,6 @@ struct KitchenFeatureView: View {
         folderPage(at: [])
             .navigationTitle(viewModel.recipeRepositoryName)
             .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
-            .task {
-                await presenter.viewDidAppear()
-            }
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .active:
@@ -74,99 +65,11 @@ struct KitchenFeatureView: View {
     }
 
     private func folderPage(at path: [String]) -> some View {
-        ScrollView {
-            // A blank page, rather than a list the restored screens cover a moment later.
-            if !viewModel.isRestoring {
-                folderContents(at: path)
-                    .sousPagePadding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .sousPage()
-    }
-
-    @ViewBuilder
-    private func folderContents(at path: [String]) -> some View {
-        switch viewModel.recipeList {
-        case .reading:
-            readingNote
-
-        case .recipes(let topFolder):
-            if let folder = topFolder.folder(at: path), !folder.isEmpty {
-                folderView(folder)
-            } else {
-                emptyNote
-            }
-
-        case .failure(let message):
-            failureNote(message)
-        }
-    }
-
-    private var readingNote: some View {
-        SousActivityNote {
-            Text("Reading the folder.", bundle: .module)
-        }
-    }
-
-    private func folderView(_ folder: KitchenFolder) -> some View {
-        // The screen showing the folder, which its rows push over.
-        let origin = folder.path.isEmpty ? nil : KitchenScreen.folder(folder.path)
-
-        return VStack(alignment: .leading, spacing: SousSpacing.medium) {
-            if !folder.folders.isEmpty {
-                folderRows(folder.folders, origin: origin)
-            }
-
-            if !folder.cards.isEmpty {
-                recipeCards(folder.cards, origin: origin)
-            }
-        }
-    }
-
-    // A plain stand-in until folders are designed.
-    private func folderRows(_ folders: [KitchenFolder], origin: KitchenScreen?) -> some View {
-        VStack(alignment: .leading, spacing: SousSpacing.small) {
-            ForEach(folders) { folder in
-                Button(
-                    action: { presenter.didPush(.folder(folder.path), from: origin) },
-                    label: {
-                        Label(folder.name, systemImage: "folder")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .sousRow()
-                    }
-                )
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private func recipeCards(_ cards: [KitchenRecipeCard], origin: KitchenScreen?) -> some View {
-        RecipeCardGrid(
-            minimumColumnWidth: dynamicTypeSize.isAccessibilitySize ? scaledCardWidth : Self.minimumCardWidth,
-            spacing: SousSpacing.medium
-        ) {
-            ForEach(cards) { card in
-                Button(
-                    action: { presenter.didPush(.recipe(card.recipeEntry), from: origin) },
-                    label: { RecipeCard(card) }
-                )
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private var emptyNote: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.small) {
-            Text("Nothing here yet", bundle: .module)
-
-            Text("Put .sous files in this folder and they are listed here.", bundle: .module)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private func failureNote(_ message: String) -> some View {
-        SousFailureNote(Text("This folder could not be read", bundle: .module), message: message)
+        KitchenFolderPage(
+            path: path,
+            presenter: presenter,
+            viewModel: viewModel
+        )
     }
 
     @ViewBuilder

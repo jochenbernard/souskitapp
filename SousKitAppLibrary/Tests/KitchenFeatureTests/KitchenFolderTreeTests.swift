@@ -79,4 +79,49 @@ struct KitchenFolderTreeTests {
     func empty() {
         #expect(top(holding: []).isEmpty)
     }
+
+    @Test("a folder counts the recipes anywhere below it")
+    func recipeCount() throws {
+        let folder = top(holding: ["crepes", "French/Classic/quiche-lorraine", "French/Comfort food/gratin-dauphinois"])
+
+        #expect(folder.recipeCount == 3)
+        #expect(try #require(folder.folder(at: ["French"])).recipeCount == 2)
+        #expect(try #require(folder.folder(at: ["French", "Classic"])).recipeCount == 1)
+    }
+
+    @Test("a folder stacks its own recipes first, then those in the folders inside it, four at most")
+    func stackedCards() throws {
+        let folder = top(
+            holding: [
+                "Baking/Classic/brioche",
+                "Baking/crepes",
+                "Baking/madeleines",
+                "Baking/Comfort food/gratin-dauphinois",
+                "Baking/Classic/croque-monsieur"
+            ]
+        )
+        let baking = try #require(folder.folder(at: ["Baking"]))
+
+        #expect(
+            baking.stackedCards.map(\.id) == [
+                "Baking/crepes",
+                "Baking/madeleines",
+                "Baking/Classic/brioche",
+                "Baking/Classic/croque-monsieur"
+            ]
+        )
+    }
+
+    @Test("a folder of one recipe stacks one card, and a folder of only folders stacks the recipes below it")
+    func shortStacks() throws {
+        let folder = top(holding: ["French/Classic/quiche-lorraine", "French/Comfort food/gratin-dauphinois"])
+
+        #expect(try #require(folder.folder(at: ["French", "Classic"])).stackedCards.map(\.id) == [
+            "French/Classic/quiche-lorraine"
+        ])
+        #expect(try #require(folder.folder(at: ["French"])).stackedCards.map(\.id) == [
+            "French/Classic/quiche-lorraine",
+            "French/Comfort food/gratin-dauphinois"
+        ])
+    }
 }

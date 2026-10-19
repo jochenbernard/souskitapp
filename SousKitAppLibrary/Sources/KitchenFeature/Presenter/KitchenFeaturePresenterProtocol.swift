@@ -1,6 +1,6 @@
 /// What ``KitchenFeatureView`` reports to.
 protocol KitchenFeaturePresenterProtocol {
-    /// The view is on screen, and the call is cancelled when it leaves.
+    /// A page of recipes is on screen, the top one or a folder's, and the call is cancelled when it leaves.
     @MainActor
     func viewDidAppear() async
 

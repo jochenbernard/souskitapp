@@ -1,6 +1,47 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld recipes" : {
+      "comment" : "How many recipes a folder holds, its own and those in the folders inside it, under the folder's name.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recipe"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recipes"
+                }
+              }
+            }
+          }
+        },
+        "nl-BE" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recept"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recepten"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Downloading from iCloud" : {
       "comment" : "What VoiceOver reads for the spinner on a recipe coming down from iCloud.",
       "localizations" : {

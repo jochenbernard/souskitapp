@@ -10,6 +10,12 @@ struct KitchenFolder: Identifiable, Hashable {
     /// The recipes directly in this folder, as cards in the order they are shown.
     let cards: [KitchenRecipeCard]
 
+    /// How many recipes sit anywhere below this folder.
+    let recipeCount: Int
+
+    /// The first few recipes anywhere below this folder, in the order they are shown, which picture it.
+    let stackedCards: [KitchenRecipeCard]
+
     var id: [String] {
         path
     }

@@ -53,6 +53,10 @@ struct MockRecipeRepositoryTests {
             try await currentRecipeEntry(withID: "French/Comfort food/gratin-dauphinois.sous", of: repository)
                 .folderPath == ["French", "Comfort food"]
         )
+        #expect(
+            try await currentRecipeEntry(withID: "Lunch/French/Classic/croque-monsieur.sous", of: repository)
+                .folderPath == ["Lunch", "French", "Classic"]
+        )
     }
 
     @MainActor

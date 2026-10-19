@@ -6,7 +6,7 @@ extension MockRecipe {
     ///
     /// The ten examples of the specification sit at the top among recipes that are empty, malformed, annotated in every
     /// way the format allows, timed in seconds, or all ten examples in one. The folders under them hold examples again,
-    /// two levels deep in places, under the same file names as those at the top. One folder holds only folders, one
+    /// down to three levels deep, under the same file names as those at the top. One folder holds only folders, one
     /// holds no recipe, and one is hidden.
     static let all: [MockRecipe] = [
         MockRecipe(path: ".archive/vinaigrette.sous", text: MockRecipes.vinaigrette),
@@ -50,6 +50,7 @@ extension MockRecipe {
         ),
         MockRecipe(path: "header-only.sous", text: MockRecipes.headerOnly),
         MockRecipe(path: "images/gratin-dauphinois.jpg", text: nil),
+        MockRecipe(path: "Lunch/French/Classic/croque-monsieur.sous", text: MockRecipes.croqueMonsieur),
         MockRecipe(path: "madeleines.sous", text: MockRecipes.madeleines),
         MockRecipe(path: "malformed.sous", text: MockRecipes.malformed),
         MockRecipe(path: "moules-marinieres.sous", text: MockRecipes.moulesMarinieres),

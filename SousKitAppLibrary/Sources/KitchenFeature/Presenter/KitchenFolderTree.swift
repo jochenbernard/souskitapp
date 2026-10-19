@@ -3,6 +3,9 @@ import RecipeLibrary
 
 /// Builds the folders the kitchen lists out of the recipes a repository yields, each carrying the path of its folder.
 enum KitchenFolderTree {
+    /// The most recipes a folder's picture stacks.
+    static let stackedCardLimit = 4
+
     /// The folder at a path, holding the folders below it that hold recipes and the recipes directly in it.
     ///
     /// - Parameters:
@@ -21,12 +24,19 @@ enum KitchenFolderTree {
             }
         }
 
+        let folders = innerEntries.keys.sorted(by: isOrderedBefore).map { name in
+            folder(at: path + [name], holding: innerEntries[name] ?? [])
+        }
+        let cards = ownEntries.sorted(by: isOrderedBefore).map(KitchenFeaturePresenter.card(for:))
+        // Its own recipes first, then those in the folders inside it.
+        let stackedCards = cards.prefix(stackedCardLimit) + folders.lazy.flatMap(\.stackedCards)
+
         return KitchenFolder(
             path: path,
-            folders: innerEntries.keys.sorted(by: isOrderedBefore).map { name in
-                folder(at: path + [name], holding: innerEntries[name] ?? [])
-            },
-            cards: ownEntries.sorted(by: isOrderedBefore).map(KitchenFeaturePresenter.card(for:))
+            folders: folders,
+            cards: cards,
+            recipeCount: recipeEntries.count,
+            stackedCards: Array(stackedCards.prefix(stackedCardLimit))
         )
     }
 
