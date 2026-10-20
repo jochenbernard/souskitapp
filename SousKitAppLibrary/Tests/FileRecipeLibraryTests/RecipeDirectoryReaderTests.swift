@@ -5,14 +5,17 @@ import Testing
 
 @Suite("Recipe directory reader")
 final class RecipeDirectoryReaderTests {
+    private let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
     private let directory: TemporaryDirectory
+    private let fileStatuses = FileStatusStub()
 
     init() throws {
         self.directory = try TemporaryDirectory(named: "RecipeDirectoryReaderTests")
     }
 
     private func readListing() throws -> RecipeDirectoryListing {
-        try RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory).readListing()
+        try RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory, fileStatus: fileStatuses.status)
+            .readListing()
     }
 
     private func readRecipeFiles() throws -> [RecipeFile] {
@@ -180,18 +183,50 @@ final class RecipeDirectoryReaderTests {
 
     @Test("a file on disk is listed with the date its contents last changed")
     func modificationDate() throws {
-        let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
         try directory.writeFile(named: "crepes.sous")
         try directory.setModificationDate(date, ofFileNamed: "crepes.sous")
 
         #expect(try readRecipeFiles().map(\.modificationDate) == [date])
     }
 
-    @Test("a placeholder is listed without its own date, which is not the recipe's")
+    @Test("a placeholder is listed with the date iCloud promises for the recipe, not with its own")
     func placeholderModificationDate() throws {
         try directory.writeFile(named: ".Crepes.sous.icloud")
+        fileStatuses.set(.notDownloaded(modifiedAt: date), forFileNamed: "Crepes.sous")
 
-        #expect(try readRecipeFiles().map(\.modificationDate) == [nil])
+        #expect(try readRecipeFiles().map(\.modificationDate) == [date])
+    }
+
+    @Test("a file whose newer version waits in iCloud is listed as outdated and on its way, at its date")
+    func outdatedFile() throws {
+        try directory.writeFile(named: "crepes.sous")
+        fileStatuses.set(.outdated(modifiedAt: date), forFileNamed: "crepes.sous")
+
+        let recipeFiles = try readRecipeFiles()
+
+        #expect(recipeFiles.map(\.isOutdated) == [true])
+        #expect(recipeFiles.map(\.availability) == [.downloading])
+        #expect(recipeFiles.map(\.modificationDate) == [date])
+    }
+
+    @Test("a file deep in a directory whose newer version waits in iCloud is listed as outdated and on its way")
+    func outdatedFileInDirectory() throws {
+        try directory.makeDirectory(named: "French/Classic")
+        try directory.writeFile(named: "French/Classic/crepes.sous")
+        fileStatuses.set(.outdated(modifiedAt: date), forFileNamed: "crepes.sous")
+
+        let recipeFiles = try readRecipeFiles()
+
+        #expect(recipeFiles.map(\.path) == ["French/Classic/crepes.sous"])
+        #expect(recipeFiles.map(\.isOutdated) == [true])
+        #expect(recipeFiles.map(\.availability) == [.downloading])
+    }
+
+    @Test("a file on disk is not outdated")
+    func currentFile() throws {
+        try directory.writeFile(named: "crepes.sous")
+
+        #expect(try readRecipeFiles().map(\.isOutdated) == [false])
     }
 
     @Test("a placeholder for something that is not a recipe is left out")

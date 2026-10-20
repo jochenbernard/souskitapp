@@ -99,7 +99,7 @@ actor RecipeSummarizer {
         }
     }
 
-    /// Reads files and keeps their summaries, fetching from iCloud the ones not on the device.
+    /// Reads files and keeps their summaries, fetching from iCloud the ones not on the device at their newest version.
     ///
     /// A file that cannot be read keeps the summary it had. Cancelling the task stops at the file being read.
     ///
@@ -108,9 +108,7 @@ actor RecipeSummarizer {
         var hasRead = false
 
         for file in files {
-            guard
-                let contents = try? await textReader.read(path: file.path, availability: file.availability)
-            else {
+            guard let contents = try? await textReader.read(path: file.path) else {
                 continue
             }
 

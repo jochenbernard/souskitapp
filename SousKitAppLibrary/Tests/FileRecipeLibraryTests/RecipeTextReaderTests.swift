@@ -3,9 +3,12 @@ import Foundation
 import RecipeLibrary
 import Testing
 
-@Suite("Recipe text reader")
+@Suite("Recipe text reader", .timeLimit(.minutes(1)))
 final class RecipeTextReaderTests {
+    private let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
     private let directory: TemporaryDirectory
+    private let downloads = DownloadSpy()
+    private let fileStatuses = FileStatusStub()
 
     init() throws {
         self.directory = try TemporaryDirectory(named: "RecipeTextReaderTests")
@@ -13,7 +16,22 @@ final class RecipeTextReaderTests {
 
     private func readText(of recipeEntry: RecipeEntry) async throws -> String {
         let reader = RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .userInitiated)
-        return try await reader.read(path: recipeEntry.path, availability: recipeEntry.availability).text
+        return try await reader.read(path: recipeEntry.path).text
+    }
+
+    /// Reads `crepes.sous` the way iCloud reports it, calling `sleep` between checks for its newest version.
+    private func readCrepes(
+        sleep: @escaping @Sendable (Duration) async throws -> Void = { _ in Issue.record("waited for a newer version") }
+    ) async throws -> String {
+        let reader = RecipeTextReader(
+            recipeDirectory: directory.recipeDirectory,
+            qualityOfService: .userInitiated,
+            fileStatus: fileStatuses.status,
+            startDownloading: downloads.startDownloading,
+            sleep: sleep
+        )
+
+        return try await reader.read(path: "crepes.sous").text
     }
 
     @Test("a recipe reads back as it was written")
@@ -61,6 +79,53 @@ final class RecipeTextReaderTests {
         await #expect(throws: (any Error).self) {
             try await readText(of: recipeEntry)
         }
+    }
+
+    @Test("a recipe outdated on the device is fetched, and read once its newest version lands")
+    func outdatedRecipe() async throws {
+        try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes\n---")
+        fileStatuses.set(.outdated(modifiedAt: date, isDataless: false), forFileNamed: "crepes.sous")
+
+        // The newest version lands while the reader waits for it.
+        let text = try await readCrepes { [directory, fileStatuses] _ in
+            try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes Suzette\n---")
+            fileStatuses.set(.current(modifiedAt: nil), forFileNamed: "crepes.sous")
+        }
+
+        #expect(text == "---\ntitle: Crepes Suzette\n---")
+        #expect(downloads.fileNames == ["crepes.sous"])
+    }
+
+    @Test("a recipe outdated and missing its contents is fetched and read without checking for its newest version")
+    func outdatedDatalessRecipe() async throws {
+        try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes Suzette\n---")
+        fileStatuses.set(.outdated(modifiedAt: date), forFileNamed: "crepes.sous")
+
+        let text = try await readCrepes()
+
+        #expect(text == "---\ntitle: Crepes Suzette\n---")
+        #expect(downloads.fileNames == ["crepes.sous"])
+    }
+
+    @Test("a recipe iCloud is already fetching is not asked for again")
+    func recipeOnItsWay() async throws {
+        try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes Suzette\n---")
+        fileStatuses.set(.outdated(modifiedAt: date, isDownloading: true), forFileNamed: "crepes.sous")
+
+        let text = try await readCrepes()
+
+        #expect(text == "---\ntitle: Crepes Suzette\n---")
+        #expect(downloads.fileNames.isEmpty)
+    }
+
+    @Test("a recipe current on the device is read without asking iCloud for it")
+    func currentRecipe() async throws {
+        try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes\n---")
+        fileStatuses.set(.current(modifiedAt: date), forFileNamed: "crepes.sous")
+
+        _ = try await readCrepes()
+
+        #expect(downloads.fileNames.isEmpty)
     }
 
     @Test("a recipe that is not valid UTF-8 throws")
