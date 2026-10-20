@@ -3,30 +3,30 @@ import RecipeLibrary
 
 /// Reads the recipes sitting directly in a directory, leaving the directories inside it alone.
 struct RecipeDirectoryReader: Sendable {
-    private static let resourceKeys: Set<URLResourceKey> = [
-        .contentModificationDateKey,
-        .isDirectoryKey,
-        .isUbiquitousItemKey,
-        .ubiquitousItemDownloadingStatusKey,
-        .ubiquitousItemIsDownloadingKey
-    ]
-
     private static let placeholderExtension = "icloud"
     private static let recipeExtension = "sous"
 
+    private let fileStatus: @Sendable (URL) -> RecipeFileStatus?
     private let recipeDirectory: RecipeDirectory
 
     /// Creates a reader.
     ///
-    /// - Parameter recipeDirectory: The directory recipes are read from.
-    init(recipeDirectory: RecipeDirectory) {
+    /// - Parameters:
+    ///   - recipeDirectory: The directory recipes are read from.
+    ///   - fileStatus: What the file system reports of the file at a URL, or of the file iCloud promises there.
+    init(
+        recipeDirectory: RecipeDirectory,
+        fileStatus: @escaping @Sendable (URL) -> RecipeFileStatus? = RecipeFileStatus.read(at:)
+    ) {
         self.recipeDirectory = recipeDirectory
+        self.fileStatus = fileStatus
     }
 
     /// Reads the directory's top level.
     ///
-    /// It downloads nothing: a recipe held only in iCloud is listed as
-    /// ``RecipeAvailability/notDownloaded``.
+    /// It downloads nothing: a recipe held only in iCloud is listed as ``RecipeAvailability/notDownloaded``, and one
+    /// whose newer version waits in iCloud as outdated and ``RecipeAvailability/downloading``, since it is fetched
+    /// once listed.
     ///
     /// - Returns: The recipe files found, ordered by path.
     /// - Throws: Whatever reading the directory throws.
@@ -34,14 +34,14 @@ struct RecipeDirectoryReader: Sendable {
         let url = recipeDirectory.url
 
         return try url.withSecurityScope {
-            try NSFileCoordinator.coordinateReading(at: url, Self.recipeFiles(inDirectoryAt:))
+            try NSFileCoordinator.coordinateReading(at: url, recipeFiles(inDirectoryAt:))
         }
     }
 
-    private static func recipeFiles(inDirectoryAt directory: URL) throws -> [RecipeFile] {
+    private func recipeFiles(inDirectoryAt directory: URL) throws -> [RecipeFile] {
         let entries = try FileManager.default.contentsOfDirectory(
             at: directory,
-            includingPropertiesForKeys: Array(resourceKeys),
+            includingPropertiesForKeys: [.isDirectoryKey],
             options: []
         )
 
@@ -51,15 +51,16 @@ struct RecipeDirectoryReader: Sendable {
         for entry in entries {
             let entryName = entry.lastPathComponent
 
-            if let name = recipeFileName(forPlaceholderNamed: entryName) {
+            if let name = Self.recipeFileName(forPlaceholderNamed: entryName) {
                 // Built off the entry, not off `directory`: listing resolves the symlinks in
                 // front of a directory, and a URL built the other way matches no entry.
                 let url = entry.deletingLastPathComponent().appending(path: name)
                 placeholders.append(placeholderFile(named: name, at: url))
-            } else if isRecipeFileName(entryName) {
+            } else if Self.isRecipeFileName(entryName) {
                 guard
-                    let values = try? entry.resourceValues(forKeys: resourceKeys),
-                    values.isDirectory == false
+                    let values = try? entry.resourceValues(forKeys: [.isDirectoryKey]),
+                    values.isDirectory == false,
+                    let status = fileStatus(entry)
                 else {
                     continue
                 }
@@ -68,8 +69,9 @@ struct RecipeDirectoryReader: Sendable {
                 recipeFiles.append(
                     RecipeFile(
                         path: entryName,
-                        availability: availability(of: values),
-                        modificationDate: values.contentModificationDate
+                        availability: Self.availability(of: status),
+                        modificationDate: status.modificationDate,
+                        isOutdated: status.downloadingStatus == .outdated
                     )
                 )
             }
@@ -106,24 +108,26 @@ struct RecipeDirectoryReader: Sendable {
     /// A placeholder stays in the directory while the fetch it triggered runs, so a recipe on its
     /// way down is reported as ``RecipeAvailability/downloading`` rather than as absent. The
     /// recipe's own URL is asked, not the placeholder's: the placeholder's dates are its own.
-    private static func placeholderFile(named name: String, at url: URL) -> RecipeFile {
-        let values = try? url.resourceValues(forKeys: resourceKeys)
+    private func placeholderFile(named name: String, at url: URL) -> RecipeFile {
+        let status = fileStatus(url)
 
         return RecipeFile(
             path: name,
-            availability: values?.ubiquitousItemIsDownloading == true ? .downloading : .notDownloaded,
-            modificationDate: values?.contentModificationDate
+            availability: status?.isDownloading == true ? .downloading : .notDownloaded,
+            modificationDate: status?.modificationDate
         )
     }
 
-    private static func availability(of values: URLResourceValues) -> RecipeAvailability {
-        guard
-            values.isUbiquitousItem == true,
-            values.ubiquitousItemDownloadingStatus == .notDownloaded
-        else {
-            return .downloaded
-        }
+    private static func availability(of status: RecipeFileStatus) -> RecipeAvailability {
+        switch status.downloadingStatus {
+        case .current:
+            .downloaded
 
-        return values.ubiquitousItemIsDownloading == true ? .downloading : .notDownloaded
+        case .outdated:
+            .downloading
+
+        case .notDownloaded:
+            status.isDownloading ? .downloading : .notDownloaded
+        }
     }
 }

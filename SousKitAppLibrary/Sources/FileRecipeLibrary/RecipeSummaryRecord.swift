@@ -30,14 +30,13 @@ struct RecipeSummaryRecord: Sendable, Hashable, Codable {
 
     /// Whether the summary still holds for a file as it is listed now.
     ///
-    /// A placeholder telling no date counts as unchanged, so a recipe summarized once stays in iCloud until it is
-    /// opened.
+    /// An outdated file has changed whatever its date says, and a file telling no date counts as changed.
     ///
     /// - Parameter file: The file the summary was read from.
     /// - Returns: Whether the file is unchanged since.
     func isCurrent(for file: RecipeFile) -> Bool {
-        guard let fileModificationDate = file.modificationDate else {
-            return file.availability != .downloaded
+        guard !file.isOutdated, let fileModificationDate = file.modificationDate else {
+            return false
         }
 
         return fileModificationDate == modificationDate

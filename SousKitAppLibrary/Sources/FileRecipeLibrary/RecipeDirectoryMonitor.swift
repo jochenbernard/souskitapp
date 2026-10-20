@@ -28,15 +28,17 @@ final class RecipeDirectoryMonitor {
     ///   - summarizer: What the recipes' summaries come from.
     ///   - settleDelay: How long a burst of changes is given to finish before the directory is
     ///     read again.
+    ///   - fileStatus: What the file system reports of the file at a URL, or of the file iCloud promises there.
     nonisolated init(
         recipeDirectory: RecipeDirectory,
         summarizer: RecipeSummarizer,
-        settleDelay: Duration = .milliseconds(150)
+        settleDelay: Duration = .milliseconds(150),
+        fileStatus: @escaping @Sendable (URL) -> RecipeFileStatus? = RecipeFileStatus.read(at:)
     ) {
         self.recipeDirectory = recipeDirectory
         self.summarizer = summarizer
         self.settleDelay = settleDelay
-        self.reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory)
+        self.reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory, fileStatus: fileStatus)
     }
 
     /// Lets go of what outlives a released monitor: `NSFileCoordinator` retains a file presenter,
