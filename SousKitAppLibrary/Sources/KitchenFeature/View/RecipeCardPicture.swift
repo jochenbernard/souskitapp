@@ -102,7 +102,7 @@ struct RecipeCardPicture: View {
                 thumbnails: KitchenThumbnails(),
                 presenter: KitchenFeaturePresenterStub()
             )
-            .aspectRatio(4.0 / 3.0, contentMode: .fit)
+            .aspectRatio(16.0 / 10.0, contentMode: .fit)
         }
     }
     .sousPagePadding()
