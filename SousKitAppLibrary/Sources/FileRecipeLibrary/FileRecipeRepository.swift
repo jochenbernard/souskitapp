@@ -23,11 +23,17 @@ struct FileRecipeRepository: RecipeRepository {
     ///   - recipeDirectory: The directory the recipes sit in.
     ///   - summaryCacheURL: Where the recipes' summaries are kept between launches, outside the directory.
     ///   - thumbnailCacheURL: Where the thumbnails of the recipes' pictures are kept, outside the directory.
+    ///   - fileStatus: What the file system reports of the file at a URL, or of the file iCloud promises there.
+    ///   - startDownloading: Asks iCloud for a file's contents, returning before they arrive.
     init(
         parser: SousParser,
         recipeDirectory: RecipeDirectory,
         summaryCacheURL: URL,
-        thumbnailCacheURL: URL
+        thumbnailCacheURL: URL,
+        fileStatus: @escaping @Sendable (URL) -> RecipeFileStatus? = RecipeFileStatus.read(at:),
+        startDownloading: @escaping @Sendable (URL) throws -> Void = { url in
+            try FileManager.default.startDownloadingUbiquitousItem(at: url)
+        }
     ) {
         let cache = RecipeThumbnailCache(recipeDirectory: recipeDirectory, folderURL: thumbnailCacheURL)
         self.monitor = RecipeDirectoryMonitor(
@@ -35,14 +41,31 @@ struct FileRecipeRepository: RecipeRepository {
             summarizer: RecipeSummarizer(
                 cache: RecipeSummaryCache(recipeDirectory: recipeDirectory, fileURL: summaryCacheURL),
                 parser: parser,
-                textReader: RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .utility)
+                textReader: RecipeTextReader(
+                    recipeDirectory: recipeDirectory,
+                    qualityOfService: .utility,
+                    fileStatus: fileStatus,
+                    startDownloading: startDownloading
+                )
             ),
-            thumbnailCache: cache
+            thumbnailCache: cache,
+            fileStatus: fileStatus,
+            startDownloadingPicture: startDownloading
         )
         self.parser = parser
-        self.pictureReader = RecipePictureReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
+        self.pictureReader = RecipePictureReader(
+            recipeDirectory: recipeDirectory,
+            qualityOfService: .userInitiated,
+            fileStatus: fileStatus,
+            startDownloading: startDownloading
+        )
         self.recipeDirectory = recipeDirectory
-        self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
+        self.textReader = RecipeTextReader(
+            recipeDirectory: recipeDirectory,
+            qualityOfService: .userInitiated,
+            fileStatus: fileStatus,
+            startDownloading: startDownloading
+        )
         self.thumbnailCache = cache
     }
 

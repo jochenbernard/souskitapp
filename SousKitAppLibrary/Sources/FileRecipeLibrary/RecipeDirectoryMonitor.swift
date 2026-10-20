@@ -63,6 +63,7 @@ final class RecipeDirectoryMonitor {
             reader: RecipePictureReader(
                 recipeDirectory: recipeDirectory,
                 qualityOfService: .utility,
+                fileStatus: fileStatus,
                 startDownloading: startDownloadingPicture
             )
         )
