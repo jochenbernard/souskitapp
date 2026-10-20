@@ -30,12 +30,14 @@ final class RecipeDirectoryMonitor {
     ///   - summarizer: What the recipes' summaries come from.
     ///   - settleDelay: How long a burst of changes is given to finish before the directory is
     ///     read again.
+    ///   - fileStatus: What the file system reports of the file at a URL, or of the file iCloud promises there.
     ///   - listDirectory: Lists the directory with the reader handed to it.
     ///   - present: Presents the directory at the URL, calling the closure on every change, or presents nothing.
     nonisolated init(
         recipeDirectory: RecipeDirectory,
         summarizer: RecipeSummarizer,
         settleDelay: Duration = .milliseconds(150),
+        fileStatus: @escaping @Sendable (URL) -> RecipeFileStatus? = RecipeFileStatus.read(at:),
         listDirectory: @escaping @Sendable (RecipeDirectoryReader) throws -> RecipeDirectoryListing = { reader in
             try reader.readListing()
         },
@@ -43,7 +45,7 @@ final class RecipeDirectoryMonitor {
             DirectoryPresenter(directoryURL: url, onChange: onChange)
         }
     ) {
-        let reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory)
+        let reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory, fileStatus: fileStatus)
         self.recipeDirectory = recipeDirectory
         self.summarizer = summarizer
         self.settleDelay = settleDelay

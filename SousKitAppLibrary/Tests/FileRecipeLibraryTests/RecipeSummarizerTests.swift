@@ -9,6 +9,7 @@ final class RecipeSummarizerTests {
     private let parser = SousParser()
     private let date = Date(timeIntervalSinceReferenceDate: 800_000_000.0)
     private let downloads = DownloadSpy()
+    private let fileStatuses = FileStatusStub()
 
     private let directory: TemporaryDirectory
 
@@ -23,6 +24,7 @@ final class RecipeSummarizerTests {
             textReader: RecipeTextReader(
                 recipeDirectory: directory.recipeDirectory,
                 qualityOfService: .utility,
+                fileStatus: fileStatuses.status,
                 startDownloading: downloads.startDownloading
             ),
             // Every read written at once, so the cache can be checked right after.
@@ -31,7 +33,9 @@ final class RecipeSummarizerTests {
     }
 
     private func listedFiles() throws -> [RecipeFile] {
-        try RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory).readListing().recipeFiles
+        try RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory, fileStatus: fileStatuses.status)
+            .readListing()
+            .recipeFiles
     }
 
     /// Lists the directory and reads what has to be read, as the monitor does, returning the entries after.
@@ -181,6 +185,7 @@ final class RecipeSummarizerTests {
     @Test("a recipe in iCloud whose summary is kept stays in iCloud")
     func cachedPlaceholderStays() async throws {
         try directory.writeFile(named: ".crepes.sous.icloud")
+        fileStatuses.set(.notDownloaded(modifiedAt: date), forFileNamed: "crepes.sous")
         cacheCrepes(title: "Crepes", modifiedAt: date)
 
         let entries = try await summarize(with: makeSummarizer())
@@ -216,6 +221,46 @@ final class RecipeSummarizerTests {
         )
 
         #expect(await summarizer.filesToRead(in: [file]).isEmpty)
+        #expect(downloads.fileNames.isEmpty)
+    }
+
+    @Test("a recipe outdated on the device is fetched and read again at an unchanged date, replacing its summary")
+    func outdatedFileIsFetched() async throws {
+        try writeCrepes(title: "Crepes Suzette")
+        fileStatuses.set(.outdated(modifiedAt: date), forFileNamed: "crepes.sous")
+        cacheCrepes(title: "Crepes", modifiedAt: date)
+
+        let entries = try await summarize(with: makeSummarizer())
+
+        #expect(entries.map(\.title) == ["Crepes Suzette"])
+        #expect(downloads.fileNames == ["crepes.sous"])
+
+        let nextLaunch = makeSummarizer()
+
+        #expect(await nextLaunch.recipeEntries(for: try listedFiles()).map(\.title) == ["Crepes Suzette"])
+    }
+
+    @Test("a recipe current on the device with its date unchanged is not read again")
+    func currentFileStays() async throws {
+        try writeCrepes(title: "Crepes Suzette")
+        fileStatuses.set(.current(modifiedAt: date), forFileNamed: "crepes.sous")
+        cacheCrepes(title: "Crepes", modifiedAt: date)
+
+        let entries = try await summarize(with: makeSummarizer())
+
+        #expect(entries.map(\.title) == ["Crepes"])
+        #expect(downloads.fileNames.isEmpty)
+    }
+
+    @Test("an outdated recipe iCloud is already fetching is read again without asking for it")
+    func outdatedFileOnItsWay() async throws {
+        try writeCrepes(title: "Crepes Suzette")
+        fileStatuses.set(.outdated(modifiedAt: date, isDownloading: true), forFileNamed: "crepes.sous")
+        cacheCrepes(title: "Crepes", modifiedAt: date)
+
+        let entries = try await summarize(with: makeSummarizer())
+
+        #expect(entries.map(\.title) == ["Crepes Suzette"])
         #expect(downloads.fileNames.isEmpty)
     }
 }

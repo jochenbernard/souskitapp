@@ -48,7 +48,7 @@ struct FileRecipeRepository: RecipeRepository {
     /// Reads off the caller's actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
     func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe> {
-        let contents = try await textReader.read(path: entry.path, availability: entry.availability)
+        let contents = try await textReader.read(path: entry.path)
 
         return parser.parseRecipe(contents.text)
     }

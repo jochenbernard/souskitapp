@@ -9,8 +9,30 @@ struct RecipeFile: Sendable, Hashable {
     /// Whether the file's contents are on the device.
     let availability: RecipeAvailability
 
-    /// When the file's contents last changed, or `nil` where an iCloud placeholder does not tell.
+    /// When the file's contents last changed, or `nil` where iCloud does not tell.
     let modificationDate: Date?
+
+    /// Whether a newer version of the contents waits in iCloud, whatever `modificationDate` says.
+    let isOutdated: Bool
+
+    /// Creates a file.
+    ///
+    /// - Parameters:
+    ///   - path: Where the file sits inside the recipe directory, extension included.
+    ///   - availability: Whether the file's contents are on the device.
+    ///   - modificationDate: When the file's contents last changed.
+    ///   - isOutdated: Whether a newer version of the contents waits in iCloud.
+    init(
+        path: String,
+        availability: RecipeAvailability,
+        modificationDate: Date?,
+        isOutdated: Bool = false
+    ) {
+        self.path = path
+        self.availability = availability
+        self.modificationDate = modificationDate
+        self.isOutdated = isOutdated
+    }
 
     /// The entry listing the file.
     ///
