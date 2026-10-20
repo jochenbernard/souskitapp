@@ -7,8 +7,10 @@ import SwiftUI
 ///
 /// It fills the height the grid offers, so the cards sharing a row end level.
 struct RecipeCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     private static let pictureAspectRatio = 16.0 / 10.0
-    private static let titleLineLimit = 3
+    private static let titleLineLimit = 2
 
     // The language the screen is written in, which is the one it reads a length of time in.
     private static let displayLocale = Locale(identifier: Bundle.module.preferredLocalizations.first ?? "en")
@@ -51,7 +53,8 @@ struct RecipeCard: View {
     private var caption: some View {
         VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
             Text(verbatim: card.recipeEntry.title)
-                .lineLimit(Self.titleLineLimit)
+                // At accessibility sizes the grid has one column, which leaves room for the whole title.
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : Self.titleLineLimit)
 
             totalTime
                 .font(.subheadline)
