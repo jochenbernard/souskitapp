@@ -48,6 +48,11 @@ struct RecipeCard: View {
                 RecipeAvailabilityBadge(card.recipeEntry.availability)
                     .padding(SousSpacing.small)
             }
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(.separator.opacity(0.5))
+                    .frame(height: 1.0)
+            }
     }
 
     private var caption: some View {
