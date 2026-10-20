@@ -7,7 +7,7 @@ import SwiftUI
 ///
 /// It fills the height the grid offers, so the cards sharing a row end level.
 struct RecipeCard: View {
-    private static let pictureAspectRatio = 4.0 / 3.0
+    private static let pictureAspectRatio = 16.0 / 10.0
     private static let titleLineLimit = 3
 
     // The language the screen is written in, which is the one it reads a length of time in.
