@@ -38,6 +38,7 @@ final class RecipeDirectoryMonitor {
     ///   - thumbnailCache: Where the thumbnails of the recipes' pictures are kept, or `nil` where none are.
     ///   - settleDelay: How long a burst of changes is given to finish before the directory is
     ///     read again.
+    ///   - fileStatus: What the file system reports of the file at a URL, or of the file iCloud promises there.
     ///   - listDirectory: Lists the directory with the reader handed to it.
     ///   - present: Presents the directory at the URL, calling the closure on every change, or presents nothing.
     ///   - startDownloadingPicture: Asks iCloud for a picture's contents, returning before they arrive.
@@ -46,6 +47,7 @@ final class RecipeDirectoryMonitor {
         summarizer: RecipeSummarizer,
         thumbnailCache: RecipeThumbnailCache? = nil,
         settleDelay: Duration = .milliseconds(150),
+        fileStatus: @escaping @Sendable (URL) -> RecipeFileStatus? = RecipeFileStatus.read(at:),
         listDirectory: @escaping @Sendable (RecipeDirectoryReader) throws -> RecipeDirectoryListing = { reader in
             try reader.readListing()
         },
@@ -56,7 +58,7 @@ final class RecipeDirectoryMonitor {
             try FileManager.default.startDownloadingUbiquitousItem(at: url)
         }
     ) {
-        let reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory)
+        let reader = RecipeDirectoryReader(recipeDirectory: recipeDirectory, fileStatus: fileStatus)
         self.pictureFetcher = RecipePictureFetcher(
             reader: RecipePictureReader(
                 recipeDirectory: recipeDirectory,
