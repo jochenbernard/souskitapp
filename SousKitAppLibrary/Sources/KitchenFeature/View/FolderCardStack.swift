@@ -38,7 +38,7 @@ struct FolderCardStack: View {
                         .rotationEffect(.degrees(-fanPosition(of: index) * Self.fanAngle))
                         .offset(
                             x: -fanPosition(of: index) * Self.fanSpread,
-                            y: -Double(index) * Self.fanRise
+                            y: -fanPosition(of: index) * Self.fanRise
                         )
                 }
             }
@@ -76,7 +76,7 @@ private func previewCards(_ count: Int) -> [KitchenRecipeCard] {
     VStack(spacing: SousSpacing.medium) {
         ForEach(1...4, id: \.self) { count in
             FolderCardStack(previewCards(count))
-                .aspectRatio(4.0 / 3.0, contentMode: .fit)
+                .aspectRatio(16.0 / 10.0, contentMode: .fit)
         }
     }
     .frame(width: 180.0)
