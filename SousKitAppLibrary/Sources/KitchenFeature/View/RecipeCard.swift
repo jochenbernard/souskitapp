@@ -59,6 +59,8 @@ struct RecipeCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(SousSpacing.medium)
+        // Sized before the picture, so a title taller than the picture is not cut a line short.
+        .layoutPriority(1.0)
     }
 
     @ViewBuilder
