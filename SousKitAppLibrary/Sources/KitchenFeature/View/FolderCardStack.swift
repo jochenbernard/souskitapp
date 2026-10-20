@@ -38,7 +38,7 @@ struct FolderCardStack: View {
                         .rotationEffect(.degrees(-fanPosition(of: index) * Self.fanAngle))
                         .offset(
                             x: -fanPosition(of: index) * Self.fanSpread,
-                            y: -Double(index) * Self.fanRise
+                            y: -fanPosition(of: index) * Self.fanRise
                         )
                 }
             }
