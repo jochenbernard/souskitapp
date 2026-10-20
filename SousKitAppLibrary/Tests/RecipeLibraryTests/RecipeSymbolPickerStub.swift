@@ -12,8 +12,17 @@ final class RecipeSymbolPickerStub: RecipeSymbolPicker {
     /// Whether a pick waits for ``release()`` before it answers.
     var isHolding = false
 
+    /// What each pick from now on throws in turn, before any is answered with a symbol.
+    var errors: [Error] = []
+
     /// What the picker was asked for, oldest first.
     private(set) var inputs: [RecipeSymbolInput] = []
+
+    /// When the picker was asked for each of ``inputs``.
+    private(set) var askTimes: [ContinuousClock.Instant] = []
+
+    /// Whether the stream from ``availabilityUpdates()`` has ended.
+    private(set) var isAvailabilityFinished = false
 
     nonisolated private let availability: AsyncStream<Bool>
     nonisolated private let availabilityContinuation: AsyncStream<Bool>.Continuation
@@ -25,6 +34,15 @@ final class RecipeSymbolPickerStub: RecipeSymbolPicker {
         self.promptVersion = promptVersion
         (self.availability, self.availabilityContinuation) = AsyncStream.makeStream(of: Bool.self)
         self.availabilityContinuation.yield(isAvailable)
+        self.availabilityContinuation.onTermination = { [weak self] _ in
+            guard let self else {
+                return
+            }
+
+            Task { @MainActor in
+                self.isAvailabilityFinished = true
+            }
+        }
     }
 
     nonisolated func availabilityUpdates() -> AsyncStream<Bool> {
@@ -34,9 +52,14 @@ final class RecipeSymbolPickerStub: RecipeSymbolPicker {
     @MainActor
     func symbol(for input: RecipeSymbolInput) async throws -> String {
         inputs.append(input)
+        askTimes.append(.now)
 
         if isHolding {
             await withCheckedContinuation({ heldPicks.append($0) })
+        }
+
+        if !errors.isEmpty {
+            throw errors.removeFirst()
         }
 
         guard let symbol = symbols[input.title] else {

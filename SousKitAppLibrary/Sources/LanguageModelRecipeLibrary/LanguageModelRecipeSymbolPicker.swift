@@ -41,13 +41,38 @@ public struct LanguageModelRecipeSymbolPicker: RecipeSymbolPicker {
     @concurrent
     public func symbol(for input: RecipeSymbolInput) async throws -> String {
         let session = LanguageModelSession(instructions: Self.instructions)
-        let response = try await session.respond(
-            to: Self.prompt(for: input),
-            generating: RecipeSymbolChoice.self,
-            options: GenerationOptions(samplingMode: .greedy)
-        )
 
-        return response.content.symbol
+        do {
+            let response = try await session.respond(
+                to: Self.prompt(for: input),
+                generating: RecipeSymbolChoice.self,
+                options: GenerationOptions(samplingMode: .greedy)
+            )
+
+            return response.content.symbol
+        } catch let error as LanguageModelError {
+            throw Self.isBusy(error) ? RecipeSymbolPickerBusyError() : error
+        } catch LanguageModelSession.Error.concurrentRequests {
+            throw RecipeSymbolPickerBusyError()
+        }
+    }
+
+    /// Whether the model failed only for now, so asking again later may get an answer.
+    private static func isBusy(_ error: LanguageModelError) -> Bool {
+        switch error {
+        case .rateLimited, .timeout:
+            true
+        case .contextSizeExceeded,
+            .guardrailViolation,
+            .refusal,
+            .unsupportedCapability,
+            .unsupportedGenerationGuide,
+            .unsupportedLanguageOrLocale,
+            .unsupportedTranscriptContent:
+            false
+        @unknown default:
+            false
+        }
     }
 
     private static func prompt(for input: RecipeSymbolInput) -> String {

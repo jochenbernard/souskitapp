@@ -60,4 +60,76 @@ extension RecipeSymbolQueueTests {
         #expect(symbols == ["crepes.sous": "birthday.cake"])
         #expect(picker.inputs.count == 2)
     }
+
+    @Test("a pick that fails while picking stops and starts being possible again is asked for again")
+    func failedWhileUnavailableAndBack() async throws {
+        let queue = makeQueue()
+        var iterator = queue.listedRecipes(following: upstream).makeAsyncIterator()
+        picker.isHolding = true
+
+        upstreamContinuation.yield(.success([crepes()]))
+        _ = await iterator.next()
+
+        while picker.inputs.isEmpty {
+            await Task.yield()
+        }
+
+        picker.setAvailable(false)
+        picker.setAvailable(true)
+        // Long enough for both changes to be taken in before the pick fails.
+        try await Task.sleep(for: .milliseconds(100))
+        picker.errors = [CocoaError(.featureUnsupported)]
+        picker.release()
+        let symbols = try await symbols(once: ["crepes.sous"], from: &iterator)
+
+        #expect(symbols == ["crepes.sous": "birthday.cake"])
+        #expect(picker.inputs.count == 2)
+    }
+
+    @Test("a pick that fails once picking stopped being possible is asked for again once it is")
+    func failedOnceUnavailable() async throws {
+        let queue = makeQueue()
+        var iterator = queue.listedRecipes(following: upstream).makeAsyncIterator()
+        picker.isHolding = true
+
+        upstreamContinuation.yield(.success([crepes()]))
+        _ = await iterator.next()
+
+        while picker.inputs.isEmpty {
+            await Task.yield()
+        }
+
+        picker.setAvailable(false)
+        try await Task.sleep(for: .milliseconds(100))
+        picker.errors = [CocoaError(.featureUnsupported)]
+        picker.release()
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(picker.inputs.count == 1)
+
+        picker.setAvailable(true)
+        let symbols = try await symbols(once: ["crepes.sous"], from: &iterator)
+
+        #expect(symbols == ["crepes.sous": "birthday.cake"])
+        #expect(picker.inputs.count == 2)
+    }
+
+    @Test("whether symbols can be picked is no longer followed once the stream ends")
+    func availabilityEnds() async throws {
+        let queue = makeQueue()
+        let stream = queue.listedRecipes(following: upstream)
+
+        upstreamContinuation.yield(.success([crepes()]))
+        upstreamContinuation.finish()
+
+        for await _ in stream {}
+
+        for _ in 0..<100 where !picker.isAvailabilityFinished {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+
+        #expect(picker.isAvailabilityFinished)
+        // The queue going would end the following too.
+        withExtendedLifetime(queue) {}
+    }
 }

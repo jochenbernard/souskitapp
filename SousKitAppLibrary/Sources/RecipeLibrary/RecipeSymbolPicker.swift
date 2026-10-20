@@ -15,6 +15,7 @@ public protocol RecipeSymbolPicker: Sendable {
     ///
     /// - Parameter input: What the symbol is picked from.
     /// - Returns: The name of the SF Symbol.
-    /// - Throws: Whatever picking the symbol throws.
+    /// - Throws: ``RecipeSymbolPickerBusyError`` where asking again later may pick the symbol, or whatever else picking
+    ///   it throws.
     func symbol(for input: RecipeSymbolInput) async throws -> String
 }

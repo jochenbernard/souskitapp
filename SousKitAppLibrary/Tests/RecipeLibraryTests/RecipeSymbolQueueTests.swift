@@ -24,8 +24,8 @@ final class RecipeSymbolQueueTests {
         upstreamContinuation.finish()
     }
 
-    func makeQueue() -> RecipeSymbolQueue {
-        RecipeSymbolQueue(picker: picker) { [weak self] id, pick in
+    func makeQueue(busyRetryDelay: Duration = .seconds(2)) -> RecipeSymbolQueue {
+        RecipeSymbolQueue(picker: picker, busyRetryDelay: busyRetryDelay) { [weak self] id, pick in
             self?.saved[id] = pick
         }
     }

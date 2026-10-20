@@ -2,8 +2,9 @@
 /// can be picked, listing the recipes again with each pick as it lands.
 ///
 /// A recipe is picked for where its contents have been read and it is listed with no pick made from what it says now,
-/// those without a picture first. A pick that fails is not asked for again until its input changes or picking becomes
-/// possible again after it was not. Picks are kept as long as the queue is, and handed on to be kept longer.
+/// those without a picture first. A pick the picker is too busy for is asked for again a few times, each after a longer
+/// wait. A pick that fails otherwise is not asked for again until its input changes or picking becomes possible again
+/// after it was not. Picks are kept as long as the queue is, and handed on to be kept longer.
 @MainActor
 public final class RecipeSymbolQueue {
     private typealias Listing = Result<[ListedRecipe], Error>
@@ -13,13 +14,21 @@ public final class RecipeSymbolQueue {
         let input: RecipeSymbolInput
     }
 
+    // How often a pick the picker was too busy for is asked for again before it counts as failed.
+    private static let busyRetryLimit = 5
+
+    private let busyRetryDelay: Duration
     private let picker: RecipeSymbolPicker
     private let save: (@MainActor (String, RecipeSymbolPick) async -> Void)?
 
+    // How often picking stopped being possible, so a pick failing meanwhile is not taken for a lasting failure.
+    private var availabilityLossCount = 0
     private var availabilityTask: Task<Void, Never>?
+    private var busyRetries: [Request: Int] = [:]
     private var continuation: AsyncStream<Listing>.Continuation?
     private var failedRequests: Set<Request> = []
     private var generation = 0
+    private var inputs = RecipeSymbolInputs()
     private var isAvailable = false
     private var pickTask: Task<Void, Never>?
     // By recipe id.
@@ -33,12 +42,16 @@ public final class RecipeSymbolQueue {
     ///
     /// - Parameters:
     ///   - picker: What the symbols are picked with.
+    ///   - busyRetryDelay: How long to wait before asking again for a pick the picker was too busy for, doubled each
+    ///     time it is again.
     ///   - save: Keeps a pick beyond the queue, for the recipe with the id, before the next pick is asked for, or
     ///     `nil` where picks last as long as the queue.
     nonisolated public init(
         picker: RecipeSymbolPicker,
+        busyRetryDelay: Duration = .seconds(2),
         save: (@MainActor (String, RecipeSymbolPick) async -> Void)? = nil
     ) {
+        self.busyRetryDelay = busyRetryDelay
         self.picker = picker
         self.save = save
     }
@@ -86,6 +99,10 @@ public final class RecipeSymbolQueue {
         at generation: Int,
         into streamContinuation: AsyncStream<Listing>.Continuation
     ) {
+        if let listedRecipes = try? listing.get() {
+            inputs.keep(listedRecipes)
+        }
+
         let picked = listing.map(withPicks)
         streamContinuation.yield(picked)
 
@@ -95,7 +112,8 @@ public final class RecipeSymbolQueue {
         }
 
         shownRecipes = try? picked.get()
-        requests = Self.requests(for: shownRecipes ?? [], promptVersion: picker.promptVersion)
+        requests = requests(for: shownRecipes ?? [])
+        forgetUnaskedFailures()
         watchAvailability()
         startPicking()
     }
@@ -105,7 +123,10 @@ public final class RecipeSymbolQueue {
             return
         }
 
+        availabilityTask?.cancel()
+        availabilityTask = nil
         continuation = nil
+        isAvailable = false
         requests = []
         shownRecipes = nil
     }
@@ -122,7 +143,7 @@ public final class RecipeSymbolQueue {
         return listedRecipes.map { listedRecipe in
             guard
                 let pick = picks[listedRecipe.entry.id],
-                let input = RecipeSymbolInput(listedRecipe: listedRecipe),
+                let input = inputs.input(for: listedRecipe),
                 listedRecipe.symbolPick?.isCurrent(for: input, promptVersion: promptVersion) != true,
                 pick.isCurrent(for: input, promptVersion: promptVersion)
             else {
@@ -137,13 +158,14 @@ public final class RecipeSymbolQueue {
     }
 
     /// What has to be picked for the recipes: those listed with no current pick.
-    private static func requests(for listedRecipes: [ListedRecipe], promptVersion: Int) -> [Request] {
+    private func requests(for listedRecipes: [ListedRecipe]) -> [Request] {
+        let promptVersion = picker.promptVersion
         var withoutPicture: [Request] = []
         var withPicture: [Request] = []
 
         for listedRecipe in listedRecipes {
             guard
-                let input = RecipeSymbolInput(listedRecipe: listedRecipe),
+                let input = inputs.input(for: listedRecipe),
                 listedRecipe.symbolPick?.isCurrent(for: input, promptVersion: promptVersion) != true
             else {
                 continue
@@ -162,6 +184,17 @@ public final class RecipeSymbolQueue {
         return withoutPicture + withPicture
     }
 
+    /// Forgets the failures of what is no longer asked for, because its recipe went or changed.
+    private func forgetUnaskedFailures() {
+        guard !failedRequests.isEmpty || !busyRetries.isEmpty else {
+            return
+        }
+
+        let asked = Set(requests)
+        failedRequests.formIntersection(asked)
+        busyRetries = busyRetries.filter({ asked.contains($0.key) })
+    }
+
     private func watchAvailability() {
         guard availabilityTask == nil else {
             return
@@ -169,6 +202,11 @@ public final class RecipeSymbolQueue {
 
         availabilityTask = Task { [weak self, picker] in
             for await canPick in picker.availabilityUpdates() {
+                // An update already on its way when following stops is not taken in.
+                guard !Task.isCancelled else {
+                    return
+                }
+
                 self?.didChangeAvailability(canPick)
             }
         }
@@ -177,7 +215,10 @@ public final class RecipeSymbolQueue {
     private func didChangeAvailability(_ isAvailable: Bool) {
         // What failed while picking was becoming impossible is asked for again once it is possible.
         if isAvailable, !self.isAvailable {
+            busyRetries = [:]
             failedRequests = []
+        } else if !isAvailable, self.isAvailable {
+            availabilityLossCount += 1
         }
 
         self.isAvailable = isAvailable
@@ -190,14 +231,28 @@ public final class RecipeSymbolQueue {
         }
 
         pickTask = Task { [weak self, picker] in
-            while !Task.isCancelled, let request = self?.nextRequest {
-                let symbol = try? await picker.symbol(for: request.input)
+            while !Task.isCancelled, let request = self?.nextRequest, let lossCount = self?.availabilityLossCount {
+                let outcome: Result<String, Error>
+
+                do {
+                    outcome = .success(try await picker.symbol(for: request.input))
+                } catch {
+                    outcome = .failure(error)
+                }
 
                 guard !Task.isCancelled else {
                     return
                 }
 
-                await self?.finish(request, symbol: symbol)
+                let delay = await self?.finish(
+                    request,
+                    with: outcome,
+                    availabilityLossCount: lossCount
+                )
+
+                if let delay {
+                    try? await Task.sleep(for: delay)
+                }
             }
 
             if !Task.isCancelled {
@@ -214,24 +269,48 @@ public final class RecipeSymbolQueue {
         return requests.first(where: { !failedRequests.contains($0) })
     }
 
-    private func finish(_ request: Request, symbol: String?) async {
-        // A failed request stays, for when picking becomes possible again.
-        guard let symbol else {
-            failedRequests.insert(request)
-            return
+    /// Takes in what a request came to, returning how long to wait before the next one where the picker was too busy.
+    private func finish(
+        _ request: Request,
+        with outcome: Result<String, Error>,
+        availabilityLossCount: Int
+    ) async -> Duration? {
+        switch outcome {
+        case .success(let symbol):
+            busyRetries[request] = nil
+            requests.removeAll(where: { $0 == request })
+
+            let pick = RecipeSymbolPick(
+                symbol: symbol,
+                input: request.input,
+                promptVersion: picker.promptVersion
+            )
+            picks[request.id] = pick
+            show(pick, forRecipeWithID: request.id)
+
+            await save?(request.id, pick)
+            return nil
+
+        case .failure(let error) where error is RecipeSymbolPickerBusyError:
+            let retries = busyRetries[request, default: 0]
+
+            guard retries < Self.busyRetryLimit else {
+                busyRetries[request] = nil
+                failedRequests.insert(request)
+                return nil
+            }
+
+            busyRetries[request] = retries + 1
+            return busyRetryDelay * (1 << retries)
+
+        case .failure:
+            // A pick that failed while picking stopped being possible is asked for again once it is possible.
+            if availabilityLossCount == self.availabilityLossCount {
+                failedRequests.insert(request)
+            }
+
+            return nil
         }
-
-        requests.removeAll(where: { $0 == request })
-
-        let pick = RecipeSymbolPick(
-            symbol: symbol,
-            input: request.input,
-            promptVersion: picker.promptVersion
-        )
-        picks[request.id] = pick
-        show(pick, forRecipeWithID: request.id)
-
-        await save?(request.id, pick)
     }
 
     /// Lists the recipes listed last again with a pick, where its recipe is still listed as it was when picked.
@@ -240,7 +319,7 @@ public final class RecipeSymbolQueue {
         guard
             var listedRecipes = shownRecipes,
             let index = listedRecipes.firstIndex(where: { $0.entry.id == id }),
-            let input = RecipeSymbolInput(listedRecipe: listedRecipes[index]),
+            let input = inputs.input(for: listedRecipes[index]),
             pick.isCurrent(for: input, promptVersion: picker.promptVersion)
         else {
             return
