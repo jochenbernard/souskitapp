@@ -20,6 +20,21 @@ struct TotalTimeTests {
         #expect(totalTime(of: "prep-time: 30 min\ncook-time: 3 h\ntotal-time: 4 h") == .duration(.seconds(14_400.0)))
     }
 
+    @Test("a header's time required is the total where it gives no total time")
+    func timeRequired() {
+        #expect(totalTime(of: "time-required: 40 minutes") == .duration(.seconds(2_400.0)))
+    }
+
+    @Test("a total time stands over a time required")
+    func totalOverTimeRequired() {
+        #expect(totalTime(of: "time-required: 40 minutes\ntotal-time: 1 h") == .duration(.seconds(3_600.0)))
+    }
+
+    @Test("a time required stands over prep and cook")
+    func timeRequiredOverParts() {
+        #expect(totalTime(of: "prep-time: 30 min\ncook-time: 3 h\ntime-required: 4 h") == .duration(.seconds(14_400.0)))
+    }
+
     @Test("prep and cook are added up where the header gives no total")
     func prepAndCook() {
         #expect(totalTime(of: "prep-time: 30 min\ncook-time: 3 h") == .duration(.seconds(12_600.0)))
@@ -48,6 +63,7 @@ struct TotalTimeTests {
     @Test("a time key written with no value gives no time")
     func emptyValue() {
         #expect(totalTime(of: "total-time:\nprep-time: 30 min\ncook-time: 3 h") == .duration(.seconds(12_600.0)))
+        #expect(totalTime(of: "total-time:\ntime-required: 40 minutes") == .duration(.seconds(2_400.0)))
         #expect(totalTime(of: "prep-time:\ncook-time: 3 h") == .duration(.seconds(10_800.0)))
         #expect(totalTime(of: "total-time:") == nil)
     }

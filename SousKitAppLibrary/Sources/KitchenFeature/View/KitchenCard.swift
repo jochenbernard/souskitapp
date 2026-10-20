@@ -5,12 +5,14 @@ import SwiftUI
 ///
 /// It fills the height the grid offers, so the cards sharing a row end level.
 struct KitchenCard<Picture: View, Detail: View>: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     private static var pictureAspectRatio: Double {
-        4.0 / 3.0
+        16.0 / 10.0
     }
 
     private static var titleLineLimit: Int {
-        3
+        2
     }
 
     @LineContainerRadius private var radius
@@ -55,7 +57,8 @@ struct KitchenCard<Picture: View, Detail: View>: View {
     private var caption: some View {
         VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
             Text(verbatim: title)
-                .lineLimit(Self.titleLineLimit)
+                // At accessibility sizes the grid has one column, which leaves room for the whole title.
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : Self.titleLineLimit)
 
             detail
                 .font(.subheadline)
@@ -63,6 +66,8 @@ struct KitchenCard<Picture: View, Detail: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(SousSpacing.medium)
+        // Sized before the picture, so a title taller than the picture is not cut a line short.
+        .layoutPriority(1.0)
     }
 }
 

@@ -8,10 +8,11 @@ public enum TotalTime: Sendable, Hashable {
     /// The header's own words, where they name no length of time that can be read, such as `about a day`.
     case written(String)
 
-    private static let totalKey = "total-time"
+    private static let totalKeys = ["total-time", "time-required"]
     private static let partKeys = ["prep-time", "cook-time"]
 
-    /// Reads the total time off a header: its `total-time`, or its `prep-time` and `cook-time` added up.
+    /// Reads the total time off a header: its `total-time`, else its `time-required`, else its `prep-time` and
+    /// `cook-time` added up.
     ///
     /// A time is read the way a step's timer is. Prep and cook are only added up where every one the header gives
     /// reads as a length of time.
@@ -22,7 +23,7 @@ public enum TotalTime: Sendable, Hashable {
     /// - Returns: The total time, or `nil` where the header gives neither a total nor a part that reads.
     public init?(metadata: Metadata, parser: SousParser) {
         // A key with no value gives no time, so it neither shows as a blank total nor stops the parts adding up.
-        if let total = metadata[Self.totalKey], !total.isEmpty {
+        if let total = Self.totalKeys.lazy.compactMap({ metadata[$0] }).first(where: { !$0.isEmpty }) {
             self = Self.duration(of: total, parser: parser).map(Self.duration) ?? .written(total)
             return
         }
