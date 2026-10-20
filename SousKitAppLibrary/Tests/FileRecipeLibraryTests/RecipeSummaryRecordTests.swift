@@ -15,12 +15,14 @@ struct RecipeSummaryRecordTests {
 
     private func file(
         _ availability: RecipeAvailability,
-        modifiedAt modificationDate: Date?
+        modifiedAt modificationDate: Date?,
+        isOutdated: Bool = false
     ) -> RecipeFile {
         RecipeFile(
             path: "crepes.sous",
             availability: availability,
-            modificationDate: modificationDate
+            modificationDate: modificationDate,
+            isOutdated: isOutdated
         )
     }
 
@@ -81,14 +83,19 @@ struct RecipeSummaryRecordTests {
         #expect(!record(of: "").isCurrent(for: file(.downloading, modifiedAt: later)))
     }
 
-    @Test("a placeholder telling no date counts as unchanged, so it stays in iCloud")
+    @Test("a placeholder telling no date has changed, so it is fetched")
     func placeholderWithoutDate() {
-        #expect(record(of: "").isCurrent(for: file(.notDownloaded, modifiedAt: nil)))
-        #expect(record(of: "").isCurrent(for: file(.downloading, modifiedAt: nil)))
+        #expect(!record(of: "").isCurrent(for: file(.notDownloaded, modifiedAt: nil)))
+        #expect(!record(of: "").isCurrent(for: file(.downloading, modifiedAt: nil)))
     }
 
     @Test("a file on the device telling no date is read again")
     func downloadedWithoutDate() {
         #expect(!record(of: "").isCurrent(for: file(.downloaded, modifiedAt: nil)))
+    }
+
+    @Test("a file outdated on the device has changed, though its date is the one kept")
+    func outdated() {
+        #expect(!record(of: "").isCurrent(for: file(.downloading, modifiedAt: date, isOutdated: true)))
     }
 }

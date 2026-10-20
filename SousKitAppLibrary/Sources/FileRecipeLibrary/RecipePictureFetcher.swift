@@ -4,7 +4,8 @@ import RecipeLibrary
 /// recipes are fetched.
 ///
 /// A picture is fetched once for each way it is listed, so one iCloud fails to fetch is asked for again only once it is
-/// listed differently. Nothing is ever evicted.
+/// listed differently, and one whose newer version waits in iCloud, listed as on its way at its old date, is fetched
+/// once more. Nothing is ever evicted.
 @MainActor
 final class RecipePictureFetcher {
     private let reader: RecipePictureReader
@@ -24,8 +25,8 @@ final class RecipePictureFetcher {
         fetches.values.forEach({ $0.cancel() })
     }
 
-    /// Fetches each picture the recipes name that is not on the device, on its own so one that never arrives holds up
-    /// no other, and gives up on the fetches of pictures no recipe names any more.
+    /// Fetches each picture the recipes name that is not on the device at its newest version, on its own so one that
+    /// never arrives holds up no other, and gives up on the fetches of pictures no recipe names any more.
     ///
     /// - Parameters:
     ///   - listedRecipes: The recipes listed now.

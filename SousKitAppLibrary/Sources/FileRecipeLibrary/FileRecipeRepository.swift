@@ -26,31 +26,54 @@ struct FileRecipeRepository: RecipeRepository {
     ///   - symbolPicker: What the recipes' symbols are picked with.
     ///   - summaryCacheURL: Where the recipes' summaries are kept between launches, outside the directory.
     ///   - thumbnailCacheURL: Where the thumbnails of the recipes' pictures are kept, outside the directory.
+    ///   - fileStatus: What the file system reports of the file at a URL, or of the file iCloud promises there.
+    ///   - startDownloading: Asks iCloud for a file's contents, returning before they arrive.
     init(
         parser: SousParser,
         recipeDirectory: RecipeDirectory,
         symbolPicker: RecipeSymbolPicker,
         summaryCacheURL: URL,
-        thumbnailCacheURL: URL
+        thumbnailCacheURL: URL,
+        fileStatus: @escaping @Sendable (URL) -> RecipeFileStatus? = RecipeFileStatus.read(at:),
+        startDownloading: @escaping @Sendable (URL) throws -> Void = { url in
+            try FileManager.default.startDownloadingUbiquitousItem(at: url)
+        }
     ) {
         let cache = RecipeThumbnailCache(recipeDirectory: recipeDirectory, folderURL: thumbnailCacheURL)
         let summarizer = RecipeSummarizer(
             cache: RecipeSummaryCache(recipeDirectory: recipeDirectory, fileURL: summaryCacheURL),
             parser: parser,
-            textReader: RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .utility)
+            textReader: RecipeTextReader(
+                recipeDirectory: recipeDirectory,
+                qualityOfService: .utility,
+                fileStatus: fileStatus,
+                startDownloading: startDownloading
+            )
         )
         self.monitor = RecipeDirectoryMonitor(
             recipeDirectory: recipeDirectory,
             summarizer: summarizer,
-            thumbnailCache: cache
+            thumbnailCache: cache,
+            fileStatus: fileStatus,
+            startDownloadingPicture: startDownloading
         )
         self.parser = parser
-        self.pictureReader = RecipePictureReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
+        self.pictureReader = RecipePictureReader(
+            recipeDirectory: recipeDirectory,
+            qualityOfService: .userInitiated,
+            fileStatus: fileStatus,
+            startDownloading: startDownloading
+        )
         self.recipeDirectory = recipeDirectory
         self.symbolQueue = RecipeSymbolQueue(picker: symbolPicker) { path, symbolPick in
             await summarizer.keep(symbolPick, forRecipeAt: path)
         }
-        self.textReader = RecipeTextReader(recipeDirectory: recipeDirectory, qualityOfService: .userInitiated)
+        self.textReader = RecipeTextReader(
+            recipeDirectory: recipeDirectory,
+            qualityOfService: .userInitiated,
+            fileStatus: fileStatus,
+            startDownloading: startDownloading
+        )
         self.thumbnailCache = cache
     }
 
@@ -65,7 +88,7 @@ struct FileRecipeRepository: RecipeRepository {
     /// Reads off the caller's actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
     func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe> {
-        let contents = try await textReader.read(path: entry.path, availability: entry.availability)
+        let contents = try await textReader.read(path: entry.path)
 
         return parser.parseRecipe(contents.text)
     }
