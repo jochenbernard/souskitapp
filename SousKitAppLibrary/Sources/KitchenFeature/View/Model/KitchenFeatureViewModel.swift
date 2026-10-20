@@ -11,6 +11,7 @@ final class KitchenFeatureViewModel {
     var openRecipe: OpenRecipe?
     var openCooking: OpenCooking?
     let thumbnails = KitchenThumbnails()
+    let symbols = KitchenSymbols()
 
     nonisolated init(recipeRepositoryName: String) {
         self.recipeRepositoryName = recipeRepositoryName

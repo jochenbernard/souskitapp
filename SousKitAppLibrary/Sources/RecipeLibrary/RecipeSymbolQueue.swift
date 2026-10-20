@@ -1,7 +1,7 @@
 /// Follows a repository's recipes and picks the symbols they are missing, one at a time in the background while symbols
 /// can be picked, listing the recipes again with each pick as it lands.
 ///
-/// A recipe is picked for where its contents have been read and its summary holds no pick made from what it says now,
+/// A recipe is picked for where its contents have been read and it is listed with no pick made from what it says now,
 /// those without a picture first. A pick that fails is not asked for again until its input changes or picking becomes
 /// possible again after it was not. Picks are kept as long as the queue is, and handed on to be kept longer.
 @MainActor
@@ -21,12 +21,13 @@ public final class RecipeSymbolQueue {
     private var failedRequests: Set<Request> = []
     private var generation = 0
     private var isAvailable = false
-    // What the stream followed sent last, or `nil` where none is followed.
-    private var listing: Listing?
     private var pickTask: Task<Void, Never>?
     // By recipe id.
     private var picks: [String: RecipeSymbolPick] = [:]
     private var requests: [Request] = []
+    // The recipes listed last, with their picks, or `nil` where no stream is followed or the last listing failed.
+    // swiftlint:disable:next discouraged_optional_collection
+    private var shownRecipes: [ListedRecipe]?
 
     /// Creates a queue, which picks nothing until it follows a stream.
     ///
@@ -93,8 +94,8 @@ public final class RecipeSymbolQueue {
             return
         }
 
-        self.listing = listing
-        requests = Self.requests(for: (try? picked.get()) ?? [], promptVersion: picker.promptVersion)
+        shownRecipes = try? picked.get()
+        requests = Self.requests(for: shownRecipes ?? [], promptVersion: picker.promptVersion)
         watchAvailability()
         startPicking()
     }
@@ -105,11 +106,12 @@ public final class RecipeSymbolQueue {
         }
 
         continuation = nil
-        listing = nil
         requests = []
+        shownRecipes = nil
     }
 
-    /// The recipes, each with the pick made here in place of its summary's, where this one is current and that one not.
+    /// The recipes, each with the pick made here in place of the one it is listed with, where this one is current and
+    /// that one not.
     private func withPicks(_ listedRecipes: [ListedRecipe]) -> [ListedRecipe] {
         guard !picks.isEmpty else {
             return listedRecipes
@@ -118,36 +120,23 @@ public final class RecipeSymbolQueue {
         let promptVersion = picker.promptVersion
 
         return listedRecipes.map { listedRecipe in
-            let entry = listedRecipe.entry
-
             guard
-                let pick = picks[entry.id],
-                let summary = entry.summary,
+                let pick = picks[listedRecipe.entry.id],
                 let input = RecipeSymbolInput(listedRecipe: listedRecipe),
-                summary.symbolPick?.isCurrent(for: input, promptVersion: promptVersion) != true,
+                listedRecipe.symbolPick?.isCurrent(for: input, promptVersion: promptVersion) != true,
                 pick.isCurrent(for: input, promptVersion: promptVersion)
             else {
                 return listedRecipe
             }
 
-            var pickedSummary = summary
-            pickedSummary.symbolPick = pick
+            var pickedRecipe = listedRecipe
+            pickedRecipe.symbolPick = pick
 
-            return ListedRecipe(
-                entry: RecipeEntry(
-                    id: entry.id,
-                    name: entry.name,
-                    availability: entry.availability,
-                    summary: pickedSummary,
-                    folderPath: entry.folderPath,
-                    picture: entry.picture
-                ),
-                ingredientNames: listedRecipe.ingredientNames
-            )
+            return pickedRecipe
         }
     }
 
-    /// What has to be picked for the recipes: those whose summaries hold no current pick.
+    /// What has to be picked for the recipes: those listed with no current pick.
     private static func requests(for listedRecipes: [ListedRecipe], promptVersion: Int) -> [Request] {
         var withoutPicture: [Request] = []
         var withPicture: [Request] = []
@@ -155,7 +144,7 @@ public final class RecipeSymbolQueue {
         for listedRecipe in listedRecipes {
             guard
                 let input = RecipeSymbolInput(listedRecipe: listedRecipe),
-                listedRecipe.entry.summary?.symbolPick?.isCurrent(for: input, promptVersion: promptVersion) != true
+                listedRecipe.symbolPick?.isCurrent(for: input, promptVersion: promptVersion) != true
             else {
                 continue
             }
@@ -240,11 +229,25 @@ public final class RecipeSymbolQueue {
             promptVersion: picker.promptVersion
         )
         picks[request.id] = pick
-
-        if let listing {
-            continuation?.yield(listing.map(withPicks))
-        }
+        show(pick, forRecipeWithID: request.id)
 
         await save?(request.id, pick)
+    }
+
+    /// Lists the recipes listed last again with a pick, where its recipe is still listed as it was when picked.
+    private func show(_ pick: RecipeSymbolPick, forRecipeWithID id: String) {
+        // Only the picked recipe changes, so the others are not checked again.
+        guard
+            var listedRecipes = shownRecipes,
+            let index = listedRecipes.firstIndex(where: { $0.entry.id == id }),
+            let input = RecipeSymbolInput(listedRecipe: listedRecipes[index]),
+            pick.isCurrent(for: input, promptVersion: picker.promptVersion)
+        else {
+            return
+        }
+
+        listedRecipes[index].symbolPick = pick
+        shownRecipes = listedRecipes
+        continuation?.yield(.success(listedRecipes))
     }
 }

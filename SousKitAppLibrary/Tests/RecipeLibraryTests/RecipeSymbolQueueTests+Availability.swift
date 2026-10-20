@@ -14,7 +14,7 @@ extension RecipeSymbolQueueTests {
         let first = try #require(await iterator.next()).get()
         try await Task.sleep(for: .milliseconds(100))
 
-        #expect(first.map(\.entry.summary?.symbolPick) == [nil])
+        #expect(first.map(\.symbolPick) == [nil])
         #expect(unavailablePicker.inputs.isEmpty)
 
         unavailablePicker.setAvailable(true)

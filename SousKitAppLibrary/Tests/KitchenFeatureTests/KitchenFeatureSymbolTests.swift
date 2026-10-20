@@ -1,4 +1,5 @@
 @testable import KitchenFeature
+import Observation
 import RecipeLibrary
 import SousKit
 import Testing
@@ -6,6 +7,11 @@ import Testing
 @MainActor
 @Suite("Kitchen feature symbols", .timeLimit(.minutes(1)))
 struct KitchenFeatureSymbolTests {
+    @MainActor
+    private final class ChangeRecord {
+        var hasChanged = false
+    }
+
     private let parser = SousParser()
     private let recipeRepository = RecipeRepositorySpy()
     private let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
@@ -26,14 +32,11 @@ struct KitchenFeatureSymbolTests {
                 id: "Baking/crepes.sous",
                 name: "crepes",
                 availability: .downloaded,
-                summary: RecipeSummary(
-                    metadata: recipe.metadata,
-                    parser: parser,
-                    symbolPick: symbolPick
-                ),
+                summary: RecipeSummary(recipe: recipe, parser: parser),
                 folderPath: ["Baking"]
             ),
-            ingredientNames: recipe.foodIngredientNames
+            ingredientNames: recipe.foodIngredientNames,
+            symbolPick: symbolPick
         )
     }
 
@@ -44,11 +47,12 @@ struct KitchenFeatureSymbolTests {
         }
 
         return [
-            folder.folder(at: ["Baking"])?.cards.first?.placeholderSymbol,
-            folder.folders.first?.stackedCards.first?.placeholderSymbol,
-            viewModel.searches[[]]?.results.first?.placeholderSymbol
+            folder.folder(at: ["Baking"])?.cards.first,
+            folder.folders.first?.stackedCards.first,
+            viewModel.searches[[]]?.results.first
         ]
         .compactMap(\.self)
+        .map({ viewModel.symbols[$0.id] })
     }
 
     /// Waits until the recipe is shown in all three places with `symbol`, or the suite's time limit ends the test.
@@ -85,5 +89,40 @@ struct KitchenFeatureSymbolTests {
         recipeRepository.send([try crepes(picking: "birthday.cake")])
 
         try await waitForSymbols("birthday.cake")
+    }
+
+    @Test("a picked symbol landing leaves the folders as they are")
+    func pickedSymbolKeepsFolders() async throws {
+        let presenter = KitchenFeaturePresenter.stubbed(
+            viewModel: viewModel,
+            parser: parser,
+            recipeRepository: recipeRepository
+        )
+        let task = Task {
+            await presenter.stackDidAppear()
+        }
+        defer {
+            task.cancel()
+        }
+
+        recipeRepository.send([try crepes()])
+
+        while shownSymbols.isEmpty {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+
+        let foldersChange = ChangeRecord()
+        withObservationTracking(
+            { _ = viewModel.recipeList },
+            onChange: { MainActor.assumeIsolated({ foldersChange.hasChanged = true }) }
+        )
+
+        recipeRepository.send([try crepes(picking: "birthday.cake")])
+
+        while shownSymbols != ["birthday.cake", "birthday.cake"] {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+
+        #expect(!foldersChange.hasChanged)
     }
 }

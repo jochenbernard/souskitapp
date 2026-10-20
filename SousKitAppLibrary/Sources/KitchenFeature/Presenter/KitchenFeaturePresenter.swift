@@ -6,9 +6,6 @@ import RecipeLibrary
 import SousKit
 
 struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
-    // For a recipe no symbol has been picked for, such as where Apple Intelligence is unavailable.
-    private static let placeholderSymbol = "fork.knife"
-
     private let cookingFeatureFactory: CookingFeatureFactory
     private let handler: KitchenFeatureHandler
     private let recipeFeatureFactory: RecipeFeatureFactory
@@ -40,9 +37,25 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func stackDidAppear() async {
+        // What the folders were built from last, symbols aside, or `nil` where none are shown.
+        // swiftlint:disable:next discouraged_optional_collection
+        var shownRecipes: [ListedRecipe]?
+
         for await result in await recipeRepository.listedRecipes() {
             switch result {
             case .success(let listedRecipes):
+                viewModel.symbols.show(listedRecipes)
+
+                // A listing that only brings a picked symbol redraws the cards showing it, not every folder.
+                let unpickedRecipes = listedRecipes.map { listedRecipe in
+                    ListedRecipe(entry: listedRecipe.entry, ingredientNames: listedRecipe.ingredientNames)
+                }
+
+                guard unpickedRecipes != shownRecipes else {
+                    continue
+                }
+
+                shownRecipes = unpickedRecipes
                 let recipeEntries = listedRecipes.map(\.entry)
                 let folder = KitchenFolderTree.folder(at: [], holding: recipeEntries)
                 searchIndex.update(listedRecipes)
@@ -51,6 +64,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
                 restore(in: folder, holding: recipeEntries)
 
             case .failure(let error):
+                shownRecipes = nil
                 viewModel.recipeList = .failure(error.localizedDescription)
                 restore(in: nil, holding: [])
             }
@@ -161,7 +175,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         return KitchenSearch(
             text: text,
             isSearching: !queryWords.isEmpty,
-            results: searchIndex.results(matching: queryWords, below: folderPath).map(Self.card(for:))
+            results: searchIndex.results(matching: queryWords, below: folderPath).map(KitchenRecipeCard.init)
         )
     }
 
@@ -323,17 +337,5 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private func closeCooking() {
         viewModel.openCooking = nil
         restorationKeeper.update({ $0.cooking = nil })
-    }
-
-    /// The card a recipe is listed as.
-    ///
-    /// - Parameter recipeEntry: The recipe.
-    /// - Returns: The card.
-    static func card(for recipeEntry: RecipeEntry) -> KitchenRecipeCard {
-        KitchenRecipeCard(
-            recipeEntry: recipeEntry,
-            placeholderSymbol: recipeEntry.summary?.symbolPick?.symbol ?? Self.placeholderSymbol,
-            placeholderColor: PlaceholderColorPick.color(forTitle: recipeEntry.title)
-        )
     }
 }

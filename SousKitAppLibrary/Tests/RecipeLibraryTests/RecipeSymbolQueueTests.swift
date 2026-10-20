@@ -44,14 +44,11 @@ final class RecipeSymbolQueueTests {
                 id: id,
                 name: id,
                 availability: .downloaded,
-                summary: RecipeSummary(
-                    metadata: recipe.metadata,
-                    parser: parser,
-                    symbolPick: pick
-                ),
+                summary: RecipeSummary(recipe: recipe, parser: parser),
                 picture: picture
             ),
-            ingredientNames: recipe.foodIngredientNames
+            ingredientNames: recipe.foodIngredientNames,
+            symbolPick: pick
         )
     }
 
@@ -93,7 +90,7 @@ final class RecipeSymbolQueueTests {
             let listedRecipes = try listing.get()
             let symbols = Dictionary(
                 uniqueKeysWithValues: listedRecipes.compactMap { listedRecipe in
-                    listedRecipe.entry.summary?.symbolPick.map({ (listedRecipe.entry.id, $0.symbol) })
+                    listedRecipe.symbolPick.map({ (listedRecipe.entry.id, $0.symbol) })
                 }
             )
 
@@ -115,7 +112,7 @@ final class RecipeSymbolQueueTests {
         upstreamContinuation.yield(.success([crepes(), bouillabaisse()]))
         let first = try #require(await iterator.next()).get()
 
-        #expect(first.map(\.entry.summary?.symbolPick) == [nil, nil])
+        #expect(first.map(\.symbolPick) == [nil, nil])
 
         picker.release()
         let symbols = try await symbols(once: ["crepes.sous", "bouillabaisse.sous"], from: &iterator)
@@ -196,12 +193,12 @@ final class RecipeSymbolQueueTests {
         upstreamContinuation.yield(.success([stale]))
         let first = try #require(await iterator.next()).get()
 
-        #expect(first.map(\.entry.summary?.symbolPick?.symbol) == ["frying.pan"])
+        #expect(first.map(\.symbolPick?.symbol) == ["frying.pan"])
 
         picker.release()
         let landed = try #require(await iterator.next()).get()
 
-        #expect(landed.map(\.entry.summary?.symbolPick?.symbol) == ["birthday.cake"])
+        #expect(landed.map(\.symbolPick?.symbol) == ["birthday.cake"])
     }
 
     @Test("a pick made with another version of the prompt is asked for again")

@@ -41,7 +41,7 @@ extension FileRecipeRepositoryTests {
     }
 
     private static func symbol(in listedRecipes: [ListedRecipe]) -> String? {
-        listedRecipes.first?.entry.summary?.symbolPick?.symbol
+        listedRecipes.first?.symbolPick?.symbol
     }
 
     @MainActor

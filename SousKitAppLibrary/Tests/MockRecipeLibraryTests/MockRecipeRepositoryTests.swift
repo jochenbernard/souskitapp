@@ -249,14 +249,14 @@ struct MockRecipeRepositoryTests {
 
         while
             let listing = await iterator.next(),
-            try listing.get().first(where: { $0.entry.id == "vinaigrette.sous" })?.entry.summary?.symbolPick == nil
+            try listing.get().first(where: { $0.entry.id == "vinaigrette.sous" })?.symbolPick == nil
         {
             continue
         }
 
-        let entries = try await currentRecipeEntries(of: repository)
-        let symbols = entries.reduce(into: [String: String]()) { symbols, entry in
-            symbols[entry.id] = entry.summary?.symbolPick?.symbol
+        let listedRecipes = try await currentListedRecipes(of: repository)
+        let symbols = listedRecipes.reduce(into: [String: String]()) { symbols, listedRecipe in
+            symbols[listedRecipe.entry.id] = listedRecipe.symbolPick?.symbol
         }
 
         #expect(symbols["bouillabaisse.sous"] == "fish")

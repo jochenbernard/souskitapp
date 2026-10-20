@@ -56,10 +56,6 @@ struct RecipeSummaryRecord: Sendable, Hashable, Codable {
     /// - Parameter parser: What the header is read back with.
     /// - Returns: The summary.
     func summary(parsedWith parser: SousParser) -> RecipeSummary {
-        RecipeSummary(
-            metadata: parser.parseRecipe(header).value.metadata,
-            parser: parser,
-            symbolPick: symbolPick
-        )
+        RecipeSummary(metadata: parser.parseRecipe(header).value.metadata, parser: parser)
     }
 }

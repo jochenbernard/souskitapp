@@ -27,7 +27,7 @@ enum KitchenFolderTree {
         let folders = innerEntries.keys.sorted(by: isOrderedBefore).map { name in
             folder(at: path + [name], holding: innerEntries[name] ?? [])
         }
-        let cards = ownEntries.sorted(by: isOrderedBefore).map(KitchenFeaturePresenter.card(for:))
+        let cards = ownEntries.sorted(by: isOrderedBefore).map(KitchenRecipeCard.init)
         // Its own recipes first, then those in the folders inside it.
         let stackedCards = cards.prefix(stackedCardLimit) + folders.lazy.flatMap(\.stackedCards)
 

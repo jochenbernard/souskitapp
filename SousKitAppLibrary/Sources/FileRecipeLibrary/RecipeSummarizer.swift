@@ -82,7 +82,8 @@ actor RecipeSummarizer {
 
             return ListedRecipe(
                 entry: file.recipeEntry(summary: summary?.summary, pictures: pictures),
-                ingredientNames: summary?.record.ingredientNames ?? []
+                ingredientNames: summary?.record.ingredientNames ?? [],
+                symbolPick: summary?.record.symbolPick
             )
         }
     }
@@ -129,14 +130,7 @@ actor RecipeSummarizer {
                 modificationDate: modificationDate,
                 symbolPick: summaries[file.path]?.record.symbolPick
             )
-            summaries[file.path] = Summary(
-                record: record,
-                summary: RecipeSummary(
-                    metadata: recipe.metadata,
-                    parser: parser,
-                    symbolPick: record.symbolPick
-                )
-            )
+            summaries[file.path] = Summary(record: record, summary: RecipeSummary(recipe: recipe, parser: parser))
             hasRead = true
         }
 
@@ -157,14 +151,7 @@ actor RecipeSummarizer {
 
         var record = summary.record
         record.symbolPick = symbolPick
-        summaries[path] = Summary(
-            record: record,
-            summary: RecipeSummary(
-                metadata: summary.summary.metadata,
-                parser: parser,
-                symbolPick: symbolPick
-            )
-        )
+        summaries[path] = Summary(record: record, summary: summary.summary)
         save()
     }
 
