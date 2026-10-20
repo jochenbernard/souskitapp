@@ -1,5 +1,6 @@
 import FoundationModels
 import Observation
+import RecipeLibrary
 
 /// Picks recipes' symbols with the on-device model of Apple Intelligence, where the device has it ready for the
 /// language it runs in.

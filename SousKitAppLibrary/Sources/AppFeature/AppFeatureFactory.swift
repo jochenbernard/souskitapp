@@ -2,6 +2,7 @@ import CookingFeature
 import FileRecipeLibrary
 import Foundation
 import KitchenFeature
+import LanguageModelRecipeLibrary
 import MockRecipeLibrary
 import OnboardingFeature
 import RecipeLibrary

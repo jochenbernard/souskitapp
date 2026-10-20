@@ -28,6 +28,7 @@ let package = Package(
             dependencies: [
                 "FileRecipeLibrary",
                 "KitchenFeature",
+                "LanguageModelRecipeLibrary",
                 "MockRecipeLibrary",
                 "OnboardingFeature",
                 "SettingsFeature"
@@ -71,6 +72,10 @@ let package = Package(
         .standardTestTarget(
             name: "KitchenFeatureTests",
             dependencies: ["LocalizationTestSupport", "KitchenFeature"]
+        ),
+        .standardTarget(
+            name: "LanguageModelRecipeLibrary",
+            dependencies: ["RecipeLibrary"]
         ),
         .standardTarget(name: "LocalizationTestSupport"),
         .standardTarget(
