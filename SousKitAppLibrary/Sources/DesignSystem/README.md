@@ -26,8 +26,8 @@ disagrees with this package, this package is right.
   or a card, `tertiaryFill` for a control or a chip, `separator` for a border,
   `.primary` and `.secondary` for text. Dark comes with them, and nothing reaches for
   `@Environment(\.colorScheme)` to pick a value.
-- One exception: `SousPlaceholderColor`, eleven muted kitchen colors, each with a light and a dark value, that a
-  recipe without a picture of its own is drawn in. A system color cannot tell eleven recipes apart. They stay out of
+- One exception: `SousPlaceholderColor`, eight colors, the same in light and dark, that a recipe without a picture
+  of its own is drawn in. A system color cannot tell eight recipes apart. They stay out of
   every other role, and the accent stays out of them, so it keeps meaning live, here, or do.
 - A UIKit color is a static on `Color` in `Color+System`, so a call site never writes
   `Color(.x)`. It is repeated on `ShapeStyle`, as `.groupedBackground` is, unless SwiftUI
@@ -80,6 +80,27 @@ Text takes a SwiftUI text style, and Dynamic Type comes from it, so nothing here
 measures a face.
 A layout that needs the height of a line of text takes `@ScaledMetric(relativeTo:)`, as
 `LineContainerRadius` does for the radius of a row or a callout.
+
+## The placeholder colors
+
+The eight `SousPlaceholderColor` values are worked out in OKLCH from the accent, `#EA5202`, which is
+`oklch(0.639 0.200 40.0)`. Their hues are spaced evenly around the wheel and shifted half a step, so none
+falls on the accent's: H = 40 + 360 / 16 + i * 360 / 8 = 62.5 + i * 45 (mod 360), for i from 0 to 7. Each
+takes the accent's lightness, L = 0.64, and half its chroma, C = 0.10. The highest chroma all eight hues
+hold inside sRGB at that lightness is about 0.11, limited near hue 200, so every one lies inside sRGB;
+`PlaceholderColorTests` checks that and each sRGB value below. Each is named after the SwiftUI color
+nearest its hue in OKLCH, every name once.
+
+| Case | OKLCH | sRGB |
+| --- | --- | --- |
+| `pink` | `oklch(0.64 0.10 17.5)` | `#C17276` |
+| `orange` | `oklch(0.64 0.10 62.5)` | `#B77E48` |
+| `yellow` | `oklch(0.64 0.10 107.5)` | `#939043` |
+| `green` | `oklch(0.64 0.10 152.5)` | `#599E6E` |
+| `teal` | `oklch(0.64 0.10 197.5)` | `#279EA1` |
+| `blue` | `oklch(0.64 0.10 242.5)` | `#5193C4` |
+| `indigo` | `oklch(0.64 0.10 287.5)` | `#8982C6` |
+| `purple` | `oklch(0.64 0.10 332.5)` | `#B075A7` |
 
 ## What the two themes do not share
 

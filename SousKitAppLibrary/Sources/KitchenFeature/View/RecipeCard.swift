@@ -49,7 +49,6 @@ struct RecipeCard: View {
                 )
                     .overlay(alignment: .topTrailing) {
                         RecipeAvailabilityBadge(card.recipeEntry.availability)
-                            .padding(SousSpacing.small)
                     }
             },
             detail: { detailText }
