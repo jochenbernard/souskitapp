@@ -2,41 +2,43 @@ import SwiftUI
 
 /// A color a recipe without a picture of its own is drawn in, so recipes tell apart at a glance.
 ///
-/// The one set of colors besides the accent that is not a system color. A recipe keeps its color from launch to
-/// launch, so a case is never reordered or removed without deciding that every recipe may change color.
+/// The one set of colors besides the accent that is not a system color, the same in light and dark. A recipe keeps
+/// its color from launch to launch, so a case is never reordered or removed without deciding that every recipe may
+/// change color.
 public enum SousPlaceholderColor: CaseIterable, Sendable {
-    case tomato
-    case saffron
-    case olive
-    case sage
-    case herb
+    case pink
+    case orange
+    case yellow
+    case green
     case teal
-    case ocean
-    case plum
-    case berry
-    case cocoa
-    case slate
+    case blue
+    case indigo
+    case purple
 
-    /// The color, for the appearance in force.
+    // The accent's lightness and half its chroma, which every hue holds inside sRGB.
+    private static let lightness = 0.64
+    private static let chroma = 0.10
+
+    /// The color.
     public var color: Color {
-        Color(uiColor: UIColor { traits in
-            UIColor(Color(hex: traits.userInterfaceStyle == .dark ? hex.dark : hex.light))
-        })
+        Color(
+            oklchLightness: Self.lightness,
+            chroma: Self.chroma,
+            hue: hue
+        )
     }
 
-    private var hex: (light: UInt32, dark: UInt32) {
+    // Every 45 degrees, half a step off the accent's 40, so none falls on the accent.
+    private var hue: Double {
         switch self {
-        case .tomato: (0xC2433A, 0xD65A50)
-        case .saffron: (0xB7800F, 0xCF9A2C)
-        case .olive: (0x77802F, 0x939C45)
-        case .sage: (0x5B8768, 0x76A383)
-        case .herb: (0x2F7A4D, 0x449565)
-        case .teal: (0x1F7B82, 0x34979F)
-        case .ocean: (0x2F62A3, 0x4C80C2)
-        case .plum: (0x76498F, 0x9265AB)
-        case .berry: (0xAA3966, 0xC5537F)
-        case .cocoa: (0x85573A, 0xA27252)
-        case .slate: (0x58636F, 0x76828E)
+        case .pink: 17.5
+        case .orange: 62.5
+        case .yellow: 107.5
+        case .green: 152.5
+        case .teal: 197.5
+        case .blue: 242.5
+        case .indigo: 287.5
+        case .purple: 332.5
         }
     }
 }
