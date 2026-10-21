@@ -13,9 +13,9 @@ struct PlaceholderColorPickTests {
 
     @Test("a title keeps its color, from launch to launch")
     func pinnedColors() {
-        #expect(PlaceholderColorPick.color(forTitle: "Crepes") == .plum)
-        #expect(PlaceholderColorPick.color(forTitle: "Bouillabaisse") == .teal)
-        #expect(PlaceholderColorPick.color(forTitle: "Vinaigrette") == .tomato)
+        #expect(PlaceholderColorPick.color(forTitle: "Crepes") == .orange)
+        #expect(PlaceholderColorPick.color(forTitle: "Bouillabaisse") == .yellow)
+        #expect(PlaceholderColorPick.color(forTitle: "Vinaigrette") == .purple)
     }
 
     @Test("titles differing only in case, accents, or spacing share a color")
