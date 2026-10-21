@@ -2,8 +2,10 @@ import DesignSystem
 import RecipeLibrary
 import SwiftUI
 
-/// Where a recipe's contents are not on the device, a mark saying so on a disc of its own.
+/// Where a recipe's contents are not on the device, a mark saying so on a disc in the top corner of its card.
 struct RecipeAvailabilityBadge: View {
+    @LineContainerRadius private var cornerRadius
+
     private let availability: RecipeAvailability
 
     init(_ availability: RecipeAvailability) {
@@ -45,6 +47,8 @@ struct RecipeAvailabilityBadge: View {
         content()
             .padding(SousSpacing.xSmall)
             .background(.regularMaterial, in: Circle())
+            // Centered in the circle the card's corner is cut from, so the disc runs concentric with the corner.
+            .frame(width: cornerRadius * 2.0, height: cornerRadius * 2.0)
             .accessibilityElement(children: .ignore)
     }
 }
