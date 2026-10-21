@@ -21,7 +21,6 @@ struct RecipeCard: View {
                 RecipeCardPlaceholder(symbol: card.placeholderSymbol, color: card.placeholderColor)
                     .overlay(alignment: .topTrailing) {
                         RecipeAvailabilityBadge(card.recipeEntry.availability)
-                            .padding(SousSpacing.small)
                     }
             },
             detail: { totalTime }
