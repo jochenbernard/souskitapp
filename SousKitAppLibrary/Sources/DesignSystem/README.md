@@ -83,8 +83,8 @@ A layout that needs the height of a line of text takes `@ScaledMetric(relativeTo
 
 ## The placeholder colors
 
-The eight `SousPlaceholderColor` values are worked out in OKLCH from the accent, `#EA5202`, which is
-`oklch(0.639 0.200 40.0)`. Their hues are spaced evenly around the wheel and shifted half a step, so none
+The eight `SousPlaceholderColor` values are worked out in OKLCH from the accent, `oklch(0.64 0.20 40)`,
+which sRGB holds as `#EA5202`. Their hues are spaced evenly around the wheel and shifted half a step, so none
 falls on the accent's: H = 40 + 360 / 16 + i * 360 / 8 = 62.5 + i * 45 (mod 360), for i from 0 to 7. Each
 takes the accent's lightness, L = 0.64, and half its chroma, C = 0.10. The highest chroma all eight hues
 hold inside sRGB at that lightness is about 0.11, limited near hue 200, so every one lies inside sRGB.
