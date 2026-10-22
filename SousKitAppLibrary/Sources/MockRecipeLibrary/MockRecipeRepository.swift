@@ -5,11 +5,13 @@ import SousKit
 /// Recipes kept in the app, for trying it where no folder can be picked, such as on a simulator.
 ///
 /// Some of the recipes start out in iCloud, and reading one fetches it first, as a folder in iCloud Drive does. One
-/// of them never arrives.
+/// of them never arrives. Every recipe with a text is listed with its summary, as a folder lists the recipes it read
+/// on an earlier launch.
 @MainActor
 public final class MockRecipeRepository: RecipeRepository {
     private let fetchDuration: Duration
     private let parser: SousParser
+    private let summaries: [String: RecipeSummary]
 
     private var continuation: AsyncStream<Result<[RecipeEntry], Error>>.Continuation?
     private var downloadTask: Task<Void, Never>?
@@ -30,6 +32,11 @@ public final class MockRecipeRepository: RecipeRepository {
     ) {
         self.parser = parser
         self.fetchDuration = fetchDuration
+        self.summaries = MockRecipe.all.reduce(into: [:]) { summaries, recipe in
+            summaries[recipe.id] = recipe.text.map { text in
+                RecipeSummary(recipe: parser.parseRecipe(text).value, parser: parser)
+            }
+        }
     }
 
     deinit {
@@ -77,7 +84,8 @@ public final class MockRecipeRepository: RecipeRepository {
             RecipeEntry(
                 id: recipe.id,
                 name: recipe.name,
-                availability: availability(of: recipe)
+                availability: availability(of: recipe),
+                summary: summaries[recipe.id]
             )
         }
     }

@@ -3,76 +3,84 @@ import RecipeLibrary
 
 /// Reads the recipes sitting directly in a directory, leaving the directories inside it alone.
 struct RecipeDirectoryReader: Sendable {
-    private static let resourceKeys: Set<URLResourceKey> = [
-        .isDirectoryKey,
-        .isUbiquitousItemKey,
-        .ubiquitousItemDownloadingStatusKey,
-        .ubiquitousItemIsDownloadingKey
-    ]
-
     private static let placeholderExtension = "icloud"
     private static let recipeExtension = "sous"
 
+    private let fileStatus: @Sendable (URL) -> RecipeFileStatus?
     private let recipeDirectory: RecipeDirectory
 
     /// Creates a reader.
     ///
-    /// - Parameter recipeDirectory: The directory recipes are read from.
-    init(recipeDirectory: RecipeDirectory) {
+    /// - Parameters:
+    ///   - recipeDirectory: The directory recipes are read from.
+    ///   - fileStatus: What the file system reports of the file at a URL, or of the file iCloud promises there.
+    init(
+        recipeDirectory: RecipeDirectory,
+        fileStatus: @escaping @Sendable (URL) -> RecipeFileStatus? = RecipeFileStatus.read(at:)
+    ) {
         self.recipeDirectory = recipeDirectory
+        self.fileStatus = fileStatus
     }
 
     /// Reads the directory's top level.
     ///
-    /// It downloads nothing: a recipe held only in iCloud is listed as
-    /// ``RecipeAvailability/notDownloaded``.
+    /// It downloads nothing: a recipe held only in iCloud is listed as ``RecipeAvailability/notDownloaded``, and one
+    /// whose newer version waits in iCloud as outdated and ``RecipeAvailability/downloading``, since it is fetched
+    /// once listed.
     ///
-    /// - Returns: The recipes found, ordered by name.
+    /// - Returns: The recipe files found, ordered by path.
     /// - Throws: Whatever reading the directory throws.
-    func readRecipeEntries() throws -> [RecipeEntry] {
+    func readRecipeFiles() throws -> [RecipeFile] {
         let url = recipeDirectory.url
 
         return try url.withSecurityScope {
-            try NSFileCoordinator.coordinateReading(at: url, Self.recipeEntries(inDirectoryAt:))
+            try NSFileCoordinator.coordinateReading(at: url, recipeFiles(inDirectoryAt:))
         }
     }
 
-    private static func recipeEntries(inDirectoryAt directory: URL) throws -> [RecipeEntry] {
+    private func recipeFiles(inDirectoryAt directory: URL) throws -> [RecipeFile] {
         let entries = try FileManager.default.contentsOfDirectory(
             at: directory,
-            includingPropertiesForKeys: Array(resourceKeys),
+            includingPropertiesForKeys: [.isDirectoryKey],
             options: []
         )
 
-        var recipeEntries: [RecipeEntry] = []
-        var placeholders: [RecipeEntry] = []
+        var recipeFiles: [RecipeFile] = []
+        var placeholders: [RecipeFile] = []
 
         for entry in entries {
             let entryName = entry.lastPathComponent
 
-            if let name = recipeFileName(forPlaceholderNamed: entryName) {
+            if let name = Self.recipeFileName(forPlaceholderNamed: entryName) {
                 // Built off the entry, not off `directory`: listing resolves the symlinks in
                 // front of a directory, and a URL built the other way matches no entry.
                 let url = entry.deletingLastPathComponent().appending(path: name)
-                placeholders.append(
-                    RecipeEntry(fileName: name, availability: availabilityOfPlaceholder(at: url))
-                )
-            } else if isRecipeFileName(entryName) {
+                placeholders.append(placeholderFile(named: name, at: url))
+            } else if Self.isRecipeFileName(entryName) {
                 guard
-                    let values = try? entry.resourceValues(forKeys: resourceKeys),
-                    values.isDirectory == false
+                    let values = try? entry.resourceValues(forKeys: [.isDirectoryKey]),
+                    values.isDirectory == false,
+                    let status = fileStatus(entry)
                 else {
                     continue
                 }
 
-                recipeEntries.append(RecipeEntry(fileName: entryName, availability: availability(of: values)))
+                // A file iCloud evicted in place keeps the dates of the contents it stands in for.
+                recipeFiles.append(
+                    RecipeFile(
+                        path: entryName,
+                        availability: Self.availability(of: status),
+                        modificationDate: status.modificationDate,
+                        isOutdated: status.downloadingStatus == .outdated
+                    )
+                )
             }
         }
 
-        let listed = Set(recipeEntries.map(\.fileName))
-        recipeEntries.append(contentsOf: placeholders.filter({ !listed.contains($0.fileName) }))
+        let listed = Set(recipeFiles.map(\.path))
+        recipeFiles.append(contentsOf: placeholders.filter({ !listed.contains($0.path) }))
 
-        return recipeEntries.sorted(by: isOrderedBefore)
+        return recipeFiles.sorted(by: { $0.path.localizedStandardCompare($1.path) == .orderedAscending })
     }
 
     /// The recipe an iCloud placeholder entry stands in for, or `nil` where it stands in for none.
@@ -98,40 +106,28 @@ struct RecipeDirectoryReader: Sendable {
     /// What a placeholder reports about the recipe it stands in for.
     ///
     /// A placeholder stays in the directory while the fetch it triggered runs, so a recipe on its
-    /// way down is reported as ``RecipeAvailability/downloading`` rather than as absent.
-    private static func availabilityOfPlaceholder(at url: URL) -> RecipeAvailability {
-        guard
-            let values = try? url.resourceValues(forKeys: resourceKeys),
-            values.ubiquitousItemIsDownloading == true
-        else {
-            return .notDownloaded
-        }
+    /// way down is reported as ``RecipeAvailability/downloading`` rather than as absent. The
+    /// recipe's own URL is asked, not the placeholder's: the placeholder's dates are its own.
+    private func placeholderFile(named name: String, at url: URL) -> RecipeFile {
+        let status = fileStatus(url)
 
-        return .downloading
+        return RecipeFile(
+            path: name,
+            availability: status?.isDownloading == true ? .downloading : .notDownloaded,
+            modificationDate: status?.modificationDate
+        )
     }
 
-    private static func availability(of values: URLResourceValues) -> RecipeAvailability {
-        guard
-            values.isUbiquitousItem == true,
-            values.ubiquitousItemDownloadingStatus == .notDownloaded
-        else {
-            return .downloaded
-        }
+    private static func availability(of status: RecipeFileStatus) -> RecipeAvailability {
+        switch status.downloadingStatus {
+        case .current:
+            .downloaded
 
-        return values.ubiquitousItemIsDownloading == true ? .downloading : .notDownloaded
-    }
+        case .outdated:
+            .downloading
 
-    /// Whether one recipe sorts before another, by name and then by file name.
-    private static func isOrderedBefore(_ lhs: RecipeEntry, _ rhs: RecipeEntry) -> Bool {
-        switch lhs.name.localizedStandardCompare(rhs.name) {
-        case .orderedAscending:
-            true
-
-        case .orderedDescending:
-            false
-
-        case .orderedSame:
-            lhs.fileName.localizedStandardCompare(rhs.fileName) == .orderedAscending
+        case .notDownloaded:
+            status.isDownloading ? .downloading : .notDownloaded
         }
     }
 }

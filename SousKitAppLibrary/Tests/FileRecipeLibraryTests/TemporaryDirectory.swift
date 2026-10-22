@@ -7,6 +7,9 @@ final class TemporaryDirectory: Sendable {
     /// Where the directory sits on disk.
     let url: URL
 
+    /// Where the summaries of the directory's recipes are kept, beside the directory rather than in it.
+    let summaryCacheURL: URL
+
     /// Creates a directory, named for the suite and a fresh UUID so suites never share one.
     ///
     /// - Parameter name: The suite's name.
@@ -16,10 +19,12 @@ final class TemporaryDirectory: Sendable {
             .appending(path: "\(name).\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: directoryURL, withIntermediateDirectories: true)
         self.url = directoryURL
+        self.summaryCacheURL = directoryURL.appendingPathExtension("RecipeSummaries.json")
     }
 
     deinit {
         try? FileManager.default.removeItem(at: url)
+        try? FileManager.default.removeItem(at: summaryCacheURL)
     }
 
     /// The directory, as the library takes it.
@@ -47,6 +52,24 @@ final class TemporaryDirectory: Sendable {
         try Data(text.utf8).write(to: url.appending(path: fileName))
 
         return RecipeEntry(fileName: fileName, availability: .downloaded)
+    }
+
+    /// The cache keeping the summaries of the directory's recipes.
+    var summaryCache: RecipeSummaryCache {
+        RecipeSummaryCache(recipeDirectory: recipeDirectory, fileURL: summaryCacheURL)
+    }
+
+    /// Sets when a file's contents last changed.
+    ///
+    /// - Parameters:
+    ///   - date: The date.
+    ///   - fileName: The file's name inside the directory.
+    /// - Throws: Whatever changing the file's attributes throws.
+    func setModificationDate(_ date: Date, ofFileNamed fileName: String) throws {
+        try FileManager.default.setAttributes(
+            [.modificationDate: date],
+            ofItemAtPath: url.appending(path: fileName).path(percentEncoded: false)
+        )
     }
 
     /// Creates a directory inside this one.

@@ -51,6 +51,16 @@ public struct SousCatalog: View {
                 ForEach(Self.systemColors, id: \.name) { swatch in
                     swatch
                 }
+
+                Divider()
+
+                ForEach(SousPlaceholderColor.allCases, id: \.self) { placeholderColor in
+                    CatalogSwatch(
+                        fill: placeholderColor.color,
+                        name: String(describing: placeholderColor),
+                        role: "a recipe without a picture"
+                    )
+                }
             }
         }
     }

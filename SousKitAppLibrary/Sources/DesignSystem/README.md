@@ -8,13 +8,13 @@ disagrees with this package, this package is right.
 
 | Layer | Type | Use |
 | --- | --- | --- |
-| Color | `Color+Accent`, `Color+System` | The accent and its wash, and the system colors SwiftUI has no name for. |
+| Color | `Color+Accent`, `Color+System`, `SousPlaceholderColor` | The accent and its wash, the system colors SwiftUI has no name for, and the colors a recipe without a picture is drawn in. |
 | Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.body`, `.subheadline`, `.caption2`. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sousBare`, `.sousChip(isSelected:)`, `.sous` | The three button styles, the button its label draws, the chip a cook chooses from a set, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
-| Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row and its two halves, the rows that share one card, the wash, the chip, the spinner. |
+| Containers | `.sousSurface(_:)`, `.sousBorder()`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card and its border, the row and its two halves, the rows that share one card, the wash, the chip, the spinner. |
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
 | Sheet | `SousSheet` | The low sheet that sets one thing. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
@@ -26,6 +26,9 @@ disagrees with this package, this package is right.
   or a card, `tertiaryFill` for a control or a chip, `separator` for a border,
   `.primary` and `.secondary` for text. Dark comes with them, and nothing reaches for
   `@Environment(\.colorScheme)` to pick a value.
+- One exception: `SousPlaceholderColor`, eight colors, the same in light and dark, that a recipe without a picture
+  of its own is drawn in. A system color cannot tell eight recipes apart. They stay out of
+  every other role, and the accent stays out of them, so it keeps meaning live, here, or do.
 - A UIKit color is a static on `Color` in `Color+System`, so a call site never writes
   `Color(.x)`. It is repeated on `ShapeStyle`, as `.groupedBackground` is, unless SwiftUI
   already names a style after it: a second `.separator` there makes both ambiguous, so
@@ -77,6 +80,28 @@ Text takes a SwiftUI text style, and Dynamic Type comes from it, so nothing here
 measures a face.
 A layout that needs the height of a line of text takes `@ScaledMetric(relativeTo:)`, as
 `LineContainerRadius` does for the radius of a row or a callout.
+
+## The placeholder colors
+
+The eight `SousPlaceholderColor` values are worked out in OKLCH from the accent, `oklch(0.64 0.20 40)`,
+which sRGB holds as `#EA5202`. Their hues are spaced evenly around the wheel and shifted half a step, so none
+falls on the accent's: H = 40 + 360 / 16 + i * 360 / 8 = 62.5 + i * 45 (mod 360), for i from 0 to 7. Each
+takes the accent's lightness, L = 0.64, and half its chroma, C = 0.10. The highest chroma all eight hues
+hold inside sRGB at that lightness is about 0.11, limited near hue 200, so every one lies inside sRGB.
+Each is converted to linear sRGB with the OKLab matrices Björn Ottosson published, gamma-encoded, and
+rounded to the hex `SousPlaceholderColor` defines. Each is named after the SwiftUI color nearest its hue
+in OKLCH, every name once.
+
+| Case | OKLCH | sRGB |
+| --- | --- | --- |
+| `pink` | `oklch(0.64 0.10 17.5)` | `#C17276` |
+| `orange` | `oklch(0.64 0.10 62.5)` | `#B77E48` |
+| `yellow` | `oklch(0.64 0.10 107.5)` | `#939043` |
+| `green` | `oklch(0.64 0.10 152.5)` | `#599E6E` |
+| `teal` | `oklch(0.64 0.10 197.5)` | `#279EA1` |
+| `blue` | `oklch(0.64 0.10 242.5)` | `#5193C4` |
+| `indigo` | `oklch(0.64 0.10 287.5)` | `#8982C6` |
+| `purple` | `oklch(0.64 0.10 332.5)` | `#B075A7` |
 
 ## What the two themes do not share
 

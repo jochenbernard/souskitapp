@@ -6,7 +6,13 @@ import SousKit
 import SwiftUI
 
 struct KitchenFeatureView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.scenePhase) private var scenePhase
+
+    @ScaledMetric(relativeTo: .body) private var scaledCardWidth = Self.minimumCardWidth
+
+    // Two columns on any iPhone; at accessibility sizes the width grows with the text, which leaves the iPhone one.
+    private static let minimumCardWidth = 160.0
 
     @Namespace private var cookingTransition
 
@@ -81,11 +87,11 @@ struct KitchenFeatureView: View {
         case .reading:
             readingNote
 
-        case .recipes(let recipeEntries):
-            if recipeEntries.isEmpty {
+        case .recipes(let cards):
+            if cards.isEmpty {
                 emptyNote
             } else {
-                recipeRows(recipeEntries)
+                recipeCards(cards)
             }
 
         case .failure(let message):
@@ -108,12 +114,15 @@ struct KitchenFeatureView: View {
         }
     }
 
-    private func recipeRows(_ recipeEntries: [RecipeEntry]) -> some View {
-        LazyVStack(spacing: SousSpacing.medium) {
-            ForEach(recipeEntries) { recipeEntry in
+    private func recipeCards(_ cards: [KitchenRecipeCard]) -> some View {
+        RecipeCardGrid(
+            minimumColumnWidth: dynamicTypeSize.isAccessibilitySize ? scaledCardWidth : Self.minimumCardWidth,
+            spacing: SousSpacing.medium
+        ) {
+            ForEach(cards) { card in
                 Button(
-                    action: { presenter.didChangePushedScreen(.recipe(recipeEntry)) },
-                    label: { recipeRow(recipeEntry) }
+                    action: { presenter.didChangePushedScreen(.recipe(card.recipeEntry)) },
+                    label: { RecipeCard(card) }
                 )
                 .buttonStyle(.plain)
             }
@@ -122,40 +131,6 @@ struct KitchenFeatureView: View {
 
     private func failureNote(_ message: String) -> some View {
         SousFailureNote(Text("This folder could not be read", bundle: .module), message: message)
-    }
-
-    private func recipeRow(_ recipeEntry: RecipeEntry) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: SousSpacing.medium) {
-            Text(verbatim: recipeEntry.name)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            availabilityBadge(recipeEntry.availability)
-        }
-        .sousRow()
-    }
-
-    @ViewBuilder
-    private func availabilityBadge(_ availability: RecipeAvailability) -> some View {
-        switch availability {
-        case .downloaded:
-            EmptyView()
-
-        case .downloading:
-            // The spinner has no text baseline to align on, so a hidden symbol lends it the row's.
-            Image(systemName: "icloud.and.arrow.down")
-                .accessibilityHidden(true)
-                .hidden()
-                .overlay {
-                    ProgressView()
-                        .controlSize(.small)
-                        .accessibilityLabel(Text("Downloading from iCloud", bundle: .module))
-                }
-
-        case .notDownloaded:
-            Image(systemName: "icloud.and.arrow.down")
-                .foregroundStyle(.secondary)
-                .accessibilityLabel(Text("In iCloud, not downloaded", bundle: .module))
-        }
     }
 
     @ViewBuilder
@@ -197,32 +172,72 @@ private func previewViewModel(
     return viewModel
 }
 
-private func previewRecipeEntry(
-    _ name: String,
-    _ availability: RecipeAvailability
-) -> RecipeEntry {
-    RecipeEntry(
-        id: name,
-        name: name,
-        availability: availability
+/// A card for a recipe whose header is `header`, or one not read yet where there is none.
+private func previewCard(
+    _ id: String,
+    _ availability: RecipeAvailability,
+    header: String? = nil
+) -> KitchenRecipeCard {
+    let parser = SousParser()
+
+    return KitchenFeaturePresenter.card(
+        for: RecipeEntry(
+            id: id,
+            name: id.replacing("-", with: " "),
+            availability: availability,
+            summary: header.map({ RecipeSummary(recipe: parser.parseRecipe($0).value, parser: parser) })
+        )
     )
+}
+
+private func previewCards() -> [KitchenRecipeCard] {
+    [
+        previewCard(
+            "boeuf-bourguignon",
+            .downloaded,
+            header: "---\ntitle: Boeuf Bourguignon\nprep-time: 30 min\ncook-time: 3 h\n---"
+        ),
+        previewCard(
+            "bouillabaisse",
+            .downloaded,
+            header: "---\ntitle: Bouillabaisse\nprep-time: 40 min\ncook-time: 50 min\n---"
+        ),
+        previewCard(
+            "crepes",
+            .notDownloaded,
+            header: "---\ntitle: Crepes\nprep-time: 10 min\ncook-time: 25 min\n---"
+        ),
+        previewCard(
+            "gratin-dauphinois",
+            .downloading,
+            header: "---\ntitle: Gratin Dauphinois\nprep-time: 30 min\ncook-time: 1 h 30 min\n---"
+        ),
+        previewCard("steps-only", .downloaded),
+        previewCard(
+            "vinaigrette",
+            .downloaded,
+            header: "---\ntitle: Vinaigrette\nyield: [125 ml]\n---"
+        )
+    ]
 }
 
 #Preview("Kitchen") {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(
-                .recipes([
-                    previewRecipeEntry("boeuf bourguignon", .downloaded),
-                    previewRecipeEntry("bouillabaisse", .downloaded),
-                    previewRecipeEntry("crepes", .notDownloaded),
-                    previewRecipeEntry("gratin dauphinois", .downloading),
-                    previewRecipeEntry("vinaigrette", .downloaded)
-                ])
-            )
+            viewModel: previewViewModel(.recipes(previewCards()))
         )
     }
+}
+
+#Preview("Kitchen, largest text") {
+    NavigationStack {
+        KitchenFeatureView(
+            presenter: KitchenFeaturePresenterStub(),
+            viewModel: previewViewModel(.recipes(previewCards()))
+        )
+    }
+    .dynamicTypeSize(.accessibility5)
 }
 
 #Preview("Kitchen, reading") {

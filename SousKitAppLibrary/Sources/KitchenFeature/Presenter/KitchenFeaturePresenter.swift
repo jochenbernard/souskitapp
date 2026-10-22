@@ -5,6 +5,9 @@ import RecipeLibrary
 import SousKit
 
 struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
+    // One symbol for every recipe, until summaries name their own.
+    private static let placeholderSymbol = "fork.knife"
+
     private let cookingFeatureFactory: CookingFeatureFactory
     private let handler: KitchenFeatureHandler
     private let recipeFeatureFactory: RecipeFeatureFactory
@@ -36,7 +39,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         for await result in await recipeRepository.recipeEntries() {
             switch result {
             case .success(let recipeEntries):
-                viewModel.recipeList = .recipes(recipeEntries)
+                viewModel.recipeList = .recipes(recipeEntries.sorted(by: Self.isOrderedBefore).map(Self.card(for:)))
                 restore(from: recipeEntries)
 
             case .failure(let error):
@@ -191,5 +194,32 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private func closeCooking() {
         viewModel.openCooking = nil
         restorationKeeper.update({ $0.cooking = nil })
+    }
+
+    /// The card a recipe is listed as.
+    ///
+    /// - Parameter recipeEntry: The recipe.
+    /// - Returns: The card.
+    static func card(for recipeEntry: RecipeEntry) -> KitchenRecipeCard {
+        KitchenRecipeCard(
+            recipeEntry: recipeEntry,
+            placeholderSymbol: Self.placeholderSymbol,
+            placeholderColor: PlaceholderColorPick.color(forTitle: recipeEntry.title)
+        )
+    }
+
+    /// Whether one recipe is listed before another: by the title its row shows, then by what the repository finds it
+    /// by, so recipes sharing a title keep one order.
+    private static func isOrderedBefore(_ lhs: RecipeEntry, _ rhs: RecipeEntry) -> Bool {
+        switch lhs.title.localizedStandardCompare(rhs.title) {
+        case .orderedAscending:
+            true
+
+        case .orderedDescending:
+            false
+
+        case .orderedSame:
+            lhs.id.localizedStandardCompare(rhs.id) == .orderedAscending
+        }
     }
 }
