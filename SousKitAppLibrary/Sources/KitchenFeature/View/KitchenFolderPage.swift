@@ -53,6 +53,8 @@ struct KitchenFolderPage: View {
         return Text(verbatim: names.joined(separator: " \u{203A} "))
             .font(.subheadline)
             .foregroundStyle(.secondary)
+            // Up into the gap under the large title, where a navigation subtitle would sit.
+            .padding(.top, -(SousSpacing.large + SousSpacing.xSmall))
             // A pause between the names, where VoiceOver would otherwise read out the separator.
             .accessibilityLabel(Text(verbatim: names.joined(separator: ", ")))
     }
