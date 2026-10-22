@@ -5,6 +5,9 @@
 final class KitchenRestorationKeeper {
     private(set) var restoration: KitchenFeatureRestoration?
 
+    /// The screens a cold start is pushing one at a time, each once the one under it has appeared, or none.
+    var screensToRestore: [KitchenScreen] = []
+
     private let handler: KitchenFeatureHandler
 
     /// Creates a keeper.
