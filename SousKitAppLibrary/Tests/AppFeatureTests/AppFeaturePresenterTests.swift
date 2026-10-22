@@ -146,6 +146,16 @@ final class AppFeaturePresenterTests {
         #expect(presenter.viewModel?.openSettings != nil)
     }
 
+    @Test("the settings open over a folder the kitchen has pushed")
+    func settingsOpenOverAFolder() {
+        let presenter = launchOnMockRecipes()
+
+        presenter.kitchenFeatureDidChangeRestoration(KitchenFeatureRestoration(folderPath: ["Baking"]))
+        presenter.didTapSettings()
+
+        #expect(presenter.viewModel?.openSettings != nil)
+    }
+
     @Test("the settings open again from the list of a kitchen put under them while they were open over a recipe")
     func settingsOpenAfterAKitchenReplacesOneOnARecipe() throws {
         _ = try makeRecipeRepositoryStore().connectRecipeDirectory(at: URL.temporaryDirectory)

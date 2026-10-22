@@ -56,16 +56,26 @@ struct AppFeatureView: View {
 
         case .kitchen(let kitchenFeature, _):
             NavigationStack(path: kitchenFeature.path) {
-                kitchenFeature.makeView()
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            SettingsButton(action: presenter.didTapSettings)
-                        }
-                    }
+                kitchenFeature.makeView {
+                    SettingsButton(action: presenter.didTapSettings)
+                }
             }
-            // The recipe a cold start opens again is there at once, rather than pushed over a list never shown.
+            // The recipe a cold start opens again is there at once, rather than pushed over a list never shown, and so
+            // is every screen pushed under it on the way.
             .transaction(value: kitchenFeature.isRestoring) { transaction in
                 transaction.disablesAnimations = true
+            }
+            .transaction { transaction in
+                if kitchenFeature.isRestoring {
+                    transaction.disablesAnimations = true
+                }
+            }
+            // Over the bar too, which the screens a cold start pushes on the way keep, to lay out their titles.
+            .overlay {
+                if kitchenFeature.isRestoring {
+                    Color.clear
+                        .sousPage()
+                }
             }
             // On the stack, which stays on screen while the kitchen's screens are pushed and popped.
             .task {

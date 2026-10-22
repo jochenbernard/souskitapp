@@ -32,12 +32,15 @@ public struct KitchenFeature {
 
     /// The feature's screen, which pushes its recipes on the stack it is placed in.
     ///
+    /// - Parameter toolbarItem: What the trailing end of the navigation bar holds on the recipe list and on every
+    ///   folder, though not on a recipe.
     /// - Returns: The view to place at the root of a navigation stack driven by ``path``.
     @MainActor
-    public func makeView() -> some View {
+    public func makeView(@ViewBuilder toolbarItem: () -> some View) -> some View {
         KitchenFeatureView(
             presenter: presenter,
-            viewModel: viewModel
+            viewModel: viewModel,
+            toolbarItem: toolbarItem()
         )
     }
 

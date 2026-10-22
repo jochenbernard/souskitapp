@@ -12,6 +12,14 @@ struct FolderPathText: View {
     }
 
     var body: some View {
+        Self.text(names)
+    }
+
+    /// The path as text, for where only text goes, such as a navigation subtitle.
+    ///
+    /// - Parameter names: The names of the folders, from the outermost down.
+    /// - Returns: The text.
+    static func text(_ names: [String]) -> Text {
         Text(verbatim: names.joined(separator: " \u{203A} "))
             // A pause between the names, where VoiceOver would otherwise read out the separator.
             .accessibilityLabel(Text(verbatim: names.joined(separator: ", ")))

@@ -17,6 +17,11 @@ public struct KitchenFeatureRestoration: Sendable, Hashable, Codable {
     /// What cooking from the recipe has done, or `nil` while cooking is not open over the kitchen.
     var cooking: CookingFeatureRestoration?
 
+    /// Whether a recipe is pushed, over the folders or the recipe list.
+    public var isShowingRecipe: Bool {
+        recipeID != nil
+    }
+
     init(
         folderPath: [String] = [],
         recipeID: String? = nil,
