@@ -15,30 +15,22 @@ public enum SousPlaceholderColor: CaseIterable, Sendable {
     case indigo
     case purple
 
-    // The accent's lightness and half its chroma, which every hue holds inside sRGB.
-    private static let lightness = 0.64
-    private static let chroma = 0.10
-
     /// The color.
     public var color: Color {
-        Color(
-            oklchLightness: Self.lightness,
-            chroma: Self.chroma,
-            hue: hue
-        )
+        Color(hex: hex)
     }
 
-    // Every 45 degrees, half a step off the accent's 40, so none falls on the accent.
-    private var hue: Double {
+    // Picked in OKLCH around the accent and rounded to sRGB; the README's placeholder colors section shows how.
+    private var hex: UInt32 {
         switch self {
-        case .pink: 17.5
-        case .orange: 62.5
-        case .yellow: 107.5
-        case .green: 152.5
-        case .teal: 197.5
-        case .blue: 242.5
-        case .indigo: 287.5
-        case .purple: 332.5
+        case .pink: 0xC17276 // oklch(0.64 0.10 17.5)
+        case .orange: 0xB77E48 // oklch(0.64 0.10 62.5)
+        case .yellow: 0x939043 // oklch(0.64 0.10 107.5)
+        case .green: 0x599E6E // oklch(0.64 0.10 152.5)
+        case .teal: 0x279EA1 // oklch(0.64 0.10 197.5)
+        case .blue: 0x5193C4 // oklch(0.64 0.10 242.5)
+        case .indigo: 0x8982C6 // oklch(0.64 0.10 287.5)
+        case .purple: 0xB075A7 // oklch(0.64 0.10 332.5)
         }
     }
 }
