@@ -59,6 +59,57 @@
         }
       }
     },
+    "Good afternoon" : {
+      "comment" : "The title of the recipe list from noon until 17:00, when the cook is likely to start on lunch.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good afternoon"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goeiemiddag"
+          }
+        }
+      }
+    },
+    "Good evening" : {
+      "comment" : "The title of the recipe list from 17:00 until 05:00, when the cook is likely to start on dinner.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good evening"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goeienavond"
+          }
+        }
+      }
+    },
+    "Good morning" : {
+      "comment" : "The title of the recipe list from 05:00 until noon, when the cook is likely to start on breakfast.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good morning"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goeiemorgen"
+          }
+        }
+      }
+    },
     "In iCloud, not downloaded" : {
       "comment" : "What VoiceOver reads for the symbol on a recipe that is still in iCloud.",
       "localizations" : {

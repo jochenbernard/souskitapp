@@ -5,20 +5,23 @@ import RecipeLibrary
 import SousKit
 import SwiftUI
 
-struct KitchenFeatureView: View {
+struct KitchenFeatureView<ToolbarItemContent: View>: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @Namespace private var cookingTransition
 
     private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
+    private let toolbarItem: ToolbarItemContent
 
     init(
         presenter: KitchenFeaturePresenterProtocol,
-        viewModel: KitchenFeatureViewModel
+        viewModel: KitchenFeatureViewModel,
+        toolbarItem: ToolbarItemContent
     ) {
         self.presenter = presenter
         self.viewModel = viewModel
+        self.toolbarItem = toolbarItem
     }
 
     var body: some View {
@@ -45,9 +48,15 @@ struct KitchenFeatureView: View {
     }
 
     private var topScreen: some View {
+        // Every screen of the kitchen has a subtitle: a pushed screen with one over a screen without loses its large
+        // title to the bar.
         folderPage(at: [])
-            .navigationTitle(viewModel.recipeRepositoryName)
+            .navigationTitle(greeting)
+            .navigationSubtitle(viewModel.recipeRepositoryName)
             .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
+            .task {
+                await presenter.topScreenDidAppear()
+            }
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .active:
@@ -64,12 +73,30 @@ struct KitchenFeatureView: View {
             }
     }
 
+    private var greeting: Text {
+        switch viewModel.greeting {
+        case .morning:
+            Text("Good morning", bundle: .module)
+
+        case .afternoon:
+            Text("Good afternoon", bundle: .module)
+
+        case .evening:
+            Text("Good evening", bundle: .module)
+        }
+    }
+
     private func folderPage(at path: [String]) -> some View {
         KitchenFolderPage(
             path: path,
             presenter: presenter,
             viewModel: viewModel
         )
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                toolbarItem
+            }
+        }
     }
 
     @ViewBuilder
@@ -86,12 +113,26 @@ struct KitchenFeatureView: View {
     private func folderScreen(at path: [String]) -> some View {
         folderPage(at: path)
             .navigationTitle(path.last ?? "")
+            .navigationSubtitle(pathText(path.dropLast()))
+            .background {
+                AppearanceReport(action: { presenter.screenDidAppear(.folder(path)) })
+            }
+    }
+
+    /// Where a folder or a recipe sits: the repository's name, then the folders leading down to it.
+    private func pathText(_ folders: some Sequence<String>) -> Text {
+        let names = [viewModel.recipeRepositoryName] + folders
+
+        return Text(verbatim: names.joined(separator: " \u{203A} "))
+            // A pause between the names, where VoiceOver would otherwise read out the separator.
+            .accessibilityLabel(Text(verbatim: names.joined(separator: ", ")))
     }
 
     @ViewBuilder
     private func recipeScreen(for recipeEntry: RecipeEntry) -> some View {
         if let openRecipe = viewModel.openRecipe, openRecipe.recipeEntry == recipeEntry {
             openRecipe.feature.makeView(cookingTransition: cookingTransition)
+                .navigationSubtitle(pathText(recipeEntry.folderPath))
         }
     }
 
@@ -105,6 +146,15 @@ struct KitchenFeatureView: View {
             }
         )
     }
+}
+
+/// A stand-in for the button the app puts in the kitchen's navigation bar.
+@MainActor
+private var previewToolbarItem: some View {
+    Button(
+        action: {},
+        label: { Image(systemName: "gearshape") }
+    )
 }
 
 @MainActor
@@ -180,7 +230,8 @@ private func previewFolder() -> KitchenFolder {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(.recipes(previewFolder()))
+            viewModel: previewViewModel(.recipes(previewFolder())),
+            toolbarItem: previewToolbarItem
         )
     }
 }
@@ -192,7 +243,8 @@ private func previewFolder() -> KitchenFolder {
     return NavigationStack(path: .constant(NavigationPath(viewModel.pushedScreens))) {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: viewModel
+            viewModel: viewModel,
+            toolbarItem: previewToolbarItem
         )
     }
 }
@@ -201,7 +253,8 @@ private func previewFolder() -> KitchenFolder {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(.recipes(previewFolder()))
+            viewModel: previewViewModel(.recipes(previewFolder())),
+            toolbarItem: previewToolbarItem
         )
     }
     .dynamicTypeSize(.accessibility5)
@@ -211,7 +264,8 @@ private func previewFolder() -> KitchenFolder {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(.reading)
+            viewModel: previewViewModel(.reading),
+            toolbarItem: previewToolbarItem
         )
     }
 }
@@ -220,7 +274,8 @@ private func previewFolder() -> KitchenFolder {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(.reading, isRestoring: true)
+            viewModel: previewViewModel(.reading, isRestoring: true),
+            toolbarItem: previewToolbarItem
         )
     }
 }
@@ -229,7 +284,8 @@ private func previewFolder() -> KitchenFolder {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(.recipes(KitchenFolderTree.folder(at: [], holding: [])))
+            viewModel: previewViewModel(.recipes(KitchenFolderTree.folder(at: [], holding: []))),
+            toolbarItem: previewToolbarItem
         )
     }
 }
@@ -238,7 +294,8 @@ private func previewFolder() -> KitchenFolder {
     NavigationStack {
         KitchenFeatureView(
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel(.failure("The folder no longer exists."))
+            viewModel: previewViewModel(.failure("The folder no longer exists.")),
+            toolbarItem: previewToolbarItem
         )
     }
 }

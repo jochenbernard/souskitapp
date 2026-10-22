@@ -91,4 +91,61 @@ extension KitchenFeatureRestorationTests {
         #expect(kitchen.handler.restoreCount == 0)
         #expect(kitchen.handler.restoration == nil)
     }
+
+    @MainActor
+    @Test("a kitchen restored more than one screen deep pushes one at a time, each once the one under it has appeared")
+    func restorePushesOneScreenAtATime() async {
+        let gratin = RecipeEntry.stubbed(at: "French/Comfort food/gratin-dauphinois")
+        let restoration = KitchenFeatureRestoration(folderPath: ["French", "Comfort food"], recipeID: gratin.id)
+
+        let kitchen = await restore(restoration, listing: [.success([gratin])], appearing: false)
+
+        #expect(kitchen.viewModel.pushedScreens == [.folder(["French"])])
+        #expect(kitchen.viewModel.isRestoring)
+
+        kitchen.presenter.screenDidAppear(.folder(["Other"]))
+
+        #expect(kitchen.viewModel.pushedScreens == [.folder(["French"])])
+
+        kitchen.presenter.screenDidAppear(.folder(["French"]))
+
+        #expect(kitchen.viewModel.pushedScreens == [.folder(["French"]), .folder(["French", "Comfort food"])])
+        #expect(kitchen.viewModel.isRestoring)
+        #expect(kitchen.handler.restoreCount == 0)
+
+        kitchen.presenter.screenDidAppear(.folder(["French", "Comfort food"]))
+
+        #expect(
+            kitchen.viewModel.pushedScreens == [
+                .folder(["French"]),
+                .folder(["French", "Comfort food"]),
+                .recipe(gratin)
+            ]
+        )
+        #expect(!kitchen.viewModel.isRestoring)
+        #expect(kitchen.viewModel.openRecipe?.recipeEntry == gratin)
+        #expect(kitchen.handler.restoreCount == 1)
+    }
+
+    @MainActor
+    @Test("going back while a kitchen pushes what it restores stops it where it stands")
+    func backWhileRestoringStops() async {
+        let restoration = KitchenFeatureRestoration(folderPath: ["French", "Comfort food"])
+
+        let kitchen = await restore(
+            restoration,
+            listing: [.success([.stubbed(at: "French/Comfort food/gratin-dauphinois")])],
+            appearing: false
+        )
+        kitchen.presenter.didPop(toCount: 0)
+
+        #expect(kitchen.viewModel.pushedScreens.isEmpty)
+        #expect(!kitchen.viewModel.isRestoring)
+        #expect(kitchen.handler.restoreCount == 1)
+        #expect(kitchen.handler.restoration == nil)
+
+        kitchen.presenter.screenDidAppear(.folder(["French"]))
+
+        #expect(kitchen.viewModel.pushedScreens.isEmpty)
+    }
 }

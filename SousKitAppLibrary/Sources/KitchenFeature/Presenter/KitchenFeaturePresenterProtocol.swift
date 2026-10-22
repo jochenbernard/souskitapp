@@ -4,6 +4,10 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func stackDidAppear() async
 
+    /// The kitchen's own screen is on screen, with nothing pushed over it, and the call is cancelled when it leaves.
+    @MainActor
+    func topScreenDidAppear() async
+
     /// The app came back to the foreground.
     @MainActor
     func didBecomeActive() async
@@ -21,6 +25,12 @@ protocol KitchenFeaturePresenterProtocol {
     /// - Parameter count: How many screens are left on it.
     @MainActor
     func didPop(toCount count: Int)
+
+    /// A screen the kitchen pushed has appeared on the stack.
+    ///
+    /// - Parameter screen: The screen.
+    @MainActor
+    func screenDidAppear(_ screen: KitchenScreen)
 
     @MainActor
     func didDismissCooking()

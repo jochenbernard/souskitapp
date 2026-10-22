@@ -9,15 +9,17 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private static let placeholderSymbol = "fork.knife"
 
     private let cookingFeatureFactory: CookingFeatureFactory
+    let greetingClock: KitchenGreetingClock
     private let handler: KitchenFeatureHandler
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
-    private let viewModel: KitchenFeatureViewModel
+    let viewModel: KitchenFeatureViewModel
 
     @MainActor
     init(
         cookingFeatureFactory: CookingFeatureFactory,
+        greetingClock: KitchenGreetingClock,
         handler: KitchenFeatureHandler,
         recipeFeatureFactory: RecipeFeatureFactory,
         recipeRepository: RecipeRepository,
@@ -25,6 +27,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         viewModel: KitchenFeatureViewModel
     ) {
         self.cookingFeatureFactory = cookingFeatureFactory
+        self.greetingClock = greetingClock
         self.handler = handler
         self.recipeFeatureFactory = recipeFeatureFactory
         self.recipeRepository = recipeRepository
@@ -51,6 +54,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func didBecomeActive() async {
+        // The clock may have moved on, or to another time zone, while the app was away.
+        greet()
         await recipeRepository.refresh()
     }
 
@@ -59,6 +64,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         guard !handler.kitchenFeatureIsCovered else {
             return
         }
+
+        stopRestoring()
 
         guard let origin else {
             changePushedScreens(to: [screen])
@@ -78,6 +85,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             return
         }
 
+        stopRestoring()
+
         // Back pressed with the cook button leaves cooking its recipe to return to.
         guard viewModel.openCooking == nil else {
             pushAgain()
@@ -85,6 +94,24 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         }
 
         changePushedScreens(to: Array(viewModel.pushedScreens.prefix(count)))
+    }
+
+    func screenDidAppear(_ screen: KitchenScreen) {
+        let screensToRestore = restorationKeeper.screensToRestore
+
+        guard !screensToRestore.isEmpty, viewModel.pushedScreens.last == screen else {
+            return
+        }
+
+        let count = viewModel.pushedScreens.count + 1
+
+        guard count < screensToRestore.count else {
+            restorationKeeper.screensToRestore = []
+            finishRestoring(screensToRestore)
+            return
+        }
+
+        viewModel.pushedScreens = Array(screensToRestore.prefix(count))
     }
 
     func didDismissCooking() {
@@ -170,13 +197,12 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// - Parameter folder: The top of the repository as it is listed now, or `nil` where it could not be read.
     @MainActor
     private func restore(in folder: KitchenFolder?) {
-        guard viewModel.isRestoring else {
+        guard viewModel.isRestoring, restorationKeeper.screensToRestore.isEmpty else {
             return
         }
 
-        viewModel.isRestoring = false
-
         guard let restoration = restorationKeeper.restoration, let folder else {
+            viewModel.isRestoring = false
             restorationKeeper.save(nil)
             return
         }
@@ -190,22 +216,52 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         let pushedScreens = folderScreens + (recipeEntry.map({ [KitchenScreen.recipe($0)] }) ?? [])
 
         guard !pushedScreens.isEmpty else {
+            viewModel.isRestoring = false
             restorationKeeper.save(nil)
             return
         }
 
+        guard pushedScreens.count > 1 else {
+            finishRestoring(pushedScreens)
+            return
+        }
+
+        // One at a time: a screen pushed under another without ever appearing loses its large title once uncovered,
+        // where it has a subtitle.
+        restorationKeeper.screensToRestore = pushedScreens
+        viewModel.pushedScreens = [pushedScreens[0]]
+    }
+
+    /// Pushes the last of what a cold start opens again, with the recipe on top where there is one.
+    ///
+    /// - Parameter pushedScreens: Every screen the stack holds once restored.
+    @MainActor
+    private func finishRestoring(_ pushedScreens: [KitchenScreen]) {
+        viewModel.isRestoring = false
         viewModel.pushedScreens = pushedScreens
 
-        if let recipeEntry {
+        if case .recipe(let recipeEntry) = pushedScreens.last {
             viewModel.openRecipe = makeOpenRecipe(
                 recipeEntry,
-                restoration: restoration.recipe,
-                resumesCooking: restoration.cooking != nil
+                restoration: restorationKeeper.restoration?.recipe,
+                resumesCooking: restorationKeeper.restoration?.cooking != nil
             )
         } else {
             restorationKeeper.save(Self.restoration(of: pushedScreens))
         }
 
+        handler.kitchenFeatureDidRestore()
+    }
+
+    /// Leaves a restoration still pushing its screens where it stands, once the cook moves on the stack themselves.
+    @MainActor
+    private func stopRestoring() {
+        guard !restorationKeeper.screensToRestore.isEmpty else {
+            return
+        }
+
+        restorationKeeper.screensToRestore = []
+        viewModel.isRestoring = false
         handler.kitchenFeatureDidRestore()
     }
 

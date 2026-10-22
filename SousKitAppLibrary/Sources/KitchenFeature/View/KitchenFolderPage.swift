@@ -31,32 +31,12 @@ struct KitchenFolderPage: View {
         ScrollView {
             // A blank page, rather than a list the restored screens cover a moment later.
             if !viewModel.isRestoring {
-                VStack(alignment: .leading, spacing: SousSpacing.medium) {
-                    if !path.isEmpty {
-                        pathAbove
-                    }
-
-                    folderContents
-                }
-                .sousPagePadding()
-                .frame(maxWidth: .infinity, alignment: .leading)
+                folderContents
+                    .sousPagePadding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         .sousPage()
-    }
-
-    /// Where a folder sits, under its title: the repository's name, then the folders leading down to it.
-    private var pathAbove: some View {
-        let names = [viewModel.recipeRepositoryName] + path.dropLast()
-
-        // In the page, not the navigation subtitle, which shrinks the title of a screen pushed from one without.
-        return Text(verbatim: names.joined(separator: " \u{203A} "))
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            // Up into the gap under the large title, where a navigation subtitle would sit.
-            .padding(.top, -(SousSpacing.large + SousSpacing.xSmall))
-            // A pause between the names, where VoiceOver would otherwise read out the separator.
-            .accessibilityLabel(Text(verbatim: names.joined(separator: ", ")))
     }
 
     @ViewBuilder
