@@ -7,6 +7,10 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func stackDidAppear() async
 
+    /// The kitchen's own screen is on screen, with nothing pushed over it, and the call is cancelled when it leaves.
+    @MainActor
+    func topScreenDidAppear() async
+
     /// The app came back to the foreground.
     @MainActor
     func didBecomeActive() async
@@ -32,6 +36,12 @@ protocol KitchenFeaturePresenterProtocol {
     ///   - folderPath: The names of the folders leading down to the folder searched, or none for the top.
     @MainActor
     func didChangeSearchText(_ text: String, in folderPath: [String])
+
+    /// A screen the kitchen pushed has appeared on the stack.
+    ///
+    /// - Parameter screen: The screen.
+    @MainActor
+    func screenDidAppear(_ screen: KitchenScreen)
 
     @MainActor
     func didDismissCooking()

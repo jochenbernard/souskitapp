@@ -34,16 +34,9 @@ struct KitchenFolderPage: View {
                 .sousPage()
         } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: SousSpacing.medium) {
-                    // Left out under a search that found nothing, whose note it would run into.
-                    if !path.isEmpty, emptySearch == nil {
-                        pathAbove
-                    }
-
-                    folderContents
-                }
-                .sousPagePadding()
-                .frame(maxWidth: .infinity, alignment: .leading)
+                folderContents
+                    .sousPagePadding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             // Over the page rather than in it, so it stays centered in what the field and the keyboard leave visible.
             .overlay {
@@ -68,16 +61,6 @@ struct KitchenFolderPage: View {
         }
 
         return search.text
-    }
-
-    /// Where a folder sits, under its title: the repository's name, then the folders leading down to it.
-    private var pathAbove: some View {
-        // In the page, not the navigation subtitle, which shrinks the title of a screen pushed from one without.
-        FolderPathText([viewModel.recipeRepositoryName] + path.dropLast())
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
-            // Up into the gap under the large title, where a navigation subtitle would sit.
-            .padding(.top, -(SousSpacing.large + SousSpacing.xSmall))
     }
 
     @ViewBuilder
