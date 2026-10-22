@@ -46,7 +46,13 @@ struct RecipeAvailabilityBadge: View {
     private func disc(@ViewBuilder content: () -> some View) -> some View {
         content()
             .padding(SousSpacing.xSmall)
-            .background(.regularMaterial, in: Circle())
+            .background {
+                Circle()
+                    .fill(.regularMaterial)
+                    .overlay {
+                        Circle().sousBorder()
+                    }
+            }
             // Centered in the circle the card's corner is cut from, so the disc runs concentric with the corner.
             .frame(width: cornerRadius * 2.0, height: cornerRadius * 2.0)
             .accessibilityElement(children: .ignore)

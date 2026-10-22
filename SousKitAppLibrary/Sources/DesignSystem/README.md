@@ -14,7 +14,7 @@ disagrees with this package, this package is right.
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sousBare`, `.sousChip(isSelected:)`, `.sous` | The three button styles, the button its label draws, the chip a cook chooses from a set, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
-| Containers | `.sousSurface(_:)`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card, the row and its two halves, the rows that share one card, the wash, the chip, the spinner. |
+| Containers | `.sousSurface(_:)`, `.sousBorder()`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card and its border, the row and its two halves, the rows that share one card, the wash, the chip, the spinner. |
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
 | Sheet | `SousSheet` | The low sheet that sets one thing. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
