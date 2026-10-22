@@ -76,6 +76,8 @@ struct KitchenFolderPage: View {
         FolderPathText([viewModel.recipeRepositoryName] + path.dropLast())
             .font(.subheadline)
             .foregroundStyle(.secondary)
+            // Up into the gap under the large title, where a navigation subtitle would sit.
+            .padding(.top, -(SousSpacing.large + SousSpacing.xSmall))
     }
 
     @ViewBuilder
