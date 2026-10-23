@@ -38,16 +38,14 @@ public struct KitchenFeatureFactory: Sendable {
         restoration: KitchenFeatureRestoration?,
         handler: KitchenFeatureHandler
     ) -> KitchenFeature {
-        let greetingClock = KitchenGreetingClock.system
         let viewModel = KitchenFeatureViewModel(recipeRepositoryName: recipeRepository.name)
-        viewModel.greeting = KitchenGreetingSchedule.greeting(at: greetingClock.now(), in: greetingClock.calendar)
         viewModel.isRestoring = restoration != nil
         let presenter = KitchenFeaturePresenter(
             cookingFeatureFactory: CookingFeatureFactory(
                 idleTimer: ApplicationIdleTimer(),
                 timerScheduler: timerScheduler
             ),
-            greetingClock: greetingClock,
+            greetingClock: .system,
             handler: handler,
             recipeFeatureFactory: RecipeFeatureFactory(
                 parser: parser,
@@ -58,6 +56,7 @@ public struct KitchenFeatureFactory: Sendable {
             restoration: restoration,
             viewModel: viewModel
         )
+        presenter.greet()
 
         return KitchenFeature(
             presenter: presenter,
