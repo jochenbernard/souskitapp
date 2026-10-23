@@ -201,12 +201,8 @@ public final class RecipeSymbolQueue {
         }
 
         availabilityTask = Task { [weak self, picker] in
-            for await canPick in picker.availabilityUpdates() {
-                // An update already on its way when following stops is not taken in.
-                guard !Task.isCancelled else {
-                    return
-                }
-
+            // An update on its way when following stops is skipped, not returned on, so the next ask ends the stream.
+            for await canPick in picker.availabilityUpdates() where !Task.isCancelled {
                 self?.didChangeAvailability(canPick)
             }
         }
