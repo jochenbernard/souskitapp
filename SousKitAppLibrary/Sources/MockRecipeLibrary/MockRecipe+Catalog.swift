@@ -19,7 +19,7 @@ extension MockRecipe {
             text: MockRecipes.crepes,
             availability: .notDownloaded
         ),
-        MockRecipe(path: "Baking/images/brioche.jpg", picture: MockPicture(hue: 0.11, aspectRatio: 1.0)),
+        MockRecipe(path: "Baking/images/brioche.jpg", picture: MockPicture(dish: .brioche, aspectRatio: 1.0)),
         MockRecipe(path: "Baking/madeleines.sous", text: MockRecipes.madeleines),
         MockRecipe(
             path: """
@@ -43,7 +43,7 @@ extension MockRecipe {
         MockRecipe(path: "French/Classic/boeuf-bourguignon.sous", text: MockRecipes.boeufBourguignon),
         MockRecipe(
             path: "French/Classic/images/boeuf-bourguignon.jpg",
-            picture: MockPicture(hue: 0.97, aspectRatio: 4.0 / 3.0)
+            picture: MockPicture(dish: .boeufBourguignon, aspectRatio: 4.0 / 3.0)
         ),
         MockRecipe(path: "French/Classic/quiche-lorraine.sous", text: MockRecipes.quicheLorraine),
         MockRecipe(
@@ -53,7 +53,7 @@ extension MockRecipe {
         ),
         MockRecipe(
             path: "French/Comfort food/images/gratin-dauphinois.jpg",
-            picture: MockPicture(hue: 0.14, aspectRatio: 4.0 / 3.0)
+            picture: MockPicture(dish: .gratinDauphinois, aspectRatio: 4.0 / 3.0)
         ),
         MockRecipe(
             path: "gratin-dauphinois.sous",
@@ -61,18 +61,27 @@ extension MockRecipe {
             availability: .downloading
         ),
         MockRecipe(path: "header-only.sous", text: MockRecipes.headerOnly),
-        MockRecipe(path: "images/boeuf-bourguignon.jpg", picture: MockPicture(hue: 0.02, aspectRatio: 16.0 / 9.0)),
-        MockRecipe(path: "images/bouillabaisse.jpg", picture: MockPicture(hue: 0.06, aspectRatio: 4.0 / 3.0)),
-        MockRecipe(path: "images/brioche.jpg", picture: MockPicture(hue: 0.1, aspectRatio: 3.0 / 4.0)),
-        MockRecipe(path: "images/crepes.jpg", picture: MockPicture(hue: 0.16, aspectRatio: 3.0 / 2.0)),
+        MockRecipe(
+            path: "images/boeuf-bourguignon.jpg",
+            picture: MockPicture(dish: .boeufBourguignon, aspectRatio: 16.0 / 9.0)
+        ),
+        MockRecipe(
+            path: "images/bouillabaisse.jpg",
+            picture: MockPicture(dish: .bouillabaisse, aspectRatio: 4.0 / 3.0)
+        ),
+        MockRecipe(path: "images/brioche.jpg", picture: MockPicture(dish: .brioche, aspectRatio: 3.0 / 4.0)),
+        MockRecipe(path: "images/crepes.jpg", picture: MockPicture(dish: .crepes, aspectRatio: 3.0 / 2.0)),
         MockRecipe(path: "images/croque-monsieur.jpg", picture: nil),
         MockRecipe(
             path: "images/gratin-dauphinois.jpg",
-            picture: MockPicture(hue: 0.13, aspectRatio: 4.0 / 3.0),
+            picture: MockPicture(dish: .gratinDauphinois, aspectRatio: 4.0 / 3.0),
             availability: .notDownloaded
         ),
-        MockRecipe(path: "images/moules-marinieres.jpg", picture: MockPicture(hue: 0.62, aspectRatio: 4.0 / 3.0)),
-        MockRecipe(path: "images/vinaigrette.jpg", picture: MockPicture(hue: 0.3, aspectRatio: 1.0)),
+        MockRecipe(
+            path: "images/moules-marinieres.jpg",
+            picture: MockPicture(dish: .moulesMarinieres, aspectRatio: 4.0 / 3.0)
+        ),
+        MockRecipe(path: "images/vinaigrette.jpg", picture: MockPicture(dish: .vinaigrette, aspectRatio: 1.0)),
         MockRecipe(path: "Lunch/French/Classic/croque-monsieur.sous", text: MockRecipes.croqueMonsieur),
         MockRecipe(path: "madeleines.sous", text: MockRecipes.madeleines),
         MockRecipe(path: "malformed.sous", text: MockRecipes.malformed),
