@@ -26,6 +26,14 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didPop(toCount count: Int)
 
+    /// The text searched for on a folder's screen changed.
+    ///
+    /// - Parameters:
+    ///   - text: The text, which may be empty.
+    ///   - folderPath: The names of the folders leading down to the folder searched, or none for the top.
+    @MainActor
+    func didChangeSearchText(_ text: String, in folderPath: [String])
+
     /// A screen the kitchen pushed has appeared on the stack.
     ///
     /// - Parameter screen: The screen.

@@ -61,6 +61,13 @@ struct RecipeSummaryRecordTests {
         #expect(kept.ingredientNames == ["garlic", "olive oil"])
     }
 
+    @Test("an ingredient marked as not eaten is left out of the names, as cookware is")
+    func nonFoodIngredientNames() {
+        let kept = record(of: "Bake in a #loaf tin# with @{60 g} butter@, covered with @foil@:non-food.")
+
+        #expect(kept.ingredientNames == ["butter"])
+    }
+
     @Test("a file modified at the date kept is unchanged")
     func sameDate() {
         #expect(record(of: "").isCurrent(for: file(.downloaded, modifiedAt: date)))

@@ -76,10 +76,10 @@ final class RecipeDirectoryMonitorTests: Sendable {
         from monitor: RecipeDirectoryMonitor,
         whileChanging change: () throws -> Void = {}
     ) async throws -> Bool {
-        let stream = monitor.recipeEntries()
+        let stream = monitor.listedRecipes()
         try change()
 
-        for await result in stream where (try? result.get())?.map(\.name) == expected {
+        for await result in stream where (try? result.get())?.map(\.entry.name) == expected {
             return true
         }
 
@@ -91,10 +91,10 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @MainActor
     private func summaries(
         reach count: Int,
-        in results: inout AsyncStream<Result<[RecipeEntry], Error>>.Iterator
+        in results: inout AsyncStream<Result<[ListedRecipe], Error>>.Iterator
     ) async throws {
         while let result = await results.next(isolation: #isolation) {
-            if try result.get().count(where: { $0.summary != nil }) == count {
+            if try result.get().count(where: { $0.entry.summary != nil }) == count {
                 return
             }
         }
@@ -104,8 +104,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @MainActor
     private func firstResult(
         from monitor: RecipeDirectoryMonitor
-    ) async -> Result<[RecipeEntry], Error>? {
-        for await result in monitor.recipeEntries() {
+    ) async -> Result<[ListedRecipe], Error>? {
+        for await result in monitor.listedRecipes() {
             return result
         }
 
@@ -202,8 +202,8 @@ final class RecipeDirectoryMonitorTests: Sendable {
         let monitor = makeMonitor()
         var titles: [[String]] = []
 
-        for await result in monitor.recipeEntries() {
-            titles.append(try result.get().map(\.title))
+        for await result in monitor.listedRecipes() {
+            titles.append(try result.get().map(\.entry.title))
 
             if titles.count == 2 {
                 break
@@ -228,7 +228,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
 
         let result = await firstResult(from: makeMonitor())
 
-        #expect(try #require(result).get().map(\.title) == ["Crepes Suzette"])
+        #expect(try #require(result).get().map(\.entry.title) == ["Crepes Suzette"])
     }
 
     @MainActor
@@ -237,7 +237,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
         let clock = TestClock()
         let cacheWrites = CacheWriteSpy()
         let (monitor, iCloud) = try makeICloudMonitor(clock: clock, cacheWrites: cacheWrites)
-        var results = monitor.recipeEntries().makeAsyncIterator()
+        var results = monitor.listedRecipes().makeAsyncIterator()
 
         // Ten land each second: the first read is written at once, and the rest once that second is over.
         for second in 0..<5 {
@@ -263,7 +263,7 @@ final class RecipeDirectoryMonitorTests: Sendable {
         let clock = TestClock()
         let cacheWrites = CacheWriteSpy()
         let (monitor, iCloud) = try makeICloudMonitor(clock: clock, cacheWrites: cacheWrites)
-        var results = monitor.recipeEntries().makeAsyncIterator()
+        var results = monitor.listedRecipes().makeAsyncIterator()
         let landed = Array(iCloudFileNames.prefix(10))
 
         iCloud.land(landed)
@@ -278,11 +278,11 @@ final class RecipeDirectoryMonitorTests: Sendable {
     @Test("a second stream ends the first")
     func secondStream() async throws {
         let monitor = makeMonitor()
-        let first = monitor.recipeEntries()
+        let first = monitor.listedRecipes()
 
         let reached = try await names(reach: [], from: monitor)
 
-        var firstResults: [Result<[RecipeEntry], Error>] = []
+        var firstResults: [Result<[ListedRecipe], Error>] = []
         for await result in first {
             firstResults.append(result)
         }

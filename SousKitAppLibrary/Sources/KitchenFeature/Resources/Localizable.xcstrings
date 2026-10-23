@@ -175,6 +175,38 @@
         }
       }
     },
+    "Search in %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search in %@"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek in %@"
+          }
+        }
+      }
+    },
+    "Search recipes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search recipes"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoek recepten"
+          }
+        }
+      }
+    },
     "This folder could not be read" : {
       "localizations" : {
         "en" : {

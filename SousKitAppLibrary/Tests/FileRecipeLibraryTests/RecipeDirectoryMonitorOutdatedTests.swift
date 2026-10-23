@@ -59,13 +59,13 @@ final class RecipeDirectoryMonitorOutdatedTests: Sendable {
     /// - Returns: The entries of `crepes.sous` in the lists read.
     @MainActor
     private func readCrepes(
-        from results: inout AsyncStream<Result<[RecipeEntry], Error>>.Iterator,
+        from results: inout AsyncStream<Result<[ListedRecipe], Error>>.Iterator,
         until isDone: ([RecipeEntry]) -> Bool
     ) async throws -> [RecipeEntry] {
         var crepes: [RecipeEntry] = []
 
         while let result = await results.next(isolation: #isolation) {
-            let recipeEntries = try result.get()
+            let recipeEntries = try result.get().map(\.entry)
             crepes += recipeEntries.filter({ $0.path == "crepes.sous" })
 
             if isDone(recipeEntries) {
@@ -80,7 +80,7 @@ final class RecipeDirectoryMonitorOutdatedTests: Sendable {
     @Test("an outdated recipe is fetched once and read again unopened, keeping its summary meanwhile")
     func outdatedRecipe() async throws {
         let monitor = try makeMonitor()
-        var results = monitor.recipeEntries().makeAsyncIterator()
+        var results = monitor.listedRecipes().makeAsyncIterator()
 
         while iCloud.requests.isEmpty {
             try await Task.sleep(for: .milliseconds(10))

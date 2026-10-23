@@ -12,11 +12,11 @@ extension RecipeDirectoryMonitorTests {
         from monitor: RecipeDirectoryMonitor,
         afterListing changes: [() throws -> Void]
     ) async throws -> Bool {
-        let stream = monitor.recipeEntries()
+        let stream = monitor.listedRecipes()
         var pending = changes[...]
 
         for await result in stream {
-            if (try? result.get())?.map(\.name) == expected {
+            if (try? result.get())?.map(\.entry.name) == expected {
                 return true
             }
 

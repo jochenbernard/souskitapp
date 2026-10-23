@@ -14,6 +14,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
+    let searchIndex = RecipeSearchIndex()
     let viewModel: KitchenFeatureViewModel
 
     @MainActor
@@ -39,16 +40,19 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func stackDidAppear() async {
-        for await result in await recipeRepository.recipeEntries() {
+        for await result in await recipeRepository.listedRecipes() {
             switch result {
-            case .success(let recipeEntries):
+            case .success(let listedRecipes):
+                let recipeEntries = listedRecipes.map(\.entry)
                 let folder = KitchenFolderTree.folder(at: [], holding: recipeEntries)
+                searchIndex.update(listedRecipes)
                 viewModel.recipeList = .recipes(folder)
-                restore(in: folder)
+                showSearchResults()
+                restore(in: folder, holding: recipeEntries)
 
             case .failure(let error):
                 viewModel.recipeList = .failure(error.localizedDescription)
-                restore(in: nil)
+                restore(in: nil, holding: [])
             }
         }
     }
@@ -161,6 +165,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
         let previousTop = viewModel.pushedScreens.last
         viewModel.pushedScreens = pushedScreens
+        forgetSearches(offScreen: pushedScreens)
 
         if case .recipe(let recipeEntry) = pushedScreens.last, pushedScreens.last != previousTop {
             viewModel.openRecipe = makeOpenRecipe(recipeEntry)
@@ -194,9 +199,11 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// Opens what the kitchen was built to open again, as far down as its folders are still listed, and its recipe
     /// where every folder and the recipe still are. What is no longer listed is forgotten.
     ///
-    /// - Parameter folder: The top of the repository as it is listed now, or `nil` where it could not be read.
+    /// - Parameters:
+    ///   - folder: The top of the repository as it is listed now, or `nil` where it could not be read.
+    ///   - recipeEntries: The recipes listed now, in every folder.
     @MainActor
-    private func restore(in folder: KitchenFolder?) {
+    private func restore(in folder: KitchenFolder?, holding recipeEntries: [RecipeEntry]) {
         guard viewModel.isRestoring, restorationKeeper.screensToRestore.isEmpty else {
             return
         }
@@ -211,8 +218,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             .map({ Array(restoration.folderPath.prefix(through: $0)) })
             .prefix(while: { folder.folder(at: $0) != nil })
             .map(KitchenScreen.folder)
-        let card = folder.folder(at: restoration.folderPath)?.cards.first(where: { $0.id == restoration.recipeID })
-        let recipeEntry = card?.recipeEntry
+        // Anywhere below the folders, since a search opens a recipe of any folder over the top one.
+        let recipeEntry = recipeEntries.first { listedEntry in
+            listedEntry.id == restoration.recipeID && listedEntry.folderPath.starts(with: restoration.folderPath)
+        }
         let pushedScreens = folderScreens + (recipeEntry.map({ [KitchenScreen.recipe($0)] }) ?? [])
 
         guard !pushedScreens.isEmpty else {

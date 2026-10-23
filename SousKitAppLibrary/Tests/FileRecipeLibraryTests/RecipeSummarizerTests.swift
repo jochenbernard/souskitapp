@@ -41,10 +41,10 @@ final class RecipeSummarizerTests {
     /// Lists the directory and reads what has to be read, as the monitor does, returning the entries after.
     private func summarize(with summarizer: RecipeSummarizer) async throws -> [RecipeEntry] {
         let files = try listedFiles()
-        _ = await summarizer.recipeEntries(for: files)
+        _ = await summarizer.listedRecipes(for: files)
         await summarizer.read(await summarizer.filesToRead(in: files))
 
-        return await summarizer.recipeEntries(for: files)
+        return await summarizer.listedRecipes(for: files).map(\.entry)
     }
 
     private func writeCrepes(title: String = "Crepes") throws {
@@ -69,7 +69,7 @@ final class RecipeSummarizerTests {
         try writeCrepes()
         let summarizer = makeSummarizer()
         let files = try listedFiles()
-        _ = await summarizer.recipeEntries(for: files)
+        _ = await summarizer.listedRecipes(for: files)
 
         let other = try TemporaryDirectory(named: "RecipeSummarizerTests")
         let otherCache = RecipeSummaryCache(recipeDirectory: other.recipeDirectory, fileURL: directory.summaryCacheURL)
@@ -115,7 +115,7 @@ final class RecipeSummarizerTests {
 
         let files = try listedFiles()
 
-        #expect(await summarizer.recipeEntries(for: files).map(\.title) == ["Crepes Suzette"])
+        #expect(await summarizer.listedRecipes(for: files).map(\.entry.title) == ["Crepes Suzette"])
         #expect(await summarizer.filesToRead(in: files).isEmpty)
     }
 
@@ -126,7 +126,7 @@ final class RecipeSummarizerTests {
         let summarizer = makeSummarizer()
 
         // The summary read before stands in until the new one lands.
-        #expect(await summarizer.recipeEntries(for: try listedFiles()).map(\.title) == ["Crepes Suzette"])
+        #expect(await summarizer.listedRecipes(for: try listedFiles()).map(\.entry.title) == ["Crepes Suzette"])
         #expect(try await summarize(with: summarizer).map(\.title) == ["Crepes"])
     }
 
@@ -151,15 +151,25 @@ final class RecipeSummarizerTests {
         try FileManager.default.removeItem(at: directory.summaryCacheURL)
         let summarizer = makeSummarizer()
 
-        #expect(await summarizer.recipeEntries(for: try listedFiles()).map(\.summary) == [nil])
+        #expect(await summarizer.listedRecipes(for: try listedFiles()).map(\.entry.summary) == [nil])
         #expect(try await summarize(with: summarizer).map(\.title) == ["Crepes"])
+    }
+
+    @Test("a file read is listed with its ingredient names, also on the next launch")
+    func ingredientNames() async throws {
+        try writeCrepes()
+        _ = try await summarize(with: makeSummarizer())
+
+        let listedRecipes = await makeSummarizer().listedRecipes(for: try listedFiles())
+
+        #expect(listedRecipes.map(\.ingredientNames) == [["flour", "eggs"]])
     }
 
     @Test("a file the cache knows nothing of and that is not read yet is listed by its name")
     func unreadFile() async throws {
         try writeCrepes()
 
-        let entries = await makeSummarizer().recipeEntries(for: try listedFiles())
+        let entries = await makeSummarizer().listedRecipes(for: try listedFiles()).map(\.entry)
 
         #expect(entries.map(\.title) == ["crepes"])
     }
@@ -237,7 +247,7 @@ final class RecipeSummarizerTests {
 
         let nextLaunch = makeSummarizer()
 
-        #expect(await nextLaunch.recipeEntries(for: try listedFiles()).map(\.title) == ["Crepes Suzette"])
+        #expect(await nextLaunch.listedRecipes(for: try listedFiles()).map(\.entry.title) == ["Crepes Suzette"])
     }
 
     @Test("a recipe current on the device with its date unchanged is not read again")

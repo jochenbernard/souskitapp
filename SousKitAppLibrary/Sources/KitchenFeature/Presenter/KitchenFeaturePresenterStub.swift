@@ -9,6 +9,8 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didPop(toCount _: Int) {}
 
+    func didChangeSearchText(_: String, in _: [String]) {}
+
     func screenDidAppear(_: KitchenScreen) {}
 
     func didDismissCooking() {}

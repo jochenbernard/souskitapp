@@ -16,7 +16,13 @@ struct MockRecipeRepositoryTests {
     /// The first list a new stream from the repository yields, which is the recipes as they are now.
     @MainActor
     private func currentRecipeEntries(of repository: MockRecipeRepository) async throws -> [RecipeEntry] {
-        var iterator = repository.recipeEntries().makeAsyncIterator()
+        try await currentListedRecipes(of: repository).map(\.entry)
+    }
+
+    /// The first list a new stream from the repository yields, with the recipes' ingredient names.
+    @MainActor
+    private func currentListedRecipes(of repository: MockRecipeRepository) async throws -> [ListedRecipe] {
+        var iterator = repository.listedRecipes().makeAsyncIterator()
 
         return try #require(await iterator.next()).get()
     }
@@ -118,8 +124,9 @@ struct MockRecipeRepositoryTests {
         var hasLanded = false
 
         // Waits for the landing, or for the suite's time limit to end the test.
-        for await result in repository.recipeEntries()
-        where (try? result.get())?.first(where: { $0.id == "gratin-dauphinois.sous" })?.availability == .downloaded {
+        for await result in repository.listedRecipes()
+        where (try? result.get())?.first(where: { $0.entry.id == "gratin-dauphinois.sous" })?.entry.availability
+            == .downloaded {
             hasLanded = true
             break
         }
@@ -127,6 +134,16 @@ struct MockRecipeRepositoryTests {
         // Releasing the repository ends the stream, which would end the wait for nothing.
         withExtendedLifetime(repository, {})
         #expect(hasLanded)
+    }
+
+    @MainActor
+    @Test("a recipe is listed with the names of the ingredients it is made of, before it is read")
+    func ingredientNamesAreListed() async throws {
+        let listedRecipes = try await currentListedRecipes(of: makeRepository())
+        let brioche = try #require(listedRecipes.first(where: { $0.entry.id == "brioche.sous" }))
+
+        #expect(brioche.ingredientNames.contains("butter"))
+        #expect(!brioche.ingredientNames.contains("foil"))
     }
 
     @MainActor
@@ -145,11 +162,11 @@ struct MockRecipeRepositoryTests {
     @Test("listing the recipes again ends the stream listed before")
     func secondStreamEndsTheFirst() async throws {
         let repository = makeRepository()
-        let first = repository.recipeEntries()
-        _ = repository.recipeEntries()
+        let first = repository.listedRecipes()
+        _ = repository.listedRecipes()
 
         // The loop ends only once the stream does; the suite's time limit fails a stream left running.
-        var lists: [[RecipeEntry]] = []
+        var lists: [[ListedRecipe]] = []
         for await result in first {
             lists.append(try result.get())
         }

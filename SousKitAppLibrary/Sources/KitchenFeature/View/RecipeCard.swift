@@ -3,15 +3,26 @@ import RecipeLibrary
 import SousKit
 import SwiftUI
 
-/// A recipe in the kitchen's grid: a picture of it, its title, and how long it takes.
+/// A recipe in the kitchen's grid: a picture of it, its title, and how long it takes or where it sits.
 struct RecipeCard: View {
+    /// What a card says under the title.
+    enum Detail {
+        /// How long the recipe takes, where its header says.
+        case totalTime
+
+        /// The names of the folders the recipe sits in, from the outermost down, as a search found it.
+        case folder([String])
+    }
+
     // The language the screen is written in, which is the one it reads a length of time in.
     private static let displayLocale = Locale(identifier: Bundle.module.preferredLocalizations.first ?? "en")
 
     private let card: KitchenRecipeCard
+    private let detail: Detail
 
-    init(_ card: KitchenRecipeCard) {
+    init(_ card: KitchenRecipeCard, detail: Detail = .totalTime) {
         self.card = card
+        self.detail = detail
     }
 
     var body: some View {
@@ -23,8 +34,19 @@ struct RecipeCard: View {
                         RecipeAvailabilityBadge(card.recipeEntry.availability)
                     }
             },
-            detail: { totalTime }
+            detail: { detailText }
         )
+    }
+
+    @ViewBuilder
+    private var detailText: some View {
+        switch detail {
+        case .totalTime:
+            totalTime
+
+        case .folder(let names):
+            FolderPathText(names)
+        }
     }
 
     @ViewBuilder
@@ -99,6 +121,18 @@ private func previewCards() -> [KitchenRecipeCard] {
             ForEach(previewCards()) { card in
                 RecipeCard(card)
             }
+        }
+        .sousPagePadding()
+    }
+    .sousPage()
+}
+
+#Preview("Recipe cards, found by a search") {
+    ScrollView {
+        RecipeCardGrid(minimumColumnWidth: 160.0, spacing: SousSpacing.medium) {
+            RecipeCard(previewCards()[0], detail: .folder(["Recipes", "French", "Classic"]))
+
+            RecipeCard(previewCards()[2], detail: .folder(["Baking"]))
         }
         .sousPagePadding()
     }

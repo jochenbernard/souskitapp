@@ -6,7 +6,7 @@ import SousKit
 struct EmptyRecipeRepository: RecipeRepository {
     let name: String
 
-    func recipeEntries() -> AsyncStream<Result<[RecipeEntry], Error>> {
+    func listedRecipes() -> AsyncStream<Result<[ListedRecipe], Error>> {
         AsyncStream(unfolding: { nil })
     }
 

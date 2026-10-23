@@ -1,23 +1,24 @@
 import RecipeLibrary
 import SousKit
 
-/// A repository listing whatever a test sends it, counting its refreshes.
+/// A repository listing whatever a test sends it, counting its refreshes and reads.
 @MainActor
 final class RecipeRepositorySpy: RecipeRepository {
     nonisolated let name = "Recipes"
 
     private(set) var refreshCount = 0
+    private(set) var readCount = 0
 
     nonisolated private let parser = SousParser()
 
-    private let continuation: AsyncStream<Result<[RecipeEntry], Error>>.Continuation
-    private let stream: AsyncStream<Result<[RecipeEntry], Error>>
+    private let continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation
+    private let stream: AsyncStream<Result<[ListedRecipe], Error>>
 
     init() {
-        (self.stream, self.continuation) = AsyncStream.makeStream(of: Result<[RecipeEntry], Error>.self)
+        (self.stream, self.continuation) = AsyncStream.makeStream(of: Result<[ListedRecipe], Error>.self)
     }
 
-    func recipeEntries() -> AsyncStream<Result<[RecipeEntry], Error>> {
+    func listedRecipes() -> AsyncStream<Result<[ListedRecipe], Error>> {
         stream
     }
 
@@ -25,13 +26,21 @@ final class RecipeRepositorySpy: RecipeRepository {
         refreshCount += 1
     }
 
-    nonisolated func readRecipe(of _: RecipeEntry) -> Parsed<Recipe> {
-        parser.parseRecipe("")
+    func readRecipe(of _: RecipeEntry) -> Parsed<Recipe> {
+        readCount += 1
+
+        return parser.parseRecipe("")
     }
 
-    /// Yields a result to the stream, which keeps it until the stream is iterated.
+    /// Yields recipes listed with no ingredient names, or a failure, to the stream, which keeps it until the stream is
+    /// iterated.
     func send(_ result: Result<[RecipeEntry], Error>) {
-        continuation.yield(result)
+        continuation.yield(result.map({ $0.map({ ListedRecipe(entry: $0, ingredientNames: []) }) }))
+    }
+
+    /// Yields recipes to the stream, which keeps them until the stream is iterated.
+    func send(_ listedRecipes: [ListedRecipe]) {
+        continuation.yield(.success(listedRecipes))
     }
 
     /// Ends the stream once the results already sent are iterated.

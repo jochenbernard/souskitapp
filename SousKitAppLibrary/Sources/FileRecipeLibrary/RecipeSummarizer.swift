@@ -58,14 +58,15 @@ actor RecipeSummarizer {
         self.timeline = Timeline(clock: clock)
     }
 
-    /// The entries for files as they are listed now, each with the summary the cache holds for it, if any.
+    /// The recipes for files as they are listed now, each with the summary and ingredient names the cache holds for
+    /// it, if any.
     ///
     /// A summary read from contents that have changed since stands in until they are read again. Summaries of files
     /// no longer listed are dropped.
     ///
     /// - Parameter files: The files the directory lists.
-    /// - Returns: The entries, in the order of `files`.
-    func recipeEntries(for files: [RecipeFile]) -> [RecipeEntry] {
+    /// - Returns: The recipes, in the order of `files`.
+    func listedRecipes(for files: [RecipeFile]) -> [ListedRecipe] {
         let paths = Set(files.map(\.path))
         let removedPaths = summaries.keys.filter({ !paths.contains($0) })
 
@@ -74,7 +75,14 @@ actor RecipeSummarizer {
             save()
         }
 
-        return files.map({ $0.recipeEntry(summary: summaries[$0.path]?.summary) })
+        return files.map { file in
+            let summary = summaries[file.path]
+
+            return ListedRecipe(
+                entry: file.recipeEntry(summary: summary?.summary),
+                ingredientNames: summary?.record.ingredientNames ?? []
+            )
+        }
     }
 
     /// The files whose summary has to be read: those the cache holds none for, or one read from older contents.
