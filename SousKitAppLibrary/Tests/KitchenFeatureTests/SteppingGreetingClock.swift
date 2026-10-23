@@ -11,7 +11,7 @@ final class SteppingGreetingClock: Sendable {
         var sleeps: [Date] = []
     }
 
-    let calendar: Calendar
+    private let calendar: Calendar
 
     private let state: Mutex<State>
 
