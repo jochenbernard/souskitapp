@@ -9,15 +9,17 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private static let placeholderSymbol = "fork.knife"
 
     private let cookingFeatureFactory: CookingFeatureFactory
+    let greetingClock: KitchenGreetingClock
     private let handler: KitchenFeatureHandler
     private let recipeFeatureFactory: RecipeFeatureFactory
     private let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
-    private let viewModel: KitchenFeatureViewModel
+    let viewModel: KitchenFeatureViewModel
 
     @MainActor
     init(
         cookingFeatureFactory: CookingFeatureFactory,
+        greetingClock: KitchenGreetingClock,
         handler: KitchenFeatureHandler,
         recipeFeatureFactory: RecipeFeatureFactory,
         recipeRepository: RecipeRepository,
@@ -25,6 +27,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         viewModel: KitchenFeatureViewModel
     ) {
         self.cookingFeatureFactory = cookingFeatureFactory
+        self.greetingClock = greetingClock
         self.handler = handler
         self.recipeFeatureFactory = recipeFeatureFactory
         self.recipeRepository = recipeRepository
@@ -35,50 +38,80 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         self.viewModel = viewModel
     }
 
-    func viewDidAppear() async {
+    func stackDidAppear() async {
         for await result in await recipeRepository.recipeEntries() {
             switch result {
             case .success(let recipeEntries):
-                viewModel.recipeList = .recipes(recipeEntries.sorted(by: Self.isOrderedBefore).map(Self.card(for:)))
-                restore(from: recipeEntries)
+                let folder = KitchenFolderTree.folder(at: [], holding: recipeEntries)
+                viewModel.recipeList = .recipes(folder)
+                restore(in: folder)
 
             case .failure(let error):
                 viewModel.recipeList = .failure(error.localizedDescription)
-                restore(from: [])
+                restore(in: nil)
             }
         }
     }
 
     func didBecomeActive() async {
+        // The clock may have moved on, or to another time zone, while the app was away.
+        greet()
         await recipeRepository.refresh()
     }
 
-    func didChangePushedScreen(_ screen: KitchenScreen?) {
+    func didPush(_ screen: KitchenScreen, from origin: KitchenScreen?) {
         // A row pressed with the button that opened something over the kitchen pushes nothing under it.
-        guard screen == nil || !handler.kitchenFeatureIsCovered else {
+        guard !handler.kitchenFeatureIsCovered else {
             return
         }
 
+        stopRestoring()
+
+        guard let origin else {
+            changePushedScreens(to: [screen])
+            return
+        }
+
+        // A row pressed on a screen already popping pushes nothing.
+        guard let index = viewModel.pushedScreens.firstIndex(of: origin) else {
+            return
+        }
+
+        changePushedScreens(to: Array(viewModel.pushedScreens.prefix(through: index)) + [screen])
+    }
+
+    func didPop(toCount count: Int) {
+        guard count < viewModel.pushedScreens.count else {
+            return
+        }
+
+        stopRestoring()
+
         // Back pressed with the cook button leaves cooking its recipe to return to.
-        guard screen != nil || viewModel.openCooking == nil else {
+        guard viewModel.openCooking == nil else {
             pushAgain()
             return
         }
 
-        // A push builds a fresh feature, so nothing done on a popped screen, such as a scale, comes back.
-        let isPush = viewModel.pushedScreen == nil
+        changePushedScreens(to: Array(viewModel.pushedScreens.prefix(count)))
+    }
 
-        viewModel.pushedScreen = screen
+    func screenDidAppear(_ screen: KitchenScreen) {
+        let screensToRestore = restorationKeeper.screensToRestore
 
-        // A pop leaves the screen it popped in place: clearing it empties that screen while it
-        // is still animating away. The next push replaces it.
-        switch screen {
-        case .recipe(let recipeEntry):
-            openRecipe(recipeEntry, isPush: isPush)
-
-        case nil:
-            restorationKeeper.save(nil)
+        guard !screensToRestore.isEmpty, viewModel.pushedScreens.last == screen else {
+            return
         }
+
+        let count = viewModel.pushedScreens.count + 1
+
+        guard count < screensToRestore.count else {
+            restorationKeeper.screensToRestore = []
+            finishRestoring(screensToRestore)
+            return
+        }
+
+        viewModel.pushedScreens = Array(screensToRestore.prefix(count))
     }
 
     func didDismissCooking() {
@@ -105,49 +138,130 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         restorationKeeper.update({ $0.cooking = restoration })
     }
 
-    /// Writes the pushed screen again, so the stack pushes the recipe it already slid away at once, under cooking.
+    /// Writes the pushed screens again, so the stack pushes the recipe it already slid away at once, under cooking.
     @MainActor
     private func pushAgain() {
-        let pushedScreen = viewModel.pushedScreen
+        let pushedScreens = viewModel.pushedScreens
 
-        viewModel.pushedScreen = nil
-        viewModel.pushedScreen = pushedScreen
+        viewModel.pushedScreens = []
+        viewModel.pushedScreens = pushedScreens
     }
 
-    /// Builds the feature for a recipe pushed on the stack, or keeps the one a recipe already on it has.
+    /// Changes the screens on the stack, building the feature for a recipe pushed on top.
+    ///
+    /// A push builds a fresh feature, so nothing done on a popped screen, such as a scale, comes back. A pop leaves
+    /// the recipe it popped in place: clearing it empties that screen while it is still animating away. The next push
+    /// replaces it.
     @MainActor
-    private func openRecipe(_ recipeEntry: RecipeEntry, isPush: Bool) {
-        guard isPush || viewModel.openRecipe?.recipeEntry != recipeEntry else {
+    private func changePushedScreens(to pushedScreens: [KitchenScreen]) {
+        // A row pressed twice pushes its screen once, keeping the feature the first press built.
+        guard pushedScreens != viewModel.pushedScreens else {
             return
         }
 
-        viewModel.openRecipe = makeOpenRecipe(recipeEntry)
-        restorationKeeper.save(KitchenFeatureRestoration(recipeID: recipeEntry.id))
+        let previousTop = viewModel.pushedScreens.last
+        viewModel.pushedScreens = pushedScreens
+
+        if case .recipe(let recipeEntry) = pushedScreens.last, pushedScreens.last != previousTop {
+            viewModel.openRecipe = makeOpenRecipe(recipeEntry)
+        }
+
+        restorationKeeper.save(Self.restoration(of: pushedScreens))
     }
 
-    /// Opens what the kitchen was built to open again, or forgets it where its recipe is no longer listed.
+    /// What a cold start opens again for the screens on the stack, as a push opened them, or `nil` for none.
+    private static func restoration(of pushedScreens: [KitchenScreen]) -> KitchenFeatureRestoration? {
+        var folderPath: [String] = []
+        var recipeID: String?
+
+        for screen in pushedScreens {
+            switch screen {
+            case .folder(let path):
+                folderPath = path
+
+            case .recipe(let recipeEntry):
+                recipeID = recipeEntry.id
+            }
+        }
+
+        guard !folderPath.isEmpty || recipeID != nil else {
+            return nil
+        }
+
+        return KitchenFeatureRestoration(folderPath: folderPath, recipeID: recipeID)
+    }
+
+    /// Opens what the kitchen was built to open again, as far down as its folders are still listed, and its recipe
+    /// where every folder and the recipe still are. What is no longer listed is forgotten.
+    ///
+    /// - Parameter folder: The top of the repository as it is listed now, or `nil` where it could not be read.
     @MainActor
-    private func restore(from recipeEntries: [RecipeEntry]) {
-        guard viewModel.isRestoring else {
+    private func restore(in folder: KitchenFolder?) {
+        guard viewModel.isRestoring, restorationKeeper.screensToRestore.isEmpty else {
             return
         }
 
-        viewModel.isRestoring = false
-
-        guard
-            let restoration = restorationKeeper.restoration,
-            let recipeEntry = recipeEntries.first(where: { $0.id == restoration.recipeID })
-        else {
+        guard let restoration = restorationKeeper.restoration, let folder else {
+            viewModel.isRestoring = false
             restorationKeeper.save(nil)
             return
         }
 
-        viewModel.pushedScreen = .recipe(recipeEntry)
-        viewModel.openRecipe = makeOpenRecipe(
-            recipeEntry,
-            restoration: restoration.recipe,
-            resumesCooking: restoration.cooking != nil
-        )
+        let folderScreens = restoration.folderPath.indices
+            .map({ Array(restoration.folderPath.prefix(through: $0)) })
+            .prefix(while: { folder.folder(at: $0) != nil })
+            .map(KitchenScreen.folder)
+        let card = folder.folder(at: restoration.folderPath)?.cards.first(where: { $0.id == restoration.recipeID })
+        let recipeEntry = card?.recipeEntry
+        let pushedScreens = folderScreens + (recipeEntry.map({ [KitchenScreen.recipe($0)] }) ?? [])
+
+        guard !pushedScreens.isEmpty else {
+            viewModel.isRestoring = false
+            restorationKeeper.save(nil)
+            return
+        }
+
+        guard pushedScreens.count > 1 else {
+            finishRestoring(pushedScreens)
+            return
+        }
+
+        // One at a time: a screen pushed under another without ever appearing loses its large title once uncovered,
+        // where it has a subtitle.
+        restorationKeeper.screensToRestore = pushedScreens
+        viewModel.pushedScreens = [pushedScreens[0]]
+    }
+
+    /// Pushes the last of what a cold start opens again, with the recipe on top where there is one.
+    ///
+    /// - Parameter pushedScreens: Every screen the stack holds once restored.
+    @MainActor
+    private func finishRestoring(_ pushedScreens: [KitchenScreen]) {
+        viewModel.isRestoring = false
+        viewModel.pushedScreens = pushedScreens
+
+        if case .recipe(let recipeEntry) = pushedScreens.last {
+            viewModel.openRecipe = makeOpenRecipe(
+                recipeEntry,
+                restoration: restorationKeeper.restoration?.recipe,
+                resumesCooking: restorationKeeper.restoration?.cooking != nil
+            )
+        } else {
+            restorationKeeper.save(Self.restoration(of: pushedScreens))
+        }
+
+        handler.kitchenFeatureDidRestore()
+    }
+
+    /// Leaves a restoration still pushing its screens where it stands, once the cook moves on the stack themselves.
+    @MainActor
+    private func stopRestoring() {
+        guard !restorationKeeper.screensToRestore.isEmpty else {
+            return
+        }
+
+        restorationKeeper.screensToRestore = []
+        viewModel.isRestoring = false
         handler.kitchenFeatureDidRestore()
     }
 
@@ -171,7 +285,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// Opens cooking from the recipe on top of the stack, unless cooking is already open.
     @MainActor
     private func openCooking(_ recipe: Recipe, isResumed: Bool) {
-        guard case .recipe(let recipeEntry) = viewModel.pushedScreen, viewModel.openCooking == nil else {
+        guard case .recipe(let recipeEntry) = viewModel.pushedScreens.last, viewModel.openCooking == nil else {
             return
         }
 
@@ -206,20 +320,5 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             placeholderSymbol: Self.placeholderSymbol,
             placeholderColor: PlaceholderColorPick.color(forTitle: recipeEntry.title)
         )
-    }
-
-    /// Whether one recipe is listed before another: by the title its row shows, then by what the repository finds it
-    /// by, so recipes sharing a title keep one order.
-    private static func isOrderedBefore(_ lhs: RecipeEntry, _ rhs: RecipeEntry) -> Bool {
-        switch lhs.title.localizedStandardCompare(rhs.title) {
-        case .orderedAscending:
-            true
-
-        case .orderedDescending:
-            false
-
-        case .orderedSame:
-            lhs.id.localizedStandardCompare(rhs.id) == .orderedAscending
-        }
     }
 }

@@ -126,10 +126,20 @@ final class FileRecipeRepositoryTests: Sendable {
         #expect(recipe.steps.isEmpty)
     }
 
+    @Test("recipes sharing a file name in different directories read as themselves")
+    func sameFileNameInTwoDirectories() async throws {
+        try directory.makeDirectory(named: "Sauce")
+        let top = try directory.writeFile(named: "vinaigrette.sous", "---\ntitle: Vinaigrette\n---")
+        let nested = try directory.writeFile(named: "Sauce/vinaigrette.sous", "---\ntitle: Vinaigrette Classic\n---")
+
+        #expect(try await readRecipe(of: top).metadata.title == "Vinaigrette")
+        #expect(try await readRecipe(of: nested).metadata.title == "Vinaigrette Classic")
+    }
+
     @Test("reading a recipe that is gone throws")
     func missingRecipe() async throws {
         let recipeEntry = try directory.writeFile(named: "crepes.sous", "Whisk.")
-        try FileManager.default.removeItem(at: directory.url.appending(path: recipeEntry.fileName))
+        try FileManager.default.removeItem(at: directory.url.appending(path: recipeEntry.path))
 
         await #expect(throws: (any Error).self) {
             try await readRecipe(of: recipeEntry)

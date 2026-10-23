@@ -16,7 +16,7 @@ final class RecipeTextReaderTests {
 
     private func readText(of recipeEntry: RecipeEntry) async throws -> String {
         let reader = RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .userInitiated)
-        return try await reader.read(fileName: recipeEntry.fileName).text
+        return try await reader.read(path: recipeEntry.path).text
     }
 
     /// Reads `crepes.sous` the way iCloud reports it, calling `sleep` between checks for its newest version.
@@ -31,7 +31,7 @@ final class RecipeTextReaderTests {
             sleep: sleep
         )
 
-        return try await reader.read(fileName: "crepes.sous").text
+        return try await reader.read(path: "crepes.sous").text
     }
 
     @Test("a recipe reads back as it was written")
@@ -74,7 +74,7 @@ final class RecipeTextReaderTests {
     @Test("reading a recipe that is gone throws")
     func missingRecipe() async throws {
         let recipeEntry = try directory.writeFile(named: "crepes.sous", "Whisk.")
-        try FileManager.default.removeItem(at: directory.url.appending(path: recipeEntry.fileName))
+        try FileManager.default.removeItem(at: directory.url.appending(path: recipeEntry.path))
 
         await #expect(throws: (any Error).self) {
             try await readText(of: recipeEntry)
@@ -133,7 +133,7 @@ final class RecipeTextReaderTests {
         try Data([0xFF, 0xFE, 0xFD]).write(to: directory.url.appending(path: "broken.sous"))
 
         await #expect(throws: (any Error).self) {
-            try await readText(of: RecipeEntry(fileName: "broken.sous", availability: .downloaded))
+            try await readText(of: RecipeEntry(path: "broken.sous", availability: .downloaded))
         }
     }
 }

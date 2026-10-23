@@ -2,51 +2,72 @@ import RecipeLibrary
 
 extension MockRecipe {
     #if DEBUG
-    /// Every recipe the repository lists, ordered by name as a folder lists them.
+    /// Every file in the folder the repository stands in for, ordered by path as a folder lists them.
     ///
-    /// The ten examples of the specification sit among recipes that are empty, malformed, annotated in every way the
-    /// format allows, timed in seconds, or all ten examples in one.
+    /// The ten examples of the specification sit at the top among recipes that are empty, malformed, annotated in every
+    /// way the format allows, timed in seconds, or all ten examples in one. The folders under them hold examples again,
+    /// down to three levels deep, under the same file names as those at the top. One folder holds only folders, one
+    /// holds no recipe, and one is hidden.
     static let all: [MockRecipe] = [
-        MockRecipe(id: "boeuf-bourguignon", text: MockRecipes.boeufBourguignon),
+        MockRecipe(path: ".archive/vinaigrette.sous", text: MockRecipes.vinaigrette),
+        MockRecipe(path: "Baking/brioche.sous", text: MockRecipes.brioche),
         MockRecipe(
-            id: """
-            boeuf-bourguignon-bouillabaisse-brioche-crepes-croque-monsieur-gratin-dauphinois-madeleines-\
-            moules-marinieres-quiche-lorraine-and-vinaigrette
-            """,
-            text: MockRecipes.everyExample
-        ),
-        MockRecipe(id: "bouillabaisse", text: MockRecipes.bouillabaisse),
-        MockRecipe(id: "brioche", text: MockRecipes.brioche),
-        MockRecipe(
-            id: "crepes",
+            path: "Baking/crepes.sous",
             text: MockRecipes.crepes,
             availability: .notDownloaded
         ),
-        MockRecipe(id: "croque-monsieur", text: MockRecipes.croqueMonsieur),
-        MockRecipe(id: "empty", text: MockRecipes.empty),
+        MockRecipe(path: "Baking/madeleines.sous", text: MockRecipes.madeleines),
         MockRecipe(
-            id: "gratin-dauphinois",
+            path: """
+            boeuf-bourguignon-bouillabaisse-brioche-crepes-croque-monsieur-gratin-dauphinois-madeleines-\
+            moules-marinieres-quiche-lorraine-and-vinaigrette.sous
+            """,
+            text: MockRecipes.everyExample
+        ),
+        MockRecipe(path: "boeuf-bourguignon.sous", text: MockRecipes.boeufBourguignon),
+        MockRecipe(path: "bouillabaisse.sous", text: MockRecipes.bouillabaisse),
+        MockRecipe(path: "brioche.sous", text: MockRecipes.brioche),
+        MockRecipe(
+            path: "crepes.sous",
+            text: MockRecipes.crepes,
+            availability: .notDownloaded
+        ),
+        MockRecipe(path: "croque-monsieur.sous", text: MockRecipes.croqueMonsieur),
+        MockRecipe(path: "Dinner/moules-marinieres.sous", text: MockRecipes.moulesMarinieres),
+        MockRecipe(path: "Dinner/Provencal/bouillabaisse.sous", text: MockRecipes.bouillabaisse),
+        MockRecipe(path: "empty.sous", text: MockRecipes.empty),
+        MockRecipe(path: "French/Classic/boeuf-bourguignon.sous", text: MockRecipes.boeufBourguignon),
+        MockRecipe(path: "French/Classic/quiche-lorraine.sous", text: MockRecipes.quicheLorraine),
+        MockRecipe(
+            path: "French/Comfort food/gratin-dauphinois.sous",
             text: MockRecipes.gratinDauphinois,
             availability: .downloading
         ),
-        MockRecipe(id: "header-only", text: MockRecipes.headerOnly),
-        MockRecipe(id: "madeleines", text: MockRecipes.madeleines),
-        MockRecipe(id: "malformed", text: MockRecipes.malformed),
-        MockRecipe(id: "moules-marinieres", text: MockRecipes.moulesMarinieres),
-        MockRecipe(id: "quiche-lorraine", text: MockRecipes.quicheLorraine),
-        MockRecipe(id: "short-timers", text: MockRecipes.shortTimers),
-        MockRecipe(id: "steps-only", text: MockRecipes.stepsOnly),
         MockRecipe(
-            id: "unreachable",
+            path: "gratin-dauphinois.sous",
+            text: MockRecipes.gratinDauphinois,
+            availability: .downloading
+        ),
+        MockRecipe(path: "header-only.sous", text: MockRecipes.headerOnly),
+        MockRecipe(path: "images/gratin-dauphinois.jpg", text: nil),
+        MockRecipe(path: "Lunch/French/Classic/croque-monsieur.sous", text: MockRecipes.croqueMonsieur),
+        MockRecipe(path: "madeleines.sous", text: MockRecipes.madeleines),
+        MockRecipe(path: "malformed.sous", text: MockRecipes.malformed),
+        MockRecipe(path: "moules-marinieres.sous", text: MockRecipes.moulesMarinieres),
+        MockRecipe(path: "quiche-lorraine.sous", text: MockRecipes.quicheLorraine),
+        MockRecipe(path: "short-timers.sous", text: MockRecipes.shortTimers),
+        MockRecipe(path: "steps-only.sous", text: MockRecipes.stepsOnly),
+        MockRecipe(
+            path: "unreachable.sous",
             text: nil,
             availability: .notDownloaded
         ),
-        MockRecipe(id: "unterminated-header", text: MockRecipes.unterminatedHeader),
-        MockRecipe(id: "unusual-annotations", text: MockRecipes.unusualAnnotations),
-        MockRecipe(id: "vinaigrette", text: MockRecipes.vinaigrette)
+        MockRecipe(path: "unterminated-header.sous", text: MockRecipes.unterminatedHeader),
+        MockRecipe(path: "unusual-annotations.sous", text: MockRecipes.unusualAnnotations),
+        MockRecipe(path: "vinaigrette.sous", text: MockRecipes.vinaigrette)
     ]
     #else
-    /// No recipes: they are there for trying the app where no folder can be picked, which only a debug build offers.
+    /// No files: they are there for trying the app where no folder can be picked, which only a debug build offers.
     static let all: [MockRecipe] = []
     #endif
 }

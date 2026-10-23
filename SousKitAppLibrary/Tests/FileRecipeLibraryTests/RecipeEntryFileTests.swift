@@ -5,7 +5,7 @@ import Testing
 @Suite("Recipe entry for a file")
 struct RecipeEntryFileTests {
     private func recipeEntry(named fileName: String) -> RecipeEntry {
-        RecipeEntry(fileName: fileName, availability: .downloaded)
+        RecipeEntry(path: fileName, availability: .downloaded)
     }
 
     @Test("hyphens part the words of a name")
@@ -48,8 +48,31 @@ struct RecipeEntryFileTests {
         #expect(recipeEntry(named: "VINAIGRETTE.SOUS").name == "VINAIGRETTE")
     }
 
-    @Test("the file name keeps its extension")
-    func fileName() {
-        #expect(recipeEntry(named: "boeuf-bourguignon.sous").fileName == "boeuf-bourguignon.sous")
+    @Test("the path keeps its extension")
+    func path() {
+        #expect(recipeEntry(named: "boeuf-bourguignon.sous").path == "boeuf-bourguignon.sous")
+    }
+
+    @Test("a recipe at the top of the directory sits in no folder")
+    func topFolderPath() {
+        #expect(recipeEntry(named: "crepes.sous").folderPath.isEmpty)
+    }
+
+    @Test("a recipe in a directory inside sits in the folders leading down to it, and is named after its file")
+    func nestedFolderPath() {
+        let recipeEntry = recipeEntry(named: "French/Comfort food/gratin-dauphinois.sous")
+
+        #expect(recipeEntry.folderPath == ["French", "Comfort food"])
+        #expect(recipeEntry.name == "gratin dauphinois")
+        #expect(recipeEntry.id == "French/Comfort food/gratin-dauphinois.sous")
+    }
+
+    @Test("files sharing a name in different directories are different recipes")
+    func sameFileNameInTwoFolders() {
+        let top = recipeEntry(named: "vinaigrette.sous")
+        let nested = recipeEntry(named: "Sauce/vinaigrette.sous")
+
+        #expect(top.name == nested.name)
+        #expect(top.id != nested.id)
     }
 }

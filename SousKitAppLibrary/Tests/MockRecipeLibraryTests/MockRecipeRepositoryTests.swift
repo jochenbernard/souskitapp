@@ -29,17 +29,53 @@ struct MockRecipeRepositoryTests {
         try #require(try await currentRecipeEntries(of: repository).first(where: { $0.id == id }))
     }
 
-    @Test("every recipe has a text to read but the unreachable one")
+    @Test("every recipe listed has a text to read but the unreachable one")
     func onlyTheUnreachableRecipeHasNoText() {
-        #expect(MockRecipe.all.filter({ $0.text == nil }).map(\.id) == ["unreachable"])
+        #expect(MockRecipe.all.filter({ $0.isListed && $0.text == nil }).map(\.id) == ["unreachable.sous"])
     }
 
     @MainActor
-    @Test("the recipes are listed by name, as a folder lists them")
-    func listedByName() async throws {
-        let names = try await currentRecipeEntries(of: makeRepository()).map(\.name)
+    @Test("the recipes are listed by where they sit, as a folder lists them")
+    func listedByPath() async throws {
+        let ids = try await currentRecipeEntries(of: makeRepository()).map(\.id)
 
-        #expect(names == names.sorted(by: { $0.localizedStandardCompare($1) == .orderedAscending }))
+        #expect(ids == ids.sorted(by: { $0.localizedStandardCompare($1) == .orderedAscending }))
+    }
+
+    @MainActor
+    @Test("recipes in folders are listed with the folders leading down to them, at any depth")
+    func folderPaths() async throws {
+        let repository = makeRepository()
+
+        #expect(try await currentRecipeEntry(withID: "crepes.sous", of: repository).folderPath.isEmpty)
+        #expect(try await currentRecipeEntry(withID: "Baking/crepes.sous", of: repository).folderPath == ["Baking"])
+        #expect(
+            try await currentRecipeEntry(withID: "French/Comfort food/gratin-dauphinois.sous", of: repository)
+                .folderPath == ["French", "Comfort food"]
+        )
+        #expect(
+            try await currentRecipeEntry(withID: "Lunch/French/Classic/croque-monsieur.sous", of: repository)
+                .folderPath == ["Lunch", "French", "Classic"]
+        )
+    }
+
+    @MainActor
+    @Test("recipes sharing a file name in different folders are listed apart, under the same name")
+    func sameFileNameInTwoFolders() async throws {
+        let entries = try await currentRecipeEntries(of: makeRepository())
+        let brioches = entries.filter({ $0.name == "brioche" })
+
+        #expect(brioches.map(\.id) == ["Baking/brioche.sous", "brioche.sous"])
+    }
+
+    @MainActor
+    @Test("a hidden folder and what is not a recipe are left out")
+    func unlistedFiles() async throws {
+        let ids = try await currentRecipeEntries(of: makeRepository()).map(\.id)
+
+        #expect(!ids.contains(where: { $0.hasPrefix(".archive/") || $0.hasPrefix("images/") }))
+        #expect(MockRecipe.all.contains(where: { $0.path.hasPrefix(".archive/") }))
+        #expect(MockRecipe.all.contains(where: { $0.path.hasPrefix("images/") }))
     }
 
     @MainActor
@@ -47,10 +83,10 @@ struct MockRecipeRepositoryTests {
     func summaries() async throws {
         let entries = try await currentRecipeEntries(of: makeRepository())
 
-        #expect(entries.filter({ $0.summary == nil }).map(\.id) == ["unreachable"])
-        #expect(entries.first(where: { $0.id == "crepes" })?.title == "Crepes")
-        #expect(entries.first(where: { $0.id == "crepes" })?.availability == .notDownloaded)
-        #expect(entries.first(where: { $0.id == "steps-only" })?.title == "steps only")
+        #expect(entries.filter({ $0.summary == nil }).map(\.id) == ["unreachable.sous"])
+        #expect(entries.first(where: { $0.id == "crepes.sous" })?.title == "Crepes")
+        #expect(entries.first(where: { $0.id == "crepes.sous" })?.availability == .notDownloaded)
+        #expect(entries.first(where: { $0.id == "steps-only.sous" })?.title == "steps only")
     }
 
     @MainActor
@@ -58,7 +94,7 @@ struct MockRecipeRepositoryTests {
     func everyRecipeReads() async throws {
         let repository = makeRepository()
 
-        for recipeEntry in try await currentRecipeEntries(of: repository) where recipeEntry.id != "unreachable" {
+        for recipeEntry in try await currentRecipeEntries(of: repository) where recipeEntry.id != "unreachable.sous" {
             _ = try await repository.readRecipe(of: recipeEntry)
         }
     }
@@ -67,12 +103,12 @@ struct MockRecipeRepositoryTests {
     @Test("a recipe in iCloud is listed as downloaded once it is read")
     func readRecipeComesDown() async throws {
         let repository = makeRepository()
-        let crepes = try await currentRecipeEntry(withID: "crepes", of: repository)
+        let crepes = try await currentRecipeEntry(withID: "crepes.sous", of: repository)
 
         _ = try await repository.readRecipe(of: crepes)
 
         #expect(crepes.availability == .notDownloaded)
-        #expect(try await currentRecipeEntry(withID: "crepes", of: repository).availability == .downloaded)
+        #expect(try await currentRecipeEntry(withID: "crepes.sous", of: repository).availability == .downloaded)
     }
 
     @MainActor
@@ -83,7 +119,7 @@ struct MockRecipeRepositoryTests {
 
         // Waits for the landing, or for the suite's time limit to end the test.
         for await result in repository.recipeEntries()
-        where (try? result.get())?.first(where: { $0.id == "gratin-dauphinois" })?.availability == .downloaded {
+        where (try? result.get())?.first(where: { $0.id == "gratin-dauphinois.sous" })?.availability == .downloaded {
             hasLanded = true
             break
         }
@@ -97,12 +133,12 @@ struct MockRecipeRepositoryTests {
     @Test("the unreachable recipe fails to read and stays in iCloud")
     func unreachableRecipeFails() async throws {
         let repository = makeRepository()
-        let unreachable = try await currentRecipeEntry(withID: "unreachable", of: repository)
+        let unreachable = try await currentRecipeEntry(withID: "unreachable.sous", of: repository)
 
         await #expect(throws: CocoaError.self) {
             try await repository.readRecipe(of: unreachable)
         }
-        #expect(try await currentRecipeEntry(withID: "unreachable", of: repository).availability == .notDownloaded)
+        #expect(try await currentRecipeEntry(withID: "unreachable.sous", of: repository).availability == .notDownloaded)
     }
 
     @MainActor

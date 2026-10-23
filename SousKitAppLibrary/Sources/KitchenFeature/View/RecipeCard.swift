@@ -4,18 +4,9 @@ import SousKit
 import SwiftUI
 
 /// A recipe in the kitchen's grid: a picture of it, its title, and how long it takes.
-///
-/// It fills the height the grid offers, so the cards sharing a row end level.
 struct RecipeCard: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    private static let pictureAspectRatio = 16.0 / 10.0
-    private static let titleLineLimit = 2
-
     // The language the screen is written in, which is the one it reads a length of time in.
     private static let displayLocale = Locale(identifier: Bundle.module.preferredLocalizations.first ?? "en")
-
-    @LineContainerRadius private var radius
 
     private let card: KitchenRecipeCard
 
@@ -24,50 +15,16 @@ struct RecipeCard: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0.0) {
-            picture
-                // Read after the title, which names the card.
-                .accessibilitySortPriority(-1.0)
-
-            caption
-        }
-        .frame(maxHeight: .infinity, alignment: .top)
-        .sousRowSurface()
-        .clipShape(.rect(cornerRadius: radius))
-        .contentShape(.rect(cornerRadius: radius))
-        .accessibilityElement(children: .combine)
-    }
-
-    private var picture: some View {
-        Color.clear
-            .aspectRatio(Self.pictureAspectRatio, contentMode: .fit)
-            .background {
+        KitchenCard(
+            title: card.recipeEntry.title,
+            picture: {
                 RecipeCardPlaceholder(symbol: card.placeholderSymbol, color: card.placeholderColor)
-            }
-            .overlay(alignment: .topTrailing) {
-                RecipeAvailabilityBadge(card.recipeEntry.availability)
-            }
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(.separator.opacity(0.5))
-                    .frame(height: 1.0)
-            }
-    }
-
-    private var caption: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.xSmall) {
-            Text(verbatim: card.recipeEntry.title)
-                // At accessibility sizes the grid has one column, which leaves room for the whole title.
-                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : Self.titleLineLimit)
-
-            totalTime
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(SousSpacing.medium)
-        // Sized before the picture, so a title taller than the picture is not cut a line short.
-        .layoutPriority(1.0)
+                    .overlay(alignment: .topTrailing) {
+                        RecipeAvailabilityBadge(card.recipeEntry.availability)
+                    }
+            },
+            detail: { totalTime }
+        )
     }
 
     @ViewBuilder

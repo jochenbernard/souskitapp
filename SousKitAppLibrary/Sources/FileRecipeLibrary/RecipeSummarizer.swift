@@ -100,7 +100,7 @@ actor RecipeSummarizer {
         var hasRead = false
 
         for file in files {
-            guard let contents = try? await textReader.read(fileName: file.path) else {
+            guard let contents = try? await textReader.read(path: file.path) else {
                 continue
             }
 

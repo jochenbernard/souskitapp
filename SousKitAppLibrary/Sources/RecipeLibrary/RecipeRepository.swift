@@ -5,7 +5,7 @@ public protocol RecipeRepository: Sendable {
     /// What the user knows the recipes by, such as the name of the folder holding them.
     var name: String { get }
 
-    /// The recipes, yielded once now and again after every change to them.
+    /// The recipes, those in folders at any depth included, yielded once now and again after every change to them.
     ///
     /// Cancelling the task iterating the stream ends it, and so does releasing the repository. One stream runs at a
     /// time; a second call ends the first.

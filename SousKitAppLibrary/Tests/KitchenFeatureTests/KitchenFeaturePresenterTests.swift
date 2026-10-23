@@ -52,24 +52,28 @@ struct KitchenFeaturePresenterTests {
 
         recipeRepository.send(.success(recipeEntries))
         recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).stackDidAppear()
 
-        guard case .recipes(let cards) = viewModel.recipeList else {
+        guard case .recipes(let folder) = viewModel.recipeList else {
             Issue.record("The recipe list did not list recipes.")
             return []
         }
 
-        return cards
+        return folder.cards
     }
 
-    /// Whether the view model reaches the given names, waiting until it does or the suite's time
-    /// limit ends the test.
+    /// Whether the view model reaches the given names in the folder at the path, the top by default, waiting until it
+    /// does or the suite's time limit ends the test.
     @MainActor
-    private func names(reach expected: [String], in viewModel: KitchenFeatureViewModel) async -> Bool {
+    private func names(
+        reach expected: [String],
+        in viewModel: KitchenFeatureViewModel,
+        at path: [String] = []
+    ) async -> Bool {
         while !Task.isCancelled {
             if
-                case .recipes(let cards) = viewModel.recipeList,
-                cards.map(\.recipeEntry.name) == expected
+                case .recipes(let folder) = viewModel.recipeList,
+                folder.folder(at: path)?.cards.map(\.recipeEntry.name) == expected
             {
                 return true
             }
@@ -104,7 +108,7 @@ struct KitchenFeaturePresenterTests {
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
         let task = Task {
-            await presenter.viewDidAppear()
+            await presenter.stackDidAppear()
         }
         defer {
             task.cancel()
@@ -175,6 +179,45 @@ struct KitchenFeaturePresenterTests {
     }
 
     @MainActor
+    @Test("a recipe the repository lists later in a folder reaches that folder")
+    func addedRecipeInAFolderReachesIt() async {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
+        let task = Task {
+            await presenter.stackDidAppear()
+        }
+        defer {
+            task.cancel()
+        }
+        let brioche = RecipeEntry(
+            id: "Baking/brioche.sous",
+            name: "brioche",
+            availability: .downloaded,
+            folderPath: ["Baking"]
+        )
+        let madeleines = RecipeEntry(
+            id: "Baking/madeleines.sous",
+            name: "madeleines",
+            availability: .downloaded,
+            folderPath: ["Baking"]
+        )
+
+        recipeRepository.send(.success([brioche]))
+        recipeRepository.send(.success([brioche, madeleines]))
+
+        #expect(await names(reach: ["brioche", "madeleines"], in: viewModel, at: ["Baking"]))
+
+        guard case .recipes(let folder) = viewModel.recipeList else {
+            Issue.record("The recipe list did not list recipes.")
+            return
+        }
+
+        #expect(folder.cards.isEmpty)
+        #expect(folder.folders.map(\.name) == ["Baking"])
+    }
+
+    @MainActor
     @Test("a failed read reaches the view model as a failure")
     func failureReachesTheViewModel() async {
         let recipeRepository = RecipeRepositorySpy()
@@ -182,7 +225,7 @@ struct KitchenFeaturePresenterTests {
 
         recipeRepository.send(.failure(CocoaError(.fileReadNoSuchFile)))
         recipeRepository.finish()
-        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).viewDidAppear()
+        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).stackDidAppear()
 
         guard case .failure(let message) = viewModel.recipeList else {
             Issue.record("The recipe list did not fail.")

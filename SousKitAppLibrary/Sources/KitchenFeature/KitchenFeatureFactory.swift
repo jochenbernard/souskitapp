@@ -45,6 +45,7 @@ public struct KitchenFeatureFactory: Sendable {
                 idleTimer: ApplicationIdleTimer(),
                 timerScheduler: timerScheduler
             ),
+            greetingClock: .system,
             handler: handler,
             recipeFeatureFactory: RecipeFeatureFactory(
                 parser: parser,
@@ -55,6 +56,7 @@ public struct KitchenFeatureFactory: Sendable {
             restoration: restoration,
             viewModel: viewModel
         )
+        presenter.greet()
 
         return KitchenFeature(
             presenter: presenter,

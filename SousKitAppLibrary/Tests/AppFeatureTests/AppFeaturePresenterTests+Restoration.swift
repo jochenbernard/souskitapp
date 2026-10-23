@@ -202,4 +202,19 @@ extension AppFeaturePresenterTests {
 
         #expect(restorationStore.record() == nil)
     }
+
+    @Test("the store keeps a path of folders with the recipe and cooking on top across instances")
+    func storeKeepsAPath() {
+        let restoration = AppRestoration(
+            kitchen: KitchenFeatureRestoration(
+                folderPath: ["French", "Comfort food"],
+                recipeID: "French/Comfort food/gratin-dauphinois.sous",
+                cooking: CookingFeatureRestoration(completedStepNumbers: [1])
+            )
+        )
+
+        restorationStore.update({ $0 = restoration })
+
+        #expect(restorationStore.record()?.restoration == restoration)
+    }
 }

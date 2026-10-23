@@ -1,9 +1,15 @@
 struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
-    func viewDidAppear() {}
+    func stackDidAppear() {}
+
+    func topScreenDidAppear() {}
 
     func didBecomeActive() {}
 
-    func didChangePushedScreen(_: KitchenScreen?) {}
+    func didPush(_: KitchenScreen, from _: KitchenScreen?) {}
+
+    func didPop(toCount _: Int) {}
+
+    func screenDidAppear(_: KitchenScreen) {}
 
     func didDismissCooking() {}
 }

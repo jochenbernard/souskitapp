@@ -1,6 +1,47 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld recipes" : {
+      "comment" : "How many recipes a folder holds, its own and those in the folders inside it, under the folder's name.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recipe"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recipes"
+                }
+              }
+            }
+          }
+        },
+        "nl-BE" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recept"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld recepten"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Downloading from iCloud" : {
       "comment" : "What VoiceOver reads for the spinner on a recipe coming down from iCloud.",
       "localizations" : {
@@ -14,6 +55,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Downloaden uit iCloud"
+          }
+        }
+      }
+    },
+    "Good afternoon" : {
+      "comment" : "The title of the recipe list from noon until 17:00, when the cook is likely to start on lunch.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good afternoon"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goeiemiddag"
+          }
+        }
+      }
+    },
+    "Good evening" : {
+      "comment" : "The title of the recipe list from 17:00 until 05:00, when the cook is likely to start on dinner.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good evening"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goeienavond"
+          }
+        }
+      }
+    },
+    "Good morning" : {
+      "comment" : "The title of the recipe list from 05:00 until noon, when the cook is likely to start on breakfast.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Good morning"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goeiemorgen"
           }
         }
       }

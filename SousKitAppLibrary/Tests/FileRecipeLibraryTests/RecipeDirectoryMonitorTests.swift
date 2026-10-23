@@ -6,14 +6,18 @@ import Testing
 
 @Suite("Recipe directory monitor", .timeLimit(.minutes(1)))
 final class RecipeDirectoryMonitorTests: Sendable {
-    private let directory: TemporaryDirectory
+    let directory: TemporaryDirectory
     private let iCloudFileNames = (1...50).map({ "recipe-\($0).sous" })
 
     init() throws {
         self.directory = try TemporaryDirectory(named: "RecipeDirectoryMonitorTests")
     }
 
-    private func makeMonitor() -> RecipeDirectoryMonitor {
+    /// A monitor over the directory, presenting it unless `presentsDirectory` is false.
+    func makeMonitor(
+        listingSpy: ListingSpy = ListingSpy(),
+        presentsDirectory: Bool = true
+    ) -> RecipeDirectoryMonitor {
         RecipeDirectoryMonitor(
             recipeDirectory: directory.recipeDirectory,
             summarizer: RecipeSummarizer(
@@ -21,7 +25,11 @@ final class RecipeDirectoryMonitorTests: Sendable {
                 parser: SousParser(),
                 textReader: RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .utility)
             ),
-            settleDelay: .milliseconds(20)
+            settleDelay: .milliseconds(20),
+            listDirectory: listingSpy.list,
+            present: { url, onChange in
+                presentsDirectory ? DirectoryPresenter(directoryURL: url, onChange: onChange) : nil
+            }
         )
     }
 

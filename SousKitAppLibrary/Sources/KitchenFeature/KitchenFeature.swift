@@ -18,13 +18,9 @@ public struct KitchenFeature {
     @MainActor
     public var path: Binding<NavigationPath> {
         Binding(
-            get: { NavigationPath(viewModel.pushedScreen.map({ [$0] }) ?? []) },
-            set: { path in
-                // The kitchen pushes from its own rows, so the stack only ever changes the path by popping it.
-                if path.isEmpty {
-                    presenter.didChangePushedScreen(nil)
-                }
-            }
+            get: { NavigationPath(viewModel.pushedScreens) },
+            // The kitchen pushes from its own rows, so the stack only ever changes the path by popping it.
+            set: { path in presenter.didPop(toCount: path.count) }
         )
     }
 
@@ -36,12 +32,25 @@ public struct KitchenFeature {
 
     /// The feature's screen, which pushes its recipes on the stack it is placed in.
     ///
+    /// - Parameter toolbarItem: What the trailing end of the navigation bar holds on the recipe list and on every
+    ///   folder, though not on a recipe.
     /// - Returns: The view to place at the root of a navigation stack driven by ``path``.
     @MainActor
-    public func makeView() -> some View {
+    public func makeView(@ViewBuilder toolbarItem: () -> some View) -> some View {
         KitchenFeatureView(
             presenter: presenter,
-            viewModel: viewModel
+            viewModel: viewModel,
+            toolbarItem: toolbarItem()
         )
+    }
+
+    /// Keeps every screen of the kitchen showing the repository's recipes as they change, until the task running it
+    /// is cancelled.
+    ///
+    /// Run it in a task on the navigation stack driven by ``path`` rather than on the view from
+    /// ``makeView(toolbarItem:)``, which a pushed screen takes off screen, cancelling the tasks on it.
+    @MainActor
+    public func followRecipes() async {
+        await presenter.stackDidAppear()
     }
 }

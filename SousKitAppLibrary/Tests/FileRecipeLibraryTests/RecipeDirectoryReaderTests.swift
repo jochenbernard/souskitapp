@@ -13,9 +13,13 @@ final class RecipeDirectoryReaderTests {
         self.directory = try TemporaryDirectory(named: "RecipeDirectoryReaderTests")
     }
 
+    private func readListing() throws -> RecipeDirectoryListing {
+        try RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory, fileStatus: fileStatuses.status)
+            .readListing()
+    }
+
     private func readRecipeFiles() throws -> [RecipeFile] {
-        let reader = RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory, fileStatus: fileStatuses.status)
-        return try reader.readRecipeFiles()
+        try readListing().recipeFiles
     }
 
     private func readRecipeEntries() throws -> [RecipeEntry] {
@@ -24,6 +28,10 @@ final class RecipeDirectoryReaderTests {
 
     private func readNames() throws -> [String] {
         try readRecipeEntries().map(\.name)
+    }
+
+    private func readPaths() throws -> [String] {
+        try readRecipeFiles().map(\.path)
     }
 
     @Test("an empty directory holds no recipes")
@@ -55,13 +63,37 @@ final class RecipeDirectoryReaderTests {
         #expect(try readNames().isEmpty)
     }
 
-    @Test("what a directory inside holds is left out")
+    @Test("the recipes in the directories inside are listed by where they sit, at any depth")
     func nestedRecipes() throws {
-        try directory.makeDirectory(named: "Desserts")
-        try Data().write(to: directory.url.appending(path: "Desserts/madeleines.sous"))
+        try directory.makeDirectory(named: "Baking")
+        try directory.makeDirectory(named: "French/Comfort food")
+        try directory.writeFile(named: "Baking/madeleines.sous")
+        try directory.writeFile(named: "French/Comfort food/gratin-dauphinois.sous")
         try directory.writeFile(named: "crepes.sous")
 
-        #expect(try readNames() == ["crepes"])
+        #expect(
+            try readPaths() == ["Baking/madeleines.sous", "crepes.sous", "French/Comfort food/gratin-dauphinois.sous"]
+        )
+        #expect(try readRecipeEntries().map(\.folderPath) == [["Baking"], [], ["French", "Comfort food"]])
+    }
+
+    @Test("files sharing a name in different directories are listed apart")
+    func sameFileNameInTwoDirectories() throws {
+        try directory.makeDirectory(named: "Sauce")
+        try directory.writeFile(named: "vinaigrette.sous")
+        try directory.writeFile(named: "Sauce/vinaigrette.sous")
+
+        #expect(try readPaths() == ["Sauce/vinaigrette.sous", "vinaigrette.sous"])
+    }
+
+    @Test("every directory read is listed, the top as an empty path, those holding no recipe included")
+    func directoryPaths() throws {
+        try directory.makeDirectory(named: "French/Classic")
+        try directory.makeDirectory(named: "images")
+        try directory.writeFile(named: "images/gratin-dauphinois.jpg")
+
+        #expect(try readListing().directoryPaths == ["", "French", "French/Classic", "images"])
+        #expect(try readPaths().isEmpty)
     }
 
     @Test("a hidden file is left out")
@@ -69,6 +101,26 @@ final class RecipeDirectoryReaderTests {
         try directory.writeFile(named: ".crepes.sous")
 
         #expect(try readNames().isEmpty)
+    }
+
+    @Test("a hidden directory and everything in it are left out")
+    func hiddenDirectory() throws {
+        try directory.makeDirectory(named: ".archive/Baking")
+        try directory.writeFile(named: ".archive/vinaigrette.sous")
+        try directory.writeFile(named: ".archive/Baking/brioche.sous")
+        try directory.writeFile(named: ".archive/.Crepes.sous.icloud")
+
+        #expect(try readPaths().isEmpty)
+        #expect(try readListing().directoryPaths == [""])
+    }
+
+    @Test("a package and everything in it are left out")
+    func package() throws {
+        try directory.makeDirectory(named: "Notes.rtfd")
+        try directory.writeFile(named: "Notes.rtfd/crepes.sous")
+
+        #expect(try readPaths().isEmpty)
+        #expect(try readListing().directoryPaths == [""])
     }
 
     @Test("recipes are ordered by name")
@@ -102,7 +154,19 @@ final class RecipeDirectoryReaderTests {
         let recipeEntries = try readRecipeEntries()
 
         #expect(recipeEntries.map(\.name) == ["Crepes"])
-        #expect(recipeEntries.map(\.fileName) == ["Crepes.sous"])
+        #expect(recipeEntries.map(\.path) == ["Crepes.sous"])
+        #expect(recipeEntries.map(\.availability) == [.notDownloaded])
+    }
+
+    @Test("an iCloud placeholder in a directory inside is listed where its recipe sits")
+    func nestedPlaceholder() throws {
+        try directory.makeDirectory(named: "Baking/Classic")
+        try directory.writeFile(named: "Baking/Classic/.brioche.sous.icloud")
+
+        let recipeEntries = try readRecipeEntries()
+
+        #expect(recipeEntries.map(\.path) == ["Baking/Classic/brioche.sous"])
+        #expect(recipeEntries.map(\.folderPath) == [["Baking", "Classic"]])
         #expect(recipeEntries.map(\.availability) == [.notDownloaded])
     }
 
@@ -143,6 +207,19 @@ final class RecipeDirectoryReaderTests {
         #expect(recipeFiles.map(\.isOutdated) == [true])
         #expect(recipeFiles.map(\.availability) == [.downloading])
         #expect(recipeFiles.map(\.modificationDate) == [date])
+    }
+
+    @Test("a file deep in a directory whose newer version waits in iCloud is listed as outdated and on its way")
+    func outdatedFileInDirectory() throws {
+        try directory.makeDirectory(named: "French/Classic")
+        try directory.writeFile(named: "French/Classic/crepes.sous")
+        fileStatuses.set(.outdated(modifiedAt: date), forFileNamed: "crepes.sous")
+
+        let recipeFiles = try readRecipeFiles()
+
+        #expect(recipeFiles.map(\.path) == ["French/Classic/crepes.sous"])
+        #expect(recipeFiles.map(\.isOutdated) == [true])
+        #expect(recipeFiles.map(\.availability) == [.downloading])
     }
 
     @Test("a file on disk is not outdated")

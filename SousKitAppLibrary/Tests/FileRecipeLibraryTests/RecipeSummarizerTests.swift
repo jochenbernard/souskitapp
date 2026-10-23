@@ -34,7 +34,8 @@ final class RecipeSummarizerTests {
 
     private func listedFiles() throws -> [RecipeFile] {
         try RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory, fileStatus: fileStatuses.status)
-            .readRecipeFiles()
+            .readListing()
+            .recipeFiles
     }
 
     /// Lists the directory and reads what has to be read, as the monitor does, returning the entries after.
@@ -92,6 +93,18 @@ final class RecipeSummarizerTests {
         #expect(entries.map(\.title) == ["Crepes"])
         #expect(directory.summaryCache.load()["crepes.sous"]?.modificationDate == date)
         #expect(directory.summaryCache.load()["crepes.sous"]?.ingredientNames == ["flour", "eggs"])
+    }
+
+    @Test("files sharing a name in different directories keep summaries of their own, by where they sit")
+    func sameFileNameInTwoDirectories() async throws {
+        try directory.makeDirectory(named: "Sauce")
+        try directory.writeFile(named: "vinaigrette.sous", "---\ntitle: Vinaigrette\n---")
+        try directory.writeFile(named: "Sauce/vinaigrette.sous", "---\ntitle: Vinaigrette Classic\n---")
+
+        let entries = try await summarize(with: makeSummarizer())
+
+        #expect(entries.map(\.title) == ["Vinaigrette Classic", "Vinaigrette"])
+        #expect(Set(directory.summaryCache.load().keys) == ["Sauce/vinaigrette.sous", "vinaigrette.sous"])
     }
 
     @Test("a file unchanged since its summary was kept is listed from the cache, not read")

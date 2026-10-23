@@ -66,7 +66,7 @@ final class RecipeDirectoryMonitorOutdatedTests: Sendable {
 
         while let result = await results.next(isolation: #isolation) {
             let recipeEntries = try result.get()
-            crepes += recipeEntries.filter({ $0.fileName == "crepes.sous" })
+            crepes += recipeEntries.filter({ $0.path == "crepes.sous" })
 
             if isDone(recipeEntries) {
                 break

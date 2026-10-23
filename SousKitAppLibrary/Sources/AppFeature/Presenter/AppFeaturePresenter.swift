@@ -96,7 +96,10 @@ final class AppFeaturePresenter:
 
     func didTapSettings() {
         // A press landing after a recipe row's opens nothing over the recipe, whose screen has no such button.
-        guard viewModel?.openSettings == nil, restorationStore.record()?.restoration.kitchen == nil else {
+        guard
+            viewModel?.openSettings == nil,
+            restorationStore.record()?.restoration.kitchen?.isShowingRecipe != true
+        else {
             return
         }
 

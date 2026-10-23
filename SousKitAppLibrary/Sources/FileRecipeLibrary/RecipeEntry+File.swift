@@ -2,32 +2,34 @@ import Foundation
 import RecipeLibrary
 
 extension RecipeEntry {
-    /// The file's name inside the recipe directory, extension included.
-    var fileName: String {
+    /// Where the file sits inside the recipe directory, extension included.
+    var path: String {
         id
     }
 
-    /// Creates an entry for a file sitting directly in the recipe directory, named after the file.
+    /// Creates an entry for a file inside the recipe directory, named after the file and found by where it sits, so
+    /// files sharing a name in different directories are different recipes.
     ///
     /// - Parameters:
-    ///   - fileName: The file's name inside the directory, extension included.
+    ///   - path: Where the file sits inside the directory, extension included.
     ///   - availability: Whether the file's contents are on the device.
     ///   - summary: What is known of the file's contents, or `nil` where they have not been read.
     init(
-        fileName: String,
+        path: String,
         availability: RecipeAvailability,
         summary: RecipeSummary? = nil
     ) {
         self.init(
-            id: fileName,
-            name: Self.name(forFileNamed: fileName),
+            id: path,
+            name: Self.name(forFileAt: path),
             availability: availability,
-            summary: summary
+            summary: summary,
+            folderPath: path.split(separator: "/").dropLast().map(String.init)
         )
     }
 
-    private static func name(forFileNamed fileName: String) -> String {
-        let stem = URL(filePath: fileName).deletingPathExtension().lastPathComponent
+    private static func name(forFileAt path: String) -> String {
+        let stem = URL(filePath: path).deletingPathExtension().lastPathComponent
         let words = stem.split(whereSeparator: isSeparator)
 
         guard !words.isEmpty else {
