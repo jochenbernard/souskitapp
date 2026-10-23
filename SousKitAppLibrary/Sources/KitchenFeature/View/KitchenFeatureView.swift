@@ -73,19 +73,6 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
             }
     }
 
-    private var greeting: Text {
-        switch viewModel.greeting {
-        case .morning:
-            Text("Good morning", bundle: .module)
-
-        case .afternoon:
-            Text("Good afternoon", bundle: .module)
-
-        case .evening:
-            Text("Good evening", bundle: .module)
-        }
-    }
-
     private func folderPage(at path: [String]) -> some View {
         KitchenFolderPage(
             path: path,
@@ -96,6 +83,19 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
             ToolbarItem(placement: .topBarTrailing) {
                 toolbarItem
             }
+        }
+    }
+
+    private var greeting: Text {
+        switch viewModel.greeting {
+        case .morning:
+            Text("Good morning", bundle: .module)
+
+        case .afternoon:
+            Text("Good afternoon", bundle: .module)
+
+        case .evening:
+            Text("Good evening", bundle: .module)
         }
     }
 
@@ -121,11 +121,8 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
 
     /// Where a folder or a recipe sits: the repository's name, then the folders leading down to it.
     private func pathText(_ folders: some Sequence<String>) -> Text {
-        let names = [viewModel.recipeRepositoryName] + folders
-
-        return Text(verbatim: names.joined(separator: " \u{203A} "))
-            // A pause between the names, where VoiceOver would otherwise read out the separator.
-            .accessibilityLabel(Text(verbatim: names.joined(separator: ", ")))
+        // No accessibility label: the navigation bar hands VoiceOver the subtitle's text alone.
+        Text(verbatim: ([viewModel.recipeRepositoryName] + folders).joined(separator: " \u{203A} "))
     }
 
     @ViewBuilder
