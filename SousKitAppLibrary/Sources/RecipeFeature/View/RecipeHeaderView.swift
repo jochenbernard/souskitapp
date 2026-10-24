@@ -23,6 +23,7 @@ struct RecipeHeaderView: View {
         case card
     }
 
+    // The hero's height at rest, which a pull past the top stretches.
     private static let heroHeight = 470.0
 
     // A little taller than a kitchen card's picture, so the title has room over it.
@@ -73,11 +74,11 @@ struct RecipeHeaderView: View {
     }
 
     var body: some View {
-        shape
+        restingShape
             // A title too long for the picture makes it taller, rather than reaching past its top.
             .frame(minHeight: captionHeight + roomAboveCaption)
             .background {
-                picture
+                stretchedPicture
             }
             .overlay(alignment: .bottomLeading) {
                 caption
@@ -90,9 +91,9 @@ struct RecipeHeaderView: View {
             }
     }
 
-    /// The header's size where its title fits.
+    /// The header's size at rest, which the picture is read to fill however far a pull stretches it.
     @ViewBuilder
-    private var shape: some View {
+    private var restingShape: some View {
         switch placement {
         case .hero:
             Color.clear
@@ -145,6 +146,16 @@ struct RecipeHeaderView: View {
         }
 
         return image.size.height
+    }
+
+    private var stretchedPicture: some View {
+        let shownPlacement = placement
+
+        return picture
+            .visualEffect { content, proxy in
+                content
+                    .scaleEffect(Self.stretch(of: shownPlacement, in: proxy), anchor: .bottom)
+            }
     }
 
     @ViewBuilder
@@ -263,6 +274,17 @@ struct RecipeHeaderView: View {
                 height: (size.height * displayScale).rounded(.up)
             )
         )
+    }
+
+    /// How much a pull past the top of the screen stretches the hero, which grows up from its bottom edge.
+    nonisolated private static func stretch(of placement: Placement, in proxy: GeometryProxy) -> Double {
+        switch placement {
+        case .hero:
+            1.0 + max(0.0, proxy.frame(in: .scrollView(axis: .vertical)).minY) / max(proxy.size.height, 1.0)
+
+        case .card:
+            1.0
+        }
     }
 }
 
