@@ -67,8 +67,10 @@ struct RecipeBodyView: View {
             }
             // Both columns sit under one bar, so either one scrolled under it shows the bar across both.
             .scrollEdgeEffectHidden(true, for: .top)
-            .toolbarBackground(.bar, for: .navigationBar)
-            .toolbarBackgroundVisibility(barBackgroundVisibility, for: .navigationBar)
+            // Drawn here, since a background set on the navigation bar collapses the kitchen's large title on a pop.
+            .overlay(alignment: .top) {
+                barBackground
+            }
         } else {
             VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
                 overview
@@ -86,8 +88,8 @@ struct RecipeBodyView: View {
         geometry.contentOffset.y + geometry.contentInsets.top > 0.0
     }
 
-    private var barBackgroundVisibility: Visibility {
-        isOverviewScrolled || areStepsScrolled ? .visible : .hidden
+    private var isBarBackgroundShown: Bool {
+        isOverviewScrolled || areStepsScrolled
     }
 
     @ViewBuilder
@@ -115,6 +117,22 @@ struct RecipeBodyView: View {
                 }
             }
         }
+    }
+
+    // No taller than the columns' top edge, so ignoring the safe area stretches it over the bar alone.
+    private var barBackground: some View {
+        Color.clear
+            .frame(height: 0.0)
+            .background(alignment: .bottom) {
+                Rectangle()
+                    .fill(.bar)
+                    .overlay(alignment: .bottom) {
+                        Divider()
+                    }
+                    .ignoresSafeArea(edges: .top)
+            }
+            .opacity(isBarBackgroundShown ? 1.0 : 0.0)
+            .animation(.spring(duration: 0.2, bounce: 0.0), value: isBarBackgroundShown)
     }
 
     private var metadataView: some View {
