@@ -50,6 +50,17 @@ struct CardMenuAnchor: UIViewRepresentable {
             menus = scrollViewMenus
         }
 
+        /// Whether the card lies under a point of a view it lies in, and is on display there.
+        ///
+        /// A lazy grid keeps the cards it no longer shows in place, hidden, for reuse.
+        func isShown(at point: CGPoint, in view: UIView) -> Bool {
+            let isVisible = sequence(first: self as UIView, next: { $0.superview })
+                .prefix(while: { $0 !== view })
+                .allSatisfy({ !$0.isHidden && $0.alpha > 0.0 })
+
+            return isVisible && convert(bounds, to: view).contains(point)
+        }
+
         /// The scroll view the card scrolls in.
         private var enclosingScrollView: UIScrollView? {
             sequence(first: superview, next: { $0?.superview })
@@ -106,7 +117,7 @@ struct CardMenuAnchor: UIViewRepresentable {
         ) -> UIContextMenuConfiguration? {
             guard
                 let view = interaction.view,
-                let anchor = anchors.allObjects.first(where: { $0.convert($0.bounds, to: view).contains(location) })
+                let anchor = anchors.allObjects.first(where: { $0.isShown(at: location, in: view) })
             else {
                 return nil
             }
