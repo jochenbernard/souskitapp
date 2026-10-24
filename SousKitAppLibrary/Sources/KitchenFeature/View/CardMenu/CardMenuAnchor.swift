@@ -115,7 +115,7 @@ struct CardMenuAnchor: UIViewRepresentable {
             let window = view.window
 
             return UIContextMenuConfiguration(
-                identifier: anchor.token.uuidString as any NSCopying,
+                identifier: anchor.token as any NSCopying,
                 previewProvider: { Self.previewController(of: cardMenu, in: window) },
                 actionProvider: { _ in Self.menuElement(of: cardMenu) }
             )
@@ -154,7 +154,7 @@ struct CardMenuAnchor: UIViewRepresentable {
         }
 
         private func anchor(of configuration: UIContextMenuConfiguration) -> AnchorView? {
-            anchors.allObjects.first(where: { $0.token.uuidString == configuration.identifier as? String })
+            anchors.allObjects.first(where: { $0.token == configuration.identifier as? UUID })
         }
 
         /// The card as it lies on the screen, which the menu lifts out of and settles back onto.

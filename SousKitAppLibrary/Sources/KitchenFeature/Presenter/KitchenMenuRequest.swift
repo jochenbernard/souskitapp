@@ -16,34 +16,33 @@ final class KitchenMenuRequest {
         case searching
     }
 
-    private var screen: KitchenScreen?
-    private var action: Action?
+    private var kept: (screen: KitchenScreen, action: Action)?
 
     nonisolated init() {}
 
     /// Keeps an action for a screen to do once it is on display, in place of any kept before.
     func keep(_ action: Action, for screen: KitchenScreen) {
-        self.screen = screen
-        self.action = action
+        kept = (screen, action)
     }
 
     /// Hands over the action kept for a screen, and forgets it.
     ///
     /// - Returns: The action, or `nil` where none is kept for the screen.
     func take(for screen: KitchenScreen) -> Action? {
-        guard self.screen == screen else {
+        guard
+            let kept,
+            kept.screen == screen
+        else {
             return nil
         }
 
-        let takenAction = action
         forget()
 
-        return takenAction
+        return kept.action
     }
 
     /// Forgets the action kept, whatever screen it was for.
     func forget() {
-        screen = nil
-        action = nil
+        kept = nil
     }
 }

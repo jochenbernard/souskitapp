@@ -22,12 +22,10 @@ private struct CardMenuModifier<Preview: View>: ViewModifier {
     }
 
     private var menu: CardMenu {
-        let makePreview = preview
-
-        return CardMenu(
+        CardMenu(
             items: items,
             open: open,
-            preview: { AnyView(makePreview()) },
+            preview: { AnyView(preview()) },
             cornerRadius: radius
         )
     }

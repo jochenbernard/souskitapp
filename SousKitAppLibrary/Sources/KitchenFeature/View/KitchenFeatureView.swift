@@ -28,7 +28,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
     var body: some View {
         topScreen
             .navigationDestination(for: KitchenScreen.self) { screen in
-                destination(for: screen)
+                screenView(for: screen)
             }
             // Over the whole kitchen rather than pushed on it, zooming out of the button that starts it, and never
             // swiped or pinched away: its own exit is the only way out.
@@ -103,31 +103,20 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
 
     /// A pushed screen: a recipe zooming out of the card that opened it, and a folder sliding in.
     @ViewBuilder
-    private func destination(for screen: KitchenScreen) -> some View {
-        switch screen {
-        case .folder:
-            screenView(for: screen)
-
-        case .recipe(let recipeEntry):
-            // A recipe a cold start opened again was opened from no card, so it slides: a zoom out of none leaves its
-            // swipes back dead.
-            if viewModel.zoomedRecipeIDs.contains(recipeEntry.id) {
-                screenView(for: screen)
-                    .navigationTransition(.zoom(sourceID: recipeEntry.id, in: cardTransition))
-            } else {
-                screenView(for: screen)
-            }
-        }
-    }
-
-    @ViewBuilder
     private func screenView(for screen: KitchenScreen) -> some View {
         switch screen {
         case .folder(let path):
             folderScreen(at: path)
 
         case .recipe(let recipeEntry):
-            recipeScreen(for: recipeEntry)
+            // A recipe a cold start opened again was opened from no card, so it slides: a zoom out of none leaves its
+            // swipes back dead.
+            if viewModel.zoomedRecipeIDs.contains(recipeEntry.id) {
+                recipeScreen(for: recipeEntry)
+                    .navigationTransition(.zoom(sourceID: recipeEntry.id, in: cardTransition))
+            } else {
+                recipeScreen(for: recipeEntry)
+            }
         }
     }
 
