@@ -17,15 +17,18 @@ struct FolderCardStack: View {
 
     private let cards: [KitchenRecipeCard]
     private let thumbnails: KitchenThumbnails
+    private let symbols: KitchenSymbols
     private let presenter: KitchenFeaturePresenterProtocol
 
     init(
         _ cards: [KitchenRecipeCard],
         thumbnails: KitchenThumbnails,
+        symbols: KitchenSymbols,
         presenter: KitchenFeaturePresenterProtocol
     ) {
         self.cards = cards
         self.thumbnails = thumbnails
+        self.symbols = symbols
         self.presenter = presenter
     }
 
@@ -61,6 +64,7 @@ struct FolderCardStack: View {
         RecipeCardPicture(
             card,
             thumbnails: thumbnails,
+            symbols: symbols,
             presenter: presenter,
             readSize: readSize
         )
@@ -75,8 +79,8 @@ struct FolderCardStack: View {
 
 private func previewCards(_ count: Int) -> [KitchenRecipeCard] {
     ["Brioche", "Crepes", "Madeleines", "Quiche Lorraine"].prefix(count).map { title in
-        KitchenFeaturePresenter.card(
-            for: RecipeEntry(
+        KitchenRecipeCard(
+            recipeEntry: RecipeEntry(
                 id: title,
                 name: title,
                 availability: .downloaded
@@ -91,6 +95,7 @@ private func previewCards(_ count: Int) -> [KitchenRecipeCard] {
             FolderCardStack(
                 previewCards(count),
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub()
             )
                 .aspectRatio(16.0 / 10.0, contentMode: .fit)

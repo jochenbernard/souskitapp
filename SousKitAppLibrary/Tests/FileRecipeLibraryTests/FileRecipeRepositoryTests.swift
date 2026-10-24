@@ -9,16 +9,20 @@ import Testing
 final class FileRecipeRepositoryTests: Sendable {
     private let parser = SousParser()
 
-    private let directory: TemporaryDirectory
+    let directory: TemporaryDirectory
 
     init() throws {
         self.directory = try TemporaryDirectory(named: "FileRecipeRepositoryTests")
     }
 
-    private func makeRepository() -> FileRecipeRepository {
+    /// A repository over the directory, picking no symbols unless given a picker that can.
+    func makeRepository(
+        symbolPicker: RecipeSymbolPicker = RecipeSymbolPickerStub(isAvailable: false)
+    ) -> FileRecipeRepository {
         FileRecipeRepository(
             parser: parser,
             recipeDirectory: directory.recipeDirectory,
+            symbolPicker: symbolPicker,
             summaryCacheURL: directory.summaryCacheURL,
             thumbnailCacheURL: directory.thumbnailCacheURL
         )

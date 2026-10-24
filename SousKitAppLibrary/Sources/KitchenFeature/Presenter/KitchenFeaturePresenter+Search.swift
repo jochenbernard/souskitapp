@@ -26,7 +26,7 @@ extension KitchenFeaturePresenter {
         return KitchenSearch(
             text: text,
             isSearching: !queryWords.isEmpty,
-            results: searchIndex.results(matching: queryWords, below: folderPath).map(Self.card(for:))
+            results: searchIndex.results(matching: queryWords, below: folderPath).map(KitchenRecipeCard.init)
         )
     }
 

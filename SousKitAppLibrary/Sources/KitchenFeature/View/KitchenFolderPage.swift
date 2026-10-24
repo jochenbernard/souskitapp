@@ -98,6 +98,7 @@ struct KitchenFolderPage: View {
                         RecipeCard(
                             card,
                             thumbnails: viewModel.thumbnails,
+                            symbols: viewModel.symbols,
                             presenter: presenter,
                             detail: .folder(folderNames(of: card))
                         )
@@ -138,6 +139,7 @@ struct KitchenFolderPage: View {
                         FolderCard(
                             innerFolder,
                             thumbnails: viewModel.thumbnails,
+                            symbols: viewModel.symbols,
                             presenter: presenter
                         )
                     }
@@ -152,6 +154,7 @@ struct KitchenFolderPage: View {
                         RecipeCard(
                             card,
                             thumbnails: viewModel.thumbnails,
+                            symbols: viewModel.symbols,
                             presenter: presenter
                         )
                     }
@@ -254,7 +257,7 @@ private func previewSearch(
     finding recipePaths: [String]
 ) -> KitchenFeatureViewModel {
     let viewModel = previewViewModel()
-    let results = recipePaths.map({ KitchenFeaturePresenter.card(for: previewEntry($0)) })
+    let results = recipePaths.map({ KitchenRecipeCard(recipeEntry: previewEntry($0)) })
     viewModel.searches[path] = KitchenSearch(text: text, isSearching: true, results: results)
 
     return viewModel

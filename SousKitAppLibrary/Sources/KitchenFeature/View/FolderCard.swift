@@ -7,15 +7,18 @@ import SwiftUI
 struct FolderCard: View {
     private let folder: KitchenFolder
     private let thumbnails: KitchenThumbnails
+    private let symbols: KitchenSymbols
     private let presenter: KitchenFeaturePresenterProtocol
 
     init(
         _ folder: KitchenFolder,
         thumbnails: KitchenThumbnails,
+        symbols: KitchenSymbols,
         presenter: KitchenFeaturePresenterProtocol
     ) {
         self.folder = folder
         self.thumbnails = thumbnails
+        self.symbols = symbols
         self.presenter = presenter
     }
 
@@ -27,6 +30,7 @@ struct FolderCard: View {
                 FolderCardStack(
                     folder.stackedCards,
                     thumbnails: thumbnails,
+                    symbols: symbols,
                     presenter: presenter
                 )
                 .clipped()
@@ -56,24 +60,28 @@ private func previewFolder(_ path: [String], recipeCount: Int) -> KitchenFolder 
             FolderCard(
                 previewFolder(["Baking"], recipeCount: 5),
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub()
             )
 
             FolderCard(
                 previewFolder(["Comfort food"], recipeCount: 1),
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub()
             )
 
             FolderCard(
                 previewFolder(["Dinner"], recipeCount: 2),
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub()
             )
 
             FolderCard(
                 previewFolder(["French", "Classic"], recipeCount: 3),
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub()
             )
         }
@@ -88,12 +96,14 @@ private func previewFolder(_ path: [String], recipeCount: Int) -> KitchenFolder 
             FolderCard(
                 previewFolder(["Baking"], recipeCount: 5),
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub()
             )
 
             FolderCard(
                 previewFolder(["Comfort food"], recipeCount: 1),
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub()
             )
         }

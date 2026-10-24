@@ -13,18 +13,27 @@ struct RecipeSummaryRecord: Sendable, Hashable, Codable {
     /// The names of the ingredients the recipe is made of, in the order it first calls for them, each once.
     let ingredientNames: [String]
 
+    /// The symbol picked last for the recipe, or `nil` where none has been.
+    var symbolPick: RecipeSymbolPick?
+
     /// Creates the record of a recipe read.
     ///
     /// - Parameters:
     ///   - recipe: The recipe.
     ///   - modificationDate: When the contents it was read from last changed.
-    init(recipe: Recipe, modificationDate: Date) {
+    ///   - symbolPick: The symbol picked last for the recipe, whatever contents it was picked from.
+    init(
+        recipe: Recipe,
+        modificationDate: Date,
+        symbolPick: RecipeSymbolPick? = nil
+    ) {
         var headerOnly = recipe
         headerOnly.groups = []
 
         self.modificationDate = modificationDate
         self.header = headerOnly.serialized()
         self.ingredientNames = recipe.foodIngredientNames
+        self.symbolPick = symbolPick
     }
 
     /// Whether the summary still holds for a file as it is listed now.

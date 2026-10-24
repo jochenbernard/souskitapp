@@ -19,17 +19,20 @@ struct RecipeCard: View {
 
     private let card: KitchenRecipeCard
     private let thumbnails: KitchenThumbnails
+    private let symbols: KitchenSymbols
     private let presenter: KitchenFeaturePresenterProtocol
     private let detail: Detail
 
     init(
         _ card: KitchenRecipeCard,
         thumbnails: KitchenThumbnails,
+        symbols: KitchenSymbols,
         presenter: KitchenFeaturePresenterProtocol,
         detail: Detail = .totalTime
     ) {
         self.card = card
         self.thumbnails = thumbnails
+        self.symbols = symbols
         self.presenter = presenter
         self.detail = detail
     }
@@ -41,6 +44,7 @@ struct RecipeCard: View {
                 RecipeCardPicture(
                     card,
                     thumbnails: thumbnails,
+                    symbols: symbols,
                     presenter: presenter
                 )
                     .overlay(alignment: .topTrailing) {
@@ -90,8 +94,8 @@ private func previewCard(
 ) -> KitchenRecipeCard {
     let parser = SousParser()
 
-    return KitchenFeaturePresenter.card(
-        for: RecipeEntry(
+    return KitchenRecipeCard(
+        recipeEntry: RecipeEntry(
             id: id,
             name: id.replacing("-", with: " "),
             availability: availability,
@@ -135,6 +139,7 @@ private func previewCards() -> [KitchenRecipeCard] {
                 RecipeCard(
                     card,
                     thumbnails: KitchenThumbnails(),
+                    symbols: KitchenSymbols(),
                     presenter: KitchenFeaturePresenterStub()
                 )
             }
@@ -150,6 +155,7 @@ private func previewCards() -> [KitchenRecipeCard] {
             RecipeCard(
                 previewCards()[0],
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub(),
                 detail: .folder(["Recipes", "French", "Classic"])
             )
@@ -157,6 +163,7 @@ private func previewCards() -> [KitchenRecipeCard] {
             RecipeCard(
                 previewCards()[2],
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub(),
                 detail: .folder(["Baking"])
             )
@@ -173,6 +180,7 @@ private func previewCards() -> [KitchenRecipeCard] {
                 RecipeCard(
                     card,
                     thumbnails: KitchenThumbnails(),
+                    symbols: KitchenSymbols(),
                     presenter: KitchenFeaturePresenterStub()
                 )
             }

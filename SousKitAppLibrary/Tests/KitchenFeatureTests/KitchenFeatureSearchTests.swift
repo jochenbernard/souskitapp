@@ -40,7 +40,7 @@ struct KitchenFeatureSearchTests {
         KitchenSearch(
             text: text,
             isSearching: true,
-            results: listedRecipes.map({ KitchenFeaturePresenter.card(for: $0.entry) })
+            results: listedRecipes.map({ KitchenRecipeCard(recipeEntry: $0.entry) })
         )
     }
 

@@ -31,6 +31,7 @@ final class FileRecipeRepositoryOutdatedPictureTests: Sendable {
         return FileRecipeRepository(
             parser: SousParser(),
             recipeDirectory: directory.recipeDirectory,
+            symbolPicker: RecipeSymbolPickerStub(isAvailable: false),
             summaryCacheURL: directory.summaryCacheURL,
             thumbnailCacheURL: directory.thumbnailCacheURL,
             fileStatus: fileStatuses.status,

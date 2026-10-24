@@ -164,7 +164,7 @@ struct KitchenFeaturePresenterTests {
     }
 
     @MainActor
-    @Test("a card's placeholder takes the color its title hashes to and the default symbol")
+    @Test("a card's placeholder takes the color its title hashes to")
     func cardPlaceholders() async {
         let cards = await cards(listing: [
             recipeEntry(id: "crepes", header: "---\ntitle: Crepes\n---"),
@@ -175,7 +175,6 @@ struct KitchenFeaturePresenterTests {
         let colors = ["Crepes", "Vinaigrette", "Vinaigrette"].map(PlaceholderColorPick.color(forTitle:))
 
         #expect(cards.map(\.placeholderColor) == colors)
-        #expect(cards.map(\.placeholderSymbol) == ["fork.knife", "fork.knife", "fork.knife"])
     }
 
     @MainActor

@@ -17,18 +17,22 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     )
 
     private let parser: SousParser
+    private let symbolPicker: RecipeSymbolPicker
     private let userDefaults: UserDefaults
 
     /// Creates a store.
     ///
     /// - Parameters:
     ///   - parser: What the recipes in the directory are read with.
+    ///   - symbolPicker: What the recipes' symbols are picked with.
     ///   - userDefaults: Where the directory is remembered.
     public init(
         parser: SousParser,
+        symbolPicker: RecipeSymbolPicker,
         userDefaults: UserDefaults = .standard
     ) {
         self.parser = parser
+        self.symbolPicker = symbolPicker
         self.userDefaults = userDefaults
     }
 
@@ -72,6 +76,7 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
         FileRecipeRepository(
             parser: parser,
             recipeDirectory: recipeDirectory,
+            symbolPicker: symbolPicker,
             summaryCacheURL: Self.summaryCacheURL,
             thumbnailCacheURL: Self.thumbnailCacheURL
         )

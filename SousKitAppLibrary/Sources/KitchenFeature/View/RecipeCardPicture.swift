@@ -17,6 +17,7 @@ struct RecipeCardPicture: View {
 
     private let card: KitchenRecipeCard
     private let thumbnails: KitchenThumbnails
+    private let symbols: KitchenSymbols
     private let presenter: KitchenFeaturePresenterProtocol
     private let readSize: CGSize?
 
@@ -25,11 +26,13 @@ struct RecipeCardPicture: View {
     init(
         _ card: KitchenRecipeCard,
         thumbnails: KitchenThumbnails,
+        symbols: KitchenSymbols,
         presenter: KitchenFeaturePresenterProtocol,
         readSize: CGSize? = nil
     ) {
         self.card = card
         self.thumbnails = thumbnails
+        self.symbols = symbols
         self.presenter = presenter
         self.readSize = readSize
     }
@@ -55,7 +58,7 @@ struct RecipeCardPicture: View {
                 .resizable()
                 .scaledToFill()
         } else {
-            RecipeCardPlaceholder(symbol: card.placeholderSymbol, color: card.placeholderColor)
+            RecipeCardPlaceholder(symbol: symbols[card.id], color: card.placeholderColor)
         }
     }
 
@@ -92,14 +95,15 @@ struct RecipeCardPicture: View {
     HStack(spacing: SousSpacing.medium) {
         ForEach(["Brioche", "Crepes"], id: \.self) { title in
             RecipeCardPicture(
-                KitchenFeaturePresenter.card(
-                    for: RecipeEntry(
+                KitchenRecipeCard(
+                    recipeEntry: RecipeEntry(
                         id: title,
                         name: title,
                         availability: .downloaded
                     )
                 ),
                 thumbnails: KitchenThumbnails(),
+                symbols: KitchenSymbols(),
                 presenter: KitchenFeaturePresenterStub()
             )
             .aspectRatio(16.0 / 10.0, contentMode: .fit)
