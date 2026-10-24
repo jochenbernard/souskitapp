@@ -43,7 +43,6 @@ struct KitchenCard<Picture: View, Detail: View>: View {
         .sousRowSurface()
         .clipShape(.rect(cornerRadius: radius))
         .contentShape(.rect(cornerRadius: radius))
-        .contentShape(.contextMenuPreview, .rect(cornerRadius: radius))
         .accessibilityElement(children: .combine)
     }
 

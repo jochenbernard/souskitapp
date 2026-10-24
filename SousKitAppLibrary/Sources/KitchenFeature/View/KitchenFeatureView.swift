@@ -101,16 +101,22 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
         }
     }
 
-    /// A pushed screen, zooming out of the card that opened it.
+    /// A pushed screen: a recipe zooming out of the card that opened it, and a folder sliding in.
     @ViewBuilder
     private func destination(for screen: KitchenScreen) -> some View {
-        // A screen a cold start opened again was opened from no card, so it slides: a zoom out of none leaves its
-        // swipes back dead.
-        if let cardID = viewModel.zoomSources[screen.cardID] {
+        switch screen {
+        case .folder:
             screenView(for: screen)
-                .navigationTransition(.zoom(sourceID: cardID, in: cardTransition))
-        } else {
-            screenView(for: screen)
+
+        case .recipe(let recipeEntry):
+            // A recipe a cold start opened again was opened from no card, so it slides: a zoom out of none leaves its
+            // swipes back dead.
+            if viewModel.zoomedRecipeIDs.contains(recipeEntry.id) {
+                screenView(for: screen)
+                    .navigationTransition(.zoom(sourceID: recipeEntry.id, in: cardTransition))
+            } else {
+                screenView(for: screen)
+            }
         }
     }
 

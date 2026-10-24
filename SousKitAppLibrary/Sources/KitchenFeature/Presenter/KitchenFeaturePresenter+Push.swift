@@ -1,3 +1,5 @@
+import RecipeLibrary
+
 extension KitchenFeaturePresenter {
     @MainActor
     func didPush(_ screen: KitchenScreen, from origin: KitchenScreen?) {
@@ -9,15 +11,10 @@ extension KitchenFeaturePresenter {
     /// - Parameters:
     ///   - screen: The screen the row pushes.
     ///   - origin: The screen the row is on, or `nil` for the kitchen's own.
-    ///   - cardID: The card the screen zooms out of, where it is not the screen's own.
     /// - Returns: Whether the screen is on top of the stack now.
     @MainActor
     @discardableResult
-    func push(
-        _ screen: KitchenScreen,
-        from origin: KitchenScreen?,
-        zoomingOutOf cardID: KitchenCardID? = nil
-    ) -> Bool {
+    func push(_ screen: KitchenScreen, from origin: KitchenScreen?) -> Bool {
         // A row pressed with the button that opened something over the kitchen pushes nothing under it.
         guard !handler.kitchenFeatureIsCovered else {
             return false
@@ -38,7 +35,14 @@ extension KitchenFeaturePresenter {
             pushedScreens = [screen]
         }
 
-        viewModel.zoomSources[screen.cardID] = cardID ?? screen.cardID
+        switch screen {
+        case .recipe(let recipeEntry):
+            viewModel.zoomedRecipeIDs.insert(recipeEntry.id)
+
+        case .folder:
+            break
+        }
+
         changePushedScreens(to: pushedScreens)
 
         return viewModel.pushedScreens.last == screen

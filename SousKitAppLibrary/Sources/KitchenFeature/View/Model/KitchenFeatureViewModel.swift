@@ -14,7 +14,7 @@ final class KitchenFeatureViewModel {
     // The folder whose search field is active, by its path, or `nil` where none is; the top's path is empty.
     // swiftlint:disable:next discouraged_optional_collection
     var presentedSearchPath: [String]?
-    var zoomSources: [KitchenCardID: KitchenCardID] = [:]
+    var zoomedRecipeIDs: Set<String> = []
     var openCooking: OpenCooking?
     let thumbnails = KitchenThumbnails()
     let symbols = KitchenSymbols()

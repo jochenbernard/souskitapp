@@ -69,8 +69,8 @@ struct KitchenFeatureMenuTests {
     }
 
     @MainActor
-    @Test("a screen pushed from its card zooms out of that card")
-    func pushZoomsOutOfItsCard() {
+    @Test("a recipe pushed from its card zooms out of that card, and a folder slides in")
+    func recipePushZooms() {
         let crepes = RecipeEntry.stubbed(at: "Baking/crepes")
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
@@ -78,8 +78,7 @@ struct KitchenFeatureMenuTests {
         presenter.didPush(.folder(["Baking"]), from: nil)
         presenter.didPush(.recipe(crepes), from: .folder(["Baking"]))
 
-        #expect(viewModel.zoomSources[.folder(["Baking"])] == .folder(["Baking"]))
-        #expect(viewModel.zoomSources[.recipe(crepes.id)] == .recipe(crepes.id))
+        #expect(viewModel.zoomedRecipeIDs == [crepes.id])
     }
 
     @MainActor
@@ -187,8 +186,8 @@ struct KitchenFeatureMenuTests {
     }
 
     @MainActor
-    @Test("showing a found recipe's folder pushes the folder over the search, zooming out of the recipe's card")
-    func showingTheFolderZoomsOutOfTheRecipe() {
+    @Test("showing a found recipe's folder pushes the folder over the search")
+    func showingTheFolderPushesIt() {
         let crepes = RecipeEntry.stubbed(at: "French/Classic/crepes")
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
@@ -197,11 +196,6 @@ struct KitchenFeatureMenuTests {
         presenter.didChooseFolder(of: crepes, from: .folder(["French"]))
 
         #expect(viewModel.pushedScreens == [.folder(["French"]), .folder(["French", "Classic"])])
-        #expect(viewModel.zoomSources[.folder(["French", "Classic"])] == .recipe(crepes.id))
-
-        presenter.didPop(toCount: 1)
-        presenter.didPush(.folder(["French", "Classic"]), from: .folder(["French"]))
-
-        #expect(viewModel.zoomSources[.folder(["French", "Classic"])] == .folder(["French", "Classic"]))
+        #expect(viewModel.zoomedRecipeIDs.isEmpty)
     }
 }

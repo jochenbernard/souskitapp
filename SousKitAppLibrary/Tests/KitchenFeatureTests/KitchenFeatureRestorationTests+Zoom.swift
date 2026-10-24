@@ -4,7 +4,7 @@ import Testing
 
 extension KitchenFeatureRestorationTests {
     @MainActor
-    @Test("a kitchen restored zooms none of the screens it opens again, as no card opened them")
+    @Test("a kitchen restored zooms out of no card for the recipe it opens again, as no card opened it")
     func restoredScreensDoNotZoom() async {
         let gratin = RecipeEntry.stubbed(at: "French/Comfort food/gratin-dauphinois")
         let restoration = KitchenFeatureRestoration(folderPath: ["French", "Comfort food"], recipeID: gratin.id)
@@ -12,6 +12,6 @@ extension KitchenFeatureRestorationTests {
         let kitchen = await restore(restoration, listing: [.success([gratin])])
 
         #expect(kitchen.viewModel.pushedScreens.count == 3)
-        #expect(kitchen.viewModel.zoomSources.isEmpty)
+        #expect(kitchen.viewModel.zoomedRecipeIDs.isEmpty)
     }
 }

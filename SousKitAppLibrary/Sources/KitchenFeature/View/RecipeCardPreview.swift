@@ -3,7 +3,7 @@ import RecipeFeature
 import RecipeLibrary
 import SwiftUI
 
-/// A glance at the recipe a card opens, which the presenter reads for the glance as it appears.
+/// A glance at the recipe a card opens, as the presenter built it for the glance.
 struct RecipeCardPreview: View {
     private let card: KitchenRecipeCard
     private let presenter: KitchenFeaturePresenterProtocol
@@ -20,14 +20,6 @@ struct RecipeCardPreview: View {
     }
 
     var body: some View {
-        content
-            .onAppear {
-                presenter.didPreview(card.recipeEntry)
-            }
-    }
-
-    @ViewBuilder
-    private var content: some View {
         if let previewedRecipe = viewModel.previewedRecipe, previewedRecipe.recipeEntry == card.recipeEntry {
             previewedRecipe.feature.makePreview(
                 placeholder: RecipePlaceholder(

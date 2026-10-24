@@ -32,12 +32,7 @@ extension KitchenFeaturePresenter {
 
     @MainActor
     func didChooseFolder(of recipeEntry: RecipeEntry, from origin: KitchenScreen?) {
-        // Out of the card that was pressed, as the folder's own card is not on the screen.
-        push(
-            .folder(recipeEntry.folderPath),
-            from: origin,
-            zoomingOutOf: .recipe(recipeEntry.id)
-        )
+        push(.folder(recipeEntry.folderPath), from: origin)
     }
 
     @MainActor

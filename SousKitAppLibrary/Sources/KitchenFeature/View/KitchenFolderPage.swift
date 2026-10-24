@@ -27,7 +27,7 @@ struct KitchenFolderPage: View {
     private let viewModel: KitchenFeatureViewModel
     private let cardTransition: Namespace.ID
 
-    /// - Parameter cardTransition: Where a screen the page pushes zooms out of its card, by the screen.
+    /// - Parameter cardTransition: Where a recipe the page pushes zooms out of its card, by the recipe's id.
     init(
         path: [String],
         presenter: KitchenFeaturePresenterProtocol,
@@ -177,7 +177,6 @@ struct KitchenFolderPage: View {
                     origin: origin,
                     presenter: presenter,
                     viewModel: viewModel,
-                    cardTransition: cardTransition,
                     previewSize: previewSize
                 )
             }

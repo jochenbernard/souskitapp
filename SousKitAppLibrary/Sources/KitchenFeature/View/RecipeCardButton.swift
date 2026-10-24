@@ -49,10 +49,13 @@ struct RecipeCardButton: View {
             )
         }
         .buttonStyle(.plain)
-        .contextMenu(
-            menuItems: { menuItems },
+        .cardMenu(
+            items: menuItems,
+            open: open,
             preview: {
-                RecipeCardPreview(
+                presenter.didPreview(card.recipeEntry)
+
+                return RecipeCardPreview(
                     card,
                     presenter: presenter,
                     viewModel: viewModel
@@ -61,14 +64,10 @@ struct RecipeCardButton: View {
             }
         )
         .matchedTransitionSource(
-            id: screen.cardID,
+            id: card.recipeEntry.id,
             in: cardTransition,
             configuration: { $0.clipShape(.rect(cornerRadius: radius)) }
         )
-        // VoiceOver lists no context menu, so its choices beyond opening are the card's actions too.
-        .accessibilityActions {
-            actionItems
-        }
     }
 
     private var screen: KitchenScreen {
@@ -80,54 +79,38 @@ struct RecipeCardButton: View {
         folderPath.isEmpty ? nil : .folder(folderPath)
     }
 
-    @ViewBuilder
-    private var menuItems: some View {
-        Button(action: open) {
-            Label(
-                title: { Text("Open", bundle: .module) },
-                icon: { Image(systemName: "arrow.up.forward.square") }
+    /// What the card's menu offers besides opening the recipe: show in folder for a recipe a search found below the
+    /// folder searched, which shows it outside its own folder.
+    private var menuItems: [CardMenuItem] {
+        let items = [
+            CardMenuItem(
+                title: String(localized: "Start cooking", bundle: .module),
+                systemImage: "frying.pan",
+                action: startCooking
+            ),
+            CardMenuItem(
+                title: String(localized: "Scale", bundle: .module),
+                systemImage: "chevron.up.chevron.down",
+                action: scale
             )
-        }
+        ]
 
-        actionItems
-    }
-
-    /// What the card does besides opening its recipe.
-    @ViewBuilder
-    private var actionItems: some View {
-        Button(action: startCooking) {
-            Label(
-                title: { Text("Start cooking", bundle: .module) },
-                icon: { Image(systemName: "frying.pan") }
-            )
-        }
-
-        Button(action: scale) {
-            Label(
-                title: { Text("Scale", bundle: .module) },
-                icon: { Image(systemName: "chevron.up.chevron.down") }
-            )
-        }
-
-        folderItem
-    }
-
-    /// Show in folder, for a recipe a search found below the folder searched, which shows it outside its own folder.
-    @ViewBuilder
-    private var folderItem: some View {
         switch detail {
         case .totalTime:
-            EmptyView()
+            return items
 
         case .folder:
-            if card.recipeEntry.folderPath != folderPath {
-                Button(action: showFolder) {
-                    Label(
-                        title: { Text("Show in folder", bundle: .module) },
-                        icon: { Image(systemName: "folder") }
-                    )
-                }
+            guard card.recipeEntry.folderPath != folderPath else {
+                return items
             }
+
+            return items + [
+                CardMenuItem(
+                    title: String(localized: "Show in folder", bundle: .module),
+                    systemImage: "folder",
+                    action: showFolder
+                )
+            ]
         }
     }
 
