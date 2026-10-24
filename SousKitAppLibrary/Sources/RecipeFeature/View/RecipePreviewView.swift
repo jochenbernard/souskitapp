@@ -3,10 +3,13 @@ import RecipeLibrary
 import SousKit
 import SwiftUI
 
-/// A glance at a recipe before it is opened: its header on the card the screen opens with, without the scale, which
-/// is something to do on the screen rather than something to read.
+/// A glance at a recipe before it is opened: the card the screen opens with, cut to its picture, title, facts and
+/// tags, so it fits the room a preview has.
 struct RecipePreviewView: View {
     @LineContainerRadius private var radius
+
+    // A preview cannot scroll, and past this size the facts alone outgrow it.
+    private static let largestTypeSize = DynamicTypeSize.accessibility1
 
     private let presenter: RecipeFeaturePresenterProtocol
     private let viewModel: RecipeFeatureViewModel
@@ -24,6 +27,7 @@ struct RecipePreviewView: View {
 
     var body: some View {
         card
+            .dynamicTypeSize(...Self.largestTypeSize)
             .task {
                 await presenter.viewDidAppear()
             }
@@ -35,7 +39,7 @@ struct RecipePreviewView: View {
         case .recipe(let recipe):
             RecipeMetadataView(
                 presenter: presenter,
-                metadata: RecipeDisplay.metadata(of: recipe.scaled.metadata),
+                metadata: RecipeDisplay.metadata(of: recipe.scaled.metadata).glance,
                 scale: nil,
                 header: header
             )
@@ -77,10 +81,8 @@ private func previewViewModel(_ recipeContent: RecipeContent) -> RecipeFeatureVi
     return viewModel
 }
 
-private func previewRecipe() -> ScaledRecipe {
-    let parser = SousParser()
-    let recipe = parser.parseRecipe(
-        """
+private func previewRecipe(
+    _ text: String = """
         ---
         title: Boeuf Bourguignon
         servings: 6
@@ -92,8 +94,9 @@ private func previewRecipe() -> ScaledRecipe {
 
         Cut @{1.2 kg} beef@ into large cubes and pat them dry.
         """
-    )
-    .value
+) -> ScaledRecipe {
+    let parser = SousParser()
+    let recipe = parser.parseRecipe(text).value
 
     return ScaledRecipe(asWritten: recipe, parser: parser)
 }
@@ -102,6 +105,27 @@ private func previewRecipe() -> ScaledRecipe {
     RecipePreviewView(
         presenter: RecipeFeaturePresenterStub(),
         viewModel: previewViewModel(.recipe(previewRecipe())),
+        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink)
+    )
+    .frame(width: 370.0)
+    .fixedSize(horizontal: false, vertical: true)
+    .sousPage()
+}
+
+#Preview("Recipe preview, header of nothing but a title") {
+    RecipePreviewView(
+        presenter: RecipeFeaturePresenterStub(),
+        viewModel: previewViewModel(
+            .recipe(
+                previewRecipe(
+                    """
+                    ---
+                    title: Vinaigrette
+                    ---
+                    """
+                )
+            )
+        ),
         placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink)
     )
     .frame(width: 370.0)

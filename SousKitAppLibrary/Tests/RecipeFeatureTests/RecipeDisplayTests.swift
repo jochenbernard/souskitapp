@@ -35,6 +35,29 @@ struct RecipeDisplayTests {
         #expect(metadata.rows.map(\.value) == ["https://example.com/gratin-dauphinois"])
     }
 
+    @Test("a glance keeps the facts and the tags, and leaves out the allergens and the lines left over")
+    func glance() {
+        let source = """
+            ---
+            title: Gratin Dauphinois
+            servings: 6
+            prep-time: 30 min
+            tags: [comfort food, french, make-ahead]
+            allergens: [dairy]
+            yield: [1.8 kg]
+            author: Jean Dupont
+            ---
+
+            Bake it.
+            """
+        let glance = RecipeDisplay.metadata(of: recipe(source).metadata).glance
+
+        #expect(glance.facts.map(\.kind) == [.servings, .prepTime])
+        #expect(glance.tags == ["comfort food", "french", "make-ahead"])
+        #expect(glance.allergens.isEmpty)
+        #expect(glance.rows.isEmpty)
+    }
+
     @Test("the picture the header names is left out of the lines left over, as the screen shows it")
     func metadataWithoutPicture() {
         let source = """

@@ -31,7 +31,7 @@ struct RecipeMetadataView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0.0) {
             header?
-                .sousCardPicture()
+                .sousCardPicture(endsCard: metadata.isEmpty && scale == nil)
 
             factStrip
 
