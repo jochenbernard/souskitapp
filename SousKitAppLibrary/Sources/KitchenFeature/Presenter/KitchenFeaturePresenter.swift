@@ -9,7 +9,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     let greetingClock: KitchenGreetingClock
     let handler: KitchenFeatureHandler
     let menuRequest = KitchenMenuRequest()
-    let recipeFeatureFactory: RecipeFeatureFactory
+    private let recipeFeatureFactory: RecipeFeatureFactory
     let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
     let searchIndex = RecipeSearchIndex()
@@ -277,7 +277,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     @MainActor
-    private func makeOpenRecipe(
+    func makeOpenRecipe(
         _ recipeEntry: RecipeEntry,
         restoration: RecipeFeatureRestoration? = nil,
         resumesCooking: Bool = false

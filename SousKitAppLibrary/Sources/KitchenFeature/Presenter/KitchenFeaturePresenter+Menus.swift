@@ -9,15 +9,7 @@ extension KitchenFeaturePresenter {
             return
         }
 
-        viewModel.previewedRecipe = OpenRecipe(
-            recipeEntry: recipeEntry,
-            feature: recipeFeatureFactory.makeRecipeFeature(
-                recipeEntry: recipeEntry,
-                restoration: nil,
-                resumesCooking: false,
-                handler: self
-            )
-        )
+        viewModel.previewedRecipe = makeOpenRecipe(recipeEntry)
     }
 
     @MainActor

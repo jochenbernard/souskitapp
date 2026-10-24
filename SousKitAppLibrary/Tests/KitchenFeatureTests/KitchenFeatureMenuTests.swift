@@ -37,7 +37,7 @@ struct KitchenFeatureMenuTests {
     }
 
     @MainActor
-    @Test("a recipe previewed gets a feature of its own, off the stack")
+    @Test("a recipe previewed gets a feature, off the stack")
     func previewBuildsAFeature() {
         let crepes = RecipeEntry.stubbed(at: "Baking/crepes")
         let viewModel = makeViewModel()
@@ -50,7 +50,7 @@ struct KitchenFeatureMenuTests {
     }
 
     @MainActor
-    @Test("a recipe previewed again keeps the feature that read it, and another recipe gets its own")
+    @Test("a recipe previewed again keeps the feature that read it, and another recipe gets another")
     func previewingAgainKeepsTheFeature() {
         let crepes = RecipeEntry.stubbed(at: "Baking/crepes")
         let brioche = RecipeEntry.stubbed(at: "Baking/brioche")
@@ -197,5 +197,32 @@ struct KitchenFeatureMenuTests {
 
         #expect(viewModel.pushedScreens == [.folder(["French"]), .folder(["French", "Classic"])])
         #expect(viewModel.zoomedRecipeIDs.isEmpty)
+    }
+
+    @MainActor
+    @Test("a folder pushed ends the search of the screen it is pushed from, and a recipe pushed leaves it")
+    func folderPushEndsTheSearch() {
+        let crepes = RecipeEntry.stubbed(at: "French/Classic/crepes")
+        let viewModel = makeViewModel()
+        let presenter = makePresenter(viewModel: viewModel)
+
+        presenter.didPush(.folder(["French"]), from: nil)
+        presenter.didChangeIsSearchPresented(true, in: ["French"])
+        presenter.didChooseFolder(of: crepes, from: .folder(["French"]))
+
+        #expect(viewModel.presentedSearchPath == nil)
+        #expect(viewModel.pushedScreens == [.folder(["French"]), .folder(["French", "Classic"])])
+
+        presenter.didPop(toCount: 0)
+        presenter.didChangeIsSearchPresented(true, in: [])
+        presenter.didPush(.recipe(crepes), from: nil)
+
+        #expect(viewModel.presentedSearchPath?.isEmpty == true)
+
+        presenter.didPop(toCount: 0)
+        presenter.didPush(.folder(["French"]), from: nil)
+
+        #expect(viewModel.presentedSearchPath == nil)
+        #expect(viewModel.pushedScreens == [.folder(["French"])])
     }
 }

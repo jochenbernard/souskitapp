@@ -15,8 +15,7 @@ struct KitchenFolderPage: View {
     // Two columns on any iPhone; at accessibility sizes the width grows with the text, which leaves the iPhone one.
     private static let minimumCardWidth = 160.0
 
-    // The widest a card's preview is, which the iPad crops past about 330 points rather than scaling it down, and
-    // the room a preview leaves for the menu under it.
+    // The iPad crops a preview wider than about 330 points, and a preview leaves room for the menu under it.
     private static let maximumPreviewWidth = 370.0
     private static let maximumRegularPreviewWidth = 320.0
     private static let menuRoom = 330.0

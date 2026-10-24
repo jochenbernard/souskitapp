@@ -109,8 +109,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
             folderScreen(at: path)
 
         case .recipe(let recipeEntry):
-            // A recipe a cold start opened again was opened from no card, so it slides: a zoom out of none leaves its
-            // swipes back dead.
+            // A recipe a cold start opened again slides, as a zoom out of no card leaves its swipe back dead.
             if viewModel.zoomedRecipeIDs.contains(recipeEntry.id) {
                 recipeScreen(for: recipeEntry)
                     .navigationTransition(.zoom(sourceID: recipeEntry.id, in: cardTransition))

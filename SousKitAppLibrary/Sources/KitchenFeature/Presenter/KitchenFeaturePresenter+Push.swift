@@ -40,11 +40,27 @@ extension KitchenFeaturePresenter {
             viewModel.zoomedRecipeIDs.insert(recipeEntry.id)
 
         case .folder:
-            break
+            // A folder pushed over a search field still active hangs UIKit in its search bar's layout.
+            endSearch(on: origin)
         }
 
         changePushedScreens(to: pushedScreens)
 
         return viewModel.pushedScreens.last == screen
+    }
+
+    /// Lets go of the search field of the folder screen a row was pressed on, or `nil` for the kitchen's own.
+    @MainActor
+    private func endSearch(on origin: KitchenScreen?) {
+        switch origin {
+        case .folder(let folderPath):
+            didChangeIsSearchPresented(false, in: folderPath)
+
+        case nil:
+            didChangeIsSearchPresented(false, in: [])
+
+        case .recipe:
+            break
+        }
     }
 }
