@@ -128,7 +128,7 @@ struct RecipeHeaderView: View {
     @ViewBuilder
     private var picture: some View {
         switch viewModel.headerPicture {
-        case .read(let image, _):
+        case .read(let image):
             photo(image)
 
         case .placeholder:

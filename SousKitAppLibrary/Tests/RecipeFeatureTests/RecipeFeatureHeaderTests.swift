@@ -233,7 +233,7 @@ struct RecipeFeatureHeaderTests {
 
     private func shownPicture(_ headerPicture: HeaderPicture) -> CGImage? {
         switch headerPicture {
-        case .read(let image, _):
+        case .read(let image):
             image
 
         case .reading, .placeholder:

@@ -6,6 +6,7 @@ import SousKit
 
 struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     private let handler: RecipeFeatureHandler
+    private let headerPictureMemory = HeaderPictureMemory()
     private let parser: SousParser
     private let preferredScaleStore: PreferredScaleStore
     private let recipeRepository: RecipeRepository
@@ -67,6 +68,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     func headerDidAppear(filling pixelSize: CGSize) async {
         guard let picture = viewModel.picture else {
             viewModel.headerPicture = .placeholder
+            headerPictureMemory.picture = nil
             return
         }
 
@@ -93,7 +95,8 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             return
         }
 
-        viewModel.headerPicture = .read(image, picture: picture)
+        viewModel.headerPicture = .read(image)
+        headerPictureMemory.picture = picture
     }
 
     func entryDidChange(_ recipeEntry: RecipeEntry) {
@@ -199,8 +202,8 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     @MainActor
     private func holdsPicture(filling pixelSize: CGSize) -> Bool {
         switch viewModel.headerPicture {
-        case let .read(image, picture):
-            picture == viewModel.picture
+        case .read(let image):
+            headerPictureMemory.picture == viewModel.picture
                 && Double(image.width) >= pixelSize.width
                 && Double(image.height) >= pixelSize.height
 
