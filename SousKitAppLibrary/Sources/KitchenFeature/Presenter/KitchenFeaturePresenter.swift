@@ -286,6 +286,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             recipeEntry: recipeEntry,
             feature: recipeFeatureFactory.makeRecipeFeature(
                 recipeEntry: recipeEntry,
+                thumbnail: recipeEntry.picture.flatMap(thumbnailMemory.thumbnail(of:)),
                 restoration: restoration,
                 resumesCooking: resumesCooking,
                 handler: self

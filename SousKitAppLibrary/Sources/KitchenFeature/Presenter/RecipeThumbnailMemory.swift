@@ -52,6 +52,14 @@ final class RecipeThumbnailMemory {
         return Double(entry.thumbnail.width) >= pixelSize.width && Double(entry.thumbnail.height) >= pixelSize.height
     }
 
+    /// The thumbnail kept for a picture, whatever its contents were then, as the picture's cards show it.
+    ///
+    /// - Parameter picture: The picture.
+    /// - Returns: The thumbnail, or `nil` where none is kept.
+    func thumbnail(of picture: RecipePicture) -> CGImage? {
+        kept[picture.id]?.thumbnail
+    }
+
     /// Keeps a picture's thumbnail, in place of the one kept for the picture before.
     ///
     /// - Parameters:

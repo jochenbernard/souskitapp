@@ -129,6 +129,27 @@ struct KitchenFeaturePresenterThumbnailTests {
     }
 
     @MainActor
+    @Test("a recipe opened from a card starts from the picture the card shows, and from none once it is let go")
+    func openedRecipeThumbnail() async throws {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        let image = try thumbnail(width: 480, height: 360)
+        recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": image]
+        let presenter = makePresenter(recipeRepository: recipeRepository, viewModel: viewModel)
+
+        #expect(presenter.thumbnailMemory.thumbnail(of: picture()) == nil)
+
+        await presenter.pictureDidAppear(picture(), filling: box)
+
+        #expect(presenter.thumbnailMemory.thumbnail(of: picture()) === image)
+
+        recipeRepository.thumbnails = [:]
+        await presenter.pictureDidAppear(picture(), filling: box)
+
+        #expect(presenter.thumbnailMemory.thumbnail(of: picture()) == nil)
+    }
+
+    @MainActor
     @Test("a picture that cannot be read shows none, not what was read of it before")
     func unreadablePicture() async throws {
         let recipeRepository = RecipeRepositorySpy()

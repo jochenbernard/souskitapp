@@ -95,6 +95,41 @@ struct RecipeFeatureHeaderTests {
     }
 
     @MainActor
+    @Test("a recipe opened from its card shows the card's picture from the start, and the header's own once read")
+    func cardPictureFirst() async throws {
+        let card = try picture(width: 537, height: 336)
+        let image = try picture(width: 1_206, height: 1_410)
+        let recipeRepository = PictureRepositorySpy(thumbnail: image)
+        let viewModel = RecipeFeatureViewModel(
+            recipeEntry: brioche,
+            folderPath: ["Recipes"],
+            thumbnail: card
+        )
+
+        #expect(shownPicture(viewModel.headerPicture) === card)
+
+        await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).headerDidAppear(filling: box)
+
+        #expect(shownPicture(viewModel.headerPicture) === image)
+        #expect(recipeRepository.thumbnailBoxes == [box])
+    }
+
+    @MainActor
+    @Test("the card's picture gives way to the placeholder where the header cannot read its own")
+    func cardPictureUnreadable() async throws {
+        let viewModel = RecipeFeatureViewModel(
+            recipeEntry: brioche,
+            folderPath: ["Recipes"],
+            thumbnail: try picture(width: 537, height: 336)
+        )
+        let presenter = makePresenter(viewModel: viewModel, recipeRepository: PictureRepositorySpy(thumbnail: nil))
+
+        await presenter.headerDidAppear(filling: box)
+
+        #expect(isPlaceholder(viewModel.headerPicture))
+    }
+
+    @MainActor
     @Test("a picture that cannot be read shows the placeholder")
     func unreadablePicture() async {
         let viewModel = RecipeFeatureViewModel(recipeEntry: brioche)
