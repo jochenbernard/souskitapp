@@ -10,6 +10,9 @@ final class KitchenFeatureViewModel {
     var searches: [[String]: KitchenSearch] = [:]
     var pushedScreens: [KitchenScreen] = []
     var openRecipe: OpenRecipe?
+    // The folder whose search field is active, by its path, or `nil` where none is; the top's path is empty.
+    // swiftlint:disable:next discouraged_optional_collection
+    var presentedSearchPath: [String]?
     var openCooking: OpenCooking?
     let thumbnails = KitchenThumbnails()
     let symbols = KitchenSymbols()
