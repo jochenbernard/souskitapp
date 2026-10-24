@@ -1,6 +1,7 @@
 import DesignSystem
 import RecipeLibrary
 import SwiftUI
+import UIKit
 
 /// The top of the recipe screen: the recipe's picture, or its placeholder, with where the recipe sits and its title
 /// over the bottom of it.
@@ -103,15 +104,47 @@ struct RecipeHeaderView: View {
         }
     }
 
-    /// What stays clear above the caption: the bar, over the hero.
+    /// What stays clear above the caption: the bar, over the hero, and a placeholder's symbol.
     private var roomAboveCaption: Double {
+        let pictureRoom = isPlaceholder ? symbolHeight + SousSpacing.large * 2.0 : SousSpacing.large
+
+        return pictureTop + pictureRoom
+    }
+
+    /// Where the picture shows from: below the bar, over the hero.
+    private var pictureTop: Double {
         switch placement {
         case .hero:
-            barBottom + SousSpacing.large
+            barBottom
 
         case .card:
-            SousSpacing.large
+            0.0
         }
+    }
+
+    private var isPlaceholder: Bool {
+        switch viewModel.headerPicture {
+        case .placeholder:
+            true
+
+        case .reading, .read:
+            false
+        }
+    }
+
+    private var symbolSize: Double {
+        placement == .hero ? heroSymbolSize : cardSymbolSize
+    }
+
+    // Taller than its point size, by as much as the symbol's own shape takes.
+    private var symbolHeight: Double {
+        let configuration = UIImage.SymbolConfiguration(pointSize: symbolSize)
+
+        guard let image = UIImage(systemName: placeholder.symbol, withConfiguration: configuration) else {
+            return symbolSize
+        }
+
+        return image.size.height
     }
 
     @ViewBuilder
@@ -124,7 +157,13 @@ struct RecipeHeaderView: View {
             SousPlaceholder(
                 symbol: placeholder.symbol,
                 color: placeholder.color,
-                symbolFont: .system(size: placement == .hero ? heroSymbolSize : cardSymbolSize)
+                symbolFont: .system(size: symbolSize),
+                symbolInsets: EdgeInsets(
+                    top: pictureTop,
+                    leading: 0.0,
+                    bottom: captionHeight,
+                    trailing: 0.0
+                )
             )
 
         case .reading:
@@ -182,8 +221,7 @@ struct RecipeHeaderView: View {
             titleText
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, SousSpacing.large)
-        .padding(.bottom, placement == .hero ? SousSpacing.xLarge : SousSpacing.large)
+        .padding([.horizontal, .bottom], SousSpacing.large)
         .fixedSize(horizontal: false, vertical: true)
         .onGeometryChange(for: CGFloat.self, of: \.size.height) { height in
             captionHeight = height
