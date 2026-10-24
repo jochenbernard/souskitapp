@@ -10,6 +10,12 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     // Caches, not the recipe directory: the summaries are rebuilt from the recipes wherever the system clears them.
     private static let summaryCacheURL = URL.cachesDirectory.appending(path: "RecipeSummaries.json")
 
+    // Caches as well: a thumbnail is made again from its picture wherever the system clears it.
+    private static let thumbnailCacheURL = URL.cachesDirectory.appending(
+        path: "RecipeThumbnails",
+        directoryHint: .isDirectory
+    )
+
     private let parser: SousParser
     private let userDefaults: UserDefaults
 
@@ -66,7 +72,8 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
         FileRecipeRepository(
             parser: parser,
             recipeDirectory: recipeDirectory,
-            summaryCacheURL: Self.summaryCacheURL
+            summaryCacheURL: Self.summaryCacheURL,
+            thumbnailCacheURL: Self.thumbnailCacheURL
         )
     }
 

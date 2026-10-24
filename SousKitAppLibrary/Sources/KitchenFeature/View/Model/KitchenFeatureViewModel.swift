@@ -11,6 +11,7 @@ final class KitchenFeatureViewModel {
     var pushedScreens: [KitchenScreen] = []
     var openRecipe: OpenRecipe?
     var openCooking: OpenCooking?
+    let thumbnails = KitchenThumbnails()
 
     nonisolated init(recipeRepositoryName: String) {
         self.recipeRepositoryName = recipeRepositoryName

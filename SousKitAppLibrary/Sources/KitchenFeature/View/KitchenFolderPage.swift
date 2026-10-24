@@ -94,7 +94,14 @@ struct KitchenFolderPage: View {
             ForEach(cards) { card in
                 Button(
                     action: { presenter.didPush(.recipe(card.recipeEntry), from: origin) },
-                    label: { RecipeCard(card, detail: .folder(folderNames(of: card))) }
+                    label: {
+                        RecipeCard(
+                            card,
+                            thumbnails: viewModel.thumbnails,
+                            presenter: presenter,
+                            detail: .folder(folderNames(of: card))
+                        )
+                    }
                 )
                 .buttonStyle(.plain)
             }
@@ -127,7 +134,13 @@ struct KitchenFolderPage: View {
             ForEach(folder.folders) { innerFolder in
                 Button(
                     action: { presenter.didPush(.folder(innerFolder.path), from: origin) },
-                    label: { FolderCard(innerFolder) }
+                    label: {
+                        FolderCard(
+                            innerFolder,
+                            thumbnails: viewModel.thumbnails,
+                            presenter: presenter
+                        )
+                    }
                 )
                 .buttonStyle(.plain)
             }
@@ -135,7 +148,13 @@ struct KitchenFolderPage: View {
             ForEach(folder.cards) { card in
                 Button(
                     action: { presenter.didPush(.recipe(card.recipeEntry), from: origin) },
-                    label: { RecipeCard(card) }
+                    label: {
+                        RecipeCard(
+                            card,
+                            thumbnails: viewModel.thumbnails,
+                            presenter: presenter
+                        )
+                    }
                 )
                 .buttonStyle(.plain)
             }

@@ -12,9 +12,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     let greetingClock: KitchenGreetingClock
     private let handler: KitchenFeatureHandler
     private let recipeFeatureFactory: RecipeFeatureFactory
-    private let recipeRepository: RecipeRepository
+    let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
     let searchIndex = RecipeSearchIndex()
+    let thumbnailMemory: RecipeThumbnailMemory
     let viewModel: KitchenFeatureViewModel
 
     @MainActor
@@ -36,6 +37,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             restoration: restoration,
             handler: handler
         )
+        self.thumbnailMemory = RecipeThumbnailMemory(shownThumbnails: viewModel.thumbnails)
         self.viewModel = viewModel
     }
 

@@ -1,3 +1,6 @@
+import CoreGraphics
+import RecipeLibrary
+
 /// What ``KitchenFeature`` and ``KitchenFeatureView`` report to.
 protocol KitchenFeaturePresenterProtocol {
     /// The stack the kitchen's screens are pushed on is on screen, and the call is cancelled when it leaves.
@@ -42,4 +45,12 @@ protocol KitchenFeaturePresenterProtocol {
 
     @MainActor
     func didDismissCooking()
+
+    /// A card showing a recipe's picture is on screen, and the call is cancelled when it leaves or its size changes.
+    ///
+    /// - Parameters:
+    ///   - picture: The picture.
+    ///   - pixelSize: The box the card shows the picture in, in pixels.
+    @MainActor
+    func pictureDidAppear(_ picture: RecipePicture, filling pixelSize: CGSize) async
 }

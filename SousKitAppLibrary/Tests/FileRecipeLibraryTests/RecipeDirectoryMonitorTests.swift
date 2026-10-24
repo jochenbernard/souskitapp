@@ -16,7 +16,9 @@ final class RecipeDirectoryMonitorTests: Sendable {
     /// A monitor over the directory, presenting it unless `presentsDirectory` is false.
     func makeMonitor(
         listingSpy: ListingSpy = ListingSpy(),
-        presentsDirectory: Bool = true
+        presentsDirectory: Bool = true,
+        pictureDownloads: DownloadSpy = DownloadSpy(),
+        thumbnailCache: RecipeThumbnailCache? = nil
     ) -> RecipeDirectoryMonitor {
         RecipeDirectoryMonitor(
             recipeDirectory: directory.recipeDirectory,
@@ -25,11 +27,13 @@ final class RecipeDirectoryMonitorTests: Sendable {
                 parser: SousParser(),
                 textReader: RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .utility)
             ),
+            thumbnailCache: thumbnailCache,
             settleDelay: .milliseconds(20),
             listDirectory: listingSpy.list,
             present: { url, onChange in
                 presentsDirectory ? DirectoryPresenter(directoryURL: url, onChange: onChange) : nil
-            }
+            },
+            startDownloadingPicture: pictureDownloads.startDownloading
         )
     }
 

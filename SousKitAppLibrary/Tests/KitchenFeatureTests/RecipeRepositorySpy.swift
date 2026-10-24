@@ -1,13 +1,20 @@
+import CoreGraphics
+import Foundation
 import RecipeLibrary
 import SousKit
 
-/// A repository listing whatever a test sends it, counting its refreshes and reads.
+/// A repository listing whatever a test sends it, counting its refreshes and reads, and reading the thumbnails a test
+/// gives it.
 @MainActor
 final class RecipeRepositorySpy: RecipeRepository {
     nonisolated let name = "Recipes"
 
     private(set) var refreshCount = 0
     private(set) var readCount = 0
+    private(set) var thumbnailReads: [RecipePicture] = []
+
+    /// The thumbnail read for each picture, by its id; any other picture fails to read.
+    var thumbnails: [String: CGImage] = [:]
 
     nonisolated private let parser = SousParser()
 
@@ -30,6 +37,16 @@ final class RecipeRepositorySpy: RecipeRepository {
         readCount += 1
 
         return parser.parseRecipe("")
+    }
+
+    func readThumbnail(of picture: RecipePicture, filling _: CGSize) throws -> CGImage {
+        thumbnailReads.append(picture)
+
+        guard let thumbnail = thumbnails[picture.id] else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+
+        return thumbnail
     }
 
     /// Yields recipes listed with no ingredient names, or a failure, to the stream, which keeps it until the stream is

@@ -16,16 +16,24 @@ struct FolderCardStack: View {
     private static let fanRise = 4.0
 
     private let cards: [KitchenRecipeCard]
+    private let thumbnails: KitchenThumbnails
+    private let presenter: KitchenFeaturePresenterProtocol
 
-    init(_ cards: [KitchenRecipeCard]) {
+    init(
+        _ cards: [KitchenRecipeCard],
+        thumbnails: KitchenThumbnails,
+        presenter: KitchenFeaturePresenterProtocol
+    ) {
         self.cards = cards
+        self.thumbnails = thumbnails
+        self.presenter = presenter
     }
 
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 ForEach(Array(cards.enumerated().reversed()), id: \.element.id) { index, card in
-                    picture(of: card)
+                    picture(of: card, readSize: geometry.size)
                         .frame(
                             width: geometry.size.width * Self.cardWidthShare,
                             height: geometry.size.height * Self.cardHeightShare
@@ -48,9 +56,14 @@ struct FolderCardStack: View {
         .accessibilityHidden(true)
     }
 
-    // What the recipe's own card shows above its title.
-    private func picture(of card: KitchenRecipeCard) -> some View {
-        RecipeCardPlaceholder(symbol: card.placeholderSymbol, color: card.placeholderColor)
+    // What the recipe's own card shows above its title, read at that card's size so both share one thumbnail.
+    private func picture(of card: KitchenRecipeCard, readSize: CGSize) -> some View {
+        RecipeCardPicture(
+            card,
+            thumbnails: thumbnails,
+            presenter: presenter,
+            readSize: readSize
+        )
             .background(.secondaryGroupedBackground)
     }
 
@@ -75,7 +88,11 @@ private func previewCards(_ count: Int) -> [KitchenRecipeCard] {
 #Preview("Folder card stacks") {
     VStack(spacing: SousSpacing.medium) {
         ForEach(1...4, id: \.self) { count in
-            FolderCardStack(previewCards(count))
+            FolderCardStack(
+                previewCards(count),
+                thumbnails: KitchenThumbnails(),
+                presenter: KitchenFeaturePresenterStub()
+            )
                 .aspectRatio(16.0 / 10.0, contentMode: .fit)
         }
     }

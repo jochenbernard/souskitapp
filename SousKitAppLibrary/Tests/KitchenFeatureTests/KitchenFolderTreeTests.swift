@@ -113,4 +113,31 @@ struct KitchenFolderTreeTests {
             "French/Comfort food/gratin-dauphinois"
         ])
     }
+
+    @Test("a folder stacks its recipes in title order, those with pictures and those without alike")
+    func stackedPictures() throws {
+        let entries = ["Baking/brioche", "Baking/crepes", "Baking/madeleines"].map { path in
+            let entry = RecipeEntry.stubbed(at: path)
+            let picture = path == "Baking/madeleines"
+                ? RecipePicture(
+                    id: "Baking/images/madeleines.jpg",
+                    modificationDate: nil,
+                    availability: .downloaded
+                )
+                : nil
+
+            return RecipeEntry(
+                id: entry.id,
+                name: entry.name,
+                availability: entry.availability,
+                folderPath: entry.folderPath,
+                picture: picture
+            )
+        }
+        let folder = KitchenFolderTree.folder(at: [], holding: entries)
+        let baking = try #require(folder.folder(at: ["Baking"]))
+
+        #expect(baking.stackedCards.map(\.id) == ["Baking/brioche", "Baking/crepes", "Baking/madeleines"])
+        #expect(baking.stackedCards.map(\.recipeEntry.picture?.id) == [nil, nil, "Baking/images/madeleines.jpg"])
+    }
 }

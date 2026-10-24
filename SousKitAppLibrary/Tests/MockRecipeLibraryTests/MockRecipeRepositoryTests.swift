@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 @testable import MockRecipeLibrary
 import RecipeLibrary
@@ -172,5 +173,62 @@ struct MockRecipeRepositoryTests {
         }
 
         #expect(!lists.isEmpty)
+    }
+
+    @MainActor
+    @Test("recipes are listed with the pictures their headers name where the folder holds them, and none elsewhere")
+    func pictures() async throws {
+        let pictures = Dictionary(
+            uniqueKeysWithValues: try await currentRecipeEntries(of: makeRepository()).map({ ($0.id, $0.picture?.id) })
+        )
+
+        #expect(pictures["brioche.sous"] == "images/brioche.jpg")
+        #expect(pictures["Baking/brioche.sous"] == "Baking/images/brioche.jpg")
+        #expect(pictures["Baking/crepes.sous"] == "images/crepes.jpg")
+        #expect(pictures["Dinner/Provencal/bouillabaisse.sous"] == "images/bouillabaisse.jpg")
+        #expect(pictures["crepes.sous"] == .some(nil))
+        #expect(pictures["bouillabaisse.sous"] == .some(nil))
+        #expect(pictures["madeleines.sous"] == .some(nil))
+        #expect(pictures["moules-marinieres.sous"] == .some(nil))
+        #expect(pictures["quiche-lorraine.sous"] == .some(nil))
+    }
+
+    @MainActor
+    @Test("a picture in iCloud lands without its recipe being read")
+    func pictureInICloud() async throws {
+        let repository = makeRepository()
+        var availabilities: [RecipeAvailability?] = []
+
+        for await result in repository.listedRecipes() {
+            let gratin = try result.get().first(where: { $0.entry.id == "gratin-dauphinois.sous" })
+            availabilities.append(gratin?.entry.picture?.availability)
+
+            if availabilities.last == .downloaded {
+                break
+            }
+        }
+
+        // Releasing the repository ends the stream, which would end the wait for nothing.
+        withExtendedLifetime(repository, {})
+        #expect(availabilities.first == .notDownloaded)
+        #expect(availabilities.last == .downloaded)
+    }
+
+    @MainActor
+    @Test("a picture is drawn filling the box, and one that cannot be read fails")
+    func thumbnails() async throws {
+        let repository = makeRepository()
+        let entries = try await currentRecipeEntries(of: repository)
+        let brioche = try #require(entries.first(where: { $0.id == "brioche.sous" })?.picture)
+        let croqueMonsieur = try #require(entries.first(where: { $0.id == "croque-monsieur.sous" })?.picture)
+        let box = CGSize(width: 400.0, height: 300.0)
+
+        let thumbnail = try await repository.readThumbnail(of: brioche, filling: box)
+
+        #expect(thumbnail.width == 400)
+        #expect(thumbnail.height == 534)
+        await #expect(throws: CocoaError.self) {
+            try await repository.readThumbnail(of: croqueMonsieur, filling: box)
+        }
     }
 }

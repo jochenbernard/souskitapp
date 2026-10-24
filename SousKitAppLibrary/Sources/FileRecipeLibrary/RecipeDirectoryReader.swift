@@ -1,9 +1,35 @@
 import Foundation
 import RecipeLibrary
+import UniformTypeIdentifiers
 
-/// Reads the recipes in a directory and in every directory inside it, leaving hidden ones, packages and what they hold
-/// alone.
+/// Reads the recipes in a directory and in every directory inside it, and the pictures their headers can name, leaving
+/// hidden ones, packages and what they hold alone.
 struct RecipeDirectoryReader: Sendable {
+    /// The files one directory holds, the placeholders iCloud left beside them apart.
+    private struct DirectoryFiles {
+        var recipes: [RecipeFile] = []
+        var recipePlaceholders: [RecipeFile] = []
+        var pictures: [RecipeFile] = []
+        var picturePlaceholders: [RecipeFile] = []
+
+        /// Adds the files to a listing, each placeholder only where the file it stands in for is not listed itself.
+        func add(to listing: inout RecipeDirectoryListing) {
+            let recipePaths = Set(recipes.map(\.path))
+            listing.recipeFiles.append(contentsOf: recipes)
+            listing.recipeFiles.append(contentsOf: recipePlaceholders.filter({ !recipePaths.contains($0.path) }))
+
+            let picturePaths = Set(pictures.map(\.path))
+
+            for file in pictures + picturePlaceholders.filter({ !picturePaths.contains($0.path) }) {
+                listing.pictures[file.path] = RecipePicture(
+                    id: file.path,
+                    modificationDate: file.modificationDate,
+                    availability: file.availability
+                )
+            }
+        }
+    }
+
     private static let resourceKeys: Set<URLResourceKey> = [
         .isDirectoryKey,
         .isPackageKey
@@ -30,9 +56,10 @@ struct RecipeDirectoryReader: Sendable {
 
     /// Reads the directory, down to the deepest directory inside it.
     ///
-    /// It downloads nothing: a recipe held only in iCloud is listed as ``RecipeAvailability/notDownloaded``, and one
-    /// whose newer version waits in iCloud as outdated and ``RecipeAvailability/downloading``, since it is fetched
-    /// once listed. A directory inside that cannot be read is left out.
+    /// It downloads nothing: a recipe or picture held only in iCloud is listed as
+    /// ``RecipeAvailability/notDownloaded``, and one whose newer version waits in iCloud as outdated and
+    /// ``RecipeAvailability/downloading``, since it is fetched once listed. A directory inside that cannot be read is
+    /// left out.
     ///
     /// - Returns: What the directory holds.
     /// - Throws: Whatever reading the directory itself throws.
@@ -73,17 +100,21 @@ struct RecipeDirectoryReader: Sendable {
 
         listing.directoryPaths.insert(path)
 
-        var recipeFiles: [RecipeFile] = []
-        var placeholders: [RecipeFile] = []
+        var files = DirectoryFiles()
 
         for entry in entries {
             let entryName = entry.lastPathComponent
 
-            if let name = Self.recipeFileName(forPlaceholderNamed: entryName) {
+            if let name = Self.fileName(forPlaceholderNamed: entryName) {
                 // Built off the entry, not off `directory`: listing resolves the symlinks in
                 // front of a directory, and a URL built the other way matches no entry.
                 let url = entry.deletingLastPathComponent().appending(path: name)
-                placeholders.append(placeholderFile(at: Self.joined(path, name), url: url))
+
+                if Self.isRecipeFileName(name) {
+                    files.recipePlaceholders.append(placeholderFile(at: Self.joined(path, name), url: url))
+                } else if Self.isPictureFileName(name) {
+                    files.picturePlaceholders.append(placeholderFile(at: Self.joined(path, name), url: url))
+                }
             } else if !entryName.hasPrefix(".") {
                 // A package is one document in Files, so nothing inside it is listed.
                 guard
@@ -93,29 +124,23 @@ struct RecipeDirectoryReader: Sendable {
                     continue
                 }
 
+                let entryPath = Self.joined(path, entryName)
+
                 if values.isDirectory == true {
                     try? read(
                         directoryAt: entry,
-                        path: Self.joined(path, entryName),
+                        path: entryPath,
                         into: &listing
                     )
-                } else if Self.isRecipeFileName(entryName), let status = fileStatus(entry) {
-                    // A file iCloud evicted in place keeps the dates of the contents it stands in for.
-                    recipeFiles.append(
-                        RecipeFile(
-                            path: Self.joined(path, entryName),
-                            availability: Self.availability(of: status),
-                            modificationDate: status.modificationDate,
-                            isOutdated: status.downloadingStatus == .outdated
-                        )
-                    )
+                } else if Self.isRecipeFileName(entryName), let file = file(at: entryPath, url: entry) {
+                    files.recipes.append(file)
+                } else if Self.isPictureFileName(entryName), let file = file(at: entryPath, url: entry) {
+                    files.pictures.append(file)
                 }
             }
         }
 
-        let listed = Set(recipeFiles.map(\.path))
-        listing.recipeFiles.append(contentsOf: recipeFiles)
-        listing.recipeFiles.append(contentsOf: placeholders.filter({ !listed.contains($0.path) }))
+        files.add(to: &listing)
     }
 
     /// The path of an entry inside the directory at `path`.
@@ -123,11 +148,11 @@ struct RecipeDirectoryReader: Sendable {
         path.isEmpty ? entryName : "\(path)/\(entryName)"
     }
 
-    /// The recipe an iCloud placeholder entry stands in for, or `nil` where it stands in for none.
+    /// The file an iCloud placeholder entry stands in for, or `nil` where it stands in for none.
     ///
     /// iCloud names the placeholder for an evicted `Crepes.sous` `.Crepes.sous.icloud`. Listing
     /// the directory with `skipsHiddenFiles` would drop that entry, and the recipe with it.
-    private static func recipeFileName(forPlaceholderNamed entryName: String) -> String? {
+    private static func fileName(forPlaceholderNamed entryName: String) -> String? {
         let suffix = ".\(placeholderExtension)"
 
         guard entryName.hasPrefix("."), entryName.lowercased().hasSuffix(suffix) else {
@@ -136,14 +161,33 @@ struct RecipeDirectoryReader: Sendable {
 
         let name = String(entryName.dropFirst().dropLast(suffix.count))
 
-        return isRecipeFileName(name) ? name : nil
+        return name.hasPrefix(".") ? nil : name
     }
 
     private static func isRecipeFileName(_ entryName: String) -> Bool {
         !entryName.hasPrefix(".") && entryName.lowercased().hasSuffix(".\(recipeExtension)")
     }
 
-    /// What a placeholder reports about the recipe it stands in for.
+    private static func isPictureFileName(_ entryName: String) -> Bool {
+        let fileExtension = URL(filePath: entryName).pathExtension
+
+        return !fileExtension.isEmpty && UTType(filenameExtension: fileExtension)?.conforms(to: .image) == true
+    }
+
+    /// A file on the device or evicted in place, which keeps the dates of the contents it stands in for, or `nil`
+    /// where the file system does not tell of it.
+    private func file(at path: String, url: URL) -> RecipeFile? {
+        fileStatus(url).map { status in
+            RecipeFile(
+                path: path,
+                availability: Self.availability(of: status),
+                modificationDate: status.modificationDate,
+                isOutdated: status.downloadingStatus == .outdated
+            )
+        }
+    }
+
+    /// What a placeholder reports about the file it stands in for.
     ///
     /// A placeholder stays in the directory while the fetch it triggered runs, so a recipe on its
     /// way down is reported as ``RecipeAvailability/downloading`` rather than as absent. The
