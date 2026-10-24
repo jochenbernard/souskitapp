@@ -40,9 +40,17 @@ extension View {
 }
 
 #Preview("Bottom blur") {
-    SousPlaceholder(symbol: "birthday.cake", color: .orange, symbolFont: .largeTitle)
-        .frame(height: 160.0)
-        .bottomBlur(radius: 8.0, height: 160.0, fullHeight: 40.0)
-        .sousPagePadding()
-        .sousPage()
+    SousPlaceholder(
+        symbol: "birthday.cake",
+        color: .orange,
+        symbolFont: .largeTitle
+    )
+    .frame(height: 160.0)
+    .bottomBlur(
+        radius: 8.0,
+        height: 160.0,
+        fullHeight: 40.0
+    )
+    .sousPagePadding()
+    .sousPage()
 }

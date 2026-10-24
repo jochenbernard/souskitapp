@@ -147,7 +147,7 @@ struct RecipeFeatureView: View {
         }
     }
 
-    /// The header on a card of its own, where the overview it opens stands beside the steps but is not shown.
+    /// The header alone on a card, where the overview it opens stands beside the steps but is not shown.
     @ViewBuilder
     private var headerCard: some View {
         if isSideBySide {
@@ -221,7 +221,7 @@ struct RecipeFeatureView: View {
             .font(.headline)
             .lineLimit(1)
             .opacity(isTitleInBar ? 1.0 : 0.0)
-            .animation(.spring(duration: 0.3), value: isTitleInBar)
+            .animation(.spring(duration: 0.3, bounce: 0.0), value: isTitleInBar)
             .accessibilityHidden(!isTitleInBar)
     }
 
