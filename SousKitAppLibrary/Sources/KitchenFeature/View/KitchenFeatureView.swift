@@ -9,6 +9,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @Namespace private var cookingTransition
+    @Namespace private var cardTransition
 
     private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
@@ -27,7 +28,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
     var body: some View {
         topScreen
             .navigationDestination(for: KitchenScreen.self) { screen in
-                screenView(for: screen)
+                destination(for: screen)
             }
             // Over the whole kitchen rather than pushed on it, zooming out of the button that starts it, and never
             // swiped or pinched away: its own exit is the only way out.
@@ -77,7 +78,8 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
         KitchenFolderPage(
             path: path,
             presenter: presenter,
-            viewModel: viewModel
+            viewModel: viewModel,
+            cardTransition: cardTransition
         )
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -96,6 +98,19 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
 
         case .evening:
             Text("Good evening", bundle: .module)
+        }
+    }
+
+    /// A pushed screen, zooming out of the card that opened it.
+    @ViewBuilder
+    private func destination(for screen: KitchenScreen) -> some View {
+        // A screen a cold start opened again was opened from no card, so it slides: a zoom out of none leaves its
+        // swipes back dead.
+        if let cardID = viewModel.zoomSources[screen.cardID] {
+            screenView(for: screen)
+                .navigationTransition(.zoom(sourceID: cardID, in: cardTransition))
+        } else {
+            screenView(for: screen)
         }
     }
 
@@ -136,6 +151,9 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
                 ),
                 cookingTransition: cookingTransition
             )
+            .background {
+                AppearanceReport(action: { presenter.screenDidAppear(.recipe(recipeEntry)) })
+            }
         }
     }
 

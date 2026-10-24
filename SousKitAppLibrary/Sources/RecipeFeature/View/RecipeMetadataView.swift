@@ -4,20 +4,22 @@ import SousKit
 import SwiftUI
 
 /// A recipe's header on a surface: its facts, its tags and allergens, the lines left over, and
-/// what the recipe is scaled to.
+/// what the recipe is scaled to where the card offers a scale.
 struct RecipeMetadataView: View {
     @LineContainerRadius private var radius
 
     private let presenter: RecipeFeaturePresenterProtocol
     private let metadata: MetadataDisplay
-    private let scale: RecipeScale
+    private let scale: RecipeScale?
     private let header: RecipeHeaderView?
 
-    /// - Parameter header: What the card opens with, or `nil` for the card alone.
+    /// - Parameters:
+    ///   - scale: What the recipe is scaled to, or `nil` for a card that offers no scale.
+    ///   - header: What the card opens with, or `nil` for the card alone.
     init(
         presenter: RecipeFeaturePresenterProtocol,
         metadata: MetadataDisplay,
-        scale: RecipeScale,
+        scale: RecipeScale?,
         header: RecipeHeaderView?
     ) {
         self.presenter = presenter
@@ -42,13 +44,7 @@ struct RecipeMetadataView: View {
                 metadataRow(row)
             }
 
-            scaleDivider
-
-            ScaleRow(
-                Text("Scale", bundle: .module),
-                scale: scale,
-                action: presenter.didTapScale
-            )
+            scaleRow
         }
         // The header's picture takes the card's corners.
         .clipShape(.rect(cornerRadius: radius))
@@ -187,6 +183,19 @@ struct RecipeMetadataView: View {
         }
     }
 
+    @ViewBuilder
+    private var scaleRow: some View {
+        if let scale {
+            scaleDivider
+
+            ScaleRow(
+                Text("Scale", bundle: .module),
+                scale: scale,
+                action: presenter.didTapScale
+            )
+        }
+    }
+
     /// The scale is the last row, so it is divided from anything the header put above it.
     @ViewBuilder
     private var scaleDivider: some View {
@@ -200,7 +209,7 @@ struct RecipeMetadataView: View {
 @MainActor
 private func previewMetadataView(
     _ header: String,
-    scale: RecipeScale
+    scale: RecipeScale?
 ) -> RecipeMetadataView {
     RecipeMetadataView(
         presenter: RecipeFeaturePresenterStub(),
@@ -271,6 +280,26 @@ private func previewMetadataView(
             ---
             """,
             scale: RecipeScale(target: .multiplier, value: 1.0)
+        )
+        .sousPagePadding()
+    }
+    .sousPage()
+}
+
+#Preview("Recipe metadata, without the scale") {
+    ScrollView {
+        previewMetadataView(
+            """
+            ---
+            title: Boeuf Bourguignon
+            servings: 6
+            prep-time: 30 min
+            cook-time: 3 h
+            tags: [dinner, classic, french]
+            allergens: [gluten, dairy]
+            ---
+            """,
+            scale: nil
         )
         .sousPagePadding()
     }

@@ -10,6 +10,7 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     private let parser: SousParser
     private let preferredScaleStore: PreferredScaleStore
     private let recipeRepository: RecipeRepository
+    private let requestMemory = RecipeRequestMemory()
     private let restoration: RecipeFeatureRestoration?
     private let resumesCooking: Bool
     private let viewModel: RecipeFeatureViewModel
@@ -62,6 +63,11 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
 
         if restores {
             resumeCooking()
+        }
+
+        if let request = requestMemory.request {
+            requestMemory.request = nil
+            perform(request)
         }
     }
 
@@ -177,6 +183,14 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         handler.recipeFeatureDidStartCooking(recipe: recipe.scaled)
     }
 
+    func didRequestCooking() {
+        perform(.cooking)
+    }
+
+    func didRequestScaling() {
+        perform(.scaling)
+    }
+
     /// The recipe as read, at the scale a cook already chose where they chose one.
     @MainActor
     private func read(_ recipe: Recipe) -> ScaledRecipe {
@@ -222,6 +236,31 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         }
 
         handler.recipeFeatureDidResumeCooking(recipe: recipe.scaled)
+    }
+
+    /// Does what was asked of the screen, now where its recipe is read, later where it is still being read, and not at
+    /// all where it could not be read.
+    @MainActor
+    private func perform(_ request: RecipeRequestMemory.Request) {
+        switch viewModel.recipeContent {
+        case .reading:
+            requestMemory.request = request
+
+        case .recipe(let recipe):
+            switch request {
+            case .cooking:
+                // A recipe of no steps has nothing to cook, as its screen offers no button to start.
+                if !recipe.scaled.steps.isEmpty {
+                    handler.recipeFeatureDidStartCooking(recipe: recipe.scaled)
+                }
+
+            case .scaling:
+                viewModel.isScaling = true
+            }
+
+        case .failure:
+            break
+        }
     }
 
     @MainActor

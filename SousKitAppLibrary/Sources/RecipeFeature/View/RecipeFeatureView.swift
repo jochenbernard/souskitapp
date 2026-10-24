@@ -48,7 +48,7 @@ struct RecipeFeatureView: View {
                 action: { barBottom = $0 }
             )
             .sousPage()
-            .navigationTitle(navigationTitle)
+            .navigationTitle(viewModel.title)
             // The header draws the title, and the bar takes it over once the header's has scrolled under it.
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -108,19 +108,11 @@ struct RecipeFeatureView: View {
             presenter: presenter,
             viewModel: viewModel,
             placeholder: placeholder,
-            title: navigationTitle,
+            title: viewModel.title,
             placement: placement,
             barBottom: barBottom,
             isTitleUnderBar: $isTitleInBar
         )
-    }
-
-    private var navigationTitle: String {
-        guard case .recipe(let recipe) = viewModel.recipeContent else {
-            return viewModel.recipeEntry.title
-        }
-
-        return viewModel.recipeEntry.title(of: recipe.scaled)
     }
 
     @ViewBuilder
@@ -217,7 +209,7 @@ struct RecipeFeatureView: View {
     }
 
     private var barTitle: some View {
-        Text(verbatim: navigationTitle)
+        Text(verbatim: viewModel.title)
             .font(.headline)
             .lineLimit(1)
             .opacity(isTitleInBar ? 1.0 : 0.0)

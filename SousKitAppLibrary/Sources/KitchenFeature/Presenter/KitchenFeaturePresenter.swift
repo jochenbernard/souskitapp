@@ -7,8 +7,9 @@ import SousKit
 struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
     private let cookingFeatureFactory: CookingFeatureFactory
     let greetingClock: KitchenGreetingClock
-    private let handler: KitchenFeatureHandler
-    private let recipeFeatureFactory: RecipeFeatureFactory
+    let handler: KitchenFeatureHandler
+    let menuRequest = KitchenMenuRequest()
+    let recipeFeatureFactory: RecipeFeatureFactory
     let recipeRepository: RecipeRepository
     private let restorationKeeper: KitchenRestorationKeeper
     let searchIndex = RecipeSearchIndex()
@@ -80,27 +81,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         await recipeRepository.refresh()
     }
 
-    func didPush(_ screen: KitchenScreen, from origin: KitchenScreen?) {
-        // A row pressed with the button that opened something over the kitchen pushes nothing under it.
-        guard !handler.kitchenFeatureIsCovered else {
-            return
-        }
-
-        stopRestoring()
-
-        guard let origin else {
-            changePushedScreens(to: [screen])
-            return
-        }
-
-        // A row pressed on a screen already popping pushes nothing.
-        guard let index = viewModel.pushedScreens.firstIndex(of: origin) else {
-            return
-        }
-
-        changePushedScreens(to: Array(viewModel.pushedScreens.prefix(through: index)) + [screen])
-    }
-
     func didPop(toCount count: Int) {
         guard count < viewModel.pushedScreens.count else {
             return
@@ -118,6 +98,8 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     }
 
     func screenDidAppear(_ screen: KitchenScreen) {
+        performMenuRequest(on: screen)
+
         let screensToRestore = restorationKeeper.screensToRestore
 
         guard !screensToRestore.isEmpty, viewModel.pushedScreens.last == screen else {
@@ -174,11 +156,14 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// the recipe it popped in place: clearing it empties that screen while it is still animating away. The next push
     /// replaces it.
     @MainActor
-    private func changePushedScreens(to pushedScreens: [KitchenScreen]) {
+    func changePushedScreens(to pushedScreens: [KitchenScreen]) {
         // A row pressed twice pushes its screen once, keeping the feature the first press built.
         guard pushedScreens != viewModel.pushedScreens else {
             return
         }
+
+        // What a menu asked of a screen it pushed goes with the push, and is not done by a screen pushed later.
+        menuRequest.forget()
 
         let previousTop = viewModel.pushedScreens.last
         viewModel.pushedScreens = pushedScreens
@@ -281,7 +266,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
     /// Leaves a restoration still pushing its screens where it stands, once the cook moves on the stack themselves.
     @MainActor
-    private func stopRestoring() {
+    func stopRestoring() {
         guard !restorationKeeper.screensToRestore.isEmpty else {
             return
         }

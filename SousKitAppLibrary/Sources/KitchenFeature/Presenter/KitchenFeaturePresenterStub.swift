@@ -18,5 +18,17 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didDismissCooking() {}
 
+    func didPreview(_: RecipeEntry) {}
+
+    func didChooseCooking(_: RecipeEntry, from _: KitchenScreen?) {}
+
+    func didChooseScaling(_: RecipeEntry, from _: KitchenScreen?) {}
+
+    func didChooseFolder(of _: RecipeEntry, from _: KitchenScreen?) {}
+
+    func didChooseSearch(inFolderAt _: [String], from _: KitchenScreen?) {}
+
+    func didChangeIsSearchPresented(_: Bool, in _: [String]) {}
+
     func pictureDidAppear(_: RecipePicture, filling _: CGSize) {}
 }
