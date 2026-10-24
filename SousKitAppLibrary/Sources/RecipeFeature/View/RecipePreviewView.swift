@@ -42,6 +42,7 @@ struct RecipePreviewView: View {
 
         case .reading, .failure:
             header
+                .sousCardPicture(endsCard: true)
                 .clipShape(.rect(cornerRadius: radius))
                 .sousRowSurface()
         }
