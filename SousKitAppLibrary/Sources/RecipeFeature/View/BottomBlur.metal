@@ -20,15 +20,17 @@ using namespace metal;
     }
 
     const int taps = 24;
-    float reach = sigma * 2.5;
+    // How many sigmas the taps reach, which `bottomBlur(radius:height:fullHeight:)` leaves room for.
+    const float reach = 2.5;
     half4 sum = half4(0.0);
     float total = 0.0;
 
     for (int i = -taps; i <= taps; i++) {
-        float offset = reach * float(i) / float(taps);
-        float weight = exp(-0.5 * offset * offset / (sigma * sigma));
+        // The weights fall off in sigmas, so they are the same at every strength.
+        float sigmas = reach * float(i) / float(taps);
+        float weight = exp(-0.5 * sigmas * sigmas);
         // Clamped, so the edges blur with the layer's own pixels rather than with clear ones.
-        float2 point = clamp(position + direction * offset, float2(0.5), size - 0.5);
+        float2 point = clamp(position + direction * sigma * sigmas, float2(0.5), size - 0.5);
 
         sum += layer.sample(point) * half(weight);
         total += weight;

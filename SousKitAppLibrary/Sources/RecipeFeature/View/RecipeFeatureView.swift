@@ -212,7 +212,7 @@ struct RecipeFeatureView: View {
         }
         .buttonStyle(.sousPrimary)
         .matchedTransitionSource(id: RecipeFeature.cookingTransitionID, in: cookingTransition)
-        .frame(maxWidth: horizontalSizeClass == .regular ? wideCookButtonWidth : .infinity)
+        .frame(maxWidth: isSideBySide ? wideCookButtonWidth : .infinity)
         .sousPagePadding()
     }
 

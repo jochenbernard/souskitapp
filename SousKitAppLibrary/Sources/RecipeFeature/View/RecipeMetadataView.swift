@@ -18,7 +18,7 @@ struct RecipeMetadataView: View {
         presenter: RecipeFeaturePresenterProtocol,
         metadata: MetadataDisplay,
         scale: RecipeScale,
-        header: RecipeHeaderView? = nil
+        header: RecipeHeaderView?
     ) {
         self.presenter = presenter
         self.metadata = metadata
@@ -205,7 +205,8 @@ private func previewMetadataView(
     RecipeMetadataView(
         presenter: RecipeFeaturePresenterStub(),
         metadata: RecipeDisplay.metadata(of: SousParser().parseRecipe(header).value.metadata),
-        scale: scale
+        scale: scale,
+        header: nil
     )
 }
 

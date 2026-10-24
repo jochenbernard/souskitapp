@@ -74,19 +74,13 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             return
         }
 
-        do {
-            let image = try await recipeRepository.readThumbnail(of: picture, filling: pixelSize)
+        let image = try? await recipeRepository.readThumbnail(of: picture, filling: pixelSize)
 
-            guard !Task.isCancelled else {
-                return
-            }
+        guard !Task.isCancelled else {
+            return
+        }
 
-            viewModel.headerPicture = .read(image, picture: picture)
-        } catch {
-            guard !Task.isCancelled else {
-                return
-            }
-
+        guard let image else {
             // A read failing leaves a picture already shown, and only a first one falls back to the placeholder.
             switch viewModel.headerPicture {
             case .reading:
@@ -95,7 +89,11 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             case .read, .placeholder:
                 break
             }
+
+            return
         }
+
+        viewModel.headerPicture = .read(image, picture: picture)
     }
 
     func entryDidChange(_ recipeEntry: RecipeEntry) {
