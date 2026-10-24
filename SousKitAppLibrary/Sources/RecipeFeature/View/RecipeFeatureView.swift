@@ -87,6 +87,8 @@ struct RecipeFeatureView: View {
 
                     content
                         .sousPagePadding()
+                        // As far below the hero as in from the screen's sides, which the page's padding alone is not.
+                        .padding(.top, isSideBySide ? 0.0 : SousSpacing.large - SousSpacing.small)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
@@ -144,6 +146,7 @@ struct RecipeFeatureView: View {
     private var headerCard: some View {
         if isSideBySide {
             header(.card)
+                .sousCardPicture(endsCard: true)
                 .clipShape(.rect(cornerRadius: radius))
                 .sousRowSurface()
                 .frame(maxWidth: overviewWidth)

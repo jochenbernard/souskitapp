@@ -52,11 +52,7 @@ struct KitchenCard<Picture: View, Detail: View>: View {
             .background {
                 picture
             }
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(.separator.opacity(0.5))
-                    .frame(height: 1.0)
-            }
+            .sousCardPicture()
     }
 
     private var caption: some View {

@@ -30,7 +30,8 @@ struct RecipeMetadataView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0.0) {
-            header
+            header?
+                .sousCardPicture()
 
             factStrip
 

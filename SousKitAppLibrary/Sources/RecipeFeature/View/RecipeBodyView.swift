@@ -17,6 +17,9 @@ struct RecipeBodyView: View {
     private let overviewWidth: Double
     private let header: RecipeHeaderView?
 
+    @State private var isOverviewScrolled = false
+    @State private var areStepsScrolled = false
+
     // A `.subheadline` number with room around it, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .subheadline) private var stepNumberDiameter = 26.0
 
@@ -48,6 +51,9 @@ struct RecipeBodyView: View {
                 }
                 // At most its width, so the steps keep room at the largest text sizes.
                 .frame(maxWidth: overviewWidth + SousSpacing.large * 2.0)
+                .onScrollGeometryChange(for: Bool.self, of: isScrolled) { _, isScrolled in
+                    isOverviewScrolled = isScrolled
+                }
 
                 ScrollView {
                     stepSection
@@ -55,7 +61,14 @@ struct RecipeBodyView: View {
                         .padding(.leading, SousSpacing.large)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .onScrollGeometryChange(for: Bool.self, of: isScrolled) { _, isScrolled in
+                    areStepsScrolled = isScrolled
+                }
             }
+            // Both columns sit under one bar, so either one scrolled under it shows the bar across both.
+            .scrollEdgeEffectHidden(true, for: .top)
+            .toolbarBackground(.bar, for: .navigationBar)
+            .toolbarBackgroundVisibility(barBackgroundVisibility, for: .navigationBar)
         } else {
             VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
                 overview
@@ -67,6 +80,14 @@ struct RecipeBodyView: View {
 
     private var isSideBySide: Bool {
         horizontalSizeClass == .regular
+    }
+
+    private func isScrolled(_ geometry: ScrollGeometry) -> Bool {
+        geometry.contentOffset.y + geometry.contentInsets.top > 0.0
+    }
+
+    private var barBackgroundVisibility: Visibility {
+        isOverviewScrolled || areStepsScrolled ? .visible : .hidden
     }
 
     @ViewBuilder

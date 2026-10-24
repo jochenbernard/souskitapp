@@ -7,6 +7,7 @@ public struct SousPlaceholder: View {
     private let symbol: String
     private let color: SousPlaceholderColor
     private let symbolFont: Font
+    private let symbolInsets: EdgeInsets
 
     /// Creates a placeholder.
     ///
@@ -14,14 +15,18 @@ public struct SousPlaceholder: View {
     ///   - symbol: The name of the SF Symbol standing in for the recipe.
     ///   - color: The recipe's color.
     ///   - symbolFont: The font the symbol is sized by, larger where the placeholder is.
+    ///   - symbolInsets: The room the symbol is centered in, inset from the placeholder's edges, such as above a
+    ///     title over its bottom.
     public init(
         symbol: String,
         color: SousPlaceholderColor,
-        symbolFont: Font = .title
+        symbolFont: Font = .title,
+        symbolInsets: EdgeInsets = EdgeInsets()
     ) {
         self.symbol = symbol
         self.color = color
         self.symbolFont = symbolFont
+        self.symbolInsets = symbolInsets
     }
 
     public var body: some View {
@@ -31,6 +36,7 @@ public struct SousPlaceholder: View {
                 Image(systemName: symbol)
                     .font(symbolFont)
                     .foregroundStyle(color.color)
+                    .padding(symbolInsets)
             }
             .accessibilityHidden(true)
     }
