@@ -83,13 +83,10 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         }
 
         guard let image else {
-            // A read failing leaves a picture already shown, and only a first one falls back to the placeholder.
-            switch viewModel.headerPicture {
-            case .reading:
+            // A failed read keeps an earlier read of the same picture, and anything else gives way to the placeholder.
+            if headerPictureMemory.picture?.id != picture.id {
                 viewModel.headerPicture = .placeholder
-
-            case .read, .placeholder:
-                break
+                headerPictureMemory.picture = nil
             }
 
             return

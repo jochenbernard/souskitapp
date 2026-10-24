@@ -198,6 +198,31 @@ struct RecipeFeatureHeaderTests {
     }
 
     @MainActor
+    @Test("another picture that cannot be read gives way to the placeholder")
+    func otherPictureUnreadable() async throws {
+        let recipeRepository = PictureRepositorySpy(thumbnail: try picture(width: 1_206, height: 1_410))
+        let viewModel = RecipeFeatureViewModel(recipeEntry: brioche)
+        let presenter = makePresenter(viewModel: viewModel, recipeRepository: recipeRepository)
+        let renamed = RecipeEntry(
+            id: "brioche",
+            name: "brioche",
+            availability: .downloaded,
+            picture: RecipePicture(
+                id: "images/brioche-tressee.jpg",
+                modificationDate: nil,
+                availability: .downloaded
+            )
+        )
+
+        await presenter.headerDidAppear(filling: box)
+        presenter.entryDidChange(renamed)
+        recipeRepository.thumbnail = nil
+        await presenter.headerDidAppear(filling: box)
+
+        #expect(isPlaceholder(viewModel.headerPicture))
+    }
+
+    @MainActor
     @Test("the same picture listed again is not read again")
     func samePictureListedAgain() async throws {
         let recipeRepository = PictureRepositorySpy(thumbnail: try picture(width: 1_206, height: 1_410))
