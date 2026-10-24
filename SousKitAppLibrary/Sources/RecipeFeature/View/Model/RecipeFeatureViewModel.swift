@@ -7,7 +7,7 @@ final class RecipeFeatureViewModel {
     let recipeEntry: RecipeEntry
     let folderPath: [String]
     var picture: RecipePicture?
-    var headerPicture = HeaderPicture.reading
+    var headerPicture: HeaderPicture
     var recipeContent: RecipeContent = .reading
     var expandedSections = RecipeSection.openByDefault
     var isScaling = false
@@ -21,5 +21,7 @@ final class RecipeFeatureViewModel {
         self.recipeEntry = recipeEntry
         self.folderPath = folderPath
         self.picture = recipeEntry.picture
+        // A recipe naming no picture shows its placeholder from the first frame of the push.
+        self.headerPicture = recipeEntry.picture == nil ? .placeholder : .reading
     }
 }

@@ -60,7 +60,7 @@ struct RecipeFeatureHeaderTests {
     }
 
     @MainActor
-    @Test("a recipe naming no picture shows its placeholder, and nothing is read")
+    @Test("a recipe naming no picture shows its placeholder from the start, and nothing is read")
     func noPicture() async throws {
         let recipeRepository = PictureRepositorySpy(thumbnail: try picture(width: 10, height: 10))
         let viewModel = RecipeFeatureViewModel(
@@ -70,6 +70,8 @@ struct RecipeFeatureHeaderTests {
                 availability: .downloaded
             )
         )
+
+        #expect(isPlaceholder(viewModel.headerPicture))
 
         await makePresenter(viewModel: viewModel, recipeRepository: recipeRepository).headerDidAppear(filling: box)
 
