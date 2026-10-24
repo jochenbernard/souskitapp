@@ -47,6 +47,8 @@ enum RecipeDisplay {
 
     private static let titleKey = "title"
 
+    private static let imageKey = "image"
+
     private static let tagsKey = "tags"
 
     private static let allergensKey = "allergens"
@@ -77,7 +79,7 @@ enum RecipeDisplay {
         return listItems(of: value)
     }
 
-    /// The header lines no fact, tag, or allergen shows, with the title left out.
+    /// The header lines no fact, tag, or allergen shows, with the title and the picture left out.
     private static func metadataRows(of metadata: Metadata) -> [MetadataRow] {
         let shown = shownIndices(in: metadata.entries)
 
@@ -94,7 +96,7 @@ enum RecipeDisplay {
         }
     }
 
-    /// Where the entries shown elsewhere sit: the title, the facts, the tags, and the allergens.
+    /// Where the entries shown elsewhere sit: the title, the picture, the facts, the tags, and the allergens.
     ///
     /// Only the entry a reader sees is left out: a header repeating the key, or spelling it as a
     /// list, carries something the one value shown never shows, and dropping every line under that
@@ -102,7 +104,7 @@ enum RecipeDisplay {
     private static func shownIndices(in entries: [Metadata.Entry]) -> Set<Int> {
         var indices = Set(entries.indices.filter({ isTagList(entries[$0]) }))
 
-        for key in [titleKey, allergensKey] + MetadataFact.Kind.allCases.map(\.key) {
+        for key in [titleKey, imageKey, allergensKey] + MetadataFact.Kind.allCases.map(\.key) {
             if let index = lastScalarIndex(of: key, in: entries) {
                 indices.insert(index)
             }

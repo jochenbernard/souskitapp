@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import RecipeLibrary
 import RecipeScaling
@@ -60,6 +61,47 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
 
         if restores {
             resumeCooking()
+        }
+    }
+
+    func headerDidAppear(filling pixelSize: CGSize) async {
+        guard let picture = viewModel.picture else {
+            viewModel.headerPicture = .placeholder
+            return
+        }
+
+        guard pixelSize.width > 0.0, pixelSize.height > 0.0, !holdsPicture(filling: pixelSize) else {
+            return
+        }
+
+        do {
+            let image = try await recipeRepository.readThumbnail(of: picture, filling: pixelSize)
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            viewModel.headerPicture = .read(image, picture: picture)
+        } catch {
+            guard !Task.isCancelled else {
+                return
+            }
+
+            // A read failing leaves a picture already shown, and only a first one falls back to the placeholder.
+            switch viewModel.headerPicture {
+            case .reading:
+                viewModel.headerPicture = .placeholder
+
+            case .read, .placeholder:
+                break
+            }
+        }
+    }
+
+    func entryDidChange(_ recipeEntry: RecipeEntry) {
+        // The header reads the new picture as it next appears, showing the one before until then.
+        if recipeEntry.picture != viewModel.picture {
+            viewModel.picture = recipeEntry.picture
         }
     }
 
@@ -152,6 +194,21 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             preferredScale: preferredScaleStore.preferredScale,
             scale: scale
         )
+    }
+
+    /// Whether the picture shown is the recipe's as listed now, read at least as large as a box, as a header shrinking
+    /// on a turn needs.
+    @MainActor
+    private func holdsPicture(filling pixelSize: CGSize) -> Bool {
+        switch viewModel.headerPicture {
+        case let .read(image, picture):
+            picture == viewModel.picture
+                && Double(image.width) >= pixelSize.width
+                && Double(image.height) >= pixelSize.height
+
+        case .reading, .placeholder:
+            false
+        }
     }
 
     /// Opens cooking again where it was open when the screen was left, now that the recipe it opens over is read.

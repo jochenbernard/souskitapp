@@ -5,6 +5,8 @@ import SousKit
 import SwiftUI
 
 /// A parsed recipe: the header and what it takes, then what to do, side by side where the width allows.
+///
+/// Side by side, each column scrolls on its own; one above the other, the body goes in the screen's scroll view.
 struct RecipeBodyView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -12,42 +14,59 @@ struct RecipeBodyView: View {
     private let recipe: ScaledRecipe
     private let metadata: MetadataDisplay
     private let expandedSections: Set<RecipeSection>
-
-    // The overview's width beside the steps, growing with Dynamic Type.
-    @ScaledMetric(relativeTo: .body) private var overviewWidth = 360.0
+    private let overviewWidth: Double
+    private let header: RecipeHeaderView?
 
     // A `.subheadline` number with room around it, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .subheadline) private var stepNumberDiameter = 26.0
 
+    /// - Parameters:
+    ///   - overviewWidth: The overview's width beside the steps.
+    ///   - header: What the header card opens with, or `nil` for the card alone.
     init(
         presenter: RecipeFeaturePresenterProtocol,
         recipe: ScaledRecipe,
         metadata: MetadataDisplay,
-        expandedSections: Set<RecipeSection>
+        expandedSections: Set<RecipeSection>,
+        overviewWidth: Double,
+        header: RecipeHeaderView?
     ) {
         self.presenter = presenter
         self.recipe = recipe
         self.metadata = metadata
         self.expandedSections = expandedSections
+        self.overviewWidth = overviewWidth
+        self.header = header
     }
 
     var body: some View {
-        columns {
-            overview
+        if isSideBySide {
+            HStack(alignment: .top, spacing: 0.0) {
+                ScrollView {
+                    overview
+                        .sousPagePadding()
+                }
+                // At most its width, so the steps keep room at the largest text sizes.
+                .frame(maxWidth: overviewWidth + SousSpacing.large * 2.0)
 
-            stepSection
+                ScrollView {
+                    stepSection
+                        .sousPagePadding()
+                        .padding(.leading, SousSpacing.large)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        } else {
+            VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
+                overview
+
+                stepSection
+            }
         }
     }
 
     private var isSideBySide: Bool {
         horizontalSizeClass == .regular
-    }
-
-    // One layout either way, so a change of size class keeps the sections rather than rebuilding them.
-    private var columns: AnyLayout {
-        isSideBySide
-            ? AnyLayout(HStackLayout(alignment: .top, spacing: SousSpacing.xxLarge))
-            : AnyLayout(VStackLayout(alignment: .leading, spacing: SousSpacing.xxLarge))
     }
 
     @ViewBuilder
@@ -81,7 +100,8 @@ struct RecipeBodyView: View {
         RecipeMetadataView(
             presenter: presenter,
             metadata: metadata,
-            scale: recipe.scale
+            scale: recipe.scale,
+            header: header
         )
     }
 
@@ -269,7 +289,9 @@ private func previewBodyView(_ recipe: ScaledRecipe) -> RecipeBodyView {
         presenter: RecipeFeaturePresenterStub(),
         recipe: recipe,
         metadata: RecipeDisplay.metadata(of: recipe.scaled.metadata),
-        expandedSections: RecipeSection.openByDefault
+        expandedSections: RecipeSection.openByDefault,
+        overviewWidth: 360.0,
+        header: nil
     )
 }
 
@@ -292,11 +314,7 @@ private func previewBodyView(_ recipe: ScaledRecipe) -> RecipeBodyView {
 }
 
 #Preview("Recipe body, side by side", traits: .fixedLayout(width: 1_210.0, height: 834.0)) {
-    ScrollView {
-        previewBodyView(previewRecipe())
-            .sousPagePadding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    .environment(\.horizontalSizeClass, .regular)
-    .sousPage()
+    previewBodyView(previewRecipe())
+        .environment(\.horizontalSizeClass, .regular)
+        .sousPage()
 }

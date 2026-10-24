@@ -31,13 +31,17 @@ public struct RecipeFeatureFactory: Sendable {
     ///   - resumesCooking: Whether cooking opens again once the recipe is read.
     ///   - handler: What the feature reports to.
     /// - Returns: The feature.
+    @MainActor
     public func makeRecipeFeature(
         recipeEntry: RecipeEntry,
         restoration: RecipeFeatureRestoration?,
         resumesCooking: Bool,
         handler: RecipeFeatureHandler
     ) -> RecipeFeature {
-        let viewModel = RecipeFeatureViewModel(recipeEntry: recipeEntry)
+        let viewModel = RecipeFeatureViewModel(
+            recipeEntry: recipeEntry,
+            folderPath: [recipeRepository.name] + recipeEntry.folderPath
+        )
         let presenter = RecipeFeaturePresenter(
             handler: handler,
             parser: parser,

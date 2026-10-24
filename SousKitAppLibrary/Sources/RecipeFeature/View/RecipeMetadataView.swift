@@ -6,22 +6,30 @@ import SwiftUI
 /// A recipe's header on a surface: its facts, its tags and allergens, the lines left over, and
 /// what the recipe is scaled to.
 struct RecipeMetadataView: View {
+    @LineContainerRadius private var radius
+
     private let presenter: RecipeFeaturePresenterProtocol
     private let metadata: MetadataDisplay
     private let scale: RecipeScale
+    private let header: RecipeHeaderView?
 
+    /// - Parameter header: What the card opens with, or `nil` for the card alone.
     init(
         presenter: RecipeFeaturePresenterProtocol,
         metadata: MetadataDisplay,
-        scale: RecipeScale
+        scale: RecipeScale,
+        header: RecipeHeaderView? = nil
     ) {
         self.presenter = presenter
         self.metadata = metadata
         self.scale = scale
+        self.header = header
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0.0) {
+            header
+
             factStrip
 
             labelsDivider
@@ -42,6 +50,8 @@ struct RecipeMetadataView: View {
                 action: presenter.didTapScale
             )
         }
+        // The header's picture takes the card's corners.
+        .clipShape(.rect(cornerRadius: radius))
         .sousRowSurface()
     }
 

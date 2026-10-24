@@ -35,6 +35,22 @@ struct RecipeDisplayTests {
         #expect(metadata.rows.map(\.value) == ["https://example.com/gratin-dauphinois"])
     }
 
+    @Test("the picture the header names is left out of the lines left over, as the screen shows it")
+    func metadataWithoutPicture() {
+        let source = """
+            ---
+            title: Gratin Dauphinois
+            image: images/gratin-dauphinois.jpg
+            author: Jean Dupont
+            ---
+
+            Bake it.
+            """
+        let metadata = RecipeDisplay.metadata(of: recipe(source).metadata)
+
+        #expect(metadata.rows.map(\.key) == ["author"])
+    }
+
     @Test("a list in a line left over joins onto one line")
     func metadataRowList() {
         let source = """

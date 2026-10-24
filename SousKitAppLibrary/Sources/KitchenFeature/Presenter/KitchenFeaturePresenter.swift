@@ -64,6 +64,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
                 viewModel.recipeList = .recipes(folder)
                 showSearchResults()
                 restore(in: folder, holding: recipeEntries)
+                showOpenRecipe(in: recipeEntries)
 
             case .failure(let error):
                 shownRecipes = nil

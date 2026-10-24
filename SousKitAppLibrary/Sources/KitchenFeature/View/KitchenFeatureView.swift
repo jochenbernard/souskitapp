@@ -119,7 +119,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
             }
     }
 
-    /// Where a folder or a recipe sits: the repository's name, then the folders leading down to it.
+    /// Where a folder sits: the repository's name, then the folders leading down to it.
     private func pathText(_ folders: some Sequence<String>) -> Text {
         // No accessibility label: the navigation bar hands VoiceOver the subtitle's text alone.
         Text(verbatim: ([viewModel.recipeRepositoryName] + folders).joined(separator: " \u{203A} "))
@@ -128,8 +128,14 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
     @ViewBuilder
     private func recipeScreen(for recipeEntry: RecipeEntry) -> some View {
         if let openRecipe = viewModel.openRecipe, openRecipe.recipeEntry == recipeEntry {
-            openRecipe.feature.makeView(cookingTransition: cookingTransition)
-                .navigationSubtitle(pathText(recipeEntry.folderPath))
+            // No subtitle: the recipe's header says where it sits.
+            openRecipe.feature.makeView(
+                placeholder: RecipePlaceholder(
+                    symbol: viewModel.symbols[recipeEntry.id],
+                    color: KitchenRecipeCard(recipeEntry: recipeEntry).placeholderColor
+                ),
+                cookingTransition: cookingTransition
+            )
         }
     }
 
