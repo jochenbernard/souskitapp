@@ -81,13 +81,13 @@ struct KitchenCard<Picture: View, Detail: View>: View {
         RecipeCardGrid(minimumColumnWidth: 160.0, spacing: SousSpacing.medium) {
             KitchenCard(
                 title: "Crepes",
-                picture: { RecipeCardPlaceholder(symbol: "fork.knife", color: .orange) },
+                picture: { SousPlaceholder(symbol: "fork.knife", color: .orange) },
                 detail: { Text(verbatim: "35 min") }
             )
 
             KitchenCard(
                 title: "Boeuf Bourguignon, Bouillabaisse, Brioche, Crepes, Croque Monsieur, and Gratin Dauphinois",
-                picture: { RecipeCardPlaceholder(symbol: "fork.knife", color: .blue) },
+                picture: { SousPlaceholder(symbol: "fork.knife", color: .blue) },
                 detail: { EmptyView() }
             )
         }
