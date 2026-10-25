@@ -73,13 +73,13 @@ struct RecipeFeatureView: View {
         if isSideBySide, let recipe = shownRecipe, let metadata = bodyMetadata(of: recipe) {
             // Each column scrolls on its own, so the ingredients stay beside the steps however long the method is.
             SousLoadingStack(
-                isLoading: isReading,
+                isLoading: viewModel.recipeContent.isReading,
                 content: {
-                    if !isReading {
-                        sideBySideBody(recipe, metadata: metadata)
+                    if !viewModel.recipeContent.isReading {
+                        bodyView(recipe, metadata: metadata, header: header(.card))
                     }
                 },
-                placeholders: { sideBySideBody(recipe, metadata: metadata) }
+                placeholders: { bodyView(recipe, metadata: metadata, header: header(.card)) }
             )
         } else {
             ScrollView {
@@ -99,13 +99,6 @@ struct RecipeFeatureView: View {
         }
     }
 
-    private var isReading: Bool {
-        switch viewModel.recipeContent {
-        case .reading: true
-        case .recipe, .failure: false
-        }
-    }
-
     /// The recipe read, or the placeholder drawn in its place while it is read, or `nil` where it could not be read.
     private var shownRecipe: ScaledRecipe? {
         switch viewModel.recipeContent {
@@ -122,14 +115,18 @@ struct RecipeFeatureView: View {
         return recipe.scaled.steps.isEmpty && metadata.isEmpty ? nil : metadata
     }
 
-    private func sideBySideBody(_ recipe: ScaledRecipe, metadata: MetadataDisplay) -> RecipeBodyView {
+    private func bodyView(
+        _ recipe: ScaledRecipe,
+        metadata: MetadataDisplay,
+        header: RecipeHeaderView?
+    ) -> RecipeBodyView {
         RecipeBodyView(
             presenter: presenter,
             recipe: recipe,
             metadata: metadata,
             expandedSections: viewModel.expandedSections,
             overviewWidth: overviewWidth,
-            header: header(.card)
+            header: header
         )
     }
 
@@ -157,7 +154,7 @@ struct RecipeFeatureView: View {
             headerCard
 
             SousLoadingStack(
-                isLoading: isReading,
+                isLoading: viewModel.recipeContent.isReading,
                 content: { readContent },
                 placeholders: { recipeBody(viewModel.placeholderRecipe) }
             )
@@ -193,14 +190,7 @@ struct RecipeFeatureView: View {
     @ViewBuilder
     private func recipeBody(_ recipe: ScaledRecipe) -> some View {
         if let metadata = bodyMetadata(of: recipe) {
-            RecipeBodyView(
-                presenter: presenter,
-                recipe: recipe,
-                metadata: metadata,
-                expandedSections: viewModel.expandedSections,
-                overviewWidth: overviewWidth,
-                header: nil
-            )
+            bodyView(recipe, metadata: metadata, header: nil)
         } else {
             emptyNote
         }
@@ -232,7 +222,7 @@ struct RecipeFeatureView: View {
             }
         }
         // With the placeholders, so the bar changes as the recipe arrives.
-        .sousLoadingArrival(isLoading: isReading)
+        .sousLoadingArrival(isLoading: viewModel.recipeContent.isReading)
     }
 
     private var readingNote: some View {

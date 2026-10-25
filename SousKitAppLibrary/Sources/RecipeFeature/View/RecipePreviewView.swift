@@ -39,7 +39,7 @@ struct RecipePreviewView: View {
             }
         }
         .dynamicTypeSize(...Self.largestTypeSize)
-        .environment(\.isSousLoading, isReading)
+        .environment(\.isSousLoading, viewModel.recipeContent.isReading)
         .task {
             await presenter.viewDidAppear()
         }
@@ -54,13 +54,6 @@ struct RecipePreviewView: View {
             tagRowCount: tagRowCount
         )
         .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var isReading: Bool {
-        switch viewModel.recipeContent {
-        case .reading: true
-        case .recipe, .failure: false
-        }
     }
 
     private var metadata: MetadataDisplay {
