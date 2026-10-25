@@ -6,8 +6,6 @@ import SwiftUI
 /// A glance at a recipe before it is opened: the card the screen opens with, cut to its picture, title, facts and
 /// tags, so it fits the room a preview has.
 struct RecipePreviewView: View {
-    @LineContainerRadius private var radius
-
     // A preview cannot scroll, and past this size the facts alone outgrow it.
     private static let largestTypeSize = DynamicTypeSize.accessibility1
 
@@ -26,29 +24,30 @@ struct RecipePreviewView: View {
     }
 
     var body: some View {
-        card
-            .dynamicTypeSize(...Self.largestTypeSize)
-            .task {
-                await presenter.viewDidAppear()
-            }
+        RecipeMetadataView(
+            presenter: presenter,
+            metadata: metadata,
+            scale: nil,
+            header: header
+        )
+        .dynamicTypeSize(...Self.largestTypeSize)
+        .task {
+            await presenter.viewDidAppear()
+        }
     }
 
-    @ViewBuilder
-    private var card: some View {
+    private var metadata: MetadataDisplay {
         switch viewModel.recipeContent {
         case .recipe(let recipe):
-            RecipeMetadataView(
-                presenter: presenter,
-                metadata: RecipeDisplay.metadata(of: recipe.scaled.metadata).glance,
-                scale: nil,
-                header: header
-            )
+            RecipeDisplay.metadata(of: recipe.scaled.metadata).glance
 
         case .reading, .failure:
-            header
-                .sousCardPicture(endsCard: true)
-                .clipShape(.rect(cornerRadius: radius))
-                .sousRowSurface()
+            MetadataDisplay(
+                facts: [],
+                tags: [],
+                allergens: [],
+                rows: []
+            )
         }
     }
 
