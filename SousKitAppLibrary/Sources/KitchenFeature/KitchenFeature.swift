@@ -24,10 +24,17 @@ public struct KitchenFeature {
         )
     }
 
-    /// Whether the kitchen has yet to open what a cold start found open, which its stack pushes without animating.
+    /// Whether the kitchen has yet to open what a cold start found open, which covers its stack until then.
     @MainActor
     public var isRestoring: Bool {
         viewModel.isRestoring
+    }
+
+    /// Whether the stack pushes what a cold start opens again without animating, which is every screen but the recipe
+    /// on top.
+    @MainActor
+    public var pushesWithoutAnimation: Bool {
+        viewModel.isRestoring && !viewModel.isPushingRestoredRecipe
     }
 
     /// The feature's screen, which pushes its recipes on the stack it is placed in.

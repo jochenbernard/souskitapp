@@ -44,12 +44,13 @@ struct KitchenFeatureRestorationTests {
         )
     }
 
-    /// Builds a kitchen to open the restoration again, whose repository lists each of the results in turn, with each
-    /// folder it pushes appearing in turn unless told not to.
+    /// Builds a kitchen to open the restoration again, whose repository lists each of the results in turn, after its
+    /// own screen has appeared and with each screen it pushes appearing in turn unless told not to.
     @MainActor
     func restore(
         _ restoration: KitchenFeatureRestoration,
         listing results: [Result<[RecipeEntry], Error>],
+        topScreenAppearing: Bool = true,
         appearing: Bool = true
     ) async -> RestoredKitchen {
         let handler = KitchenFeatureHandlerStub(restoration: restoration)
@@ -68,12 +69,19 @@ struct KitchenFeatureRestorationTests {
         }
 
         recipeRepository.finish()
+
+        if topScreenAppearing {
+            presenter.screenDidAppear(nil)
+        }
+
         await presenter.stackDidAppear()
 
         if appearing {
             for depth in restoration.folderPath.indices {
                 presenter.screenDidAppear(.folder(Array(restoration.folderPath.prefix(through: depth))))
             }
+
+            presenter.screenDidAppear(viewModel.pushedScreens.last)
         }
 
         return RestoredKitchen(

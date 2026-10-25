@@ -37,11 +37,11 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didChangeSearchText(_ text: String, in folderPath: [String])
 
-    /// A screen the kitchen pushed has appeared on the stack.
+    /// A screen of the kitchen has appeared on the stack, its push finished.
     ///
-    /// - Parameter screen: The screen.
+    /// - Parameter screen: The screen, or `nil` for the kitchen's own.
     @MainActor
-    func screenDidAppear(_ screen: KitchenScreen)
+    func screenDidAppear(_ screen: KitchenScreen?)
 
     @MainActor
     func didDismissCooking()
