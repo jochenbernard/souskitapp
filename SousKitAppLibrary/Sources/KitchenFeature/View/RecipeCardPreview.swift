@@ -8,15 +8,19 @@ struct RecipeCardPreview: View {
     private let card: KitchenRecipeCard
     private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
+    private let maximumHeight: CGFloat
 
+    /// - Parameter maximumHeight: The most height the glance may take.
     init(
         _ card: KitchenRecipeCard,
         presenter: KitchenFeaturePresenterProtocol,
-        viewModel: KitchenFeatureViewModel
+        viewModel: KitchenFeatureViewModel,
+        maximumHeight: CGFloat
     ) {
         self.card = card
         self.presenter = presenter
         self.viewModel = viewModel
+        self.maximumHeight = maximumHeight
     }
 
     var body: some View {
@@ -25,7 +29,8 @@ struct RecipeCardPreview: View {
                 placeholder: RecipePlaceholder(
                     symbol: viewModel.symbols[card.id],
                     color: card.placeholderColor
-                )
+                ),
+                maximumHeight: maximumHeight
             )
         } else {
             // The card stands in for the moment the recipe's own preview takes to be built.
@@ -49,7 +54,8 @@ struct RecipeCardPreview: View {
             )
         ),
         presenter: KitchenFeaturePresenterStub(),
-        viewModel: KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        viewModel: KitchenFeatureViewModel(recipeRepositoryName: "Recipes"),
+        maximumHeight: 544.0
     )
     .frame(width: 370.0)
     .fixedSize(horizontal: false, vertical: true)

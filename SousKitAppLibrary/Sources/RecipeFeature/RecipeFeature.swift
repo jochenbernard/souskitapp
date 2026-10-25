@@ -43,15 +43,18 @@ public struct RecipeFeature {
     ///
     /// Its height follows what it holds, so it is offered no fixed height.
     ///
-    /// - Parameter placeholder: What the recipe's card shows where it has no picture, which the glance shows in its
-    ///   place too.
+    /// - Parameters:
+    ///   - placeholder: What the recipe's card shows where it has no picture, which the glance shows in its place
+    ///     too.
+    ///   - maximumHeight: The most height the glance may take, which its tags take as many rows of as fit.
     /// - Returns: The view to show as the recipe's preview.
     @MainActor
-    public func makePreview(placeholder: RecipePlaceholder) -> some View {
+    public func makePreview(placeholder: RecipePlaceholder, maximumHeight: CGFloat) -> some View {
         RecipePreviewView(
             presenter: presenter,
             viewModel: viewModel,
-            placeholder: placeholder
+            placeholder: placeholder,
+            maximumHeight: maximumHeight
         )
     }
 

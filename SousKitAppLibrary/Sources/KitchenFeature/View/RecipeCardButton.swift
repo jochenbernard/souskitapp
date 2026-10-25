@@ -58,7 +58,8 @@ struct RecipeCardButton: View {
                 return RecipeCardPreview(
                     card,
                     presenter: presenter,
-                    viewModel: viewModel
+                    viewModel: viewModel,
+                    maximumHeight: previewSize.height
                 )
                 .cardPreview(fitting: previewSize)
             }

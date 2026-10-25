@@ -6,28 +6,45 @@ import SwiftUI
 /// A glance at a recipe before it is opened: the card the screen opens with, cut to its picture, title, facts and
 /// tags, so it fits the room a preview has.
 struct RecipePreviewView: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     // A preview cannot scroll, and past this size the facts alone outgrow it.
     private static let largestTypeSize = DynamicTypeSize.accessibility1
-    // Two rows of tags, or one at accessibility sizes, where two outgrow an iPad's preview.
-    private static let maximumTagRowCount = 2
 
     private let presenter: RecipeFeaturePresenterProtocol
     private let viewModel: RecipeFeatureViewModel
     private let placeholder: RecipePlaceholder
+    private let maximumHeight: CGFloat
 
+    /// - Parameter maximumHeight: The most height the glance may take, which its tags take as many rows of as fit.
     init(
         presenter: RecipeFeaturePresenterProtocol,
         viewModel: RecipeFeatureViewModel,
-        placeholder: RecipePlaceholder
+        placeholder: RecipePlaceholder,
+        maximumHeight: CGFloat
     ) {
         self.presenter = presenter
         self.viewModel = viewModel
         self.placeholder = placeholder
+        self.maximumHeight = maximumHeight
     }
 
     var body: some View {
+        HeightOffer(maximumHeight: maximumHeight) {
+            // Every tag, or as many as two rows or one hold, whichever is the first the height holds.
+            ViewThatFits(in: .vertical) {
+                metadataView(tagRowCount: nil)
+
+                metadataView(tagRowCount: 2)
+
+                metadataView(tagRowCount: 1)
+            }
+        }
+        .dynamicTypeSize(...Self.largestTypeSize)
+        .task {
+            await presenter.viewDidAppear()
+        }
+    }
+
+    private func metadataView(tagRowCount: Int?) -> some View {
         RecipeMetadataView(
             presenter: presenter,
             metadata: metadata,
@@ -35,10 +52,7 @@ struct RecipePreviewView: View {
             header: header,
             tagRowCount: tagRowCount
         )
-        .dynamicTypeSize(...Self.largestTypeSize)
-        .task {
-            await presenter.viewDidAppear()
-        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var metadata: MetadataDisplay {
@@ -67,12 +81,7 @@ struct RecipePreviewView: View {
             // A glance has no bar for the title to scroll under.
             isTitleUnderBar: .constant(false)
         )
-    }
-
-    private var tagRowCount: Int {
-        dynamicTypeSize.isAccessibilitySize ? 1 : Self.maximumTagRowCount
-    }
-}
+    }}
 
 @MainActor
 private func previewViewModel(_ recipeContent: RecipeContent) -> RecipeFeatureViewModel {
@@ -113,7 +122,8 @@ private func previewRecipe(
     RecipePreviewView(
         presenter: RecipeFeaturePresenterStub(),
         viewModel: previewViewModel(.recipe(previewRecipe())),
-        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink)
+        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink),
+        maximumHeight: 544.0
     )
     .frame(width: 370.0)
     .fixedSize(horizontal: false, vertical: true)
@@ -134,7 +144,8 @@ private func previewRecipe(
                 )
             )
         ),
-        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink)
+        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink),
+        maximumHeight: 544.0
     )
     .frame(width: 370.0)
     .fixedSize(horizontal: false, vertical: true)
@@ -159,7 +170,8 @@ private func previewRecipe(
                 )
             )
         ),
-        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink)
+        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink),
+        maximumHeight: 400.0
     )
     .frame(width: 320.0)
     .fixedSize(horizontal: false, vertical: true)
@@ -170,7 +182,8 @@ private func previewRecipe(
     RecipePreviewView(
         presenter: RecipeFeaturePresenterStub(),
         viewModel: previewViewModel(.reading),
-        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink)
+        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink),
+        maximumHeight: 544.0
     )
     .frame(width: 370.0)
     .fixedSize(horizontal: false, vertical: true)
