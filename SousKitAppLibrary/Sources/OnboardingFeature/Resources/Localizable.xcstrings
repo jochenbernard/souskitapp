@@ -17,35 +17,18 @@
         }
       }
     },
-    "Setup" : {
-      "comment" : "The eyebrow above the onboarding headline.",
+    "Sous reads your recipes from a folder of .sous files. Choose that folder to start; you can change it later in Settings." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Setup"
+            "value" : "Sous reads your recipes from a folder of .sous files. Choose that folder to start; you can change it later in Settings."
           }
         },
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Instellen"
-          }
-        }
-      }
-    },
-    "Sous reads your recipes from a folder of .sous files. Pick that folder to start; you can change it later." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sous reads your recipes from a folder of .sous files. Pick that folder to start; you can change it later."
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sous leest je recepten uit een map met .sous-bestanden. Kies die map om te beginnen; je kunt ze later wijzigen."
+            "value" : "Sous leest je recepten uit een map met .sous-bestanden. Kies die map om te beginnen; je kunt ze later wijzigen in Instellingen."
           }
         }
       }
@@ -68,18 +51,19 @@
         }
       }
     },
-    "Where your recipes live" : {
+    "Your recipes, ready to cook" : {
+      "comment" : "The onboarding's headline.",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Where your recipes live"
+            "value" : "Your recipes, ready to cook"
           }
         },
         "nl-BE" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Waar je recepten staan"
+            "value" : "Je recepten, klaar om te koken"
           }
         }
       }

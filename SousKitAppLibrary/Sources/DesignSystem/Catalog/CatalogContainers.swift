@@ -11,6 +11,8 @@ struct CatalogContainers: View {
 
             rowGroup
 
+            card
+
             Text(verbatim: "This recipe could not be read")
                 .sousCallout()
 
@@ -31,6 +33,15 @@ struct CatalogContainers: View {
                     .sousRowPadding()
             }
         }
+    }
+
+    private var card: some View {
+        SousCard(
+            title: "Crepes",
+            picture: { SousPlaceholder(symbol: "frying.pan", color: .orange) },
+            detail: { Text(verbatim: "35 min") }
+        )
+        .frame(width: 200.0)
     }
 
     private var chips: some View {
