@@ -24,6 +24,7 @@ struct OnboardingShowcaseFan: View {
                 let position = OnboardingFanLayout.position(ofCardAt: index, of: OnboardingShowcaseRecipe.all.count)
 
                 OnboardingShowcaseCard(recipe)
+                    .onboardingTopCardShadow(isOnTop: position == 0.0)
                     .shadow(
                         color: .black.opacity(Self.shadowOpacity),
                         radius: Self.shadowRadius,
