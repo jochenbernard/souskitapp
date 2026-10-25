@@ -45,7 +45,11 @@ struct KitchenFolderPage: View {
                 }
             }
             .sousPage()
-            .searchable(text: searchText, prompt: searchPrompt)
+            .searchable(
+                text: searchText,
+                isPresented: isSearchPresented,
+                prompt: searchPrompt
+            )
         }
     }
 
@@ -194,6 +198,13 @@ struct KitchenFolderPage: View {
         Binding(
             get: { viewModel.searches[path]?.text ?? "" },
             set: { text in presenter.didChangeSearchText(text, in: path) }
+        )
+    }
+
+    private var isSearchPresented: Binding<Bool> {
+        Binding(
+            get: { viewModel.presentedSearchPath == path },
+            set: { isPresented in presenter.didChangeIsSearchPresented(isPresented, in: path) }
         )
     }
 

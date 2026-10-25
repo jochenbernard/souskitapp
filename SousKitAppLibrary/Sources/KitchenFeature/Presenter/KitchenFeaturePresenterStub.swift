@@ -18,5 +18,7 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didDismissCooking() {}
 
+    func didChangeIsSearchPresented(_: Bool, in _: [String]) {}
+
     func pictureDidAppear(_: RecipePicture, filling _: CGSize) {}
 }
