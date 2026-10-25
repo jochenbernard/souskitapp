@@ -1,4 +1,3 @@
-import RecipeFeature
 import RecipeLibrary
 
 extension KitchenFeaturePresenter {
@@ -60,16 +59,7 @@ extension KitchenFeaturePresenter {
 
         case .document(let recipeEntry):
             changePushedScreens(to: [screen])
-            viewModel.openRecipe = OpenRecipe(
-                recipeEntry: recipeEntry,
-                feature: recipeFeatureFactory.reading(document.recipeRepository).makeRecipeFeature(
-                    recipeEntry: recipeEntry,
-                    thumbnail: nil,
-                    restoration: nil,
-                    resumesCooking: false,
-                    handler: self
-                )
-            )
+            viewModel.openRecipe = makeOpenRecipe(recipeEntry, reading: document.recipeRepository)
 
         case .folder:
             break

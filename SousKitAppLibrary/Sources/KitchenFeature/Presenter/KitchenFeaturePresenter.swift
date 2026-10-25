@@ -10,7 +10,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     let greetingClock: KitchenGreetingClock
     let handler: KitchenFeatureHandler
     let menuRequest = KitchenMenuRequest()
-    let recipeFeatureFactory: RecipeFeatureFactory
+    private let recipeFeatureFactory: RecipeFeatureFactory
     let recipeRepository: RecipeRepository
     let restorationKeeper: KitchenRestorationKeeper
     let searchIndex = RecipeSearchIndex()
@@ -191,12 +191,16 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     @MainActor
     func makeOpenRecipe(
         _ recipeEntry: RecipeEntry,
+        reading recipeRepository: RecipeRepository? = nil,
         restoration: RecipeFeatureRestoration? = nil,
         resumesCooking: Bool = false
     ) -> OpenRecipe {
-        OpenRecipe(
+        // A file outside the kitchen's repository is read through its own.
+        let factory = recipeRepository.map(recipeFeatureFactory.reading) ?? recipeFeatureFactory
+
+        return OpenRecipe(
             recipeEntry: recipeEntry,
-            feature: recipeFeatureFactory.makeRecipeFeature(
+            feature: factory.makeRecipeFeature(
                 recipeEntry: recipeEntry,
                 thumbnail: recipeEntry.picture.flatMap({ viewModel.thumbnails[$0] }),
                 restoration: restoration,
