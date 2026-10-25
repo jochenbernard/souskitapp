@@ -70,42 +70,56 @@ struct RecipeFeatureView: View {
 
     @ViewBuilder
     private var page: some View {
-        if isSideBySide, let recipe = shownRecipe, let metadata = bodyMetadata(of: recipe) {
-            // Each column scrolls on its own, so the ingredients stay beside the steps however long the method is.
+        if isSideBySide {
             SousLoadingStack(
                 isLoading: viewModel.recipeContent.isReading,
-                content: {
-                    if !viewModel.recipeContent.isReading {
-                        bodyView(recipe, metadata: metadata, header: header(.card))
-                    }
-                },
-                placeholders: { bodyView(recipe, metadata: metadata, header: header(.card)) }
+                content: { sideBySideContent },
+                placeholders: { columns(viewModel.placeholderRecipe) }
             )
         } else {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0.0) {
-                    hero
-
-                    content
-                        .sousPagePadding()
-                        // As far below the hero as in from the screen's sides, which the page's padding alone is not.
-                        .padding(.top, isSideBySide ? 0.0 : SousSpacing.large - SousSpacing.small)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            // The hero reaches the top of the screen, and the bar's edge comes back with the title.
-            .ignoresSafeArea(.container, edges: isSideBySide ? [] : .top)
-            .scrollEdgeEffectHidden(!isSideBySide && !isTitleInBar, for: .top)
+            scrollingPage
         }
     }
 
-    /// The recipe read, or the placeholder drawn in its place while it is read, or `nil` where it could not be read.
-    private var shownRecipe: ScaledRecipe? {
+    @ViewBuilder
+    private var sideBySideContent: some View {
         switch viewModel.recipeContent {
-        case .reading: viewModel.placeholderRecipe
-        case .recipe(let recipe): recipe
-        case .failure: nil
+        case .reading:
+            EmptyView()
+
+        case .recipe(let recipe):
+            columns(recipe)
+
+        case .failure:
+            scrollingPage
         }
+    }
+
+    @ViewBuilder
+    private func columns(_ recipe: ScaledRecipe) -> some View {
+        if let metadata = bodyMetadata(of: recipe) {
+            // Each column scrolls on its own, so the ingredients stay beside the steps however long the method is.
+            bodyView(recipe, metadata: metadata, header: header(.card))
+        } else {
+            scrollingPage
+        }
+    }
+
+    private var scrollingPage: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0.0) {
+                hero
+
+                content
+                    .sousPagePadding()
+                    // As far below the hero as in from the screen's sides, which the page's padding alone is not.
+                    .padding(.top, isSideBySide ? 0.0 : SousSpacing.large - SousSpacing.small)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        // The hero reaches the top of the screen, and the bar's edge comes back with the title.
+        .ignoresSafeArea(.container, edges: isSideBySide ? [] : .top)
+        .scrollEdgeEffectHidden(!isSideBySide && !isTitleInBar, for: .top)
     }
 
     /// The header the metadata shows, or `nil` for a recipe of neither steps nor a header, which shows a note.
