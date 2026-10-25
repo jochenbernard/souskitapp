@@ -25,10 +25,7 @@ extension KitchenFeaturePresenter {
     @MainActor
     func didChooseSharing(_ recipeEntry: RecipeEntry) async {
         // A file that cannot be fetched or copied opens no sheet, as there is nothing to hand on.
-        guard
-            let url = try? await recipeRepository.exportRecipeFile(of: recipeEntry),
-            !Task.isCancelled
-        else {
+        guard let url = try? await recipeRepository.exportRecipeFile(of: recipeEntry) else {
             return
         }
 
