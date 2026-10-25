@@ -30,7 +30,7 @@ struct PlaceholderCardGrid: View {
     var body: some View {
         RecipeCardGrid(minimumColumnWidth: minimumColumnWidth, spacing: SousSpacing.medium) {
             ForEach(0..<cardCount, id: \.self) { index in
-                KitchenCard(
+                SousCard(
                     title: Self.titles[index % Self.titles.count],
                     picture: { Color.tertiaryFill },
                     detail: { Text(verbatim: Self.details[index % Self.details.count]) }
