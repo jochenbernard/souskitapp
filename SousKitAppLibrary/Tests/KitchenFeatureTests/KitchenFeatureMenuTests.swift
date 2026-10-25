@@ -161,31 +161,6 @@ struct KitchenFeatureMenuTests {
     }
 
     @MainActor
-    @Test("a folder's search let go of, or its folder popped, leaves no search active")
-    func searchEndsWithItsFolder() {
-        let viewModel = makeViewModel()
-        let presenter = makePresenter(viewModel: viewModel)
-
-        presenter.didPush(.folder(["Baking"]), from: nil)
-        presenter.didChangeIsSearchPresented(true, in: ["Baking"])
-
-        #expect(viewModel.presentedSearchPath == ["Baking"])
-
-        presenter.didChangeIsSearchPresented(false, in: [])
-
-        #expect(viewModel.presentedSearchPath == ["Baking"])
-
-        presenter.didPop(toCount: 0)
-
-        #expect(viewModel.presentedSearchPath == nil)
-
-        presenter.didChangeIsSearchPresented(true, in: [])
-        presenter.didChangeIsSearchPresented(false, in: [])
-
-        #expect(viewModel.presentedSearchPath == nil)
-    }
-
-    @MainActor
     @Test("showing a found recipe's folder pushes the folder over the search")
     func showingTheFolderPushesIt() {
         let crepes = RecipeEntry.stubbed(at: "French/Classic/crepes")
@@ -200,8 +175,8 @@ struct KitchenFeatureMenuTests {
     }
 
     @MainActor
-    @Test("a folder pushed ends the search of the screen it is pushed from, and a recipe pushed leaves it")
-    func folderPushEndsTheSearch() {
+    @Test("showing a found recipe's folder ends the search it was found in")
+    func showingTheFolderEndsTheSearch() {
         let crepes = RecipeEntry.stubbed(at: "French/Classic/crepes")
         let viewModel = makeViewModel()
         let presenter = makePresenter(viewModel: viewModel)
@@ -212,17 +187,5 @@ struct KitchenFeatureMenuTests {
 
         #expect(viewModel.presentedSearchPath == nil)
         #expect(viewModel.pushedScreens == [.folder(["French"]), .folder(["French", "Classic"])])
-
-        presenter.didPop(toCount: 0)
-        presenter.didChangeIsSearchPresented(true, in: [])
-        presenter.didPush(.recipe(crepes), from: nil)
-
-        #expect(viewModel.presentedSearchPath?.isEmpty == true)
-
-        presenter.didPop(toCount: 0)
-        presenter.didPush(.folder(["French"]), from: nil)
-
-        #expect(viewModel.presentedSearchPath == nil)
-        #expect(viewModel.pushedScreens == [.folder(["French"])])
     }
 }

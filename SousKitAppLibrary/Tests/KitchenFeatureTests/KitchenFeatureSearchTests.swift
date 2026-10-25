@@ -241,4 +241,51 @@ struct KitchenFeatureSearchTests {
 
         #expect(Array(kitchen.viewModel.searches.keys) == [[]])
     }
+
+    @MainActor
+    @Test("a folder's search let go of, or its folder popped, leaves no search active")
+    func searchEndsWithItsFolder() async {
+        let kitchen = await kitchen(listing: [bourguignon, quiche, croque, gratin])
+
+        kitchen.presenter.didPush(.folder(["French"]), from: nil)
+        kitchen.presenter.didChangeIsSearchPresented(true, in: ["French"])
+
+        #expect(kitchen.viewModel.presentedSearchPath == ["French"])
+
+        kitchen.presenter.didChangeIsSearchPresented(false, in: [])
+
+        #expect(kitchen.viewModel.presentedSearchPath == ["French"])
+
+        kitchen.presenter.didPop(toCount: 0)
+
+        #expect(kitchen.viewModel.presentedSearchPath == nil)
+
+        kitchen.presenter.didChangeIsSearchPresented(true, in: [])
+        kitchen.presenter.didChangeIsSearchPresented(false, in: [])
+
+        #expect(kitchen.viewModel.presentedSearchPath == nil)
+    }
+
+    @MainActor
+    @Test("a folder pushed ends the search of the screen it is pushed from, and a recipe pushed leaves it")
+    func folderPushEndsTheSearch() async {
+        let kitchen = await kitchen(listing: [bourguignon, quiche, croque, gratin])
+
+        kitchen.presenter.didChangeIsSearchPresented(true, in: [])
+        kitchen.presenter.didPush(.recipe(quiche.entry), from: nil)
+
+        #expect(kitchen.viewModel.presentedSearchPath?.isEmpty == true)
+
+        kitchen.presenter.didPop(toCount: 0)
+        kitchen.presenter.didPush(.folder(["French"]), from: nil)
+
+        #expect(kitchen.viewModel.presentedSearchPath == nil)
+        #expect(kitchen.viewModel.pushedScreens == [.folder(["French"])])
+
+        kitchen.presenter.didChangeIsSearchPresented(true, in: ["French"])
+        kitchen.presenter.didPush(.folder(["French", "Classic"]), from: .folder(["French"]))
+
+        #expect(kitchen.viewModel.presentedSearchPath == nil)
+        #expect(kitchen.viewModel.pushedScreens == [.folder(["French"]), .folder(["French", "Classic"])])
+    }
 }
