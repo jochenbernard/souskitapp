@@ -46,7 +46,11 @@ enum DocumentIcon {
         let fold = page.width * 0.24
         let radius = page.width * 0.05
 
-        let outline = pagePath(page, fold: fold, radius: radius)
+        let outline = pagePath(
+            page,
+            fold: fold,
+            radius: radius
+        )
         UIColor.white.setFill()
         outline.fill()
         UIColor.black.withAlphaComponent(0.16).setStroke()
@@ -77,7 +81,11 @@ enum DocumentIcon {
         ))
     }
 
-    private static func pagePath(_ page: CGRect, fold: CGFloat, radius: CGFloat) -> UIBezierPath {
+    private static func pagePath(
+        _ page: CGRect,
+        fold: CGFloat,
+        radius: CGFloat
+    ) -> UIBezierPath {
         let path = UIBezierPath()
         path.move(to: CGPoint(x: page.minX + radius, y: page.minY))
         path.addLine(to: CGPoint(x: page.maxX - fold, y: page.minY))

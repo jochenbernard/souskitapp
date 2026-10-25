@@ -31,7 +31,11 @@ final class RecipeRepositoryStoreSpy: RecipeRepositoryStore {
 
         return RecipeDocument(
             url: url,
-            entry: RecipeEntry(id: url.absoluteString, name: url.lastPathComponent, availability: .downloaded),
+            entry: RecipeEntry(
+                id: url.absoluteString,
+                name: url.lastPathComponent,
+                availability: .downloaded
+            ),
             recipeRepository: recipeRepository
         )
     }
