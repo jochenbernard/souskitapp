@@ -228,6 +228,18 @@ struct RecipeFeatureView: View {
 
     private func shareLink(_ sharedRecipe: SharedRecipe) -> some View {
         ShareLink(item: sharedRecipe, preview: SharePreview(viewModel.title))
+            // Before the read the sheet waits on the fetch, and after a failed one its actions hand on nothing.
+            .disabled(!isRecipeRead)
+    }
+
+    private var isRecipeRead: Bool {
+        switch viewModel.recipeContent {
+        case .recipe:
+            true
+
+        case .reading, .failure:
+            false
+        }
     }
 
     @ViewBuilder
