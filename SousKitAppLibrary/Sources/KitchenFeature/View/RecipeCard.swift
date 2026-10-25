@@ -62,7 +62,7 @@ struct RecipeCard: View {
             totalTime
 
         case .folder(let names):
-            FolderPathText(names)
+            SousFolderPath(names)
         }
     }
 

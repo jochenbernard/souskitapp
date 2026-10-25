@@ -35,7 +35,11 @@ struct AppFeatureFactory {
             preferredScaleStore: scaleStore,
             timerScheduler: scheduler
         )
-        self.mockRecipeRepository = MockRecipeRepository(parser: parser, symbolPicker: symbolPicker)
+        self.mockRecipeRepository = MockRecipeRepository(
+            parser: parser,
+            symbolPicker: symbolPicker,
+            symbolCacheURL: URL.cachesDirectory.appending(path: "MockRecipeSymbols.json")
+        )
         self.onboardingFeatureFactory = OnboardingFeatureFactory(recipeRepositoryStore: store)
         self.preferredScaleStore = scaleStore
         self.recipeRepositoryKindStore = RecipeRepositoryKindStore()

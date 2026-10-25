@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import RecipeLibrary
 import RecipeScaling
@@ -5,6 +6,7 @@ import SousKit
 
 struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
     private let handler: RecipeFeatureHandler
+    private let headerPictureMemory = HeaderPictureMemory()
     private let parser: SousParser
     private let preferredScaleStore: PreferredScaleStore
     private let recipeRepository: RecipeRepository
@@ -60,6 +62,44 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
 
         if restores {
             resumeCooking()
+        }
+    }
+
+    func headerDidAppear(filling pixelSize: CGSize) async {
+        guard let picture = viewModel.picture else {
+            viewModel.headerPicture = .placeholder
+            headerPictureMemory.picture = nil
+            return
+        }
+
+        guard pixelSize.width > 0.0, pixelSize.height > 0.0, !holdsPicture(filling: pixelSize) else {
+            return
+        }
+
+        let image = try? await recipeRepository.readThumbnail(of: picture, filling: pixelSize)
+
+        guard !Task.isCancelled else {
+            return
+        }
+
+        guard let image else {
+            // A failed read keeps an earlier read of the same picture, and anything else gives way to the placeholder.
+            if headerPictureMemory.picture?.id != picture.id {
+                viewModel.headerPicture = .placeholder
+                headerPictureMemory.picture = nil
+            }
+
+            return
+        }
+
+        viewModel.headerPicture = .read(image)
+        headerPictureMemory.picture = picture
+    }
+
+    func entryDidChange(_ recipeEntry: RecipeEntry) {
+        // The header reads the new picture as it next appears, showing the one before until then.
+        if recipeEntry.picture != viewModel.picture {
+            viewModel.picture = recipeEntry.picture
         }
     }
 
@@ -152,6 +192,21 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
             preferredScale: preferredScaleStore.preferredScale,
             scale: scale
         )
+    }
+
+    /// Whether the picture shown is the recipe's as listed now, read at least as large as a box, as a header shrinking
+    /// on a turn needs.
+    @MainActor
+    private func holdsPicture(filling pixelSize: CGSize) -> Bool {
+        switch viewModel.headerPicture {
+        case .read(let image):
+            headerPictureMemory.picture == viewModel.picture
+                && Double(image.width) >= pixelSize.width
+                && Double(image.height) >= pixelSize.height
+
+        case .reading, .placeholder:
+            false
+        }
     }
 
     /// Opens cooking again where it was open when the screen was left, now that the recipe it opens over is read.

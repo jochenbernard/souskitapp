@@ -9,7 +9,7 @@ import SousKit
 /// iCloud, and reading one fetches it first, as a folder in iCloud Drive does. One of them never arrives. Every recipe
 /// with a text is listed with its summary and ingredient names, as a folder lists the recipes it read on an earlier
 /// launch, and with the picture its header names where the folder holds it. A picture in iCloud lands a fetch's time
-/// after the recipes are first listed. Symbols are picked as a folder's are, and kept until the repository goes.
+/// after the recipes are first listed. Symbols are picked and kept between launches as a folder's are.
 @MainActor
 public final class MockRecipeRepository: RecipeRepository {
     private let fetchDuration: Duration
@@ -18,6 +18,8 @@ public final class MockRecipeRepository: RecipeRepository {
     private let pictureFiles: [String: MockRecipe]
     private let summaries: [String: RecipeSummary]
     private let ingredientNames: [String: [String]]
+    // By recipe id, as an earlier launch kept them.
+    private let symbolPicks: [String: RecipeSymbolPick]
     private let symbolQueue: RecipeSymbolQueue
 
     private var continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation?
@@ -33,14 +35,21 @@ public final class MockRecipeRepository: RecipeRepository {
     /// - Parameters:
     ///   - parser: What the recipes are read with.
     ///   - symbolPicker: What the recipes' symbols are picked with.
+    ///   - symbolCacheURL: Where the recipes' symbols are kept between launches.
     ///   - fetchDuration: How long a recipe takes to come down from iCloud.
     nonisolated public init(
         parser: SousParser,
         symbolPicker: RecipeSymbolPicker,
+        symbolCacheURL: URL,
         fetchDuration: Duration = .seconds(3)
     ) {
+        let symbolCache = MockSymbolCache(fileURL: symbolCacheURL)
+
         self.parser = parser
-        self.symbolQueue = RecipeSymbolQueue(picker: symbolPicker)
+        self.symbolPicks = symbolCache.load()
+        self.symbolQueue = RecipeSymbolQueue(picker: symbolPicker) { id, symbolPick in
+            symbolCache.keep(symbolPick, forRecipeWithID: id)
+        }
         self.fetchDuration = fetchDuration
         self.pictureFiles = Dictionary(
             uniqueKeysWithValues: MockRecipe.all.filter(\.isPicture).map({ ($0.id, $0) })
@@ -121,7 +130,8 @@ public final class MockRecipeRepository: RecipeRepository {
                     folderPath: recipe.folderPath,
                     picture: picture(of: recipe)
                 ),
-                ingredientNames: ingredientNames[recipe.id] ?? []
+                ingredientNames: ingredientNames[recipe.id] ?? [],
+                symbolPick: symbolPicks[recipe.id]
             )
         }
     }

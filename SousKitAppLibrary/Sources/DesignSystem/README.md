@@ -9,13 +9,14 @@ disagrees with this package, this package is right.
 | Layer | Type | Use |
 | --- | --- | --- |
 | Color | `Color+Accent`, `Color+System`, `SousPlaceholderColor` | The accent and its wash, the system colors SwiftUI has no name for, and the colors a recipe without a picture is drawn in. |
-| Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.body`, `.subheadline`, `.caption2`. |
+| Type | SwiftUI's `Font.TextStyle` | `.largeTitle`, `.title`, `.title3`, `.headline`, `.body`, `.subheadline`, `.caption2`. |
 | Layout | `SousSpacing`, `SousRadius` | Spacing steps and corner radii. |
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sousBare`, `.sousChip(isSelected:)`, `.sous` | The three button styles, the button its label draws, the chip a cook chooses from a set, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
-| Containers | `.sousSurface(_:)`, `.sousBorder()`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card and its border, the row and its two halves, the rows that share one card, the wash, the chip, the spinner. |
+| Containers | `.sousSurface(_:)`, `.sousBorder()`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `.sousCardPicture()`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card and its border, the row and its two halves, the picture a card opens with, the rows that share one card, the wash, the chip, the spinner. |
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
+| Recipes | `SousPlaceholder`, `SousFolderPath` | What a recipe without a picture shows, and the folders something sits in. |
 | Sheet | `SousSheet` | The low sheet that sets one thing. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
 
@@ -60,16 +61,19 @@ disagrees with this package, this package is right.
 - The accent is `oklch(0.64 0.20 40)`, which sRGB holds as `#EA5202`. A new accent is picked in
   OKLCH, then written to `Color+Accent`, `AccentColor`, and the app icon's `icon.json`, which takes
   it as 0.91765, 0.32157, 0.00784. It carries white text, at APCA Lc 69.
-- Set text with `.font(_:)` and a system text style. Six of them are in use: `.largeTitle` for
+- Set text with `.font(_:)` and a system text style. Seven of them are in use: `.largeTitle` for
   a hero line, `.title` for a landing headline, `.title3` for the step in front of the cook,
-  `.body` for copy and controls, `.subheadline` for quantities and metadata, `.caption2` for
-  an eyebrow.
+  `.headline` for a title in the navigation bar, `.body` for copy and controls, `.subheadline` for
+  quantities and metadata, `.caption2` for an eyebrow.
 - A screen's title is its `.navigationTitle(_:)`, large by default, and is not drawn again in
-  the content. Cooking is the one screen that takes `.inline`, where the step in front of the
-  cook outranks the recipe's name. A sheet takes `.inline` too, in a toolbar of its own that holds
-  its actions: Done is a `.confirm` button, not a style from here.
+  the content. Cooking takes `.inline`, where the step in front of the cook outranks the recipe's
+  name. A recipe takes it too: its title stands over its picture, and the bar shows the title in
+  `.headline` once that one scrolls under it. A sheet takes `.inline` too, in a toolbar of its own
+  that holds its actions: Done is a `.confirm` button, not a style from here.
 - A fixed size, `.system(size:weight:)`, is for the wordmark and nothing else. It does not
-  scale, which is right for a lockup and wrong for anything a reader reads.
+  scale, which is right for a lockup and wrong for anything a reader reads. A symbol larger than
+  any text style, such as a placeholder's in a recipe's header, takes its size from
+  `@ScaledMetric(relativeTo:)`.
 - Semibold is limited to the wordmark.
 - One primary button per view.
 - Motion is spring only; no easing curves.

@@ -15,6 +15,7 @@ import Testing
 final class AppFeaturePresenterTests {
     private let parser = SousParser()
     private let suiteName: String
+    private let symbolCacheURL: URL
     private let userDefaults: UserDefaults
 
     let crepesRestoration = AppRestoration(kitchen: KitchenFeatureRestoration(recipeID: "crepes"))
@@ -22,11 +23,13 @@ final class AppFeaturePresenterTests {
 
     init() throws {
         self.suiteName = "AppFeaturePresenterTests.\(UUID().uuidString)"
+        self.symbolCacheURL = URL.temporaryDirectory.appending(path: "\(suiteName).json")
         self.userDefaults = try #require(UserDefaults(suiteName: suiteName))
     }
 
     isolated deinit {
         userDefaults.removePersistentDomain(forName: suiteName)
+        try? FileManager.default.removeItem(at: symbolCacheURL)
     }
 
     /// A store keeping what the app has open in this suite's defaults.
@@ -65,7 +68,11 @@ final class AppFeaturePresenterTests {
                 preferredScaleStore: preferredScaleStore,
                 timerScheduler: TimerSchedulerStub()
             ),
-            mockRecipeRepository: MockRecipeRepository(parser: parser, symbolPicker: RecipeSymbolPickerStub()),
+            mockRecipeRepository: MockRecipeRepository(
+                parser: parser,
+                symbolPicker: RecipeSymbolPickerStub(),
+                symbolCacheURL: symbolCacheURL
+            ),
             onboardingFeatureFactory: OnboardingFeatureFactory(recipeRepositoryStore: recipeRepositoryStore),
             preferredScaleStore: preferredScaleStore,
             recipeRepositoryKindStore: recipeRepositoryKindStore,

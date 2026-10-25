@@ -77,6 +77,9 @@ public struct SousCatalog: View {
                 Text(verbatim: "Cover the pot and braise at 150C for 3 h, until the beef gives to a fork.")
                     .font(.title3)
 
+                Text(verbatim: "Gratin Dauphinois")
+                    .font(.headline)
+
                 Text(
                     verbatim: """
                     Peel 1.2 kg potatoes and slice them 3 mm thick on a mandoline, then \

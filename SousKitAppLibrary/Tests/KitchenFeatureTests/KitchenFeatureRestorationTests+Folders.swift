@@ -122,8 +122,13 @@ extension KitchenFeatureRestorationTests {
                 .recipe(gratin)
             ]
         )
-        #expect(!kitchen.viewModel.isRestoring)
+        #expect(kitchen.viewModel.isRestoring)
         #expect(kitchen.viewModel.openRecipe?.recipeEntry == gratin)
+        #expect(kitchen.handler.restoreCount == 0)
+
+        kitchen.presenter.screenDidAppear(.recipe(gratin))
+
+        #expect(!kitchen.viewModel.isRestoring)
         #expect(kitchen.handler.restoreCount == 1)
     }
 

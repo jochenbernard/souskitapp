@@ -6,10 +6,18 @@ import SousKit
 import Testing
 
 @Suite("Mock recipe repository", .timeLimit(.minutes(1)))
-struct MockRecipeRepositoryTests {
+@MainActor
+final class MockRecipeRepositoryTests {
     private let parser = SousParser()
+    private let symbolCacheURL = URL.temporaryDirectory.appending(
+        path: "MockRecipeRepositoryTests-\(UUID().uuidString).json"
+    )
 
-    /// A repository picking no symbols unless given a picker that can.
+    isolated deinit {
+        try? FileManager.default.removeItem(at: symbolCacheURL)
+    }
+
+    /// A repository picking no symbols unless given a picker that can, keeping them in this suite's file.
     @MainActor
     private func makeRepository(
         symbolPicker: RecipeSymbolPicker = RecipeSymbolPickerStub(isAvailable: false)
@@ -17,6 +25,7 @@ struct MockRecipeRepositoryTests {
         MockRecipeRepository(
             parser: parser,
             symbolPicker: symbolPicker,
+            symbolCacheURL: symbolCacheURL,
             fetchDuration: .zero
         )
     }
@@ -262,5 +271,31 @@ struct MockRecipeRepositoryTests {
         #expect(symbols["bouillabaisse.sous"] == "fish")
         #expect(symbols["vinaigrette.sous"] == "drop")
         #expect(symbols["brioche.sous"] == nil)
+    }
+
+    @MainActor
+    @Test("a symbol picked for a recipe is listed at once by the next launch's repository, which cannot pick")
+    func symbolKeptAcrossLaunches() async throws {
+        let picker = RecipeSymbolPickerStub()
+        picker.symbols = ["Moules Marinieres": "fish"]
+        let repository = makeRepository(symbolPicker: picker)
+        var iterator = repository.listedRecipes().makeAsyncIterator()
+
+        while
+            let listing = await iterator.next(),
+            try listing.get().first(where: { $0.entry.id == "Dinner/moules-marinieres.sous" })?.symbolPick == nil
+        {
+            continue
+        }
+
+        // The pick is kept after it is listed, before the next one is asked for.
+        while MockSymbolCache(fileURL: symbolCacheURL).load()["Dinner/moules-marinieres.sous"] == nil {
+            try await Task.sleep(for: .milliseconds(50))
+        }
+
+        let listedRecipes = try await currentListedRecipes(of: makeRepository())
+        let moules = listedRecipes.first(where: { $0.entry.id == "Dinner/moules-marinieres.sous" })
+
+        #expect(moules?.symbolPick?.symbol == "fish")
     }
 }

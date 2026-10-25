@@ -48,12 +48,13 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
     }
 
     private var topScreen: some View {
-        // Every screen of the kitchen has a subtitle: a pushed screen with one over a screen without loses its large
-        // title to the bar.
+        // Subtitled like every folder, as one pushed over a screen without a subtitle loses its large title to the bar.
         folderPage(at: [])
             .navigationTitle(greeting)
             .navigationSubtitle(viewModel.recipeRepositoryName)
-            .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
+            .background {
+                AppearanceReport(action: { presenter.screenDidAppear(nil) })
+            }
             .task {
                 await presenter.topScreenDidAppear()
             }
@@ -119,7 +120,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
             }
     }
 
-    /// Where a folder or a recipe sits: the repository's name, then the folders leading down to it.
+    /// Where a folder sits: the repository's name, then the folders leading down to it.
     private func pathText(_ folders: some Sequence<String>) -> Text {
         // No accessibility label: the navigation bar hands VoiceOver the subtitle's text alone.
         Text(verbatim: ([viewModel.recipeRepositoryName] + folders).joined(separator: " \u{203A} "))
@@ -128,8 +129,17 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
     @ViewBuilder
     private func recipeScreen(for recipeEntry: RecipeEntry) -> some View {
         if let openRecipe = viewModel.openRecipe, openRecipe.recipeEntry == recipeEntry {
-            openRecipe.feature.makeView(cookingTransition: cookingTransition)
-                .navigationSubtitle(pathText(recipeEntry.folderPath))
+            // No subtitle: the recipe's header says where it sits.
+            openRecipe.feature.makeView(
+                placeholder: RecipePlaceholder(
+                    symbol: viewModel.symbols[recipeEntry.id],
+                    color: KitchenRecipeCard(recipeEntry: recipeEntry).placeholderColor
+                ),
+                cookingTransition: cookingTransition
+            )
+            .background {
+                AppearanceReport(action: { presenter.screenDidAppear(.recipe(recipeEntry)) })
+            }
         }
     }
 

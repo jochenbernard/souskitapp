@@ -58,7 +58,7 @@ struct RecipeCardPicture: View {
                 .resizable()
                 .scaledToFill()
         } else {
-            RecipeCardPlaceholder(symbol: symbols[card.id], color: card.placeholderColor)
+            SousPlaceholder(symbol: symbols[card.id], color: card.placeholderColor)
         }
     }
 

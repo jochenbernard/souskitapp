@@ -14,7 +14,7 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didChangeSearchText(_: String, in _: [String]) {}
 
-    func screenDidAppear(_: KitchenScreen) {}
+    func screenDidAppear(_: KitchenScreen?) {}
 
     func didDismissCooking() {}
 
