@@ -106,7 +106,8 @@ struct RecipeBodyView: View {
 
             cookwareSection(cookwareNames)
         }
-        .frame(maxWidth: isSideBySide ? overviewWidth : .infinity)
+        // At the top: it is measured a fraction narrower than it is laid out, where a line can wrap once more.
+        .frame(maxWidth: isSideBySide ? overviewWidth : .infinity, alignment: .top)
     }
 
     @ViewBuilder
