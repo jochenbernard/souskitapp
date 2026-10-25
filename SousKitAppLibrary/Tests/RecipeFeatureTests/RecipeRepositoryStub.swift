@@ -31,4 +31,8 @@ struct RecipeRepositoryStub: RecipeRepository {
     func readThumbnail(of _: RecipePicture, filling _: CGSize) throws -> CGImage {
         throw CocoaError(.fileReadNoSuchFile)
     }
+
+    func recipeID(forFileAt _: URL) -> String? {
+        nil
+    }
 }

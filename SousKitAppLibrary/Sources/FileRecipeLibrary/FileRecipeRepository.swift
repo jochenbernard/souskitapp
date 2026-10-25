@@ -114,4 +114,8 @@ struct FileRecipeRepository: RecipeRepository {
         // Read back from the kept file, so the first read shows the picture as every later one does.
         return thumbnailCache.thumbnail(of: picture, filling: pixelSize) ?? keptThumbnail
     }
+
+    func recipeID(forFileAt url: URL) -> String? {
+        recipeDirectory.path(ofFileAt: url)
+    }
 }

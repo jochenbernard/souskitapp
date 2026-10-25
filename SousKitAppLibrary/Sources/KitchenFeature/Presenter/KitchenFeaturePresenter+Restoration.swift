@@ -19,6 +19,7 @@ extension KitchenFeaturePresenter {
 
         if screen == nil {
             restorationKeeper.hasTopScreenAppeared = true
+            openRequestedDocument()
         }
 
         guard !restorationKeeper.screensToRestore.isEmpty else {

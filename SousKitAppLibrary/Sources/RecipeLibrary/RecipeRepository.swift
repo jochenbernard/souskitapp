@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 import SousKit
 
 /// The user's recipes, listed and read wherever they are kept.
@@ -41,4 +42,10 @@ public protocol RecipeRepository: Sendable {
     /// - Returns: The picture, decoded.
     /// - Throws: Whatever fetching or reading the picture throws, or what its contents not being a picture does.
     func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage
+
+    /// The id of the recipe a file holds, where the file is one of the repository's recipes.
+    ///
+    /// - Parameter url: Where the file sits.
+    /// - Returns: The id, or `nil` where the repository does not hold the file.
+    func recipeID(forFileAt url: URL) -> String?
 }

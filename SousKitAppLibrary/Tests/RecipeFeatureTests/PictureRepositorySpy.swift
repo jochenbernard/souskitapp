@@ -39,4 +39,8 @@ final class PictureRepositorySpy: RecipeRepository {
 
         return thumbnail
     }
+
+    nonisolated func recipeID(forFileAt _: URL) -> String? {
+        nil
+    }
 }

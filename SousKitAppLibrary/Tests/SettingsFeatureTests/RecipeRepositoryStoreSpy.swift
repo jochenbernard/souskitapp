@@ -26,5 +26,15 @@ final class RecipeRepositoryStoreSpy: RecipeRepositoryStore {
         return EmptyRecipeRepository(name: url.lastPathComponent)
     }
 
+    func openRecipeDocument(at url: URL) -> RecipeDocument {
+        let recipeRepository = EmptyRecipeRepository(name: url.deletingLastPathComponent().lastPathComponent)
+
+        return RecipeDocument(
+            url: url,
+            entry: RecipeEntry(id: url.absoluteString, name: url.lastPathComponent, availability: .downloaded),
+            recipeRepository: recipeRepository
+        )
+    }
+
     func clear() {}
 }

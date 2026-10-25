@@ -6,10 +6,11 @@ import SousKit
 
 struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHandler, CookingFeatureHandler {
     private let cookingFeatureFactory: CookingFeatureFactory
+    let documentRequest = KitchenDocumentRequest()
     let greetingClock: KitchenGreetingClock
     let handler: KitchenFeatureHandler
     let menuRequest = KitchenMenuRequest()
-    private let recipeFeatureFactory: RecipeFeatureFactory
+    let recipeFeatureFactory: RecipeFeatureFactory
     let recipeRepository: RecipeRepository
     let restorationKeeper: KitchenRestorationKeeper
     let searchIndex = RecipeSearchIndex()
@@ -66,11 +67,16 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
                 showSearchResults()
                 restore(in: folder, holding: recipeEntries)
                 showOpenRecipe(in: recipeEntries)
+                documentRequest.recipeEntries = recipeEntries
+                openRequestedDocument()
 
             case .failure(let error):
                 shownRecipes = nil
                 viewModel.recipeList = .failure(error.localizedDescription)
                 restore(in: nil, holding: [])
+                // A file the repository holds opens where it sits, as any other file does.
+                documentRequest.recipeEntries = []
+                openRequestedDocument()
             }
         }
     }
@@ -168,6 +174,10 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
             case .recipe(let recipeEntry):
                 recipeID = recipeEntry.id
+
+            case .document:
+                // A file outside the repository is not opened again, as nothing reaches it after a cold start.
+                break
             }
         }
 
@@ -199,7 +209,17 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// Opens cooking from the recipe on top of the stack, unless cooking is already open.
     @MainActor
     private func openCooking(_ recipe: Recipe, isResumed: Bool) {
-        guard case .recipe(let recipeEntry) = viewModel.pushedScreens.last, viewModel.openCooking == nil else {
+        let recipeEntry: RecipeEntry
+
+        switch viewModel.pushedScreens.last {
+        case .recipe(let pushedEntry), .document(let pushedEntry):
+            recipeEntry = pushedEntry
+
+        case .folder, nil:
+            return
+        }
+
+        guard viewModel.openCooking == nil else {
             return
         }
 

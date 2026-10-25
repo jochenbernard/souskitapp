@@ -100,6 +100,11 @@ public final class MockRecipeRepository: RecipeRepository {
         return try await Self.draw(mockPicture, filling: pixelSize)
     }
 
+    /// Finds no recipe: the recipes kept in the app are in no file.
+    nonisolated public func recipeID(forFileAt _: URL) -> String? {
+        nil
+    }
+
     @MainActor
     public func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe> {
         guard let recipe = MockRecipe.all.first(where: { $0.isListed && $0.id == entry.id }) else {
