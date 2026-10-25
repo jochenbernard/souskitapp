@@ -205,7 +205,7 @@ struct KitchenFeatureMenuTests {
         await presenter.didChooseSharing(crepes)
 
         #expect(repository.exportedEntries == [crepes])
-        #expect(viewModel.sharedFile?.recipeEntry == crepes)
+        #expect(viewModel.sharedFile?.recipeID == crepes.id)
         #expect(viewModel.sharedFile?.url == URL.temporaryDirectory.appending(path: "Baking/crepes"))
 
         presenter.didDismissSharing()
@@ -224,6 +224,42 @@ struct KitchenFeatureMenuTests {
             parser: parser,
             recipeRepository: repository
         )
+
+        await presenter.didChooseSharing(RecipeEntry.stubbed(at: "Baking/crepes"))
+
+        #expect(viewModel.sharedFile == nil)
+    }
+
+    @MainActor
+    @Test("a recipe whose file arrives after a screen was pushed opens no sheet")
+    func sharingOutlastedByAPush() async {
+        let repository = RecipeRepositorySpy()
+        let viewModel = makeViewModel()
+        let presenter = KitchenFeaturePresenter.stubbed(
+            viewModel: viewModel,
+            parser: parser,
+            recipeRepository: repository
+        )
+        repository.whileExporting = { presenter.didPush(.recipe(.stubbed(at: "croque-monsieur")), from: nil) }
+
+        await presenter.didChooseSharing(RecipeEntry.stubbed(at: "Baking/crepes"))
+
+        #expect(viewModel.sharedFile == nil)
+    }
+
+    @MainActor
+    @Test("a recipe whose file arrives after something opened over the kitchen opens no sheet")
+    func sharingOutlastedByACover() async {
+        let handler = KitchenFeatureHandlerStub()
+        let repository = RecipeRepositorySpy()
+        let viewModel = makeViewModel()
+        let presenter = KitchenFeaturePresenter.stubbed(
+            viewModel: viewModel,
+            parser: parser,
+            handler: handler,
+            recipeRepository: repository
+        )
+        repository.whileExporting = { handler.kitchenFeatureIsCovered = true }
 
         await presenter.didChooseSharing(RecipeEntry.stubbed(at: "Baking/crepes"))
 

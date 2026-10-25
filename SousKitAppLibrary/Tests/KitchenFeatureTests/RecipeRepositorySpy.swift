@@ -20,6 +20,9 @@ final class RecipeRepositorySpy: RecipeRepository {
     /// What every export throws, or `nil` for exports that succeed.
     var exportError: Error?
 
+    /// What happens while a file is exported, as the user does while a file comes down from iCloud.
+    var whileExporting: () -> Void = {}
+
     nonisolated private let parser = SousParser()
 
     private let continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation
@@ -57,6 +60,7 @@ final class RecipeRepositorySpy: RecipeRepository {
     /// a test gives.
     func exportRecipeFile(of entry: RecipeEntry) throws -> URL {
         exportedEntries.append(entry)
+        whileExporting()
 
         if let exportError {
             throw exportError

@@ -76,7 +76,7 @@ struct RecipeCardButton: View {
 
     /// The file the share sheet is open for, where it is this card's recipe's.
     private var sharedFileURL: URL? {
-        viewModel.sharedFile?.recipeEntry == card.recipeEntry ? viewModel.sharedFile?.url : nil
+        viewModel.sharedFile?.recipeID == card.recipeEntry.id ? viewModel.sharedFile?.url : nil
     }
 
     private var screen: KitchenScreen {

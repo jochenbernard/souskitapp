@@ -24,12 +24,18 @@ extension KitchenFeaturePresenter {
 
     @MainActor
     func didChooseSharing(_ recipeEntry: RecipeEntry) async {
-        // A file that cannot be fetched or copied opens no sheet, as there is nothing to hand on.
-        guard let url = try? await recipeRepository.exportRecipeFile(of: recipeEntry) else {
+        let pushedScreens = viewModel.pushedScreens
+
+        // No sheet for a file that cannot be copied, or for one that arrives after the user moved on from the card.
+        guard
+            let url = try? await recipeRepository.exportRecipeFile(of: recipeEntry),
+            viewModel.pushedScreens == pushedScreens,
+            !handler.kitchenFeatureIsCovered
+        else {
             return
         }
 
-        viewModel.sharedFile = SharedRecipeFile(recipeEntry: recipeEntry, url: url)
+        viewModel.sharedFile = SharedRecipeFile(recipeID: recipeEntry.id, url: url)
     }
 
     @MainActor
