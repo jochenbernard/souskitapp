@@ -188,7 +188,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             recipeEntry: recipeEntry,
             feature: recipeFeatureFactory.makeRecipeFeature(
                 recipeEntry: recipeEntry,
-                thumbnail: recipeEntry.picture.flatMap(thumbnailMemory.thumbnail(of:)),
+                thumbnail: recipeEntry.picture.flatMap({ viewModel.thumbnails[$0] }),
                 restoration: restoration,
                 resumesCooking: resumesCooking,
                 handler: self
