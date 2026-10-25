@@ -39,6 +39,7 @@ struct RecipePreviewView: View {
             }
         }
         .dynamicTypeSize(...Self.largestTypeSize)
+        .environment(\.isSousLoading, isReading)
         .task {
             await presenter.viewDidAppear()
         }
@@ -55,12 +56,22 @@ struct RecipePreviewView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 
+    private var isReading: Bool {
+        switch viewModel.recipeContent {
+        case .reading: true
+        case .recipe, .failure: false
+        }
+    }
+
     private var metadata: MetadataDisplay {
         switch viewModel.recipeContent {
+        case .reading:
+            RecipeDisplay.metadata(of: viewModel.placeholderRecipe.scaled.metadata).glance
+
         case .recipe(let recipe):
             RecipeDisplay.metadata(of: recipe.scaled.metadata).glance
 
-        case .reading, .failure:
+        case .failure:
             MetadataDisplay(
                 facts: [],
                 tags: [],
@@ -91,7 +102,8 @@ private func previewViewModel(_ recipeContent: RecipeContent) -> RecipeFeatureVi
             name: "boeuf bourguignon",
             availability: .downloaded
         ),
-        folderPath: ["Recipes", "French", "Classic"]
+        folderPath: ["Recipes", "French", "Classic"],
+        placeholderRecipe: .placeholder(parser: SousParser())
     )
     viewModel.recipeContent = recipeContent
 

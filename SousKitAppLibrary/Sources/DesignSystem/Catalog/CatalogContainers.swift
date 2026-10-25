@@ -14,9 +14,7 @@ struct CatalogContainers: View {
             Text(verbatim: "This recipe could not be read")
                 .sousCallout()
 
-            SousActivityNote {
-                Text(verbatim: "Fetching from iCloud.")
-            }
+            loadingPlaceholder
 
             chips
 
@@ -31,6 +29,13 @@ struct CatalogContainers: View {
                     .sousRowPadding()
             }
         }
+    }
+
+    private var loadingPlaceholder: some View {
+        Text(verbatim: "Boeuf Bourguignon")
+            .sousLoadingPlaceholder()
+            .sousRow()
+            .environment(\.isSousLoading, true)
     }
 
     private var chips: some View {

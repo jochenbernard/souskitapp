@@ -51,6 +51,7 @@ struct KitchenCard<Picture: View, Detail: View>: View {
             .aspectRatio(Self.pictureAspectRatio, contentMode: .fit)
             .background {
                 picture
+                    .sousLoadingPlaceholder()
             }
             .sousCardPicture()
     }
@@ -65,6 +66,7 @@ struct KitchenCard<Picture: View, Detail: View>: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
+        .sousLoadingPlaceholder()
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(SousSpacing.medium)
         // Sized before the picture, so a title taller than the picture is not cut a line short.

@@ -9,6 +9,7 @@ import SwiftUI
 /// Side by side, each column scrolls on its own; one above the other, the body goes in the screen's scroll view.
 struct RecipeBodyView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.isSousLoading) private var isLoading
 
     private let presenter: RecipeFeaturePresenterProtocol
     private let recipe: ScaledRecipe
@@ -169,6 +170,7 @@ struct RecipeBodyView: View {
                                 .sousChip()
                         }
                     }
+                    .sousLoadingPlaceholder()
                 }
             }
         }
@@ -192,6 +194,8 @@ struct RecipeBodyView: View {
             label: { Text(section.label, bundle: .module) }
         )
         .disclosureGroupStyle(.sous)
+        // A heading over placeholders leads nowhere yet, so only the screen's note on the wait is read.
+        .accessibilityHidden(isLoading)
     }
 
     private func ingredientRows(_ rows: [IngredientRow]) -> some View {
@@ -208,6 +212,7 @@ struct RecipeBodyView: View {
             Text("Plus \(RecipeDisplay.joinedList(staples)) from the pantry.", bundle: .module)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .sousLoadingPlaceholder()
                 .padding(.horizontal, SousSpacing.large)
         }
     }
@@ -225,6 +230,7 @@ struct RecipeBodyView: View {
             Text(verbatim: name)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .sousLoadingPlaceholder()
                 .padding(.horizontal, SousSpacing.large)
         }
     }
@@ -245,6 +251,7 @@ struct RecipeBodyView: View {
 
             amountText(row.amount)
         }
+        .sousLoadingPlaceholder()
         .sousRowPadding()
     }
 
@@ -255,6 +262,7 @@ struct RecipeBodyView: View {
             stepProse(step)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .sousLoadingPlaceholder()
         // The number is the row's tallest line, so padding it evenly sets it as far from the top as from the side.
         .padding(SousSpacing.large)
     }
@@ -277,7 +285,8 @@ struct RecipeBodyView: View {
     }
 
     private func stepProse(_ step: Step) -> Text {
-        Text(StepProse.attributedProse(of: step, annotationColor: .accent))
+        // A placeholder's bars carry no accent, which means live.
+        Text(StepProse.attributedProse(of: step, annotationColor: isLoading ? .clear : .accent))
     }
 
     private func isExpanded(_ section: RecipeSection) -> Binding<Bool> {

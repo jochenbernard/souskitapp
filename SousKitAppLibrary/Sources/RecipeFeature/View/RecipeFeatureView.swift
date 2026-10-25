@@ -23,6 +23,9 @@ struct RecipeFeatureView: View {
     // The cook button's width where the screen is wide, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var wideCookButtonWidth = 360.0
 
+    // As long as the placeholders take to fade, so the bar changes with them.
+    private static let arrival = Animation.spring(duration: 0.5, bounce: 0.0)
+
     init(
         presenter: RecipeFeaturePresenterProtocol,
         viewModel: RecipeFeatureViewModel,
@@ -70,15 +73,16 @@ struct RecipeFeatureView: View {
 
     @ViewBuilder
     private var page: some View {
-        if isSideBySide, case .recipe(let recipe) = viewModel.recipeContent, let metadata = bodyMetadata(of: recipe) {
+        if isSideBySide, let recipe = shownRecipe, let metadata = bodyMetadata(of: recipe) {
             // Each column scrolls on its own, so the ingredients stay beside the steps however long the method is.
-            RecipeBodyView(
-                presenter: presenter,
-                recipe: recipe,
-                metadata: metadata,
-                expandedSections: viewModel.expandedSections,
-                overviewWidth: overviewWidth,
-                header: header(.card)
+            SousLoadingStack(
+                isLoading: isReading,
+                content: {
+                    if !isReading {
+                        sideBySideBody(recipe, metadata: metadata)
+                    }
+                },
+                placeholders: { sideBySideBody(recipe, metadata: metadata) }
             )
         } else {
             ScrollView {
@@ -98,11 +102,38 @@ struct RecipeFeatureView: View {
         }
     }
 
+    private var isReading: Bool {
+        switch viewModel.recipeContent {
+        case .reading: true
+        case .recipe, .failure: false
+        }
+    }
+
+    /// The recipe read, or the placeholder drawn in its place while it is read, or `nil` where it could not be read.
+    private var shownRecipe: ScaledRecipe? {
+        switch viewModel.recipeContent {
+        case .reading: viewModel.placeholderRecipe
+        case .recipe(let recipe): recipe
+        case .failure: nil
+        }
+    }
+
     /// The header the metadata shows, or `nil` for a recipe of neither steps nor a header, which shows a note.
     private func bodyMetadata(of recipe: ScaledRecipe) -> MetadataDisplay? {
         let metadata = RecipeDisplay.metadata(of: recipe.scaled.metadata)
 
         return recipe.scaled.steps.isEmpty && metadata.isEmpty ? nil : metadata
+    }
+
+    private func sideBySideBody(_ recipe: ScaledRecipe, metadata: MetadataDisplay) -> RecipeBodyView {
+        RecipeBodyView(
+            presenter: presenter,
+            recipe: recipe,
+            metadata: metadata,
+            expandedSections: viewModel.expandedSections,
+            overviewWidth: overviewWidth,
+            header: header(.card)
+        )
     }
 
     private func header(_ placement: RecipeHeaderView.Placement) -> RecipeHeaderView {
@@ -128,16 +159,11 @@ struct RecipeFeatureView: View {
         VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
             headerCard
 
-            switch viewModel.recipeContent {
-            case .reading:
-                readingNote
-
-            case .recipe(let recipe):
-                recipeBody(recipe)
-
-            case .failure(let message):
-                failureNote(message)
-            }
+            SousLoadingStack(
+                isLoading: isReading,
+                content: { readContent },
+                placeholders: { recipeBody(viewModel.placeholderRecipe) }
+            )
         }
     }
 
@@ -153,9 +179,17 @@ struct RecipeFeatureView: View {
         }
     }
 
-    private var readingNote: some View {
-        SousActivityNote {
-            readingMessage
+    @ViewBuilder
+    private var readContent: some View {
+        switch viewModel.recipeContent {
+        case .reading:
+            EmptyView()
+
+        case .recipe(let recipe):
+            recipeBody(recipe)
+
+        case .failure(let message):
+            failureNote(message)
         }
     }
 
@@ -184,20 +218,42 @@ struct RecipeFeatureView: View {
         SousFailureNote(Text("This recipe could not be read", bundle: .module), message: message)
     }
 
-    @ViewBuilder
-    private var readingMessage: some View {
-        if viewModel.recipeEntry.availability == .downloaded {
-            Text("Reading the recipe.", bundle: .module)
-        } else {
-            Text("Fetching from iCloud.", bundle: .module)
+    private var cookBar: some View {
+        // Over one another, so the note and the button take turns in one place.
+        ZStack {
+            switch viewModel.recipeContent {
+            case .reading:
+                readingNote
+
+            case .recipe(let recipe):
+                if !recipe.scaled.steps.isEmpty {
+                    cookButton
+                }
+
+            case .failure:
+                EmptyView()
+            }
         }
+        .animation(Self.arrival, value: isReading)
     }
 
-    @ViewBuilder
-    private var cookBar: some View {
-        if case .recipe(let recipe) = viewModel.recipeContent, !recipe.scaled.steps.isEmpty {
-            cookButton
-        }
+    private var readingNote: some View {
+        readingMessage
+            .foregroundStyle(.secondary)
+            // Only a recipe coming down from iCloud says what it waits on, since that wait is the long one.
+            .opacity(isFetching ? 1.0 : 0.0)
+            .frame(maxWidth: .infinity)
+            .sousPagePadding()
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(readingMessage)
+    }
+
+    private var isFetching: Bool {
+        viewModel.recipeEntry.availability != .downloaded
+    }
+
+    private var readingMessage: Text {
+        isFetching ? Text("Fetching from iCloud.", bundle: .module) : Text("Reading the recipe.", bundle: .module)
     }
 
     private var cookButton: some View {
@@ -252,7 +308,8 @@ private func previewViewModel(
             name: "boeuf bourguignon",
             availability: availability
         ),
-        folderPath: ["Recipes", "French", "Classic"]
+        folderPath: ["Recipes", "French", "Classic"],
+        placeholderRecipe: .placeholder(parser: SousParser())
     )
     viewModel.recipeContent = recipeContent
 
