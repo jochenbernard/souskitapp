@@ -39,4 +39,8 @@ final class PictureRepositorySpy: RecipeRepository {
 
         return thumbnail
     }
+
+    func exportRecipeFile(of _: RecipeEntry) throws -> URL {
+        throw CocoaError(.fileReadNoSuchFile)
+    }
 }

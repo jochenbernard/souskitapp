@@ -14,5 +14,25 @@
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>
 	</dict>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.plain-text</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Sous Recipe</string>
+			<key>UTTypeIdentifier</key>
+			<string>app.souskit.sous</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>sous</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

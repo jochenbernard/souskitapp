@@ -114,4 +114,14 @@ struct FileRecipeRepository: RecipeRepository {
         // Read back from the kept file, so the first read shows the picture as every later one does.
         return thumbnailCache.thumbnail(of: picture, filling: pixelSize) ?? keptThumbnail
     }
+
+    /// Copies off the caller's actor, where a recipe still in iCloud has to be fetched first, into a folder of the
+    /// copy's own under the temporary directory.
+    @concurrent
+    func exportRecipeFile(of entry: RecipeEntry) async throws -> URL {
+        try await textReader.copy(
+            path: entry.path,
+            into: URL.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        )
+    }
 }

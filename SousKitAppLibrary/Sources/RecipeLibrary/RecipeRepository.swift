@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 import SousKit
 
 /// The user's recipes, listed and read wherever they are kept.
@@ -41,4 +42,14 @@ public protocol RecipeRepository: Sendable {
     /// - Returns: The picture, decoded.
     /// - Throws: Whatever fetching or reading the picture throws, or what its contents not being a picture does.
     func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage
+
+    /// Copies a recipe's file out of the repository, for handing it to another app.
+    ///
+    /// A recipe not on the device is fetched first, and the copy holds its newest version. Every call makes a new copy,
+    /// which no other call writes to.
+    ///
+    /// - Parameter entry: The recipe to copy.
+    /// - Returns: Where the copy sits, under the name of the recipe's file.
+    /// - Throws: Whatever fetching, reading or copying the file throws.
+    func exportRecipeFile(of entry: RecipeEntry) async throws -> URL
 }

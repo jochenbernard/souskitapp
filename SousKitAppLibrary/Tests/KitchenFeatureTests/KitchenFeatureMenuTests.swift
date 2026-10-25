@@ -1,3 +1,4 @@
+import Foundation
 @testable import KitchenFeature
 import Observation
 import os
@@ -187,5 +188,45 @@ struct KitchenFeatureMenuTests {
 
         #expect(viewModel.presentedSearchPath == nil)
         #expect(viewModel.pushedScreens == [.folder(["French"]), .folder(["French", "Classic"])])
+    }
+
+    @MainActor
+    @Test("sharing a recipe copies its file out, opens the sheet over its card, and closing the sheet forgets it")
+    func sharing() async {
+        let crepes = RecipeEntry.stubbed(at: "Baking/crepes")
+        let repository = RecipeRepositorySpy()
+        let viewModel = makeViewModel()
+        let presenter = KitchenFeaturePresenter.stubbed(
+            viewModel: viewModel,
+            parser: parser,
+            recipeRepository: repository
+        )
+
+        await presenter.didChooseSharing(crepes)
+
+        #expect(repository.exportedEntries == [crepes])
+        #expect(viewModel.sharedFile?.recipeEntry == crepes)
+        #expect(viewModel.sharedFile?.url == URL.temporaryDirectory.appending(path: "Baking/crepes"))
+
+        presenter.didDismissSharing()
+
+        #expect(viewModel.sharedFile == nil)
+    }
+
+    @MainActor
+    @Test("a recipe whose file cannot be copied out opens no sheet")
+    func sharingFails() async {
+        let repository = RecipeRepositorySpy()
+        repository.exportError = CocoaError(.ubiquitousFileUbiquityServerNotAvailable)
+        let viewModel = makeViewModel()
+        let presenter = KitchenFeaturePresenter.stubbed(
+            viewModel: viewModel,
+            parser: parser,
+            recipeRepository: repository
+        )
+
+        await presenter.didChooseSharing(RecipeEntry.stubbed(at: "Baking/crepes"))
+
+        #expect(viewModel.sharedFile == nil)
     }
 }

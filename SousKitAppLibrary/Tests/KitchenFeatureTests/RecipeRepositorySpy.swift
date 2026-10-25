@@ -12,9 +12,13 @@ final class RecipeRepositorySpy: RecipeRepository {
     private(set) var refreshCount = 0
     private(set) var readCount = 0
     private(set) var thumbnailReads: [RecipePicture] = []
+    private(set) var exportedEntries: [RecipeEntry] = []
 
     /// The thumbnail read for each picture, by its id; any other picture fails to read.
     var thumbnails: [String: CGImage] = [:]
+
+    /// What every export throws, or `nil` for exports that succeed.
+    var exportError: Error?
 
     nonisolated private let parser = SousParser()
 
@@ -47,6 +51,18 @@ final class RecipeRepositorySpy: RecipeRepository {
         }
 
         return thumbnail
+    }
+
+    /// Copies out no file: the recipe's path inside the temporary directory, where nothing is written, or the error
+    /// a test gives.
+    func exportRecipeFile(of entry: RecipeEntry) throws -> URL {
+        exportedEntries.append(entry)
+
+        if let exportError {
+            throw exportError
+        }
+
+        return URL.temporaryDirectory.appending(path: entry.id)
     }
 
     /// Yields recipes listed with no ingredient names, or a failure, to the stream, which keeps it until the stream is
