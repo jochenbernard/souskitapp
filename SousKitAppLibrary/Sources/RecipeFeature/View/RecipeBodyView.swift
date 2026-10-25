@@ -140,7 +140,8 @@ struct RecipeBodyView: View {
             presenter: presenter,
             metadata: metadata,
             scale: recipe.scale,
-            header: header
+            header: header,
+            tagRowCount: nil
         )
     }
 

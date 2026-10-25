@@ -8,6 +8,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private let cookingFeatureFactory: CookingFeatureFactory
     let greetingClock: KitchenGreetingClock
     let handler: KitchenFeatureHandler
+    let menuRequest = KitchenMenuRequest()
     private let recipeFeatureFactory: RecipeFeatureFactory
     let recipeRepository: RecipeRepository
     let restorationKeeper: KitchenRestorationKeeper
@@ -141,6 +142,9 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             return
         }
 
+        // What a menu asked of a screen it pushed goes with the push, and is not done by a screen pushed later.
+        menuRequest.forget()
+
         let previousTop = viewModel.pushedScreens.last
         viewModel.pushedScreens = pushedScreens
         forgetSearches(offScreen: pushedScreens)
@@ -184,6 +188,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
             recipeEntry: recipeEntry,
             feature: recipeFeatureFactory.makeRecipeFeature(
                 recipeEntry: recipeEntry,
+                thumbnail: recipeEntry.picture.flatMap({ viewModel.thumbnails[$0] }),
                 restoration: restoration,
                 resumesCooking: resumesCooking,
                 handler: self

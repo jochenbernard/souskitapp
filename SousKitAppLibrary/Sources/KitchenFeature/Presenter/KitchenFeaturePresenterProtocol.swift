@@ -46,6 +46,42 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didDismissCooking()
 
+    /// A recipe's card was long pressed, for a preview of the recipe.
+    @MainActor
+    func didPreview(_ recipeEntry: RecipeEntry)
+
+    /// A recipe card's menu chose to cook the recipe, which pushes it and then starts cooking from it.
+    ///
+    /// - Parameters:
+    ///   - recipeEntry: The recipe.
+    ///   - origin: The screen the card is on, or `nil` for the kitchen's own.
+    @MainActor
+    func didChooseCooking(_ recipeEntry: RecipeEntry, from origin: KitchenScreen?)
+
+    /// A recipe card's menu chose to scale the recipe, which pushes it with its scale sheet open.
+    ///
+    /// - Parameters:
+    ///   - recipeEntry: The recipe.
+    ///   - origin: The screen the card is on, or `nil` for the kitchen's own.
+    @MainActor
+    func didChooseScaling(_ recipeEntry: RecipeEntry, from origin: KitchenScreen?)
+
+    /// The menu of a recipe a search found chose to show the folder the recipe sits in, which pushes the folder.
+    ///
+    /// - Parameters:
+    ///   - recipeEntry: The recipe.
+    ///   - origin: The screen the card is on, or `nil` for the kitchen's own.
+    @MainActor
+    func didChooseFolder(of recipeEntry: RecipeEntry, from origin: KitchenScreen?)
+
+    /// A folder card's menu chose to search in the folder, which pushes it with its search field active.
+    ///
+    /// - Parameters:
+    ///   - folderPath: The names of the folders leading down to the folder, its own last.
+    ///   - origin: The screen the card is on, or `nil` for the kitchen's own.
+    @MainActor
+    func didChooseSearch(inFolderAt folderPath: [String], from origin: KitchenScreen?)
+
     /// A folder's search field became active or stopped being active.
     ///
     /// - Parameters:

@@ -25,6 +25,39 @@ public struct RecipeFeature {
         presenter.entryDidChange(recipeEntry)
     }
 
+    /// Starts cooking the recipe as the screen's button does, once the recipe is read, which reports it to the handler.
+    ///
+    /// A recipe that cannot be read, or has no steps, starts nothing.
+    @MainActor
+    public func startCooking() {
+        presenter.didRequestCooking()
+    }
+
+    /// Opens the screen's scale sheet, once the recipe is read.
+    @MainActor
+    public func showScale() {
+        presenter.didRequestScaling()
+    }
+
+    /// A glance at the recipe before it is opened, which reads the recipe as it appears.
+    ///
+    /// Its height follows what it holds, so it is offered no fixed height.
+    ///
+    /// - Parameters:
+    ///   - placeholder: What the recipe's card shows where it has no picture, which the glance shows in its place
+    ///     too.
+    ///   - maximumHeight: The most height the glance may take, which its tags take as many rows of as fit.
+    /// - Returns: The view to show as the recipe's preview.
+    @MainActor
+    public func makePreview(placeholder: RecipePlaceholder, maximumHeight: CGFloat) -> some View {
+        RecipePreviewView(
+            presenter: presenter,
+            viewModel: viewModel,
+            placeholder: placeholder,
+            maximumHeight: maximumHeight
+        )
+    }
+
     /// The feature's screen.
     ///
     /// - Parameters:

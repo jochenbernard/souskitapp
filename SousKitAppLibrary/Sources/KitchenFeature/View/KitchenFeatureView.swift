@@ -9,6 +9,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @Namespace private var cookingTransition
+    @Namespace private var cardTransition
 
     private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
@@ -78,7 +79,8 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
         KitchenFolderPage(
             path: path,
             presenter: presenter,
-            viewModel: viewModel
+            viewModel: viewModel,
+            cardTransition: cardTransition
         )
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -100,6 +102,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
         }
     }
 
+    /// A pushed screen: a recipe zooming out of the card that opened it, and a folder sliding in.
     @ViewBuilder
     private func screenView(for screen: KitchenScreen) -> some View {
         switch screen {
@@ -107,7 +110,13 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
             folderScreen(at: path)
 
         case .recipe(let recipeEntry):
-            recipeScreen(for: recipeEntry)
+            // A recipe a cold start opened again slides, as a zoom out of no card leaves its swipe back dead.
+            if viewModel.zoomedRecipeIDs.contains(recipeEntry.id) {
+                recipeScreen(for: recipeEntry)
+                    .navigationTransition(.zoom(sourceID: recipeEntry.id, in: cardTransition))
+            } else {
+                recipeScreen(for: recipeEntry)
+            }
         }
     }
 

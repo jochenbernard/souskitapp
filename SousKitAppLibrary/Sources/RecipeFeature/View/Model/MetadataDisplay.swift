@@ -16,4 +16,14 @@ struct MetadataDisplay {
     var isEmpty: Bool {
         facts.isEmpty && tags.isEmpty && allergens.isEmpty && rows.isEmpty
     }
+
+    /// The facts and the tags alone, which a glance at the recipe shows.
+    var glance: MetadataDisplay {
+        MetadataDisplay(
+            facts: facts,
+            tags: tags,
+            allergens: [],
+            rows: []
+        )
+    }
 }

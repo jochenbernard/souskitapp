@@ -4,32 +4,38 @@ import SousKit
 import SwiftUI
 
 /// A recipe's header on a surface: its facts, its tags and allergens, the lines left over, and
-/// what the recipe is scaled to.
+/// what the recipe is scaled to where the card offers a scale.
 struct RecipeMetadataView: View {
     @LineContainerRadius private var radius
 
     private let presenter: RecipeFeaturePresenterProtocol
     private let metadata: MetadataDisplay
-    private let scale: RecipeScale
+    private let scale: RecipeScale?
     private let header: RecipeHeaderView?
+    private let tagRowCount: Int?
 
-    /// - Parameter header: What the card opens with, or `nil` for the card alone.
+    /// - Parameters:
+    ///   - scale: What the recipe is scaled to, or `nil` for a card that offers no scale.
+    ///   - header: What the card opens with, or `nil` for the card alone.
+    ///   - tagRowCount: The most rows of tags the card shows, with a chip counting the rest, or `nil` for every tag.
     init(
         presenter: RecipeFeaturePresenterProtocol,
         metadata: MetadataDisplay,
-        scale: RecipeScale,
-        header: RecipeHeaderView?
+        scale: RecipeScale?,
+        header: RecipeHeaderView?,
+        tagRowCount: Int?
     ) {
         self.presenter = presenter
         self.metadata = metadata
         self.scale = scale
         self.header = header
+        self.tagRowCount = tagRowCount
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0.0) {
             header?
-                .sousCardPicture()
+                .sousCardPicture(endsCard: metadata.isEmpty && scale == nil)
 
             factStrip
 
@@ -43,13 +49,7 @@ struct RecipeMetadataView: View {
                 metadataRow(row)
             }
 
-            scaleDivider
-
-            ScaleRow(
-                Text("Scale", bundle: .module),
-                scale: scale,
-                action: presenter.didTapScale
-            )
+            scaleRow
         }
         // The header's picture takes the card's corners.
         .clipShape(.rect(cornerRadius: radius))
@@ -137,12 +137,36 @@ struct RecipeMetadataView: View {
     @ViewBuilder
     private var tagChips: some View {
         if !metadata.tags.isEmpty {
-            SousFlowLayout(spacing: SousSpacing.small) {
-                ForEach(metadata.tags.indices, id: \.self) { index in
-                    Text(verbatim: metadata.tags[index])
-                        .sousChip()
+            if let tagRowCount {
+                // The most tags that fit in the rows, the chip counting the rest among them.
+                ViewThatFits(in: .horizontal) {
+                    ForEach((0...metadata.tags.count).reversed(), id: \.self) { shownCount in
+                        tagFlow(shownCount: shownCount, maximumRowCount: tagRowCount)
+                    }
                 }
+            } else {
+                tagFlow(shownCount: metadata.tags.count, maximumRowCount: nil)
             }
+        }
+    }
+
+    private func tagFlow(shownCount: Int, maximumRowCount: Int?) -> some View {
+        SousFlowLayout(spacing: SousSpacing.small, maximumRowCount: maximumRowCount) {
+            ForEach(0..<shownCount, id: \.self) { index in
+                Text(verbatim: metadata.tags[index])
+                    .sousChip()
+            }
+
+            hiddenTagsChip(metadata.tags.count - shownCount)
+        }
+    }
+
+    @ViewBuilder
+    private func hiddenTagsChip(_ count: Int) -> some View {
+        if count > 0 {
+            Text(verbatim: "+\(count)")
+                .sousChip()
+                .accessibilityLabel(Text("\(count) more tags", bundle: .module))
         }
     }
 
@@ -188,6 +212,19 @@ struct RecipeMetadataView: View {
         }
     }
 
+    @ViewBuilder
+    private var scaleRow: some View {
+        if let scale {
+            scaleDivider
+
+            ScaleRow(
+                Text("Scale", bundle: .module),
+                scale: scale,
+                action: presenter.didTapScale
+            )
+        }
+    }
+
     /// The scale is the last row, so it is divided from anything the header put above it.
     @ViewBuilder
     private var scaleDivider: some View {
@@ -201,13 +238,15 @@ struct RecipeMetadataView: View {
 @MainActor
 private func previewMetadataView(
     _ header: String,
-    scale: RecipeScale
+    scale: RecipeScale?,
+    tagRowCount: Int? = nil
 ) -> RecipeMetadataView {
     RecipeMetadataView(
         presenter: RecipeFeaturePresenterStub(),
         metadata: RecipeDisplay.metadata(of: SousParser().parseRecipe(header).value.metadata),
         scale: scale,
-        header: nil
+        header: nil,
+        tagRowCount: tagRowCount
     )
 }
 
@@ -273,6 +312,45 @@ private func previewMetadataView(
             """,
             scale: RecipeScale(target: .multiplier, value: 1.0)
         )
+        .sousPagePadding()
+    }
+    .sousPage()
+}
+
+#Preview("Recipe metadata, without the scale") {
+    ScrollView {
+        previewMetadataView(
+            """
+            ---
+            title: Boeuf Bourguignon
+            servings: 6
+            prep-time: 30 min
+            cook-time: 3 h
+            tags: [dinner, classic, french]
+            allergens: [gluten, dairy]
+            ---
+            """,
+            scale: nil
+        )
+        .sousPagePadding()
+    }
+    .sousPage()
+}
+
+#Preview("Recipe metadata, tags cut to two rows") {
+    ScrollView {
+        previewMetadataView(
+            """
+            ---
+            title: Ratatouille
+            servings: 4
+            tags: [dinner, lunch, vegetarian, vegan, summer, provencal, french, classic, make-ahead, comfort food]
+            ---
+            """,
+            scale: nil,
+            tagRowCount: 2
+        )
+        .frame(width: 320.0)
         .sousPagePadding()
     }
     .sousPage()

@@ -3,6 +3,10 @@ import RecipeLibrary
 extension KitchenFeaturePresenter {
     @MainActor
     func screenDidAppear(_ screen: KitchenScreen?) {
+        if let screen {
+            performMenuRequest(on: screen)
+        }
+
         guard viewModel.pushedScreens.last == screen else {
             return
         }

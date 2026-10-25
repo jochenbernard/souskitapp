@@ -1,3 +1,4 @@
+import CoreGraphics
 import Observation
 import RecipeLibrary
 
@@ -13,15 +14,24 @@ final class RecipeFeatureViewModel {
     var isScaling = false
     var scaleText = ""
 
-    /// - Parameter folderPath: The repository's name, then the folders leading down to the recipe.
+    /// - Parameters:
+    ///   - folderPath: The repository's name, then the folders leading down to the recipe.
+    ///   - thumbnail: The recipe's picture as its card shows it, or `nil` where the card shows none.
     init(
         recipeEntry: RecipeEntry,
-        folderPath: [String]
+        folderPath: [String],
+        thumbnail: CGImage? = nil
     ) {
         self.recipeEntry = recipeEntry
         self.folderPath = folderPath
         self.picture = recipeEntry.picture
-        // A recipe naming no picture shows its placeholder from the first frame of the push.
-        self.headerPicture = recipeEntry.picture == nil ? .placeholder : .reading
+        // The card's picture stands in from the first frame of the zoom until the header reads its own.
+        self.headerPicture = if recipeEntry.picture == nil {
+            .placeholder
+        } else if let thumbnail {
+            .read(thumbnail)
+        } else {
+            .reading
+        }
     }
 }

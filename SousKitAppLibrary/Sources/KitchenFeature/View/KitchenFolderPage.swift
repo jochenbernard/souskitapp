@@ -6,25 +6,38 @@ import SwiftUI
 /// the folders inside it and its recipes, as cards.
 struct KitchenFolderPage: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @ScaledMetric(relativeTo: .body) private var scaledCardWidth = Self.minimumCardWidth
 
+    @State private var pageSize = CGSize.zero
+
     // Two columns on any iPhone; at accessibility sizes the width grows with the text, which leaves the iPhone one.
     private static let minimumCardWidth = 160.0
+
+    private static let maximumPreviewWidth = 370.0
+    // The iPad crops a preview wider than about 330 points and narrows one taller than about 490 points.
+    private static let regularPreviewSize = CGSize(width: 320.0, height: 488.0)
+    // On an iPhone a preview leaves room for the menu under it.
+    private static let menuRoom = 330.0
 
     // The names of the folders leading down to the folder, or none for the top of the repository.
     private let path: [String]
     private let presenter: KitchenFeaturePresenterProtocol
     private let viewModel: KitchenFeatureViewModel
+    private let cardTransition: Namespace.ID
 
+    /// - Parameter cardTransition: Where a recipe the page pushes zooms out of its card, by the recipe's id.
     init(
         path: [String],
         presenter: KitchenFeaturePresenterProtocol,
-        viewModel: KitchenFeatureViewModel
+        viewModel: KitchenFeatureViewModel,
+        cardTransition: Namespace.ID
     ) {
         self.path = path
         self.presenter = presenter
         self.viewModel = viewModel
+        self.cardTransition = cardTransition
     }
 
     var body: some View {
@@ -38,6 +51,17 @@ struct KitchenFolderPage: View {
                     .sousPagePadding()
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            // With the bars, which a preview may cover.
+            .onGeometryChange(
+                for: CGSize.self,
+                of: { proxy in
+                    CGSize(
+                        width: proxy.size.width,
+                        height: proxy.size.height + proxy.safeAreaInsets.top + proxy.safeAreaInsets.bottom
+                    )
+                },
+                action: { pageSize = $0 }
+            )
             // Over the page rather than in it, so it stays centered in what the field and the keyboard leave visible.
             .overlay {
                 if let emptySearch {
@@ -96,19 +120,7 @@ struct KitchenFolderPage: View {
     private func searchResultsView(_ cards: [KitchenRecipeCard]) -> some View {
         RecipeCardGrid(minimumColumnWidth: minimumColumnWidth, spacing: SousSpacing.medium) {
             ForEach(cards) { card in
-                Button(
-                    action: { presenter.didPush(.recipe(card.recipeEntry), from: origin) },
-                    label: {
-                        RecipeCard(
-                            card,
-                            thumbnails: viewModel.thumbnails,
-                            symbols: viewModel.symbols,
-                            presenter: presenter,
-                            detail: .folder(folderNames(of: card))
-                        )
-                    }
-                )
-                .buttonStyle(.plain)
+                recipeButton(card, detail: .folder(folderNames(of: card)))
             }
         }
     }
@@ -117,9 +129,32 @@ struct KitchenFolderPage: View {
         dynamicTypeSize.isAccessibilitySize ? scaledCardWidth : Self.minimumCardWidth
     }
 
-    /// The screen showing the folder, which its cards push over.
-    private var origin: KitchenScreen? {
-        path.isEmpty ? nil : .folder(path)
+    private func recipeButton(_ card: KitchenRecipeCard, detail: RecipeCard.Detail) -> some View {
+        RecipeCardButton(
+            card,
+            detail: detail,
+            folderPath: path,
+            presenter: presenter,
+            viewModel: viewModel,
+            cardTransition: cardTransition,
+            previewSize: previewSize
+        )
+    }
+
+    /// The most a card's preview takes of the page: its width, and its height, which leaves room for the menu.
+    private var previewSize: CGSize {
+        switch horizontalSizeClass {
+        case .regular:
+            return Self.regularPreviewSize
+
+        case .compact, nil:
+            let width = min(Self.maximumPreviewWidth, pageSize.width - SousSpacing.large * 2.0)
+
+            return CGSize(width: width, height: max(pageSize.height - Self.menuRoom, width))
+
+        @unknown default:
+            return Self.regularPreviewSize
+        }
     }
 
     /// Where a recipe a search found sits: from the repository's name down at the top, and from the folder searched
@@ -137,35 +172,24 @@ struct KitchenFolderPage: View {
     private func folderView(_ folder: KitchenFolder) -> some View {
         RecipeCardGrid(minimumColumnWidth: minimumColumnWidth, spacing: SousSpacing.medium) {
             ForEach(folder.folders) { innerFolder in
-                Button(
-                    action: { presenter.didPush(.folder(innerFolder.path), from: origin) },
-                    label: {
-                        FolderCard(
-                            innerFolder,
-                            thumbnails: viewModel.thumbnails,
-                            symbols: viewModel.symbols,
-                            presenter: presenter
-                        )
-                    }
+                FolderCardButton(
+                    innerFolder,
+                    origin: origin,
+                    presenter: presenter,
+                    viewModel: viewModel,
+                    previewSize: previewSize
                 )
-                .buttonStyle(.plain)
             }
 
             ForEach(folder.cards) { card in
-                Button(
-                    action: { presenter.didPush(.recipe(card.recipeEntry), from: origin) },
-                    label: {
-                        RecipeCard(
-                            card,
-                            thumbnails: viewModel.thumbnails,
-                            symbols: viewModel.symbols,
-                            presenter: presenter
-                        )
-                    }
-                )
-                .buttonStyle(.plain)
+                recipeButton(card, detail: .totalTime)
             }
         }
+    }
+
+    /// The screen showing the folder, which its cards push over.
+    private var origin: KitchenScreen? {
+        path.isEmpty ? nil : .folder(path)
     }
 
     private var emptyNote: some View {
@@ -239,22 +263,28 @@ private func previewViewModel() -> KitchenFeatureViewModel {
 }
 
 #Preview("Folder page, top") {
+    @Previewable @Namespace var cardTransition
+
     NavigationStack {
         KitchenFolderPage(
             path: [],
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel()
+            viewModel: previewViewModel(),
+            cardTransition: cardTransition
         )
         .navigationTitle("Recipes")
     }
 }
 
 #Preview("Folder page, inside a folder") {
+    @Previewable @Namespace var cardTransition
+
     NavigationStack {
         KitchenFolderPage(
             path: ["Baking"],
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewViewModel()
+            viewModel: previewViewModel(),
+            cardTransition: cardTransition
         )
         .navigationTitle("Baking")
     }
@@ -275,33 +305,42 @@ private func previewSearch(
 }
 
 #Preview("Folder page, search results") {
+    @Previewable @Namespace var cardTransition
+
     NavigationStack {
         KitchenFolderPage(
             path: [],
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewSearch("b", at: [], finding: ["Baking/brioche", "Baking/Classic/crepes"])
+            viewModel: previewSearch("b", at: [], finding: ["Baking/brioche", "Baking/Classic/crepes"]),
+            cardTransition: cardTransition
         )
         .navigationTitle("Recipes")
     }
 }
 
 #Preview("Folder page, search results inside a folder") {
+    @Previewable @Namespace var cardTransition
+
     NavigationStack {
         KitchenFolderPage(
             path: ["Baking"],
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewSearch("b", at: ["Baking"], finding: ["Baking/brioche", "Baking/Classic/crepes"])
+            viewModel: previewSearch("b", at: ["Baking"], finding: ["Baking/brioche", "Baking/Classic/crepes"]),
+            cardTransition: cardTransition
         )
         .navigationTitle("Baking")
     }
 }
 
 #Preview("Folder page, no search results") {
+    @Previewable @Namespace var cardTransition
+
     NavigationStack {
         KitchenFolderPage(
             path: [],
             presenter: KitchenFeaturePresenterStub(),
-            viewModel: previewSearch("mussels", at: [], finding: [])
+            viewModel: previewSearch("mussels", at: [], finding: []),
+            cardTransition: cardTransition
         )
         .navigationTitle("Recipes")
     }

@@ -1,3 +1,4 @@
+import CoreGraphics
 import RecipeLibrary
 import SousKit
 
@@ -27,6 +28,8 @@ public struct RecipeFeatureFactory: Sendable {
     ///
     /// - Parameters:
     ///   - recipeEntry: The recipe to render.
+    ///   - thumbnail: The recipe's picture as its card shows it, which the header shows until it reads its own, or
+    ///     `nil` where the card shows none.
     ///   - restoration: How the screen was left, or `nil` for a screen just pushed.
     ///   - resumesCooking: Whether cooking opens again once the recipe is read.
     ///   - handler: What the feature reports to.
@@ -34,13 +37,15 @@ public struct RecipeFeatureFactory: Sendable {
     @MainActor
     public func makeRecipeFeature(
         recipeEntry: RecipeEntry,
+        thumbnail: CGImage?,
         restoration: RecipeFeatureRestoration?,
         resumesCooking: Bool,
         handler: RecipeFeatureHandler
     ) -> RecipeFeature {
         let viewModel = RecipeFeatureViewModel(
             recipeEntry: recipeEntry,
-            folderPath: [recipeRepository.name] + recipeEntry.folderPath
+            folderPath: [recipeRepository.name] + recipeEntry.folderPath,
+            thumbnail: thumbnail
         )
         let presenter = RecipeFeaturePresenter(
             handler: handler,

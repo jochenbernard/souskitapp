@@ -5,7 +5,7 @@ enum HeaderPicture {
     /// The header has not appeared yet, or the picture the recipe names is still being read.
     case reading
 
-    /// A picture, read to fill the header.
+    /// A picture, read to fill the header, or as the recipe's card shows it until it is.
     case read(CGImage)
 
     /// The recipe's placeholder, where it names no picture or its picture cannot be read.

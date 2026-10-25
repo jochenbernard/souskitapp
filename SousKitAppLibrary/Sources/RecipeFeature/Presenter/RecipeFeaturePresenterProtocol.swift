@@ -27,4 +27,12 @@ protocol RecipeFeaturePresenterProtocol: ScaleSheetPresenterProtocol {
 
     @MainActor
     func didTapCook()
+
+    /// Cooking was asked for from outside the screen, as its button starts it, once the recipe is read.
+    @MainActor
+    func didRequestCooking()
+
+    /// The scale sheet was asked for from outside the screen, to open once the recipe is read.
+    @MainActor
+    func didRequestScaling()
 }

@@ -143,6 +143,23 @@
         }
       }
     },
+    "Open" : {
+      "comment" : "A card's menu: opens what the card opens.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Openen"
+          }
+        }
+      }
+    },
     "Put .sous files in this folder and they are listed here." : {
       "localizations" : {
         "en" : {
@@ -171,6 +188,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "De map wordt gelezen."
+          }
+        }
+      }
+    },
+    "Scale" : {
+      "comment" : "A recipe card's menu: opens the recipe with its scale sheet.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scale"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Omrekenen"
           }
         }
       }
@@ -207,6 +241,40 @@
         }
       }
     },
+    "Show in folder" : {
+      "comment" : "The menu of a recipe a search found: opens the folder the recipe sits in.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show in folder"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toon in map"
+          }
+        }
+      }
+    },
+    "Start cooking" : {
+      "comment" : "A recipe card's menu: opens the recipe and starts cooking it.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start cooking"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beginnen met koken"
+          }
+        }
+      }
+    },
     "This folder could not be read" : {
       "localizations" : {
         "en" : {
@@ -219,6 +287,47 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Deze map kon niet gelezen worden"
+          }
+        }
+      }
+    },
+    "and %lld more" : {
+      "comment" : "Under a folder's preview: how many of its cards the preview leaves out.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "and %lld more"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "and %lld more"
+                }
+              }
+            }
+          }
+        },
+        "nl-BE" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "en nog %lld"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "en nog %lld"
+                }
+              }
+            }
           }
         }
       }
