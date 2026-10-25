@@ -12,20 +12,24 @@ struct RecipeMetadataView: View {
     private let metadata: MetadataDisplay
     private let scale: RecipeScale?
     private let header: RecipeHeaderView?
+    private let tagRowCount: Int?
 
     /// - Parameters:
     ///   - scale: What the recipe is scaled to, or `nil` for a card that offers no scale.
     ///   - header: What the card opens with, or `nil` for the card alone.
+    ///   - tagRowCount: The most rows of tags the card shows, with a chip counting the rest, or `nil` for every tag.
     init(
         presenter: RecipeFeaturePresenterProtocol,
         metadata: MetadataDisplay,
         scale: RecipeScale?,
-        header: RecipeHeaderView?
+        header: RecipeHeaderView?,
+        tagRowCount: Int?
     ) {
         self.presenter = presenter
         self.metadata = metadata
         self.scale = scale
         self.header = header
+        self.tagRowCount = tagRowCount
     }
 
     var body: some View {
@@ -133,12 +137,36 @@ struct RecipeMetadataView: View {
     @ViewBuilder
     private var tagChips: some View {
         if !metadata.tags.isEmpty {
-            SousFlowLayout(spacing: SousSpacing.small) {
-                ForEach(metadata.tags.indices, id: \.self) { index in
-                    Text(verbatim: metadata.tags[index])
-                        .sousChip()
+            if let tagRowCount {
+                // The most tags that fit in the rows, the chip counting the rest among them.
+                ViewThatFits(in: .horizontal) {
+                    ForEach((0...metadata.tags.count).reversed(), id: \.self) { shownCount in
+                        tagFlow(shownCount: shownCount, maximumRowCount: tagRowCount)
+                    }
                 }
+            } else {
+                tagFlow(shownCount: metadata.tags.count, maximumRowCount: nil)
             }
+        }
+    }
+
+    private func tagFlow(shownCount: Int, maximumRowCount: Int?) -> some View {
+        SousFlowLayout(spacing: SousSpacing.small, maximumRowCount: maximumRowCount) {
+            ForEach(0..<shownCount, id: \.self) { index in
+                Text(verbatim: metadata.tags[index])
+                    .sousChip()
+            }
+
+            hiddenTagsChip(metadata.tags.count - shownCount)
+        }
+    }
+
+    @ViewBuilder
+    private func hiddenTagsChip(_ count: Int) -> some View {
+        if count > 0 {
+            Text(verbatim: "+\(count)")
+                .sousChip()
+                .accessibilityLabel(Text("\(count) more tags", bundle: .module))
         }
     }
 
@@ -210,13 +238,15 @@ struct RecipeMetadataView: View {
 @MainActor
 private func previewMetadataView(
     _ header: String,
-    scale: RecipeScale?
+    scale: RecipeScale?,
+    tagRowCount: Int? = nil
 ) -> RecipeMetadataView {
     RecipeMetadataView(
         presenter: RecipeFeaturePresenterStub(),
         metadata: RecipeDisplay.metadata(of: SousParser().parseRecipe(header).value.metadata),
         scale: scale,
-        header: nil
+        header: nil,
+        tagRowCount: tagRowCount
     )
 }
 
@@ -302,6 +332,25 @@ private func previewMetadataView(
             """,
             scale: nil
         )
+        .sousPagePadding()
+    }
+    .sousPage()
+}
+
+#Preview("Recipe metadata, tags cut to two rows") {
+    ScrollView {
+        previewMetadataView(
+            """
+            ---
+            title: Ratatouille
+            servings: 4
+            tags: [dinner, lunch, vegetarian, vegan, summer, provencal, french, classic, make-ahead, comfort food]
+            ---
+            """,
+            scale: nil,
+            tagRowCount: 2
+        )
+        .frame(width: 320.0)
         .sousPagePadding()
     }
     .sousPage()

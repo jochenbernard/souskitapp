@@ -1,6 +1,47 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld more tags" : {
+      "comment" : "What VoiceOver reads for the chip that counts the tags a recipe's preview leaves out.",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld more tag"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld more tags"
+                }
+              }
+            }
+          }
+        },
+        "nl-BE" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "nog %lld tag"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "nog %lld tags"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Author" : {
       "comment" : "The label on a recipe's author line.",
       "localizations" : {

@@ -6,8 +6,12 @@ import SwiftUI
 /// A glance at a recipe before it is opened: the card the screen opens with, cut to its picture, title, facts and
 /// tags, so it fits the room a preview has.
 struct RecipePreviewView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     // A preview cannot scroll, and past this size the facts alone outgrow it.
     private static let largestTypeSize = DynamicTypeSize.accessibility1
+    // Two rows of tags, or one at accessibility sizes, where two outgrow an iPad's preview.
+    private static let maximumTagRowCount = 2
 
     private let presenter: RecipeFeaturePresenterProtocol
     private let viewModel: RecipeFeatureViewModel
@@ -28,7 +32,8 @@ struct RecipePreviewView: View {
             presenter: presenter,
             metadata: metadata,
             scale: nil,
-            header: header
+            header: header,
+            tagRowCount: tagRowCount
         )
         .dynamicTypeSize(...Self.largestTypeSize)
         .task {
@@ -62,6 +67,10 @@ struct RecipePreviewView: View {
             // A glance has no bar for the title to scroll under.
             isTitleUnderBar: .constant(false)
         )
+    }
+
+    private var tagRowCount: Int {
+        dynamicTypeSize.isAccessibilitySize ? 1 : Self.maximumTagRowCount
     }
 }
 
@@ -128,6 +137,31 @@ private func previewRecipe(
         placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink)
     )
     .frame(width: 370.0)
+    .fixedSize(horizontal: false, vertical: true)
+    .sousPage()
+}
+
+#Preview("Recipe preview, many tags") {
+    RecipePreviewView(
+        presenter: RecipeFeaturePresenterStub(),
+        viewModel: previewViewModel(
+            .recipe(
+                previewRecipe(
+                    """
+                    ---
+                    title: Ratatouille
+                    servings: 4
+                    prep-time: 25 min
+                    cook-time: 1 h 15 min
+                    tags: [dinner, lunch, vegetarian, vegan, summer, provencal, french, classic, make-ahead, picnic]
+                    ---
+                    """
+                )
+            )
+        ),
+        placeholder: RecipePlaceholder(symbol: "fork.knife", color: .pink)
+    )
+    .frame(width: 320.0)
     .fixedSize(horizontal: false, vertical: true)
     .sousPage()
 }
