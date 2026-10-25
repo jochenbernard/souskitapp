@@ -7,9 +7,14 @@ import SwiftUI
 struct FolderPreview: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    // A preview cannot scroll, and past this size its heading and one card outgrow it.
+    private static let largestTypeSize = DynamicTypeSize.accessibility1
+    // Past this size two rows of cards outgrow the preview.
+    private static let largestTwoRowTypeSize = DynamicTypeSize.large
+
     // Two columns of cards, or one at accessibility sizes, where a card is as wide as the preview.
     private static let wideColumnCount = 2
-    private static let rowCount = 2
+    private static let maximumRowCount = 2
 
     private let folder: KitchenFolder
     private let thumbnails: KitchenThumbnails
@@ -38,6 +43,7 @@ struct FolderPreview: View {
         }
         .padding(SousSpacing.large)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .dynamicTypeSize(...Self.largestTypeSize)
         .sousPage()
     }
 
@@ -93,8 +99,12 @@ struct FolderPreview: View {
         dynamicTypeSize.isAccessibilitySize ? 1 : Self.wideColumnCount
     }
 
+    private var rowCount: Int {
+        dynamicTypeSize > Self.largestTwoRowTypeSize ? 1 : Self.maximumRowCount
+    }
+
     private var shownCount: Int {
-        columnCount * Self.rowCount
+        columnCount * rowCount
     }
 
     /// The folders inside this one that the preview shows, which come before its recipes as on its page.

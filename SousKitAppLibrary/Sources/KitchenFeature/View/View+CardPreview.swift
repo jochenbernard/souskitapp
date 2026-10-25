@@ -6,7 +6,7 @@ private struct CardPreviewModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            // Narrower where the menu leaves less room beside it, as an iPad's does at the largest text sizes.
+            // Narrower where the system narrows a preview taller than the room it has, keeping its proportions.
             .frame(idealWidth: size.width, maxWidth: size.width)
             // A context menu's preview of no fixed height never opens.
             .fixedSize(horizontal: false, vertical: true)

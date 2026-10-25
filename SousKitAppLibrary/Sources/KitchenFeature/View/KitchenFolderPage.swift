@@ -15,9 +15,10 @@ struct KitchenFolderPage: View {
     // Two columns on any iPhone; at accessibility sizes the width grows with the text, which leaves the iPhone one.
     private static let minimumCardWidth = 160.0
 
-    // The iPad crops a preview wider than about 330 points, and a preview leaves room for the menu under it.
     private static let maximumPreviewWidth = 370.0
-    private static let maximumRegularPreviewWidth = 320.0
+    // The iPad crops a preview wider than about 330 points and narrows one taller than about 490 points.
+    private static let regularPreviewSize = CGSize(width: 320.0, height: 488.0)
+    // On an iPhone a preview leaves room for the menu under it.
     private static let menuRoom = 330.0
 
     // The names of the folders leading down to the folder, or none for the top of the repository.
@@ -142,18 +143,18 @@ struct KitchenFolderPage: View {
 
     /// The most a card's preview takes of the page: its width, and its height, which leaves room for the menu.
     private var previewSize: CGSize {
-        let width = switch horizontalSizeClass {
+        switch horizontalSizeClass {
         case .regular:
-            Self.maximumRegularPreviewWidth
+            return Self.regularPreviewSize
 
         case .compact, nil:
-            min(Self.maximumPreviewWidth, pageSize.width - SousSpacing.large * 2.0)
+            let width = min(Self.maximumPreviewWidth, pageSize.width - SousSpacing.large * 2.0)
+
+            return CGSize(width: width, height: max(pageSize.height - Self.menuRoom, width))
 
         @unknown default:
-            Self.maximumRegularPreviewWidth
+            return Self.regularPreviewSize
         }
-
-        return CGSize(width: width, height: max(pageSize.height - Self.menuRoom, width))
     }
 
     /// Where a recipe a search found sits: from the repository's name down at the top, and from the folder searched
