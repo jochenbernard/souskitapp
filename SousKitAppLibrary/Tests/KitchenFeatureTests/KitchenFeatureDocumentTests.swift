@@ -165,6 +165,21 @@ struct KitchenFeatureDocumentTests {
     }
 
     @MainActor
+    @Test("the recipe already on top of a folder stays there when its file is opened")
+    func sameFileKeepsTheFolderUnderIt() async {
+        let crepes = recipeEntry("crepes.sous")
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        let presenter = await makePresenter(viewModel: viewModel, listing: [crepes])
+        presenter.screenDidAppear(nil)
+        presenter.didPush(.folder(["Baking"]), from: nil)
+        presenter.didPush(.recipe(crepes), from: .folder(["Baking"]))
+
+        presenter.didOpen(document(at: crepesURL))
+
+        #expect(viewModel.pushedScreens == [.folder(["Baking"]), .recipe(crepes)])
+    }
+
+    @MainActor
     @Test("a file opened while cooking is open opens nothing, then or after")
     func fileWhileCookingOpensNothing() async {
         let crepes = recipeEntry("crepes.sous")

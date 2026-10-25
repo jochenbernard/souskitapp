@@ -46,8 +46,8 @@ extension KitchenFeaturePresenter {
 
         documentRequest.document = nil
 
-        // The recipe already on top stays as it is, read and scaled.
-        guard viewModel.pushedScreens != [screen] else {
+        // The recipe already on top stays as it is, read and scaled, with the screens under it.
+        guard viewModel.pushedScreens.last != screen else {
             return
         }
 
