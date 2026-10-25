@@ -49,8 +49,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
     }
 
     private var topScreen: some View {
-        // Every screen of the kitchen has a subtitle: a pushed screen with one over a screen without loses its large
-        // title to the bar.
+        // Subtitled like every folder, as one pushed over a screen without a subtitle loses its large title to the bar.
         folderPage(at: [])
             .navigationTitle(greeting)
             .navigationSubtitle(viewModel.recipeRepositoryName)
