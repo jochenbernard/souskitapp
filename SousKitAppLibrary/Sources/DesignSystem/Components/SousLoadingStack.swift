@@ -5,10 +5,6 @@ import SwiftUI
 /// The content lands where the placeholders were, so build them from the content's own views. Within them,
 /// `isSousLoading` is true, which draws every view marked with `sousLoadingPlaceholder()` as a placeholder.
 public struct SousLoadingStack<Content: View, Placeholders: View>: View {
-    private static var arrival: Animation {
-        .spring(duration: 0.5, bounce: 0.0)
-    }
-
     private let isLoading: Bool
     private let content: Content
     private let placeholders: Placeholders
@@ -43,7 +39,7 @@ public struct SousLoadingStack<Content: View, Placeholders: View>: View {
                         .transition(.asymmetric(insertion: .identity, removal: .opacity))
                 }
             }
-            .animation(Self.arrival, value: isLoading)
+            .sousLoadingArrival(isLoading: isLoading)
         }
     }
 }

@@ -23,9 +23,6 @@ struct RecipeFeatureView: View {
     // The cook button's width where the screen is wide, growing with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var wideCookButtonWidth = 360.0
 
-    // As long as the placeholders take to fade, so the bar changes with them.
-    private static let arrival = Animation.spring(duration: 0.5, bounce: 0.0)
-
     init(
         presenter: RecipeFeaturePresenterProtocol,
         viewModel: RecipeFeatureViewModel,
@@ -234,7 +231,8 @@ struct RecipeFeatureView: View {
                 EmptyView()
             }
         }
-        .animation(Self.arrival, value: isReading)
+        // With the placeholders, so the bar changes as the recipe arrives.
+        .sousLoadingArrival(isLoading: isReading)
     }
 
     private var readingNote: some View {
