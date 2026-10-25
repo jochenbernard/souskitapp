@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 @testable import KitchenFeature
+@testable import RecipeFeature
 import RecipeLibrary
 import SousKit
 import Testing
@@ -48,6 +49,24 @@ struct KitchenFeaturePresenterThumbnailTests {
             parser: parser,
             recipeRepository: recipeRepository
         )
+    }
+
+    /// The picture the header of the recipe on the stack starts from, or `nil` where it starts from none.
+    @MainActor
+    private func openedHeaderPicture(in viewModel: KitchenFeatureViewModel) throws -> CGImage? {
+        let feature = try #require(viewModel.openRecipe?.feature)
+        // The feature keeps its view model to itself.
+        let recipeViewModel = try #require(
+            Mirror(reflecting: feature).descendant("viewModel") as? RecipeFeatureViewModel
+        )
+
+        switch recipeViewModel.headerPicture {
+        case .read(let image):
+            return image
+
+        case .reading, .placeholder:
+            return nil
+        }
     }
 
     @MainActor
@@ -126,6 +145,34 @@ struct KitchenFeaturePresenterThumbnailTests {
 
         #expect(viewModel.thumbnails[picture(modifiedAt: nil)] === replacement)
         #expect(recipeRepository.thumbnailReads.count == 2)
+    }
+
+    @MainActor
+    @Test("a recipe opened from a card starts from the picture the card shows, and from none once it is let go")
+    func openedRecipeStartsFromTheCardsPicture() async throws {
+        let recipeRepository = RecipeRepositorySpy()
+        let viewModel = KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        let image = try thumbnail(width: 480, height: 360)
+        recipeRepository.thumbnails = ["images/gratin-dauphinois.jpg": image]
+        let presenter = makePresenter(recipeRepository: recipeRepository, viewModel: viewModel)
+        let gratin = RecipeEntry(
+            id: "gratin-dauphinois",
+            name: "gratin dauphinois",
+            availability: .downloaded,
+            picture: picture()
+        )
+        await presenter.pictureDidAppear(picture(), filling: box)
+
+        presenter.didPush(.recipe(gratin), from: nil)
+
+        #expect(try openedHeaderPicture(in: viewModel) === image)
+
+        recipeRepository.thumbnails = [:]
+        await presenter.pictureDidAppear(picture(), filling: box)
+        presenter.didPop(toCount: 0)
+        presenter.didPush(.recipe(gratin), from: nil)
+
+        #expect(try openedHeaderPicture(in: viewModel) == nil)
     }
 
     @MainActor
