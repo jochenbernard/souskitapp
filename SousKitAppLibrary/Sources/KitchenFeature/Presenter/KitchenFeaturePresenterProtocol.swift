@@ -46,6 +46,14 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didDismissCooking()
 
+    /// A folder's search field became active or stopped being active.
+    ///
+    /// - Parameters:
+    ///   - isPresented: Whether it is active.
+    ///   - folderPath: The names of the folders leading down to the folder, or none for the top.
+    @MainActor
+    func didChangeIsSearchPresented(_ isPresented: Bool, in folderPath: [String])
+
     /// A card showing a recipe's picture is on screen, and the call is cancelled when it leaves or its size changes.
     ///
     /// - Parameters:

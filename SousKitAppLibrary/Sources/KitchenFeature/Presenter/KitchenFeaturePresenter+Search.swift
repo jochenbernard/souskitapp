@@ -40,5 +40,23 @@ extension KitchenFeaturePresenter {
         if searches.count != viewModel.searches.count {
             viewModel.searches = searches
         }
+
+        // A folder pushed again opens with its search field at rest.
+        if
+            let presentedSearchPath = viewModel.presentedSearchPath,
+            !presentedSearchPath.isEmpty,
+            !pushedScreens.contains(.folder(presentedSearchPath))
+        {
+            viewModel.presentedSearchPath = nil
+        }
+    }
+
+    @MainActor
+    func didChangeIsSearchPresented(_ isPresented: Bool, in folderPath: [String]) {
+        if isPresented {
+            viewModel.presentedSearchPath = folderPath
+        } else if viewModel.presentedSearchPath == folderPath {
+            viewModel.presentedSearchPath = nil
+        }
     }
 }

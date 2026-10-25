@@ -80,27 +80,6 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         await recipeRepository.refresh()
     }
 
-    func didPush(_ screen: KitchenScreen, from origin: KitchenScreen?) {
-        // A row pressed with the button that opened something over the kitchen pushes nothing under it.
-        guard !handler.kitchenFeatureIsCovered else {
-            return
-        }
-
-        stopRestoring()
-
-        guard let origin else {
-            changePushedScreens(to: [screen])
-            return
-        }
-
-        // A row pressed on a screen already popping pushes nothing.
-        guard let index = viewModel.pushedScreens.firstIndex(of: origin) else {
-            return
-        }
-
-        changePushedScreens(to: Array(viewModel.pushedScreens.prefix(through: index)) + [screen])
-    }
-
     func didPop(toCount count: Int) {
         guard count < viewModel.pushedScreens.count else {
             return
@@ -156,7 +135,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     /// the recipe it popped in place: clearing it empties that screen while it is still animating away. The next push
     /// replaces it.
     @MainActor
-    private func changePushedScreens(to pushedScreens: [KitchenScreen]) {
+    func changePushedScreens(to pushedScreens: [KitchenScreen]) {
         // A row pressed twice pushes its screen once, keeping the feature the first press built.
         guard pushedScreens != viewModel.pushedScreens else {
             return
