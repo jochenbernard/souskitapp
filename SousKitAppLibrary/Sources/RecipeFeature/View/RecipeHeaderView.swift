@@ -1,7 +1,6 @@
 import DesignSystem
 import RecipeLibrary
 import SwiftUI
-import UIKit
 
 /// The top of the recipe screen: the recipe's picture, or its placeholder, with where the recipe sits and its title
 /// over the bottom of it.
