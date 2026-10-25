@@ -155,6 +155,29 @@ struct KitchenFeatureSearchTests {
     }
 
     @MainActor
+    @Test("a folder pushed from an active search ends it, text and all, and going back lists the folder again")
+    func folderPushEndsTheSearchText() async {
+        let kitchen = await kitchen(listing: [bourguignon, quiche, croque, gratin])
+
+        kitchen.presenter.didChangeIsSearchPresented(true, in: [])
+        kitchen.presenter.didChangeSearchText("lardons", in: [])
+        kitchen.presenter.didChooseFolder(of: bourguignon.entry, from: nil)
+        kitchen.presenter.didPop(toCount: 0)
+
+        #expect(kitchen.viewModel.presentedSearchPath == nil)
+        #expect(kitchen.viewModel.searches.isEmpty)
+
+        kitchen.presenter.didPush(.folder(["French"]), from: nil)
+        kitchen.presenter.didChangeIsSearchPresented(true, in: ["French"])
+        kitchen.presenter.didChangeSearchText("cream", in: ["French"])
+        kitchen.presenter.didChooseSearch(inFolderAt: ["French", "Comfort food"], from: .folder(["French"]))
+        kitchen.presenter.didPop(toCount: 1)
+
+        #expect(kitchen.viewModel.presentedSearchPath == nil)
+        #expect(kitchen.viewModel.searches.isEmpty)
+    }
+
+    @MainActor
     @Test("a recipe opened from a result is reported for the next cold start over the top list, without the search")
     func resultReportsTheRecipeAlone() async {
         let kitchen = await kitchen(listing: [bourguignon, quiche])

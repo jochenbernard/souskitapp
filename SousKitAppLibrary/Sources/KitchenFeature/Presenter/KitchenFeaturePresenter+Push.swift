@@ -49,18 +49,29 @@ extension KitchenFeaturePresenter {
         return viewModel.pushedScreens.last == screen
     }
 
-    /// Lets go of the search field of the folder screen a row was pressed on, or `nil` for the kitchen's own.
+    /// Ends the active search of the folder screen a row was pressed on, or `nil` for the kitchen's own, as its field's
+    /// close button does, so the screen lists its folder again.
     @MainActor
     private func endSearch(on origin: KitchenScreen?) {
         switch origin {
         case .folder(let folderPath):
-            didChangeIsSearchPresented(false, in: folderPath)
+            endSearch(in: folderPath)
 
         case nil:
-            didChangeIsSearchPresented(false, in: [])
+            endSearch(in: [])
 
         case .recipe:
             break
         }
+    }
+
+    @MainActor
+    private func endSearch(in folderPath: [String]) {
+        guard viewModel.presentedSearchPath == folderPath else {
+            return
+        }
+
+        didChangeIsSearchPresented(false, in: folderPath)
+        didChangeSearchText("", in: folderPath)
     }
 }
