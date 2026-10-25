@@ -53,7 +53,9 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
         folderPage(at: [])
             .navigationTitle(greeting)
             .navigationSubtitle(viewModel.recipeRepositoryName)
-            .toolbarVisibility(viewModel.isRestoring ? .hidden : .automatic, for: .navigationBar)
+            .background {
+                AppearanceReport(action: { presenter.screenDidAppear(nil) })
+            }
             .task {
                 await presenter.topScreenDidAppear()
             }
@@ -136,6 +138,9 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
                 ),
                 cookingTransition: cookingTransition
             )
+            .background {
+                AppearanceReport(action: { presenter.screenDidAppear(.recipe(recipeEntry)) })
+            }
         }
     }
 

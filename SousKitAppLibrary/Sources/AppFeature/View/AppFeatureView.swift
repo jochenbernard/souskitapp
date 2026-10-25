@@ -60,13 +60,12 @@ struct AppFeatureView: View {
                     SettingsButton(action: presenter.didTapSettings)
                 }
             }
-            // The recipe a cold start opens again is there at once, rather than pushed over a list never shown, and so
-            // is every screen pushed under it on the way.
+            // What a cold start opens again is there at once, rather than pushed over a list never shown.
             .transaction(value: kitchenFeature.isRestoring) { transaction in
                 transaction.disablesAnimations = true
             }
             .transaction { transaction in
-                if kitchenFeature.isRestoring {
+                if kitchenFeature.pushesWithoutAnimation {
                     transaction.disablesAnimations = true
                 }
             }

@@ -8,6 +8,9 @@ final class KitchenRestorationKeeper {
     /// The screens a cold start is pushing one at a time, each once the one under it has appeared, or none.
     var screensToRestore: [KitchenScreen] = []
 
+    /// Whether the kitchen's own screen has appeared, which a cold start waits for before pushing anything over it.
+    var hasTopScreenAppeared = false
+
     private let handler: KitchenFeatureHandler
 
     /// Creates a keeper.

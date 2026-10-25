@@ -2,22 +2,26 @@ import RecipeLibrary
 
 extension KitchenFeaturePresenter {
     @MainActor
-    func screenDidAppear(_ screen: KitchenScreen) {
-        let screensToRestore = restorationKeeper.screensToRestore
-
-        guard !screensToRestore.isEmpty, viewModel.pushedScreens.last == screen else {
+    func screenDidAppear(_ screen: KitchenScreen?) {
+        guard viewModel.pushedScreens.last == screen else {
             return
         }
 
-        let count = viewModel.pushedScreens.count + 1
-
-        guard count < screensToRestore.count else {
-            restorationKeeper.screensToRestore = []
-            finishRestoring(screensToRestore)
+        guard !viewModel.isPushingRestoredRecipe else {
+            viewModel.isPushingRestoredRecipe = false
+            endRestoring()
             return
         }
 
-        viewModel.pushedScreens = Array(screensToRestore.prefix(count))
+        if screen == nil {
+            restorationKeeper.hasTopScreenAppeared = true
+        }
+
+        guard !restorationKeeper.screensToRestore.isEmpty else {
+            return
+        }
+
+        restoreNextScreen()
     }
 
     /// Opens what the kitchen was built to open again, as far down as its folders are still listed, and its recipe
@@ -28,7 +32,11 @@ extension KitchenFeaturePresenter {
     ///   - recipeEntries: The recipes listed now, in every folder.
     @MainActor
     func restore(in folder: KitchenFolder?, holding recipeEntries: [RecipeEntry]) {
-        guard viewModel.isRestoring, restorationKeeper.screensToRestore.isEmpty else {
+        guard
+            viewModel.isRestoring,
+            restorationKeeper.screensToRestore.isEmpty,
+            !viewModel.isPushingRestoredRecipe
+        else {
             return
         }
 
@@ -54,36 +62,51 @@ extension KitchenFeaturePresenter {
             return
         }
 
-        guard pushedScreens.count > 1 else {
-            finishRestoring(pushedScreens)
+        // One at a time, each over a screen that has appeared: a screen pushed under another without ever appearing
+        // loses its large title once uncovered, where it has a subtitle.
+        restorationKeeper.screensToRestore = pushedScreens
+
+        if restorationKeeper.hasTopScreenAppeared {
+            restoreNextScreen()
+        }
+    }
+
+    /// Pushes the next screen a cold start opens again, over the ones on the stack, or the last of them.
+    @MainActor
+    func restoreNextScreen() {
+        let screensToRestore = restorationKeeper.screensToRestore
+        let count = viewModel.pushedScreens.count + 1
+
+        guard count < screensToRestore.count else {
+            restorationKeeper.screensToRestore = []
+            finishRestoring(screensToRestore)
             return
         }
 
-        // One at a time: a screen pushed under another without ever appearing loses its large title once uncovered,
-        // where it has a subtitle.
-        restorationKeeper.screensToRestore = pushedScreens
-        viewModel.pushedScreens = [pushedScreens[0]]
+        viewModel.pushedScreens = Array(screensToRestore.prefix(count))
     }
 
-    /// Pushes the last of what a cold start opens again, with the recipe on top where there is one.
+    /// Pushes the last of what a cold start opens again, with the recipe on top where there is one, whose appearance
+    /// then ends the restoration.
     ///
     /// - Parameter pushedScreens: Every screen the stack holds once restored.
     @MainActor
     func finishRestoring(_ pushedScreens: [KitchenScreen]) {
-        viewModel.isRestoring = false
-        viewModel.pushedScreens = pushedScreens
-
-        if case .recipe(let recipeEntry) = pushedScreens.last {
-            viewModel.openRecipe = makeOpenRecipe(
-                recipeEntry,
-                restoration: restorationKeeper.restoration?.recipe,
-                resumesCooking: restorationKeeper.restoration?.cooking != nil
-            )
-        } else {
+        guard case .recipe(let recipeEntry) = pushedScreens.last else {
+            viewModel.pushedScreens = pushedScreens
             restorationKeeper.save(Self.restoration(of: pushedScreens))
+            endRestoring()
+            return
         }
 
-        handler.kitchenFeatureDidRestore()
+        // Animated under the cover: a recipe pushed without animation leaves the screen under it collapsed.
+        viewModel.isPushingRestoredRecipe = true
+        viewModel.pushedScreens = pushedScreens
+        viewModel.openRecipe = makeOpenRecipe(
+            recipeEntry,
+            restoration: restorationKeeper.restoration?.recipe,
+            resumesCooking: restorationKeeper.restoration?.cooking != nil
+        )
     }
 
     /// Leaves a restoration still pushing its screens where it stands, once the cook moves on the stack themselves.
@@ -94,6 +117,11 @@ extension KitchenFeaturePresenter {
         }
 
         restorationKeeper.screensToRestore = []
+        endRestoring()
+    }
+
+    @MainActor
+    func endRestoring() {
         viewModel.isRestoring = false
         handler.kitchenFeatureDidRestore()
     }

@@ -7,6 +7,7 @@ final class KitchenFeatureViewModel {
     var greeting: KitchenGreeting = .morning
     var recipeList: KitchenRecipeList = .reading
     var isRestoring = false
+    var isPushingRestoredRecipe = false
     var searches: [[String]: KitchenSearch] = [:]
     var pushedScreens: [KitchenScreen] = []
     var openRecipe: OpenRecipe?
