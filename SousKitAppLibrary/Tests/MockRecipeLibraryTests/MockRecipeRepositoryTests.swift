@@ -19,7 +19,7 @@ final class MockRecipeRepositoryTests {
 
     /// A repository picking no symbols unless given a picker that can, keeping them in this suite's file.
     @MainActor
-    private func makeRepository(
+    func makeRepository(
         symbolPicker: RecipeSymbolPicker = RecipeSymbolPickerStub(isAvailable: false)
     ) -> MockRecipeRepository {
         MockRecipeRepository(
@@ -45,7 +45,7 @@ final class MockRecipeRepositoryTests {
     }
 
     @MainActor
-    private func currentRecipeEntry(
+    func currentRecipeEntry(
         withID id: String,
         of repository: MockRecipeRepository
     ) async throws -> RecipeEntry {

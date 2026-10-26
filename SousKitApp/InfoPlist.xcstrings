@@ -42,6 +42,24 @@
           }
         }
       }
+    },
+    "Sous Recipe" : {
+      "comment" : "The kind of file a Sous recipe is, as the Files app names it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sous Recipe"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sous-recept"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
