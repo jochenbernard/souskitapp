@@ -1,6 +1,7 @@
 import CookingFeature
 import Foundation
 import KitchenFeature
+import MockRecipeLibrary
 import OnboardingFeature
 import RecipeLibrary
 import SettingsFeature
@@ -13,7 +14,7 @@ final class AppFeaturePresenter:
     var viewModel: AppFeatureViewModel?
 
     private let kitchenFeatureFactory: KitchenFeatureFactory
-    private let mockRecipeRepository: RecipeRepository
+    private let mockRecipeRepository: MockRecipeRepository
     private let onboardingFeatureFactory: OnboardingFeatureFactory
     private let preferredScaleStore: UserDefaultsPreferredScaleStore
     private let recipeRepositoryKindStore: RecipeRepositoryKindStore
@@ -34,7 +35,7 @@ final class AppFeaturePresenter:
     @MainActor
     init(
         kitchenFeatureFactory: KitchenFeatureFactory,
-        mockRecipeRepository: RecipeRepository,
+        mockRecipeRepository: MockRecipeRepository,
         onboardingFeatureFactory: OnboardingFeatureFactory,
         preferredScaleStore: UserDefaultsPreferredScaleStore,
         recipeRepositoryKindStore: RecipeRepositoryKindStore,
@@ -163,9 +164,11 @@ final class AppFeaturePresenter:
     }
 
     func settingsFeatureDidConfirmReset() {
+        timerScheduler.cancelAll()
         preferredScaleStore.clear()
         recipeRepositoryKindStore.clear()
         recipeRepositoryStore.clear()
+        mockRecipeRepository.clear()
         closeSettings()
         viewModel?.screen = makeScreen()
     }

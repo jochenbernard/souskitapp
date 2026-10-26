@@ -9,11 +9,13 @@ import Testing
 final class FileRecipeRepositoryStoreTests {
     private let parser = SousParser()
 
+    private let caches: TemporaryDirectory
     private let directory: TemporaryDirectory
     private let suiteName: String
     private let userDefaults: UserDefaults
 
     init() throws {
+        self.caches = try TemporaryDirectory(named: "FileRecipeRepositoryStoreTests")
         self.directory = try TemporaryDirectory(named: "FileRecipeRepositoryStoreTests")
         self.suiteName = directory.url.lastPathComponent
         self.userDefaults = try #require(UserDefaults(suiteName: suiteName))
@@ -23,12 +25,13 @@ final class FileRecipeRepositoryStoreTests {
         userDefaults.removePersistentDomain(forName: suiteName)
     }
 
-    /// A store remembering its directory in this suite's defaults.
+    /// A store remembering its directory in this suite's defaults, and keeping what it reads in this suite's caches.
     private func makeStore() -> FileRecipeRepositoryStore {
         FileRecipeRepositoryStore(
             parser: parser,
             symbolPicker: RecipeSymbolPickerStub(),
-            userDefaults: userDefaults
+            userDefaults: userDefaults,
+            cachesDirectory: caches.url
         )
     }
 
@@ -76,14 +79,18 @@ final class FileRecipeRepositoryStoreTests {
         #expect(store.makeRecipeRepository()?.name == "Elsewhere")
     }
 
-    @Test("clearing forgets the directory")
+    @Test("clearing forgets the directory, and the summaries and thumbnails kept of its recipes")
     func clearing() throws {
         let store = makeStore()
         _ = try store.connectRecipeDirectory(at: directory.url)
+        try caches.writeFile(named: "RecipeSummaries.json")
+        try caches.makeDirectory(named: "RecipeThumbnails")
+        try caches.writeFile(named: "RecipeThumbnails/thumbnail")
 
         store.clear()
 
         #expect(store.makeRecipeRepository() == nil)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: caches.url.path(percentEncoded: false)).isEmpty)
     }
 
     @Test("a bookmark that no longer resolves reads back as nothing remembered")

@@ -9,7 +9,7 @@ import Testing
 @MainActor
 final class MockRecipeRepositoryTests {
     private let parser = SousParser()
-    private let symbolCacheURL = URL.temporaryDirectory.appending(
+    let symbolCacheURL = URL.temporaryDirectory.appending(
         path: "MockRecipeRepositoryTests-\(UUID().uuidString).json"
     )
 
@@ -19,7 +19,7 @@ final class MockRecipeRepositoryTests {
 
     /// A repository picking no symbols unless given a picker that can, keeping them in this suite's file.
     @MainActor
-    private func makeRepository(
+    func makeRepository(
         symbolPicker: RecipeSymbolPicker = RecipeSymbolPickerStub(isAvailable: false)
     ) -> MockRecipeRepository {
         MockRecipeRepository(
@@ -38,14 +38,14 @@ final class MockRecipeRepositoryTests {
 
     /// The first list a new stream from the repository yields, with the recipes' ingredient names.
     @MainActor
-    private func currentListedRecipes(of repository: MockRecipeRepository) async throws -> [ListedRecipe] {
+    func currentListedRecipes(of repository: MockRecipeRepository) async throws -> [ListedRecipe] {
         var iterator = repository.listedRecipes().makeAsyncIterator()
 
         return try #require(await iterator.next()).get()
     }
 
     @MainActor
-    private func currentRecipeEntry(
+    func currentRecipeEntry(
         withID id: String,
         of repository: MockRecipeRepository
     ) async throws -> RecipeEntry {

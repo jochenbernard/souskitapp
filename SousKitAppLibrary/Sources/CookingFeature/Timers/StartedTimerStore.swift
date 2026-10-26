@@ -51,6 +51,11 @@ struct StartedTimerStore {
         return kept
     }
 
+    /// Forgets every timer.
+    func clear() {
+        userDefaults.removeObject(forKey: Self.key)
+    }
+
     private func save(_ startedTimers: [UUID: StartedTimer]) {
         userDefaults.set(try? JSONEncoder().encode(startedTimers), forKey: Self.key)
     }

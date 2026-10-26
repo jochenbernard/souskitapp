@@ -53,6 +53,23 @@
         }
       }
     },
+    "Everything the app keeps is forgotten and setup starts over. Recipes on disk are left alone." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everything the app keeps is forgotten and setup starts over. Recipes on disk are left alone."
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alles wat de app bewaart wordt vergeten en de setup begint opnieuw. Recepten op schijf blijven staan."
+          }
+        }
+      }
+    },
     "Folder" : {
       "comment" : "The title of the settings section on the folder recipes are read from.",
       "localizations" : {
@@ -183,23 +200,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Testrecepten"
-          }
-        }
-      }
-    },
-    "The folder and the settings are forgotten and setup starts over. Recipes on disk are left alone." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The folder and the settings are forgotten and setup starts over. Recipes on disk are left alone."
-          }
-        },
-        "nl-BE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "De map en de instellingen worden vergeten en de setup begint opnieuw. Recepten op schijf blijven staan."
           }
         }
       }

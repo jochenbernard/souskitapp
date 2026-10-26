@@ -7,15 +7,7 @@ import SousKit
 public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     private static let key = "FileRecipeRepositoryStore.bookmark"
 
-    // Caches, not the recipe directory: the summaries are rebuilt from the recipes wherever the system clears them.
-    private static let summaryCacheURL = URL.cachesDirectory.appending(path: "RecipeSummaries.json")
-
-    // Caches as well: a thumbnail is made again from its picture wherever the system clears it.
-    private static let thumbnailCacheURL = URL.cachesDirectory.appending(
-        path: "RecipeThumbnails",
-        directoryHint: .isDirectory
-    )
-
+    private let cachesDirectory: URL
     private let parser: SousParser
     private let symbolPicker: RecipeSymbolPicker
     private let userDefaults: UserDefaults
@@ -26,11 +18,14 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     ///   - parser: What the recipes in the directory are read with.
     ///   - symbolPicker: What the recipes' symbols are picked with.
     ///   - userDefaults: Where the directory is remembered.
+    ///   - cachesDirectory: Where what is read from the directory is kept, outside it.
     public init(
         parser: SousParser,
         symbolPicker: RecipeSymbolPicker,
-        userDefaults: UserDefaults = .standard
+        userDefaults: UserDefaults = .standard,
+        cachesDirectory: URL = .cachesDirectory
     ) {
+        self.cachesDirectory = cachesDirectory
         self.parser = parser
         self.symbolPicker = symbolPicker
         self.userDefaults = userDefaults
@@ -58,6 +53,16 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
         return RecipeDirectory(url: url)
     }
 
+    // Caches, not the recipe directory: the summaries are rebuilt from the recipes wherever the system clears them.
+    private var summaryCacheURL: URL {
+        cachesDirectory.appending(path: "RecipeSummaries.json")
+    }
+
+    // Caches as well: a thumbnail is made again from its picture wherever the system clears it.
+    private var thumbnailCacheURL: URL {
+        cachesDirectory.appending(path: "RecipeThumbnails", directoryHint: .isDirectory)
+    }
+
     public func makeRecipeRepository() -> RecipeRepository? {
         recipeDirectory.map(makeRecipeRepository(reading:))
     }
@@ -70,6 +75,8 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
 
     public func clear() {
         userDefaults.removeObject(forKey: Self.key)
+        RecipeSummaryCache.clear(fileURL: summaryCacheURL)
+        RecipeThumbnailCache.clear(folderURL: thumbnailCacheURL)
     }
 
     private func makeRecipeRepository(reading recipeDirectory: RecipeDirectory) -> FileRecipeRepository {
@@ -77,8 +84,8 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
             parser: parser,
             recipeDirectory: recipeDirectory,
             symbolPicker: symbolPicker,
-            summaryCacheURL: Self.summaryCacheURL,
-            thumbnailCacheURL: Self.thumbnailCacheURL
+            summaryCacheURL: summaryCacheURL,
+            thumbnailCacheURL: thumbnailCacheURL
         )
     }
 

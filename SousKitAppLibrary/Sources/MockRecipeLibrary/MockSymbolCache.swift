@@ -47,4 +47,9 @@ struct MockSymbolCache: Sendable {
         )
         try? data.write(to: fileURL, options: .atomic)
     }
+
+    /// Removes every pick kept.
+    func clear() {
+        try? FileManager.default.removeItem(at: fileURL)
+    }
 }

@@ -18,13 +18,15 @@ public final class MockRecipeRepository: RecipeRepository {
     private let pictureFiles: [String: MockRecipe]
     private let summaries: [String: RecipeSummary]
     private let ingredientNames: [String: [String]]
-    // By recipe id, as an earlier launch kept them.
-    private let symbolPicks: [String: RecipeSymbolPick]
-    private let symbolQueue: RecipeSymbolQueue
+    private let symbolCache: MockSymbolCache
+    private let symbolPicker: RecipeSymbolPicker
 
     private var continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation?
     private var downloadTask: Task<Void, Never>?
     private var fetchedIDs: Set<String> = []
+    // By recipe id, as an earlier launch kept them.
+    private var symbolPicks: [String: RecipeSymbolPick]
+    private var symbolQueue: RecipeSymbolQueue
 
     nonisolated public var name: String {
         String(localized: "Mock recipes", bundle: .module)
@@ -43,13 +45,13 @@ public final class MockRecipeRepository: RecipeRepository {
         symbolCacheURL: URL,
         fetchDuration: Duration = .seconds(3)
     ) {
-        let symbolCache = MockSymbolCache(fileURL: symbolCacheURL)
+        let cache = MockSymbolCache(fileURL: symbolCacheURL)
 
         self.parser = parser
-        self.symbolPicks = symbolCache.load()
-        self.symbolQueue = RecipeSymbolQueue(picker: symbolPicker) { id, symbolPick in
-            symbolCache.keep(symbolPick, forRecipeWithID: id)
-        }
+        self.symbolCache = cache
+        self.symbolPicker = symbolPicker
+        self.symbolPicks = cache.load()
+        self.symbolQueue = Self.makeSymbolQueue(picker: symbolPicker, cache: cache)
         self.fetchDuration = fetchDuration
         self.pictureFiles = Dictionary(
             uniqueKeysWithValues: MockRecipe.all.filter(\.isPicture).map({ ($0.id, $0) })
@@ -81,6 +83,20 @@ public final class MockRecipeRepository: RecipeRepository {
     }
 
     public func refresh() {}
+
+    /// Forgets the symbols picked and the recipes fetched from iCloud, as before the app first ran, and ends the stream
+    /// listed last.
+    public func clear() {
+        downloadTask?.cancel()
+        downloadTask = nil
+        continuation?.finish()
+        continuation = nil
+        fetchedIDs = []
+        symbolPicks = [:]
+        // A new queue, since the one let go picks nothing more for the file to keep.
+        symbolQueue = Self.makeSymbolQueue(picker: symbolPicker, cache: symbolCache)
+        symbolCache.clear()
+    }
 
     @MainActor
     public func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage {
@@ -150,6 +166,15 @@ public final class MockRecipeRepository: RecipeRepository {
             modificationDate: nil,
             availability: availability(of: file)
         )
+    }
+
+    nonisolated private static func makeSymbolQueue(
+        picker: RecipeSymbolPicker,
+        cache: MockSymbolCache
+    ) -> RecipeSymbolQueue {
+        RecipeSymbolQueue(picker: picker) { id, symbolPick in
+            cache.keep(symbolPick, forRecipeWithID: id)
+        }
     }
 
     /// Draws off the main actor, as decoding a photo would be.

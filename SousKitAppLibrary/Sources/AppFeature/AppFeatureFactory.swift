@@ -12,7 +12,7 @@ import SousKit
 /// Builds ``AppFeature`` and everything under it.
 struct AppFeatureFactory {
     private let kitchenFeatureFactory: KitchenFeatureFactory
-    private let mockRecipeRepository: RecipeRepository
+    private let mockRecipeRepository: MockRecipeRepository
     private let onboardingFeatureFactory: OnboardingFeatureFactory
     private let preferredScaleStore: UserDefaultsPreferredScaleStore
     private let recipeRepositoryKindStore: RecipeRepositoryKindStore
