@@ -70,7 +70,7 @@ extension KitchenFeaturePresenter {
         case (.searching, .folder(let folderPath)):
             viewModel.presentedSearchPath = folderPath
 
-        case (.cooking, .folder), (.scaling, .folder), (.searching, .recipe):
+        case (.cooking, .folder), (.scaling, .folder), (.searching, .recipe), (_, .document):
             break
         }
     }

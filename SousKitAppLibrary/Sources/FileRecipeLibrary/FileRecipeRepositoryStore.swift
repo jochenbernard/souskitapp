@@ -82,6 +82,16 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
         return makeRecipeRepository(reading: RecipeDirectory(url: url))
     }
 
+    public func openRecipeDocument(at url: URL) -> RecipeDocument {
+        let recipeRepository = RecipeDocumentRepository(url: url, parser: parser, exportFolderURL: exportFolderURL)
+
+        return RecipeDocument(
+            url: url,
+            entry: recipeRepository.entry,
+            recipeRepository: recipeRepository
+        )
+    }
+
     public func clear() {
         userDefaults.removeObject(forKey: Self.key)
         RecipeSummaryCache.clear(fileURL: summaryCacheURL)

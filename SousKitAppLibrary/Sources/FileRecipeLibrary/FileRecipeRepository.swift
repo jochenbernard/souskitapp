@@ -119,6 +119,10 @@ struct FileRecipeRepository: RecipeRepository {
         return thumbnailCache.thumbnail(of: picture, filling: pixelSize) ?? keptThumbnail
     }
 
+    func recipeID(forFileAt url: URL) -> String? {
+        recipeDirectory.path(ofFileAt: url)
+    }
+
     /// Copies off the caller's actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
     func exportRecipeFile(of entry: RecipeEntry) async throws -> URL {

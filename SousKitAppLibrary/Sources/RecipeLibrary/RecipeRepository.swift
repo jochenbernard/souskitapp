@@ -43,6 +43,12 @@ public protocol RecipeRepository: Sendable {
     /// - Throws: Whatever fetching or reading the picture throws, or what its contents not being a picture does.
     func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage
 
+    /// The id of the recipe a file holds, where the file is one of the repository's recipes.
+    ///
+    /// - Parameter url: Where the file sits.
+    /// - Returns: The id, or `nil` where the repository does not hold the file.
+    func recipeID(forFileAt url: URL) -> String?
+
     /// Copies a recipe's file out of the repository, for handing it to another app.
     ///
     /// A recipe not on the device is fetched first, and the copy holds its newest version. Every call makes a new copy,
