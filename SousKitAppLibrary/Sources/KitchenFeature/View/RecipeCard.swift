@@ -38,7 +38,7 @@ struct RecipeCard: View {
     }
 
     var body: some View {
-        KitchenCard(
+        SousCard(
             title: card.recipeEntry.title,
             picture: {
                 RecipeCardPicture(

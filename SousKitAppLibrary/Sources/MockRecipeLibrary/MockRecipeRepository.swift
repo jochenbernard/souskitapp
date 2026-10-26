@@ -107,6 +107,25 @@ public final class MockRecipeRepository: RecipeRepository {
 
     @MainActor
     public func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe> {
+        parser.parseRecipe(try await fetch(entry).text)
+    }
+
+    /// Writes the recipe's text to a file of its file's name, as a folder's recipe is copied, with the same fetch and
+    /// failures as reading it.
+    @MainActor
+    public func exportRecipeFile(of entry: RecipeEntry) async throws -> URL {
+        let (recipe, text) = try await fetch(entry)
+        let folderURL = URL.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        let fileURL = folderURL.appending(path: URL(filePath: recipe.path).lastPathComponent)
+
+        try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+        try Data(text.utf8).write(to: fileURL)
+
+        return fileURL
+    }
+
+    /// A listed recipe and its text, after a fetch's time where it starts out in iCloud.
+    private func fetch(_ entry: RecipeEntry) async throws -> (recipe: MockRecipe, text: String) {
         guard let recipe = MockRecipe.all.first(where: { $0.isListed && $0.id == entry.id }) else {
             throw CocoaError(.fileReadNoSuchFile)
         }
@@ -121,7 +140,7 @@ public final class MockRecipeRepository: RecipeRepository {
 
         markFetched([recipe])
 
-        return parser.parseRecipe(text)
+        return (recipe, text)
     }
 
     private var listing: [ListedRecipe] {

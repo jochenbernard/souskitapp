@@ -26,6 +26,10 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didChooseScaling(_: RecipeEntry, from _: KitchenScreen?) {}
 
+    func didChooseSharing(_: RecipeEntry) {}
+
+    func didDismissSharing() {}
+
     func didChooseFolder(of _: RecipeEntry, from _: KitchenScreen?) {}
 
     func didChooseSearch(inFolderAt _: [String], from _: KitchenScreen?) {}

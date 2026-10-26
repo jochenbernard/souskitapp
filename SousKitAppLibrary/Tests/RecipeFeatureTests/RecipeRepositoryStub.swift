@@ -3,7 +3,7 @@ import Foundation
 import RecipeLibrary
 import SousKit
 
-/// A repository reading every recipe as one text, or failing every read where it holds none.
+/// A repository reading and exporting every recipe as one text, or failing every read where it holds none.
 struct RecipeRepositoryStub: RecipeRepository {
     let name = "Recipes"
 
@@ -34,5 +34,19 @@ struct RecipeRepositoryStub: RecipeRepository {
 
     func recipeID(forFileAt _: URL) -> String? {
         nil
+    }
+
+    /// Writes the text to a file in a folder of its own under the temporary directory, named after the recipe's id.
+    func exportRecipeFile(of entry: RecipeEntry) throws -> URL {
+        guard let text else {
+            throw CocoaError(.fileReadNoSuchFile)
+        }
+
+        let folderURL = URL.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+        let fileURL = folderURL.appending(path: "\(entry.id).sous")
+        try Data(text.utf8).write(to: fileURL)
+
+        return fileURL
     }
 }

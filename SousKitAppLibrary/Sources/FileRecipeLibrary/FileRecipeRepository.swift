@@ -118,4 +118,14 @@ struct FileRecipeRepository: RecipeRepository {
     func recipeID(forFileAt url: URL) -> String? {
         recipeDirectory.path(ofFileAt: url)
     }
+
+    /// Copies off the caller's actor, where a recipe still in iCloud has to be fetched first, into a folder of the
+    /// copy's own under the temporary directory.
+    @concurrent
+    func exportRecipeFile(of entry: RecipeEntry) async throws -> URL {
+        try await textReader.copy(
+            path: entry.path,
+            into: URL.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        )
+    }
 }

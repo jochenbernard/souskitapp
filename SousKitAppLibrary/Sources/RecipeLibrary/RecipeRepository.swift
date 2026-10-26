@@ -48,4 +48,14 @@ public protocol RecipeRepository: Sendable {
     /// - Parameter url: Where the file sits.
     /// - Returns: The id, or `nil` where the repository does not hold the file.
     func recipeID(forFileAt url: URL) -> String?
+
+    /// Copies a recipe's file out of the repository, for handing it to another app.
+    ///
+    /// A recipe not on the device is fetched first, and the copy holds its newest version. Every call makes a new copy,
+    /// which no other call writes to.
+    ///
+    /// - Parameter entry: The recipe to copy.
+    /// - Returns: Where the copy sits, under the name of the recipe's file.
+    /// - Throws: Whatever fetching, reading or copying the file throws.
+    func exportRecipeFile(of entry: RecipeEntry) async throws -> URL
 }

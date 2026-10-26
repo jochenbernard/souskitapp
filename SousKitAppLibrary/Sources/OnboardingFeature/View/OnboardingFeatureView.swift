@@ -4,12 +4,30 @@ import UniformTypeIdentifiers
 
 struct OnboardingFeatureView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // The cards' widths on a phone, and where the page is wide.
+    private static let compactCardWidths = 120.0...160.0
+    private static let regularCardWidths = 200.0...250.0
+
+    // The cards fan out once, then the copy rises in under them. Without motion, both fade in where they rest.
+    private static let fanEntrance = Animation.spring(duration: 0.7, bounce: 0.3).delay(0.35)
+    private static let stillFanEntrance = Animation.spring(duration: 0.5, bounce: 0.0).delay(0.2)
+    private static let copyEntrance = Animation.spring(duration: 0.6, bounce: 0.0).delay(0.6)
+
+    // How much smaller the fan starts, and how far below its place the copy starts.
+    private static let stackedFanScale = 0.92
+    private static let copyRise = 24.0
 
     private let presenter: OnboardingFeaturePresenterProtocol
     private let viewModel: OnboardingFeatureViewModel
 
-    // A comfortable line length for the introduction, growing with Dynamic Type.
-    @ScaledMetric(relativeTo: .body) private var columnWidth = 480.0
+    // A comfortable line length for the copy where the page is wide, growing with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var columnWidth = 440.0
+
+    @State private var visibleHeight = 0.0
+    @State private var isFanned = false
+    @State private var showsCopy = false
 
     init(
         presenter: OnboardingFeaturePresenterProtocol,
@@ -20,79 +38,134 @@ struct OnboardingFeatureView: View {
     }
 
     var body: some View {
-        column
-            .frame(
-                maxWidth: columnWidth,
-                maxHeight: isOneBlock ? nil : .infinity,
-                alignment: .topLeading
-            )
-            .sousPagePadding()
-            .frame(
-                maxWidth: .infinity,
-                maxHeight: .infinity,
-                alignment: isOneBlock ? .center : .topLeading
-            )
-            .sousPage()
-            .fileImporter(
-                isPresented: isChoosingDirectory,
-                allowedContentTypes: [.folder],
-                onCompletion: presenter.didChooseDirectory
-            )
+        ScrollView {
+            content
+                .frame(maxWidth: .infinity, minHeight: visibleHeight)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        // The scroll view's own size is the screen between its bars.
+        .onScrollGeometryChange(
+            for: Double.self,
+            of: { $0.containerSize.height },
+            action: { _, newHeight in visibleHeight = newHeight }
+        )
+        .scrollEdgeEffectStyle(.soft, for: .bottom)
+        .safeAreaBar(edge: .bottom) {
+            bottomBar
+        }
+        .sousPage()
+        .fileImporter(
+            isPresented: isChoosingDirectory,
+            allowedContentTypes: [.folder],
+            onCompletion: presenter.didChooseDirectory
+        )
+        .onAppear(perform: enter)
     }
 
-    // Where the page is wide, the setup reads as one block. On a phone the button stays in reach.
-    private var isOneBlock: Bool {
-        horizontalSizeClass == .regular
+    private var isCompact: Bool {
+        horizontalSizeClass != .regular
     }
 
-    private var column: some View {
+    @ViewBuilder
+    private var content: some View {
+        if isCompact {
+            phoneContent
+        } else {
+            // The fan beside the copy where both fit at their size, above it where they do not.
+            ViewThatFits(in: .horizontal) {
+                sideBySideContent
+
+                stackedContent
+            }
+        }
+    }
+
+    // The fan in the room the copy leaves, and the actions in reach in the bar.
+    private var phoneContent: some View {
         VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
-            introductionBlock
+            fan(cardWidths: Self.compactCardWidths)
+                .frame(maxHeight: .infinity)
+
+            copy
+        }
+        .sousPagePadding()
+    }
+
+    private var sideBySideContent: some View {
+        HStack(spacing: SousSpacing.section) {
+            fan(cardWidths: Self.regularCardWidths)
+
+            VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
+                copy
+
+                actions
+            }
+            .frame(width: columnWidth)
+        }
+        .padding(.horizontal, SousSpacing.page)
+        .padding(.vertical, SousSpacing.xxLarge)
+    }
+
+    private var stackedContent: some View {
+        VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
+            fan(cardWidths: Self.regularCardWidths)
+
+            copy
 
             actions
         }
+        .frame(maxWidth: columnWidth)
+        .sousPagePadding()
+        .padding(.vertical, SousSpacing.xxLarge)
     }
 
-    private var introductionBlock: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
-            lockup
-
-            introduction
+    @ViewBuilder
+    private var bottomBar: some View {
+        if isCompact {
+            actions
+                .sousPagePadding()
         }
-        .frame(maxHeight: isOneBlock ? nil : .infinity, alignment: .leading)
     }
 
-    private var lockup: some View {
-        SousLockup(markSize: 44.0, wordmarkSize: 32.0)
+    private func fan(cardWidths: ClosedRange<Double>) -> some View {
+        let isLaidOut = isFanned || reduceMotion
+
+        return OnboardingShowcaseFan(cardWidths: cardWidths, isFanned: isLaidOut)
+            .scaleEffect(isLaidOut ? 1.0 : Self.stackedFanScale)
+            // Fading as one picture, so the cards under the top one stay hidden while it fades in.
+            .compositingGroup()
+            .opacity(isFanned ? 1.0 : 0.0)
+    }
+
+    private var copy: some View {
+        VStack(alignment: .leading, spacing: SousSpacing.xLarge) {
+            introduction
+                .offset(y: showsCopy || reduceMotion ? 0.0 : Self.copyRise)
+                .opacity(showsCopy ? 1.0 : 0.0)
+
+            failureNote
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        // Whole, however little room the fan leaves.
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var introduction: some View {
         VStack(alignment: .leading, spacing: SousSpacing.medium) {
-            Text("Setup", bundle: .module)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            SousLockup(markSize: 32.0, wordmarkSize: 24.0)
 
-            Text("Where your recipes live", bundle: .module)
-                .font(.title)
+            Text("Your recipes, ready to cook", bundle: .module)
+                .font(.largeTitle.bold())
+                .accessibilityAddTraits(.isHeader)
 
             Text(
                 """
-                Sous reads your recipes from a folder of .sous files. Pick that folder to \
-                start; you can change it later.
+                Sous reads your recipes from a folder of .sous files. Choose that folder to start; you can \
+                change it later in Settings.
                 """,
                 bundle: .module
             )
             .foregroundStyle(.secondary)
-        }
-    }
-
-    private var actions: some View {
-        VStack(alignment: .leading, spacing: SousSpacing.large) {
-            failureNote
-
-            mockRecipesButton
-
-            chooseButton
         }
     }
 
@@ -101,6 +174,14 @@ struct OnboardingFeatureView: View {
         if let failureMessage = viewModel.failureMessage {
             Text(failureMessage)
                 .sousCallout()
+        }
+    }
+
+    private var actions: some View {
+        VStack(spacing: SousSpacing.medium) {
+            mockRecipesButton
+
+            chooseButton
         }
     }
 
@@ -128,6 +209,20 @@ struct OnboardingFeatureView: View {
             get: { viewModel.isChoosingDirectory },
             set: { presenter.didChangeIsChoosingDirectory($0) }
         )
+    }
+
+    private func enter() {
+        guard !isFanned else {
+            return
+        }
+
+        withAnimation(reduceMotion ? Self.stillFanEntrance : Self.fanEntrance) {
+            isFanned = true
+        }
+
+        withAnimation(Self.copyEntrance) {
+            showsCopy = true
+        }
     }
 }
 

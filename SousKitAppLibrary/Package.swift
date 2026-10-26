@@ -90,7 +90,10 @@ let package = Package(
         .standardTarget(
             name: "OnboardingFeature",
             dependencies: ["DesignSystem", "RecipeLibrary"],
-            resources: [.process("Resources/Localizable.xcstrings")]
+            resources: [
+                .process("Resources/Localizable.xcstrings"),
+                .process("Resources/Showcase.xcassets")
+            ]
         ),
         .standardTestTarget(
             name: "OnboardingFeatureTests",

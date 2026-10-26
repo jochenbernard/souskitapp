@@ -17,6 +17,7 @@ final class KitchenFeatureViewModel {
     var presentedSearchPath: [String]?
     var zoomedRecipeIDs: Set<String> = []
     var openCooking: OpenCooking?
+    var sharedFile: SharedRecipeFile?
     let thumbnails = KitchenThumbnails()
     let symbols = KitchenSymbols()
 
