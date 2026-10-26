@@ -124,7 +124,6 @@ final class RecipeDirectoryMonitor {
     /// The stream still reads the directory itself, and yields again only what changed since.
     ///
     /// - Returns: The listing, for reading ahead what the recipes are shown with.
-    @discardableResult
     func readAhead() -> Task<[ListedRecipe], Error> {
         // Detached, so the recipes are ready even while the main actor is busy putting the first screen up.
         let readAhead = Task.detached(priority: .userInitiated) { [listDirectory, summarizer] in

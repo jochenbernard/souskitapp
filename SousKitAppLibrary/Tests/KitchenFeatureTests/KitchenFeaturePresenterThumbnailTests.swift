@@ -8,10 +8,10 @@ import Testing
 
 @Suite("Kitchen feature presenter thumbnails")
 struct KitchenFeaturePresenterThumbnailTests {
-    private let box = CGSize(width: 480.0, height: 360.0)
-    private let parser = SousParser()
+    let box = CGSize(width: 480.0, height: 360.0)
+    let parser = SousParser()
 
-    private func picture(
+    func picture(
         _ name: String = "gratin-dauphinois",
         modifiedAt date: Date? = nil,
         availability: RecipeAvailability = .downloaded
@@ -23,7 +23,7 @@ struct KitchenFeaturePresenterThumbnailTests {
         )
     }
 
-    private func thumbnail(width: Int, height: Int) throws -> CGImage {
+    func thumbnail(width: Int, height: Int) throws -> CGImage {
         let context = try #require(
             CGContext(
                 data: nil,
@@ -40,7 +40,7 @@ struct KitchenFeaturePresenterThumbnailTests {
     }
 
     @MainActor
-    private func makePresenter(
+    func makePresenter(
         recipeRepository: RecipeRepositorySpy,
         viewModel: KitchenFeatureViewModel
     ) -> KitchenFeaturePresenter {

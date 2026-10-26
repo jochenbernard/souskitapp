@@ -23,8 +23,7 @@ extension KitchenFeaturePresenter {
         if let thumbnail {
             thumbnailMemory.keep(thumbnail, of: picture)
         } else {
-            thumbnailMemory.forget(picture)
-            viewModel.thumbnails.readDidFail(of: picture)
+            thumbnailMemory.readDidFail(of: picture)
         }
     }
 
@@ -34,11 +33,6 @@ extension KitchenFeaturePresenter {
     func keepCachedThumbnails(in folder: KitchenFolder) async {
         let cards = folder.folders.flatMap(\.stackedCards) + folder.cards
         let pictures = Array(cards.lazy.compactMap(\.recipeEntry.picture).prefix(Self.cachedPictureCount))
-
-        guard !pictures.isEmpty else {
-            return
-        }
-
         let (thumbnails, continuation) = AsyncStream.makeStream(of: (RecipePicture, CGImage?).self)
 
         for picture in pictures {
@@ -52,17 +46,10 @@ extension KitchenFeaturePresenter {
             try? await Task.sleep(for: Self.cachedThumbnailWait)
             continuation.finish()
         }
-        var readCount = 0
 
-        for await (picture, thumbnail) in thumbnails {
+        for await (picture, thumbnail) in thumbnails.prefix(pictures.count) {
             if let thumbnail {
                 thumbnailMemory.keep(thumbnail, of: picture)
-            }
-
-            readCount += 1
-
-            if readCount == pictures.count {
-                break
             }
         }
 

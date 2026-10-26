@@ -7,13 +7,8 @@ import Testing
 extension FileRecipeRepositoryTests {
     @Test("a cached thumbnail is the one a read of the picture kept, and none is made for a picture never read")
     func cachedThumbnail() async throws {
-        try directory.writePicture(
-            named: "gratin-dauphinois.png",
-            width: 1_600,
-            height: 1_000
-        )
-        let listing = try RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory).readListing()
-        let picture = try #require(listing.pictures["gratin-dauphinois.png"])
+        try writeGratin(width: 1_600, height: 1_000)
+        let picture = try self.picture(at: "gratin-dauphinois.png")
         let box = CGSize(width: 400.0, height: 300.0)
 
         #expect(await makeRepository().cachedThumbnail(of: picture) == nil)

@@ -111,9 +111,7 @@ final class FileRecipeRepositoryStoreTests {
     @Test("a repository a store makes reads the thumbnails kept for the first pictures ahead of the kitchen")
     func thumbnailsReadAhead() async throws {
         let store = makeStore()
-        let pictures = try await keepThumbnails(named: ["brioche", "crepes"], with: store)
-        // Connected again rather than made from the bookmark, which resolves the temporary directory's path otherwise.
-        let recipeRepository = try store.connectRecipeDirectory(at: directory.url)
+        let (pictures, recipeRepository) = try await keepThumbnails(named: ["brioche", "crepes"], with: store)
 
         #expect(await recipeRepository.cachedThumbnail(of: pictures[0]) != nil)
 
@@ -125,9 +123,7 @@ final class FileRecipeRepositoryStoreTests {
     @Test("clearing while a repository reads ahead leaves nothing in the caches")
     func clearingDuringReadAhead() async throws {
         let store = makeStore()
-        let pictures = try await keepThumbnails(named: ["brioche", "crepes"], with: store)
-        // Connected again rather than made from the bookmark, which resolves the temporary directory's path otherwise.
-        let recipeRepository = try store.connectRecipeDirectory(at: directory.url)
+        let (pictures, recipeRepository) = try await keepThumbnails(named: ["brioche", "crepes"], with: store)
 
         store.clear()
 
@@ -139,13 +135,13 @@ final class FileRecipeRepositoryStoreTests {
     }
 
     /// Connects the directory holding recipes of the names given, each naming a picture, and reads their summaries and
-    /// thumbnails, so the caches hold both as after an earlier launch.
+    /// thumbnails, so the caches hold both as after an earlier launch, then connects it again.
     ///
-    /// - Returns: The pictures, in the order of the names.
+    /// - Returns: The pictures, in the order of the names, and the repository connected again.
     private func keepThumbnails(
         named names: [String],
         with store: FileRecipeRepositoryStore
-    ) async throws -> [RecipePicture] {
+    ) async throws -> (pictures: [RecipePicture], recipeRepository: RecipeRepository) {
         for name in names {
             try directory.writePicture(
                 named: "\(name).png",
@@ -170,7 +166,8 @@ final class FileRecipeRepositoryStoreTests {
             _ = try await recipeRepository.readThumbnail(of: picture, filling: CGSize(width: 400.0, height: 250.0))
         }
 
-        return pictures
+        // Connected again rather than made from the bookmark, which resolves the temporary directory's path otherwise.
+        return (pictures, try store.connectRecipeDirectory(at: directory.url))
     }
 
     @Test("a bookmark that no longer resolves reads back as nothing remembered")

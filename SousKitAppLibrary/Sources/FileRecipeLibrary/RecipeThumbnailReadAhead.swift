@@ -102,13 +102,7 @@ final class RecipeThumbnailReadAhead: Sendable {
                 }
             }
 
-            var thumbnails: [RecipePicture: CGImage] = [:]
-
-            for await (picture, thumbnail) in group {
-                thumbnails[picture] = thumbnail
-            }
-
-            return thumbnails
+            return await group.reduce(into: [:], { $0[$1.0] = $1.1 })
         }
     }
 }

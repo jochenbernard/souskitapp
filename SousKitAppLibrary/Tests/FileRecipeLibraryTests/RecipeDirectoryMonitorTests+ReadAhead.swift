@@ -19,7 +19,7 @@ extension RecipeDirectoryMonitorTests {
             }
         }
 
-        monitor.readAhead()
+        _ = monitor.readAhead()
         var results = monitor.listedRecipes().makeAsyncIterator()
         let first = await results.next(isolation: #isolation)
         let second = await results.next(isolation: #isolation)
@@ -44,7 +44,7 @@ extension RecipeDirectoryMonitorTests {
             }
         }
 
-        monitor.readAhead()
+        _ = monitor.readAhead()
 
         while listingCount.withLock({ $0 }) == 0 {
             try await Task.sleep(for: .milliseconds(1))

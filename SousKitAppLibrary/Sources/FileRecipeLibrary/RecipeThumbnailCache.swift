@@ -81,11 +81,10 @@ struct RecipeThumbnailCache: Sendable {
         let keptFiles = names().compactMap { name in
             Self.keptSize(inFileName: name, after: prefix).map({ (name: name, size: $0) })
         }
-        let largest = keptFiles.max { lhs, rhs in
-            lhs.size.width * lhs.size.height < rhs.size.width * rhs.size.height
-        }
 
-        guard let largest else {
+        guard
+            let largest = keptFiles.max(by: { $0.size.width * $0.size.height < $1.size.width * $1.size.height })
+        else {
             return nil
         }
 
@@ -225,17 +224,13 @@ struct RecipeThumbnailCache: Sendable {
             return nil
         }
 
-        let lengths = name.dropFirst(prefix.count).split(separator: "x").map({ Double($0) })
+        let lengths = name.dropFirst(prefix.count).split(separator: "x").compactMap({ Double($0) })
 
-        guard
-            lengths.count == 2,
-            let width = lengths[0],
-            let height = lengths[1]
-        else {
+        guard lengths.count == 2 else {
             return nil
         }
 
-        return CGSize(width: width, height: height)
+        return CGSize(width: lengths[0], height: lengths[1])
     }
 
     private static func keptLength(holding length: Double) -> Double {
