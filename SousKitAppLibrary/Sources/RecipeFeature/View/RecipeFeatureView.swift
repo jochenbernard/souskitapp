@@ -13,9 +13,6 @@ struct RecipeFeatureView: View {
 
     @LineContainerRadius private var radius
 
-    // What the share sheet's popover finds the share button by, as the bar draws it outside this view.
-    private static let shareButtonID = "share"
-
     private let presenter: RecipeFeaturePresenterProtocol
     private let viewModel: RecipeFeatureViewModel
     private let placeholder: RecipePlaceholder
@@ -70,7 +67,7 @@ struct RecipeFeatureView: View {
             .background {
                 SousShareSheet(
                     fileURL: viewModel.sharedFileURL,
-                    barButtonID: Self.shareButtonID,
+                    barButtonTitle: shareTitle,
                     dismiss: presenter.didDismissSharing
                 )
             }
@@ -238,13 +235,17 @@ struct RecipeFeatureView: View {
 
     private var shareButton: some View {
         Button(
-            String(localized: "Share", bundle: .module),
+            shareTitle,
             systemImage: "square.and.arrow.up",
             action: share
         )
         // Before the read the copy waits on the fetch, and after a failed one there is no recipe to hand on.
         .disabled(!isRecipeRead)
-        .accessibilityIdentifier(Self.shareButtonID)
+    }
+
+    // What the share sheet's popover finds the share button by, as the bar draws it outside this view.
+    private var shareTitle: String {
+        String(localized: "Share", bundle: .module)
     }
 
     private func share() {
