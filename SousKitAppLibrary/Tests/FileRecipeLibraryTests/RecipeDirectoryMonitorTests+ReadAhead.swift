@@ -11,29 +11,13 @@ extension RecipeDirectoryMonitorTests {
     func streamAfterReadAhead() async throws {
         try directory.writeFile(named: "crepes.sous")
         let listingCount = Mutex(0)
-        let monitor = RecipeDirectoryMonitor(
-            recipeDirectory: directory.recipeDirectory,
-            summarizer: RecipeSummarizer(
-                cache: directory.summaryCache,
-                parser: SousParser(),
-                textReader: RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .utility)
-            ),
-            settleDelay: .milliseconds(20),
-            listDirectory: { reader in
-                let isFirst = listingCount.withLock { count in
-                    count += 1
+        let monitor = makeReadAheadMonitor {
+            listingCount.withLock { count in
+                count += 1
 
-                    return count == 1
-                }
-
-                // The read ahead lists, and the stream's own read fails, so each result tells which read it came from.
-                guard isFirst else {
-                    throw CocoaError(.fileReadUnknown)
-                }
-
-                return try reader.readListing()
+                return count == 1
             }
-        )
+        }
 
         monitor.readAhead()
         var results = monitor.listedRecipes().makeAsyncIterator()
@@ -44,5 +28,61 @@ extension RecipeDirectoryMonitorTests {
         #expect(throws: (any Error).self) {
             try #require(second).get()
         }
+    }
+
+    @MainActor
+    @Test("a read started while the read ahead lists waits for it, yielding the recipes listed ahead first")
+    func readDuringReadAhead() async throws {
+        try directory.writeFile(named: "crepes.sous")
+        let listingCount = Mutex(0)
+        let readAheadGate = DispatchSemaphore(value: 0)
+        let monitor = makeReadAheadMonitor(readAheadGate: readAheadGate) {
+            listingCount.withLock { count in
+                count += 1
+
+                return count == 1
+            }
+        }
+
+        monitor.readAhead()
+
+        while listingCount.withLock({ $0 }) == 0 {
+            try await Task.sleep(for: .milliseconds(1))
+        }
+
+        var results = monitor.listedRecipes().makeAsyncIterator()
+        monitor.refresh()
+        readAheadGate.signal()
+        let first = await results.next(isolation: #isolation)
+
+        #expect(try #require(first).get().map(\.entry.name) == ["crepes"])
+    }
+
+    /// A monitor whose first listing, the read ahead's, succeeds once `readAheadGate` opens, and whose later listings
+    /// fail, so each result tells which read it came from.
+    ///
+    /// - Parameter isFirstListing: Counts a listing, returning whether it is the first.
+    private func makeReadAheadMonitor(
+        readAheadGate: DispatchSemaphore? = nil,
+        isFirstListing: @escaping @Sendable () -> Bool
+    ) -> RecipeDirectoryMonitor {
+        RecipeDirectoryMonitor(
+            recipeDirectory: directory.recipeDirectory,
+            summarizer: RecipeSummarizer(
+                cache: directory.summaryCache,
+                parser: SousParser(),
+                textReader: RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .utility)
+            ),
+            settleDelay: .milliseconds(20),
+            listDirectory: { reader in
+                guard isFirstListing() else {
+                    throw CocoaError(.fileReadUnknown)
+                }
+
+                readAheadGate?.wait()
+
+                return try reader.readListing()
+            }
+        )
     }
 }

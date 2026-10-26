@@ -119,8 +119,7 @@ final class RecipeDirectoryMonitor {
         read(afterSettling: false)
     }
 
-    /// Lists the recipes with the summaries the cache holds, before any stream asks, for the next stream to yield
-    /// before its own read.
+    /// Lists the recipes with the summaries the cache holds, for the next stream to yield before its own read.
     ///
     /// The stream still reads the directory itself, and yields again only what changed since.
     func readAhead() {
@@ -214,7 +213,6 @@ final class RecipeDirectoryMonitor {
 
         let delay = afterSettling ? settleDelay : .zero
         let readAhead = readAheadTask
-        readAheadTask = nil
 
         readTask = Task { [weak self, listDirectory, summarizer] in
             try? await Task.sleep(for: delay)
@@ -223,9 +221,9 @@ final class RecipeDirectoryMonitor {
                 return
             }
 
-            // Shown while the directory is listed again, now that it is watched.
-            if let listedRecipes = try? await readAhead?.value, !Task.isCancelled {
-                self?.yield(.success(listedRecipes))
+            // Every read waits for it until one yields it: its older listing, done later, drops newer files' summaries.
+            if let readAhead, await self?.yieldRecipes(of: readAhead) == false {
+                return
             }
 
             var result = await Self.readListing(with: listDirectory)
@@ -256,6 +254,25 @@ final class RecipeDirectoryMonitor {
                 self?.yield(.failure(error))
             }
         }
+    }
+
+    /// Yields the recipes the read ahead listed once it finishes, unless the read waiting on it is cancelled meanwhile.
+    ///
+    /// - Returns: Whether the read goes on.
+    private func yieldRecipes(of readAhead: Task<[ListedRecipe], Error>) async -> Bool {
+        let listedRecipes = try? await readAhead.value
+
+        guard !Task.isCancelled else {
+            return false
+        }
+
+        readAheadTask = nil
+
+        if let listedRecipes {
+            yield(.success(listedRecipes))
+        }
+
+        return true
     }
 
     /// Keeps a listing, watching the directories it holds and giving up on the fetches of files it no longer holds.
