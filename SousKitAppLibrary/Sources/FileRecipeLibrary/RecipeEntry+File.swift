@@ -34,7 +34,11 @@ extension RecipeEntry {
         )
     }
 
-    private static func name(forFileAt path: String) -> String {
+    /// The name of the recipe in a file, from the file's name without its extension, with its words spaced.
+    ///
+    /// - Parameter path: Where the file sits, extension included.
+    /// - Returns: The name.
+    static func name(forFileAt path: String) -> String {
         let stem = URL(filePath: path).deletingPathExtension().lastPathComponent
         let words = stem.split(whereSeparator: isSeparator)
 

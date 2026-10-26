@@ -41,6 +41,7 @@ struct AppFeatureView: View {
                 }
             }
             .onAppear(perform: presenter.viewDidAppear)
+            .onOpenURL(perform: presenter.didOpenFile(at:))
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background {
                     presenter.didEnterBackground()

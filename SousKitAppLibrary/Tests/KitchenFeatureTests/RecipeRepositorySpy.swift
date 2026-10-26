@@ -3,8 +3,8 @@ import Foundation
 import RecipeLibrary
 import SousKit
 
-/// A repository listing whatever a test sends it, counting its refreshes and reads, and reading the thumbnails a test
-/// gives it.
+/// A repository listing whatever a test sends it, counting its refreshes and reads, reading the thumbnails a test
+/// gives it, and holding the files a test names.
 @MainActor
 final class RecipeRepositorySpy: RecipeRepository {
     nonisolated let name = "Recipes"
@@ -25,10 +25,14 @@ final class RecipeRepositorySpy: RecipeRepository {
 
     nonisolated private let parser = SousParser()
 
+    /// The id of the recipe each file holds, by the file's URL.
+    nonisolated private let fileIDs: [URL: String]
+
     private let continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation
     private let stream: AsyncStream<Result<[ListedRecipe], Error>>
 
-    init() {
+    init(fileIDs: [URL: String] = [:]) {
+        self.fileIDs = fileIDs
         (self.stream, self.continuation) = AsyncStream.makeStream(of: Result<[ListedRecipe], Error>.self)
     }
 
@@ -54,6 +58,10 @@ final class RecipeRepositorySpy: RecipeRepository {
         }
 
         return thumbnail
+    }
+
+    nonisolated func recipeID(forFileAt url: URL) -> String? {
+        fileIDs[url]
     }
 
     /// Copies out no file: the recipe's path inside the temporary directory, where nothing is written, or the error

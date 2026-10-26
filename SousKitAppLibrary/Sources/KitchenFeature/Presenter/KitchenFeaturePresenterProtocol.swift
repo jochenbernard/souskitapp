@@ -23,6 +23,12 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didPush(_ screen: KitchenScreen, from origin: KitchenScreen?)
 
+    /// A recipe file was handed to the app to open.
+    ///
+    /// - Parameter document: The file.
+    @MainActor
+    func didOpen(_ document: RecipeDocument)
+
     /// The stack popped screens.
     ///
     /// - Parameter count: How many screens are left on it.

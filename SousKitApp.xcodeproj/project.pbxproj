@@ -7,12 +7,38 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B98492D64B37C2BCEA9B724C /* SousKitThumbnails.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 8747662858910E4643837521 /* SousKitThumbnails.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		713C18243047700A0006D2ED /* AppFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 713C18233047700A0006D2ED /* AppFeature */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		DAF8865F48585C92D99A8B9B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 71CB48A430471AC200F07C1F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 31A78822BB367E4726C12E6E;
+			remoteInfo = SousKitThumbnails;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E8DBDA52A1C5B1237EB57FD3 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B98492D64B37C2BCEA9B724C /* SousKitThumbnails.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		713C181E3047606E0006D2ED /* SousKitAppLibrary */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = SousKitAppLibrary; sourceTree = "<group>"; };
 		71CB48AC30471AC200F07C1F /* SousKitApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SousKitApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8747662858910E4643837521 /* SousKitThumbnails.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SousKitThumbnails.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -22,6 +48,13 @@
 				Info.plist,
 			);
 			target = 71CB48AB30471AC200F07C1F /* SousKitApp */;
+		};
+		3C4737FF4FEECA1B1FA5903D /* Exceptions for "SousKitThumbnails" folder in "SousKitThumbnails" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 31A78822BB367E4726C12E6E /* SousKitThumbnails */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -34,9 +67,24 @@
 			path = SousKitApp;
 			sourceTree = "<group>";
 		};
+		F0C534AE690AEA9F20E9964E /* SousKitThumbnails */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3C4737FF4FEECA1B1FA5903D /* Exceptions for "SousKitThumbnails" folder in "SousKitThumbnails" target */,
+			);
+			path = SousKitThumbnails;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		4D3C5913B310DFEEF7293777 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		71CB48A930471AC200F07C1F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -53,6 +101,7 @@
 			children = (
 				713C181E3047606E0006D2ED /* SousKitAppLibrary */,
 				71CB48AE30471AC200F07C1F /* SousKitApp */,
+				F0C534AE690AEA9F20E9964E /* SousKitThumbnails */,
 				71CB48AD30471AC200F07C1F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -61,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				71CB48AC30471AC200F07C1F /* SousKitApp.app */,
+				8747662858910E4643837521 /* SousKitThumbnails.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -68,6 +118,27 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		31A78822BB367E4726C12E6E /* SousKitThumbnails */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3DF3C739C432A5332BF71F40 /* Build configuration list for PBXNativeTarget "SousKitThumbnails" */;
+			buildPhases = (
+				258AAA28063D4999BCB82CA9 /* Sources */,
+				4D3C5913B310DFEEF7293777 /* Frameworks */,
+				0C704D343BB914A90847E5DD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				43B0E6FB45F8B113436F2CE1 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F0C534AE690AEA9F20E9964E /* SousKitThumbnails */,
+			);
+			name = SousKitThumbnails;
+			productName = SousKitThumbnails;
+			productReference = 8747662858910E4643837521 /* SousKitThumbnails.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		71CB48AB30471AC200F07C1F /* SousKitApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 71CB48B730471AC300F07C1F /* Build configuration list for PBXNativeTarget "SousKitApp" */;
@@ -75,11 +146,13 @@
 				71CB48A830471AC200F07C1F /* Sources */,
 				71CB48A930471AC200F07C1F /* Frameworks */,
 				71CB48AA30471AC200F07C1F /* Resources */,
+				E8DBDA52A1C5B1237EB57FD3 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				713C18213047646E0006D2ED /* PBXTargetDependency */,
+				80F049D092440BB4B11DB8A6 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				71CB48AE30471AC200F07C1F /* SousKitApp */,
@@ -105,6 +178,9 @@
 					71CB48AB30471AC200F07C1F = {
 						CreatedOnToolsVersion = 26.6;
 					};
+					31A78822BB367E4726C12E6E = {
+						CreatedOnToolsVersion = 27.0;
+					};
 				};
 			};
 			buildConfigurationList = 71CB48A730471AC200F07C1F /* Build configuration list for PBXProject "SousKitApp" */;
@@ -126,11 +202,19 @@
 			projectRoot = "";
 			targets = (
 				71CB48AB30471AC200F07C1F /* SousKitApp */,
+				31A78822BB367E4726C12E6E /* SousKitThumbnails */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0C704D343BB914A90847E5DD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		71CB48AA30471AC200F07C1F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -141,6 +225,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		258AAA28063D4999BCB82CA9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		71CB48A830471AC200F07C1F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -155,9 +246,68 @@
 			isa = PBXTargetDependency;
 			productRef = 713C18203047646E0006D2ED /* SwiftLintBuildToolPlugin */;
 		};
+		80F049D092440BB4B11DB8A6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 31A78822BB367E4726C12E6E /* SousKitThumbnails */;
+			targetProxy = DAF8865F48585C92D99A8B9B /* PBXContainerItemProxy */;
+		};
+		43B0E6FB45F8B113436F2CE1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 5FAB979F6DFAB2D99391F1CA /* SwiftLintBuildToolPlugin */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		A35569ACE1EC2AB955FD18A5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SousKitThumbnails/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SousKitThumbnails;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.4;
+				PRODUCT_BUNDLE_IDENTIFIER = app.souskit.souskitapp.thumbnails;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7EADBF07B18B5CD36F1569F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SousKitThumbnails/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SousKitThumbnails;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.4;
+				PRODUCT_BUNDLE_IDENTIFIER = app.souskit.souskitapp.thumbnails;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		71CB48B530471AC300F07C1F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -348,6 +498,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		3DF3C739C432A5332BF71F40 /* Build configuration list for PBXNativeTarget "SousKitThumbnails" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A35569ACE1EC2AB955FD18A5 /* Debug */,
+				7EADBF07B18B5CD36F1569F8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		71CB48A730471AC200F07C1F /* Build configuration list for PBXProject "SousKitApp" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -387,6 +546,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		5FAB979F6DFAB2D99391F1CA /* SwiftLintBuildToolPlugin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 713C181F3047641B0006D2ED /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */;
+			productName = "plugin:SwiftLintBuildToolPlugin";
+		};
 		713C18203047646E0006D2ED /* SwiftLintBuildToolPlugin */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 713C181F3047641B0006D2ED /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */;

@@ -24,6 +24,18 @@ public struct RecipeFeatureFactory: Sendable {
         self.recipeRepository = recipeRepository
     }
 
+    /// A factory building the same features from another repository.
+    ///
+    /// - Parameter recipeRepository: The repository the recipes are read from.
+    /// - Returns: The factory.
+    public func reading(_ recipeRepository: RecipeRepository) -> Self {
+        Self(
+            parser: parser,
+            preferredScaleStore: preferredScaleStore,
+            recipeRepository: recipeRepository
+        )
+    }
+
     /// Builds the feature.
     ///
     /// - Parameters:
