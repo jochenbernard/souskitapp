@@ -28,4 +28,8 @@ public protocol TimerScheduler: Sendable {
     /// - Throws: Whatever cancelling the timer throws.
     @MainActor
     func cancel(_ timer: RunningTimer) throws
+
+    /// Cancels every timer counting down or ringing, and forgets every timer started.
+    @MainActor
+    func cancelAll()
 }

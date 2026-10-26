@@ -14,7 +14,8 @@ disagrees with this package, this package is right.
 | Mark | `SousMark` | The logo, drawn on the 64-unit grid. |
 | Components | `.sousPrimary`, `.sousSecondary`, `.sousQuiet`, `.sousBare`, `.sousChip(isSelected:)`, `.sous` | The three button styles, the button its label draws, the chip a cook chooses from a set, and the disclosure group style. |
 | Page | `.sousPage()`, `.sousPagePadding()` | The ground a screen sits on, and the inset to its edges. |
-| Containers | `.sousSurface(_:)`, `.sousBorder()`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `.sousCardPicture()`, `SousCard`, `SousRowGroup`, `.sousCallout()`, `.sousChip()`, `SousActivityNote` | The card and its border, the row and its two halves, the picture a card opens with, the card with a picture and a title, the rows that share one card, the wash, the chip, the spinner. |
+| Containers | `.sousSurface(_:)`, `.sousBorder()`, `.sousRow()`, `.sousRowPadding()`, `.sousRowSurface()`, `.sousCardPicture()`, `SousCard`, `SousRowGroup`, `.sousCallout()`, `.sousChip()` | The card and its border, the row and its two halves, the picture a card opens with, the card with a picture and a title, the rows that share one card, the wash, the chip. |
+| Loading | `SousLoadingStack`, `.sousLoadingPlaceholder()`, `isSousLoading`, `.sousLoadingArrival(isLoading:)` | Content still being read, the placeholders shaped like it that stand in until it arrives, and what arrives with it. |
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
 | Recipes | `SousPlaceholder`, `SousFolderPath` | What a recipe without a picture shows, and the folders something sits in. |
 | Sheet | `SousSheet` | The low sheet that sets one thing. |
@@ -151,6 +152,13 @@ container, and sets `.accent` on what it holds, so a call site names neither.
 
 A disclosure group takes `.sous` rather than the automatic style, which cannot inset its chevron
 to line up with what is on a surface.
+
+A screen waiting on what it reads draws that content's own views as placeholders, not a spinner,
+so the content lands where they were. What the screen knows before the read, such as a section's
+heading, stays as it is. The placeholders breathe between full and 0.4 opacity on a repeating
+spring, and hold still under Reduce Motion; once the content arrives, they fade from above it, or
+give way at once to content that took under half a second. They are hidden from assistive
+technologies, so the screen gives one element that says what it waits on.
 
 ## Adding to it
 

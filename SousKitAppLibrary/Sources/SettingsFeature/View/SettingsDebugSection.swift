@@ -51,7 +51,7 @@ struct SettingsDebugSection: View {
 
     private var resetNote: some View {
         Text(
-            "The folder and the settings are forgotten and setup starts over. Recipes on disk are left alone.",
+            "Everything the app keeps is forgotten and setup starts over. Recipes on disk are left alone.",
             bundle: .module
         )
     }

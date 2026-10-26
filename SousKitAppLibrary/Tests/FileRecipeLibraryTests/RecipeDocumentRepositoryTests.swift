@@ -25,7 +25,11 @@ final class RecipeDocumentRepositoryTests {
             """
         )
         let url = directory.url.appending(path: "vinaigrette.sous")
-        let repository = RecipeDocumentRepository(url: url, parser: SousParser())
+        let repository = RecipeDocumentRepository(
+            url: url,
+            parser: SousParser(),
+            exportFolderURL: URL.temporaryDirectory.appending(path: UUID().uuidString)
+        )
 
         let recipe = try await repository.readRecipe(of: repository.entry).value
 
@@ -38,7 +42,11 @@ final class RecipeDocumentRepositoryTests {
     @Test("the file is found by its URL, which no file in a directory is found by")
     func fileFoundByURL() {
         let url = directory.url.appending(path: "vinaigrette.sous")
-        let repository = RecipeDocumentRepository(url: url, parser: SousParser())
+        let repository = RecipeDocumentRepository(
+            url: url,
+            parser: SousParser(),
+            exportFolderURL: URL.temporaryDirectory.appending(path: UUID().uuidString)
+        )
 
         #expect(repository.recipeID(forFileAt: url) == repository.entry.id)
         #expect(repository.recipeID(forFileAt: directory.url.appending(path: "crepes.sous")) == nil)
@@ -49,7 +57,11 @@ final class RecipeDocumentRepositoryTests {
     func unreadableFileFails() async throws {
         let url = directory.url.appending(path: "brioche.sous")
         try Data([0xFF, 0xFE, 0x00, 0xD8, 0x80]).write(to: url)
-        let repository = RecipeDocumentRepository(url: url, parser: SousParser())
+        let repository = RecipeDocumentRepository(
+            url: url,
+            parser: SousParser(),
+            exportFolderURL: URL.temporaryDirectory.appending(path: UUID().uuidString)
+        )
 
         await #expect(throws: (any Error).self) {
             try await repository.readRecipe(of: repository.entry)

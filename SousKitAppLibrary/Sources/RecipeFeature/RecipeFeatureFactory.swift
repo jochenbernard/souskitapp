@@ -57,6 +57,7 @@ public struct RecipeFeatureFactory: Sendable {
         let viewModel = RecipeFeatureViewModel(
             recipeEntry: recipeEntry,
             folderPath: [recipeRepository.name] + recipeEntry.folderPath,
+            placeholderRecipe: .placeholder(parser: parser),
             thumbnail: thumbnail,
             sharedRecipe: SharedRecipe(entry: recipeEntry, recipeRepository: recipeRepository)
         )

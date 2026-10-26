@@ -14,17 +14,20 @@ struct RecipeDocumentRepository: RecipeRepository {
     private let parser: SousParser
     private let textReader: RecipeTextReader
     private let url: URL
+    private let exportFolderURL: URL
 
     /// Creates a repository.
     ///
     /// - Parameters:
     ///   - url: The file, whose security scope every read opens.
     ///   - parser: What the recipe is read with.
+    ///   - exportFolderURL: The folder each copy made for sharing goes in a folder of its own under.
     ///   - fileStatus: What the file system reports of the file at a URL, or of the file iCloud promises there.
     ///   - startDownloading: Asks iCloud for a file's contents, returning before they arrive.
     init(
         url: URL,
         parser: SousParser,
+        exportFolderURL: URL,
         fileStatus: @escaping @Sendable (URL) -> RecipeFileStatus? = RecipeFileStatus.read(at:),
         startDownloading: @escaping @Sendable (URL) throws -> Void = { url in
             try FileManager.default.startDownloadingUbiquitousItem(at: url)
@@ -48,6 +51,7 @@ struct RecipeDocumentRepository: RecipeRepository {
             startDownloading: startDownloading
         )
         self.url = url
+        self.exportFolderURL = exportFolderURL
     }
 
     func listedRecipes() -> AsyncStream<Result<[ListedRecipe], Error>> {
@@ -78,15 +82,11 @@ struct RecipeDocumentRepository: RecipeRepository {
         url.standardizedFileURL == self.url.standardizedFileURL ? entry.id : nil
     }
 
-    /// Copies off the caller's actor, where a recipe still in iCloud has to be fetched first, into a folder of the
-    /// copy's own under the temporary directory.
+    /// Copies off the caller's actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
     func exportRecipeFile(of _: RecipeEntry) async throws -> URL {
         try await url.withSecurityScope {
-            try await textReader.copy(
-                path: url.lastPathComponent,
-                into: URL.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
-            )
+            try await textReader.copy(path: url.lastPathComponent, under: exportFolderURL)
         }
     }
 }

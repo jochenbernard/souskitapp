@@ -16,6 +16,9 @@ final class TemporaryDirectory: Sendable {
     /// Where the thumbnails of the directory's pictures are kept, beside the directory rather than in it.
     let thumbnailCacheURL: URL
 
+    /// Where the directory's recipe files are copied for other apps, beside the directory rather than in it.
+    let exportFolderURL: URL
+
     /// Creates a directory, named for the suite and a fresh UUID so suites never share one.
     ///
     /// - Parameter name: The suite's name.
@@ -27,12 +30,14 @@ final class TemporaryDirectory: Sendable {
         self.url = directoryURL
         self.summaryCacheURL = directoryURL.appendingPathExtension("RecipeSummaries.json")
         self.thumbnailCacheURL = directoryURL.appendingPathExtension("RecipeThumbnails")
+        self.exportFolderURL = directoryURL.appendingPathExtension("RecipeExports")
     }
 
     deinit {
         try? FileManager.default.removeItem(at: url)
         try? FileManager.default.removeItem(at: summaryCacheURL)
         try? FileManager.default.removeItem(at: thumbnailCacheURL)
+        try? FileManager.default.removeItem(at: exportFolderURL)
     }
 
     /// The directory, as the library takes it.

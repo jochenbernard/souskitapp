@@ -40,4 +40,8 @@ final class TimerSchedulerSpy: TimerScheduler {
     func cancel(_ timer: RunningTimer) {
         cancelledTimers.append(timer)
     }
+
+    func cancelAll() {
+        cancelledTimers.append(contentsOf: currentRunningTimers())
+    }
 }

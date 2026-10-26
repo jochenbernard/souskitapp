@@ -9,15 +9,21 @@ import Testing
 @MainActor
 final class MockRecipeRepositoryTests {
     private let parser = SousParser()
-    private let symbolCacheURL = URL.temporaryDirectory.appending(
+    let symbolCacheURL = URL.temporaryDirectory.appending(
         path: "MockRecipeRepositoryTests-\(UUID().uuidString).json"
+    )
+    let exportFolderURL = URL.temporaryDirectory.appending(
+        path: "MockRecipeRepositoryTests-\(UUID().uuidString)",
+        directoryHint: .isDirectory
     )
 
     isolated deinit {
         try? FileManager.default.removeItem(at: symbolCacheURL)
+        try? FileManager.default.removeItem(at: exportFolderURL)
     }
 
-    /// A repository picking no symbols unless given a picker that can, keeping them in this suite's file.
+    /// A repository picking no symbols unless given a picker that can, keeping them in this suite's file, and exporting
+    /// into this suite's folder.
     @MainActor
     func makeRepository(
         symbolPicker: RecipeSymbolPicker = RecipeSymbolPickerStub(isAvailable: false)
@@ -26,6 +32,7 @@ final class MockRecipeRepositoryTests {
             parser: parser,
             symbolPicker: symbolPicker,
             symbolCacheURL: symbolCacheURL,
+            exportFolderURL: exportFolderURL,
             fetchDuration: .zero
         )
     }
@@ -38,7 +45,7 @@ final class MockRecipeRepositoryTests {
 
     /// The first list a new stream from the repository yields, with the recipes' ingredient names.
     @MainActor
-    private func currentListedRecipes(of repository: MockRecipeRepository) async throws -> [ListedRecipe] {
+    func currentListedRecipes(of repository: MockRecipeRepository) async throws -> [ListedRecipe] {
         var iterator = repository.listedRecipes().makeAsyncIterator()
 
         return try #require(await iterator.next()).get()

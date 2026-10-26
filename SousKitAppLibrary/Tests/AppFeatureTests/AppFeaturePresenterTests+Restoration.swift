@@ -7,7 +7,7 @@ import RecipeLibrary
 import Testing
 
 extension AppFeaturePresenterTests {
-    private var runningTimer: RunningTimer {
+    var runningTimer: RunningTimer {
         RunningTimer(
             id: UUID(),
             cookingTimer: .step(
@@ -76,7 +76,7 @@ extension AppFeaturePresenterTests {
         keep(cookingRestoration)
         restorationStore.recordTermination()
 
-        _ = launch(timers: [runningTimer])
+        _ = launch(timerScheduler: TimerSchedulerStub(timers: [runningTimer]))
 
         #expect(restorationStore.record()?.restoration == cookingRestoration)
     }
@@ -86,7 +86,7 @@ extension AppFeaturePresenterTests {
         keep(cookingRestoration)
         restorationStore.beginSettling()
 
-        let presenter = launch(timers: [runningTimer])
+        let presenter = launch(timerScheduler: TimerSchedulerStub(timers: [runningTimer]))
 
         #expect(restorationStore.record() == nil)
         #expect(presenter.viewModel?.openSettings == nil)

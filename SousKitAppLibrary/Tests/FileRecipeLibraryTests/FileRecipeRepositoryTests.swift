@@ -24,7 +24,8 @@ final class FileRecipeRepositoryTests: Sendable {
             recipeDirectory: directory.recipeDirectory,
             symbolPicker: symbolPicker,
             summaryCacheURL: directory.summaryCacheURL,
-            thumbnailCacheURL: directory.thumbnailCacheURL
+            thumbnailCacheURL: directory.thumbnailCacheURL,
+            exportFolderURL: directory.exportFolderURL
         )
     }
 
@@ -152,7 +153,7 @@ final class FileRecipeRepositoryTests: Sendable {
         }
     }
 
-    @Test("a recipe's file is exported as a copy of its own each time, outside the directory, under the file's name")
+    @Test("a recipe's file is exported as a copy of its own each time, in the export folder, under the file's name")
     func exportRecipeFile() async throws {
         try directory.makeDirectory(named: "Sauce")
         let vinaigrette = try directory.writeFile(named: "Sauce/vinaigrette.sous", "---\ntitle: Vinaigrette\n---")
@@ -160,14 +161,10 @@ final class FileRecipeRepositoryTests: Sendable {
 
         let first = try await repository.exportRecipeFile(of: vinaigrette)
         let second = try await repository.exportRecipeFile(of: vinaigrette)
-        defer {
-            try? FileManager.default.removeItem(at: first.deletingLastPathComponent())
-            try? FileManager.default.removeItem(at: second.deletingLastPathComponent())
-        }
 
         #expect(first.lastPathComponent == "vinaigrette.sous")
         #expect(first != second)
-        #expect(!first.path(percentEncoded: false).hasPrefix(directory.url.path(percentEncoded: false)))
+        #expect(Array(first.pathComponents.dropLast(2)) == directory.exportFolderURL.pathComponents)
         #expect(try String(contentsOf: second, encoding: .utf8) == "---\ntitle: Vinaigrette\n---")
     }
 

@@ -12,19 +12,22 @@ import SousKit
 /// after the recipes are first listed. Symbols are picked and kept between launches as a folder's are.
 @MainActor
 public final class MockRecipeRepository: RecipeRepository {
+    private let exportFolderURL: URL
     private let fetchDuration: Duration
     private let parser: SousParser
     // By path, so listing many recipes looks each one's picture up at once.
     private let pictureFiles: [String: MockRecipe]
     private let summaries: [String: RecipeSummary]
     private let ingredientNames: [String: [String]]
-    // By recipe id, as an earlier launch kept them.
-    private let symbolPicks: [String: RecipeSymbolPick]
-    private let symbolQueue: RecipeSymbolQueue
+    private let symbolCache: MockSymbolCache
+    private let symbolPicker: RecipeSymbolPicker
 
     private var continuation: AsyncStream<Result<[ListedRecipe], Error>>.Continuation?
     private var downloadTask: Task<Void, Never>?
     private var fetchedIDs: Set<String> = []
+    // By recipe id, as an earlier launch kept them.
+    private var symbolPicks: [String: RecipeSymbolPick]
+    private var symbolQueue: RecipeSymbolQueue
 
     nonisolated public var name: String {
         String(localized: "Mock recipes", bundle: .module)
@@ -36,20 +39,23 @@ public final class MockRecipeRepository: RecipeRepository {
     ///   - parser: What the recipes are read with.
     ///   - symbolPicker: What the recipes' symbols are picked with.
     ///   - symbolCacheURL: Where the recipes' symbols are kept between launches.
+    ///   - exportFolderURL: Where the recipes' files are written for handing them to other apps.
     ///   - fetchDuration: How long a recipe takes to come down from iCloud.
     nonisolated public init(
         parser: SousParser,
         symbolPicker: RecipeSymbolPicker,
         symbolCacheURL: URL,
+        exportFolderURL: URL,
         fetchDuration: Duration = .seconds(3)
     ) {
-        let symbolCache = MockSymbolCache(fileURL: symbolCacheURL)
+        let cache = MockSymbolCache(fileURL: symbolCacheURL)
 
+        self.exportFolderURL = exportFolderURL
         self.parser = parser
-        self.symbolPicks = symbolCache.load()
-        self.symbolQueue = RecipeSymbolQueue(picker: symbolPicker) { id, symbolPick in
-            symbolCache.keep(symbolPick, forRecipeWithID: id)
-        }
+        self.symbolCache = cache
+        self.symbolPicker = symbolPicker
+        self.symbolPicks = cache.load()
+        self.symbolQueue = Self.makeSymbolQueue(picker: symbolPicker, cache: cache)
         self.fetchDuration = fetchDuration
         self.pictureFiles = Dictionary(
             uniqueKeysWithValues: MockRecipe.all.filter(\.isPicture).map({ ($0.id, $0) })
@@ -81,6 +87,21 @@ public final class MockRecipeRepository: RecipeRepository {
     }
 
     public func refresh() {}
+
+    /// Forgets the symbols picked and the recipes fetched from iCloud and removes the files exported, as before the app
+    /// first ran, and ends the stream listed last.
+    public func clear() {
+        downloadTask?.cancel()
+        downloadTask = nil
+        continuation?.finish()
+        continuation = nil
+        fetchedIDs = []
+        symbolPicks = [:]
+        // A new queue, since the one let go picks nothing more for the file to keep.
+        symbolQueue = Self.makeSymbolQueue(picker: symbolPicker, cache: symbolCache)
+        symbolCache.clear()
+        try? FileManager.default.removeItem(at: exportFolderURL)
+    }
 
     @MainActor
     public func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage {
@@ -115,7 +136,7 @@ public final class MockRecipeRepository: RecipeRepository {
     @MainActor
     public func exportRecipeFile(of entry: RecipeEntry) async throws -> URL {
         let (recipe, text) = try await fetch(entry)
-        let folderURL = URL.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        let folderURL = exportFolderURL.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         let fileURL = folderURL.appending(path: URL(filePath: recipe.path).lastPathComponent)
 
         try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
@@ -174,6 +195,15 @@ public final class MockRecipeRepository: RecipeRepository {
             modificationDate: nil,
             availability: availability(of: file)
         )
+    }
+
+    nonisolated private static func makeSymbolQueue(
+        picker: RecipeSymbolPicker,
+        cache: MockSymbolCache
+    ) -> RecipeSymbolQueue {
+        RecipeSymbolQueue(picker: picker) { id, symbolPick in
+            cache.keep(symbolPick, forRecipeWithID: id)
+        }
     }
 
     /// Draws off the main actor, as decoding a photo would be.

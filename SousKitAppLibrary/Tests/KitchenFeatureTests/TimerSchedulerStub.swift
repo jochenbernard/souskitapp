@@ -18,4 +18,6 @@ struct TimerSchedulerStub: TimerScheduler {
     func start(_: CookingTimer) {}
 
     func cancel(_: RunningTimer) {}
+
+    func cancelAll() {}
 }
