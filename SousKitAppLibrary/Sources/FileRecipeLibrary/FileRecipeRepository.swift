@@ -135,7 +135,7 @@ struct FileRecipeRepository: RecipeRepository {
             return thumbnail
         }
 
-        return thumbnailCache.largestThumbnail(of: picture)
+        return thumbnailCache.smallestThumbnail(of: picture)
     }
 
     func recipeID(forFileAt url: URL) -> String? {

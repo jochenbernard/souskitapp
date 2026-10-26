@@ -2,8 +2,6 @@ import CoreGraphics
 import RecipeLibrary
 
 extension KitchenFeaturePresenter {
-    // About the first two screens of cards on an iPhone.
-    private static let cachedPictureCount = 24
     // The longest the cards wait for them, many times what reading kept thumbnails takes.
     private static let cachedThumbnailWait = Duration.milliseconds(300)
 
@@ -27,12 +25,11 @@ extension KitchenFeaturePresenter {
         }
     }
 
-    /// Keeps the thumbnails the repository holds for the pictures a folder shows first, those read within a moment,
+    /// Keeps the thumbnails the repository holds for the pictures a listing shows first, those read within a moment,
     /// so its cards show them from their first frame.
     @MainActor
-    func keepCachedThumbnails(in folder: KitchenFolder) async {
-        let cards = folder.folders.flatMap(\.stackedCards) + folder.cards
-        let pictures = Array(cards.lazy.compactMap(\.recipeEntry.picture).prefix(Self.cachedPictureCount))
+    func keepCachedThumbnails(of recipeEntries: [RecipeEntry]) async {
+        let pictures = RecipeListingOrder.firstPictures(of: recipeEntries)
         let (thumbnails, continuation) = AsyncStream.makeStream(of: (RecipePicture, CGImage?).self)
 
         for picture in pictures {

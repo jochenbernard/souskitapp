@@ -22,11 +22,12 @@ extension KitchenFeaturePresenter {
     @MainActor
     func search(for text: String, below folderPath: [String]) -> KitchenSearch {
         let queryWords = RecipeSearchTerms.words(of: text)
+        let results = searchIndex.results(matching: queryWords, below: folderPath)
 
         return KitchenSearch(
             text: text,
             isSearching: !queryWords.isEmpty,
-            results: searchIndex.results(matching: queryWords, below: folderPath).map(KitchenRecipeCard.init)
+            results: results.map({ KitchenRecipeCard(recipeEntry: $0) })
         )
     }
 

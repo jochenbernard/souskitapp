@@ -69,11 +69,11 @@ struct RecipeThumbnailCache: Sendable {
         return try? RecipeThumbnailMaker.thumbnail(ofImageAt: fileURL, filling: pixelSize)
     }
 
-    /// The thumbnail kept for a picture as it is now at the largest kept size, for a box not known yet.
+    /// The thumbnail kept for a picture as it is now at the smallest kept size, for a box not known yet.
     ///
     /// - Parameter picture: The picture.
     /// - Returns: The thumbnail, decoded, or `nil` where none is kept.
-    func largestThumbnail(of picture: RecipePicture) -> CGImage? {
+    func smallestThumbnail(of picture: RecipePicture) -> CGImage? {
         guard let prefix = fileNamePrefix(of: picture) else {
             return nil
         }
@@ -82,15 +82,16 @@ struct RecipeThumbnailCache: Sendable {
             Self.keptSize(inFileName: name, after: prefix).map({ (name: name, size: $0) })
         }
 
+        // Most often a card's; a recipe screen's takes many times the memory, and a card needing more reads its own.
         guard
-            let largest = keptFiles.max(by: { $0.size.width * $0.size.height < $1.size.width * $1.size.height })
+            let smallest = keptFiles.min(by: { $0.size.width * $0.size.height < $1.size.width * $1.size.height })
         else {
             return nil
         }
 
         return try? RecipeThumbnailMaker.thumbnail(
-            ofImageAt: folderURL.appending(path: largest.name),
-            filling: largest.size
+            ofImageAt: folderURL.appending(path: smallest.name),
+            filling: smallest.size
         )
     }
 

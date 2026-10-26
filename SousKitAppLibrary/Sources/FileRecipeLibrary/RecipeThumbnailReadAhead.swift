@@ -13,47 +13,10 @@ final class RecipeThumbnailReadAhead: Sendable {
         var thumbnails: [RecipePicture: CGImage] = [:]
     }
 
-    // About the first two screens of cards on an iPhone.
-    private static let pictureLimit = 24
-    // As many as a folder's card stacks.
-    private static let folderPictureLimit = 4
-
     private let state = Mutex(State())
 
     deinit {
         state.withLock({ $0.read?.cancel() })
-    }
-
-    /// The pictures of the recipes a kitchen shows first: those a card of a folder at the top stacks, then those of the
-    /// recipes at the top.
-    ///
-    /// - Parameter entries: The recipes, ordered by path.
-    /// - Returns: The pictures, the first shown first.
-    static func firstPictures(of entries: [RecipeEntry]) -> [RecipePicture] {
-        var folderPictures: [String: [RecipePicture]] = [:]
-        var topPictures: [RecipePicture] = []
-        // A folder's own recipes first, as its card stacks them.
-        let ownEntriesFirst = entries.filter({ $0.folderPath.count <= 1 }) + entries.filter({ $0.folderPath.count > 1 })
-
-        for entry in ownEntriesFirst {
-            guard let picture = entry.picture else {
-                continue
-            }
-
-            guard let folderName = entry.folderPath.first else {
-                topPictures.append(picture)
-                continue
-            }
-
-            if folderPictures[folderName, default: []].count < folderPictureLimit {
-                folderPictures[folderName, default: []].append(picture)
-            }
-        }
-
-        let folderNames = folderPictures.keys.sorted(by: { $0.localizedStandardCompare($1) == .orderedAscending })
-        let pictures = folderNames.flatMap({ folderPictures[$0] ?? [] }) + topPictures
-
-        return Array(pictures.prefix(pictureLimit))
     }
 
     /// Starts reading the thumbnails of the pictures a kitchen shows first once a listing lands, giving up on the reads
@@ -69,7 +32,7 @@ final class RecipeThumbnailReadAhead: Sendable {
             // Detached, so the thumbnails are ready even while the main actor is busy putting the first screen up.
             state.read = Task.detached(priority: .userInitiated) { [weak self] in
                 let entries = (try? await listing.value)?.map(\.entry) ?? []
-                let thumbnails = await Self.read(Self.firstPictures(of: entries), from: cache)
+                let thumbnails = await Self.read(RecipeListingOrder.firstPictures(of: entries), from: cache)
 
                 self?.state.withLock { state in
                     // Checked while held, so reads given up on never land over those started since.
@@ -98,7 +61,7 @@ final class RecipeThumbnailReadAhead: Sendable {
         await withTaskGroup(of: (RecipePicture, CGImage?).self) { group in
             for picture in pictures {
                 group.addTask {
-                    (picture, Task.isCancelled ? nil : cache.largestThumbnail(of: picture))
+                    (picture, Task.isCancelled ? nil : cache.smallestThumbnail(of: picture))
                 }
             }
 

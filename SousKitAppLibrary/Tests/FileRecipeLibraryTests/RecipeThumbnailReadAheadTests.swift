@@ -27,12 +27,11 @@ final class RecipeThumbnailReadAheadTests {
     }
 
     /// A recipe listed with the picture of its own name.
-    private func entry(_ name: String, in folderPath: [String] = []) -> RecipeEntry {
+    private func entry(_ name: String) -> RecipeEntry {
         RecipeEntry(
-            id: (folderPath + ["\(name).sous"]).joined(separator: "/"),
+            id: "\(name).sous",
             name: name,
             availability: .downloaded,
-            folderPath: folderPath,
             picture: picture(name)
         )
     }
@@ -63,48 +62,6 @@ final class RecipeThumbnailReadAheadTests {
         readAhead.start(after: listing, from: makeCache())
 
         return readAhead
-    }
-
-    @Test("the pictures shown first are those each folder's card stacks, its own recipes first, then those at the top")
-    func firstPictures() {
-        let entries = [
-            entry("boeuf-bourguignon"),
-            entry("brioche", in: ["Baking", "Breads"]),
-            entry("crepes", in: ["Baking"]),
-            entry("croque-monsieur", in: ["Lunch"]),
-            entry("madeleines", in: ["Baking"]),
-            entry("quiche-lorraine", in: ["Baking"]),
-            entry("gratin-dauphinois", in: ["Baking"]),
-            entry("vinaigrette")
-        ]
-
-        let pictures = RecipeThumbnailReadAhead.firstPictures(of: entries)
-
-        #expect(
-            pictures.map(\.id) == [
-                "images/crepes.jpg",
-                "images/madeleines.jpg",
-                "images/quiche-lorraine.jpg",
-                "images/gratin-dauphinois.jpg",
-                "images/croque-monsieur.jpg",
-                "images/boeuf-bourguignon.jpg",
-                "images/vinaigrette.jpg"
-            ]
-        )
-    }
-
-    @Test("at most 24 pictures are shown first, and a recipe naming none adds none")
-    func firstPictureLimit() {
-        let unpictured = RecipeEntry(
-            id: "bouillabaisse.sous",
-            name: "bouillabaisse",
-            availability: .downloaded
-        )
-        let entries = [unpictured] + (1...30).map({ entry("crepes-\($0)") })
-
-        let pictures = RecipeThumbnailReadAhead.firstPictures(of: entries)
-
-        #expect(pictures.map(\.id) == (1...24).map({ "images/crepes-\($0).jpg" }))
     }
 
     @Test("the thumbnails kept for the pictures shown first are read once the listing lands, and each handed out once")

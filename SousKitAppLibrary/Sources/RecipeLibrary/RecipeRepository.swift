@@ -43,7 +43,7 @@ public protocol RecipeRepository: Sendable {
     /// - Throws: Whatever fetching or reading the picture throws, or what its contents not being a picture does.
     func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage
 
-    /// The thumbnail an earlier read of a picture kept, at the largest size kept.
+    /// The thumbnail an earlier read of a picture kept, at the smallest size kept.
     ///
     /// Never reads the picture itself, so a picture no read has kept a thumbnail of gives none at once.
     ///

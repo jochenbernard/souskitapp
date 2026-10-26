@@ -62,11 +62,16 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
                 shownRecipes = unpickedRecipes
                 let recipeEntries = listedRecipes.map(\.entry)
-                let folder = KitchenFolderTree.folder(at: [], holding: recipeEntries)
+                let folder = KitchenFolderTree.folder(
+                    at: [],
+                    holding: recipeEntries,
+                    // Until one is, a recipe naming no picture cannot be told from one not read yet.
+                    isListingRead: recipeEntries.contains(where: { $0.summary != nil })
+                )
 
                 if !hasShownCards {
                     hasShownCards = true
-                    await keepCachedThumbnails(in: folder)
+                    await keepCachedThumbnails(of: recipeEntries)
                 }
 
                 searchIndex.update(listedRecipes)

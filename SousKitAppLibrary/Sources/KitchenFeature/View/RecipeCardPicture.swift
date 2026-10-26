@@ -3,7 +3,8 @@ import RecipeLibrary
 import SwiftUI
 
 /// What a card shows of a recipe: the picture its header names, filling the card's picture and cropped to it, a
-/// loading placeholder while the picture is read, or the recipe's placeholder where it names none or it cannot be read.
+/// loading placeholder while the picture is read or not known yet, or the recipe's placeholder where it names none or
+/// it cannot be read.
 struct RecipeCardPicture: View {
     @Environment(\.displayScale) private var displayScale
 
@@ -93,7 +94,11 @@ struct RecipeCardPicture: View {
     }
 
     private var isPictureOnItsWay: Bool {
-        card.recipeEntry.picture.map({ !thumbnails.didFail($0) }) ?? false
+        guard let picture = card.recipeEntry.picture else {
+            return !card.isPictureKnown
+        }
+
+        return !thumbnails.didFail(picture)
     }
 
     private var request: Request {
