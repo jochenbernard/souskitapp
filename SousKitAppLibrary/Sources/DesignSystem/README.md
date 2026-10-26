@@ -18,6 +18,7 @@ disagrees with this package, this package is right.
 | Layouts | `SousFlowLayout` | Rows that wrap, for a set of chips. |
 | Recipes | `SousPlaceholder`, `SousFolderPath` | What a recipe without a picture shows, and the folders something sits in. |
 | Sheet | `SousSheet` | The low sheet that sets one thing. |
+| Share | `SousShareSheet` | The share sheet for a file. |
 | Catalog | `SousCatalog` | Every color, style, and component on one page. |
 
 ## Rules

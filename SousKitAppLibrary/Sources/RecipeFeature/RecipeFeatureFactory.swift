@@ -45,8 +45,7 @@ public struct RecipeFeatureFactory: Sendable {
         let viewModel = RecipeFeatureViewModel(
             recipeEntry: recipeEntry,
             folderPath: [recipeRepository.name] + recipeEntry.folderPath,
-            thumbnail: thumbnail,
-            sharedRecipe: SharedRecipe(entry: recipeEntry, recipeRepository: recipeRepository)
+            thumbnail: thumbnail
         )
         let presenter = RecipeFeaturePresenter(
             handler: handler,

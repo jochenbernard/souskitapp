@@ -25,6 +25,10 @@ struct RecipeFeaturePresenterStub: RecipeFeaturePresenterProtocol {
 
     func didTapCook() {}
 
+    func didTapShare() {}
+
+    func didDismissSharing() {}
+
     func didRequestCooking() {}
 
     func didRequestScaling() {}
