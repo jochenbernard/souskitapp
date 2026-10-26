@@ -307,6 +307,23 @@
         }
       }
     },
+    "Share" : {
+      "comment" : "The recipe screen's bar: shares the recipe's file.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
+          }
+        },
+        "nl-BE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deel"
+          }
+        }
+      }
+    },
     "Source" : {
       "comment" : "The label on the line naming where a recipe comes from.",
       "localizations" : {

@@ -9,6 +9,7 @@ struct RecipeFeatureView: View {
 
     @State private var barBottom = 0.0
     @State private var isTitleInBar = false
+    @State private var sharing: Task<Void, Never>?
 
     @LineContainerRadius private var radius
 
@@ -56,18 +57,24 @@ struct RecipeFeatureView: View {
                     barTitle
                 }
 
-                if let sharedRecipe = viewModel.sharedRecipe {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        shareLink(sharedRecipe)
-                    }
+                ToolbarItem(placement: .topBarTrailing) {
+                    shareButton
                 }
             }
             .sheet(isPresented: isScaling) {
                 scaleSheet
             }
+            .background {
+                SousShareSheet(
+                    fileURL: viewModel.sharedFileURL,
+                    barButtonTitle: shareTitle,
+                    dismiss: presenter.didDismissSharing
+                )
+            }
             .task {
                 await presenter.viewDidAppear()
             }
+            .onDisappear(perform: { sharing?.cancel() })
     }
 
     private var isSideBySide: Bool {
@@ -284,10 +291,31 @@ struct RecipeFeatureView: View {
             .accessibilityHidden(!isTitleInBar)
     }
 
-    private func shareLink(_ sharedRecipe: SharedRecipe) -> some View {
-        ShareLink(item: sharedRecipe, preview: SharePreview(viewModel.title))
-            // Before the read the sheet waits on the fetch, and after a failed one its actions hand on nothing.
-            .disabled(!isRecipeRead)
+    private var shareButton: some View {
+        Button(
+            shareTitle,
+            systemImage: "square.and.arrow.up",
+            action: share
+        )
+        // Before the read the copy waits on the fetch, and after a failed one there is no recipe to hand on.
+        .disabled(!isRecipeRead)
+    }
+
+    // What the share sheet's popover finds the share button by, as the bar draws it outside this view.
+    private var shareTitle: String {
+        String(localized: "Share", bundle: .module)
+    }
+
+    private func share() {
+        // A tap while the file is being copied would copy it again.
+        guard sharing == nil else {
+            return
+        }
+
+        sharing = Task {
+            await presenter.didTapShare()
+            sharing = nil
+        }
     }
 
     private var isRecipeRead: Bool {
