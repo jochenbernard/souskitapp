@@ -36,5 +36,7 @@ struct KitchenFeaturePresenterStub: KitchenFeaturePresenterProtocol {
 
     func didChangeIsSearchPresented(_: Bool, in _: [String]) {}
 
+    func screenDidResize(holding _: Int) {}
+
     func pictureDidAppear(_: RecipePicture, filling _: CGSize) {}
 }

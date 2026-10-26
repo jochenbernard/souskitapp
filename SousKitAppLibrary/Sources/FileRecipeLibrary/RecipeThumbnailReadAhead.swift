@@ -32,7 +32,9 @@ final class RecipeThumbnailReadAhead: Sendable {
             // Detached, so the thumbnails are ready even while the main actor is busy putting the first screen up.
             state.read = Task.detached(priority: .userInitiated) { [weak self] in
                 let entries = (try? await listing.value)?.map(\.entry) ?? []
-                let thumbnails = await Self.read(RecipeListingOrder.firstPictures(of: entries), from: cache)
+                // Read before the kitchen's screen is measured: the fewest it shows first, so it asks for every one.
+                let pictures = RecipeListingOrder.firstPictures(of: entries, cardCount: 0)
+                let thumbnails = await Self.read(pictures, from: cache)
 
                 self?.state.withLock { state in
                     // Checked while held, so reads given up on never land over those started since.

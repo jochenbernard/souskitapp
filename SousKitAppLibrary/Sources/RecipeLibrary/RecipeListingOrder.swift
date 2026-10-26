@@ -15,6 +15,12 @@ public enum RecipeListingOrder {
             return Array((ownEntries.prefix(limit) + folders.lazy.flatMap(\.folderRecipes)).prefix(limit))
         }
 
+        /// The recipes each card listed in the folder is shown by: a folder's, then each recipe's own, in the order
+        /// the cards are listed.
+        var cardRecipes: [[RecipeEntry]] {
+            folders.map(\.folderRecipes) + ownEntries.map({ [$0] })
+        }
+
         init(_ recipeEntries: [RecipeEntry], depth: Int) {
             var directEntries: [RecipeEntry] = []
             var innerEntries: [String: [RecipeEntry]] = [:]
@@ -37,8 +43,8 @@ public enum RecipeListingOrder {
     /// The most recipes a folder is shown by.
     public static let folderRecipeLimit = 4
 
-    /// The most pictures shown first: about the first two screens of an iPhone.
-    public static let firstPictureLimit = 24
+    // About the first two screens of an iPhone, and what is read ahead before a screen is measured.
+    private static let minimumFirstPictureCount = 24
 
     /// Whether one folder is listed before another: by name, then by the name's exact characters, so names differing
     /// only in case keep one order.
@@ -81,14 +87,18 @@ public enum RecipeListingOrder {
     }
 
     /// The pictures shown first at the top of a listing: those of the recipes each folder there is shown by, then
-    /// those of the recipes directly there.
+    /// those of the recipes directly there: the pictures of the cards filling a screen, and at least 24.
     ///
-    /// - Parameter recipeEntries: The recipes, in any order.
-    /// - Returns: At most ``firstPictureLimit`` pictures, the first shown first.
-    public static func firstPictures(of recipeEntries: [RecipeEntry]) -> [RecipePicture] {
-        let level = Level(recipeEntries, depth: 0)
-        let recipes = level.folders.flatMap(\.folderRecipes) + level.ownEntries
+    /// - Parameters:
+    ///   - recipeEntries: The recipes, in any order.
+    ///   - cardCount: How many cards fill the screen the listing is shown on, or 0 where it is not measured yet.
+    /// - Returns: The pictures, the first shown first.
+    public static func firstPictures(of recipeEntries: [RecipeEntry], cardCount: Int) -> [RecipePicture] {
+        let cardRecipes = Level(recipeEntries, depth: 0).cardRecipes
+        let screenPictureCount = cardRecipes.prefix(cardCount).joined().count(where: { $0.picture != nil })
 
-        return Array(recipes.lazy.compactMap(\.picture).prefix(firstPictureLimit))
+        return Array(
+            cardRecipes.joined().lazy.compactMap(\.picture).prefix(max(screenPictureCount, minimumFirstPictureCount))
+        )
     }
 }

@@ -64,7 +64,10 @@ struct KitchenFolderPage: View {
                         height: proxy.size.height + proxy.safeAreaInsets.top + proxy.safeAreaInsets.bottom
                     )
                 },
-                action: { pageSize = $0 }
+                action: { size in
+                    pageSize = size
+                    presenter.screenDidResize(holding: cardCount(filling: size))
+                }
             )
             // Over the page rather than in it, so it stays centered in what the field and the keyboard leave visible.
             .overlay {
@@ -79,6 +82,24 @@ struct KitchenFolderPage: View {
                 prompt: searchPrompt
             )
         }
+    }
+
+    /// How many cards fill a page at most, taking a card as tall as it is wide: the bars the page's height holds leave
+    /// room for cards a little shorter.
+    private func cardCount(filling size: CGSize) -> Int {
+        // Laid out as the grid lays out its columns, inside the page's padding.
+        let width = size.width - SousSpacing.large * 2.0
+        let spacing = SousSpacing.medium
+
+        guard width > 0.0 else {
+            return 0
+        }
+
+        let columnCount = max(Int((width + spacing) / (minimumColumnWidth + spacing)), 1)
+        let columnWidth = (width - spacing * Double(columnCount - 1)) / Double(columnCount)
+        let rowCount = Int((size.height / (columnWidth + spacing)).rounded(.up))
+
+        return columnCount * rowCount
     }
 
     /// The text of a search that found nothing among the recipes listed, or `nil` where none did.

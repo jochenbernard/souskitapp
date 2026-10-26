@@ -58,6 +58,27 @@ extension KitchenFeaturePresenterThumbnailTests {
     }
 
     @MainActor
+    @Test("a screen holding more cards than the read ahead is given the kept thumbnails of every card on it")
+    func screenOfCards() async throws {
+        let recipeRepository = RecipeRepositorySpy()
+        let image = try thumbnail(width: 480, height: 360)
+        let names = (10...49).map({ "dish-\($0)" })
+        recipeRepository.cachedThumbnails = Dictionary(uniqueKeysWithValues: names.map({ ("images/\($0).jpg", image) }))
+        let presenter = makePresenter(
+            recipeRepository: recipeRepository,
+            viewModel: KitchenFeatureViewModel(recipeRepositoryName: "Recipes")
+        )
+        presenter.screenDidResize(holding: 30)
+        recipeRepository.send(.success(names.map({ entry($0) })))
+        recipeRepository.finish()
+
+        await presenter.stackDidAppear()
+
+        let keptNames = names.filter({ presenter.viewModel.thumbnails[picture($0)] != nil })
+        #expect(keptNames == Array(names.prefix(30)))
+    }
+
+    @MainActor
     @Test("a card showing a kept thumbnail as large as its box does not read its picture")
     func keptThumbnailServesTheCard() async throws {
         let recipeRepository = RecipeRepositorySpy()

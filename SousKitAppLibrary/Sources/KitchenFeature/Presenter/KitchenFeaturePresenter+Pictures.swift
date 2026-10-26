@@ -25,11 +25,16 @@ extension KitchenFeaturePresenter {
         }
     }
 
+    @MainActor
+    func screenDidResize(holding cardCount: Int) {
+        screenCapacity.cardCount = cardCount
+    }
+
     /// Keeps the thumbnails the repository holds for the pictures a listing shows first, those read within a moment,
     /// so its cards show them from their first frame.
     @MainActor
     func keepCachedThumbnails(of recipeEntries: [RecipeEntry]) async {
-        let pictures = RecipeListingOrder.firstPictures(of: recipeEntries)
+        let pictures = RecipeListingOrder.firstPictures(of: recipeEntries, cardCount: screenCapacity.cardCount)
         let (thumbnails, continuation) = AsyncStream.makeStream(of: (RecipePicture, CGImage?).self)
 
         for picture in pictures {

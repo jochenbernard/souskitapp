@@ -174,8 +174,9 @@ struct KitchenFolderTreeTests {
         }
         let folder = KitchenFolderTree.folder(at: [], holding: entries)
         let shownCards = folder.folders.flatMap(\.stackedCards) + folder.cards
+        let pictures = RecipeListingOrder.firstPictures(of: entries, cardCount: 0)
 
-        #expect(RecipeListingOrder.firstPictures(of: entries) == shownCards.compactMap(\.recipeEntry.picture))
+        #expect(pictures == shownCards.compactMap(\.recipeEntry.picture))
     }
 
     @Test("a listing with no recipe read yet knows the picture of no card, stacked or in a folder")

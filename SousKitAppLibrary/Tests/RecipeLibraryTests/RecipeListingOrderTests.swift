@@ -56,7 +56,7 @@ struct RecipeListingOrderTests {
             entry("d2", titled: "Croque Monsieur", in: ["Lunch"])
         ]
 
-        let pictures = RecipeListingOrder.firstPictures(of: entries)
+        let pictures = RecipeListingOrder.firstPictures(of: entries, cardCount: 0)
 
         // Baking's recipe with no picture still takes one of its four places; Lunch's own come before Toasts'.
         #expect(
@@ -72,12 +72,28 @@ struct RecipeListingOrderTests {
         )
     }
 
-    @Test("at most 24 pictures are shown first")
-    func firstPictureLimit() {
+    @Test("before a screen is measured, 24 pictures are shown first, as many on a screen holding fewer cards")
+    func fewestFirstPictures() {
         let entries = (1...30).map({ entry("crepes-\($0)", titled: "Crepes \(31 - $0)") })
 
-        let pictures = RecipeListingOrder.firstPictures(of: entries)
+        #expect(
+            RecipeListingOrder.firstPictures(of: entries, cardCount: 0).map(\.id)
+                == (7...30).reversed().map({ "crepes-\($0).jpg" })
+        )
+        #expect(RecipeListingOrder.firstPictures(of: entries, cardCount: 10).count == 24)
+    }
 
-        #expect(pictures.map(\.id) == (7...30).reversed().map({ "crepes-\($0).jpg" }))
+    @Test("a screen holding more cards shows the pictures of every card on it first, the folders' stacks included")
+    func screenOfPictures() {
+        let folderEntries = (1...5).map({ entry("brioche-\($0)", titled: "Brioche \($0)", in: ["Baking"]) })
+        let entries = folderEntries + (1...30).map({ entry("crepes-\($0)", titled: "Crepes \(31 - $0)") })
+
+        let pictures = RecipeListingOrder.firstPictures(of: entries, cardCount: 26)
+
+        // The folder's card shows four pictures, and the 25 cards after it one each.
+        #expect(
+            pictures.map(\.id)
+                == (1...4).map({ "Baking/brioche-\($0).jpg" }) + (6...30).reversed().map({ "crepes-\($0).jpg" })
+        )
     }
 }

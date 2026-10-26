@@ -13,6 +13,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private let recipeFeatureFactory: RecipeFeatureFactory
     let recipeRepository: RecipeRepository
     let restorationKeeper: KitchenRestorationKeeper
+    let screenCapacity = KitchenScreenCapacity()
     let searchIndex = RecipeSearchIndex()
     let thumbnailMemory: RecipeThumbnailMemory
     let viewModel: KitchenFeatureViewModel
