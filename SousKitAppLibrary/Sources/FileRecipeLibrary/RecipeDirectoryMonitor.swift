@@ -27,6 +27,7 @@ final class RecipeDirectoryMonitor {
     private var lastListedRecipes: [ListedRecipe]?
     private var pictures: [String: RecipePicture] = [:]
     private var presenter: DirectoryPresenter?
+    private var readAheadTask: Task<[ListedRecipe], Error>?
     private var readTask: Task<Void, Never>?
     private var recipeFiles: [RecipeFile] = []
 
@@ -118,6 +119,18 @@ final class RecipeDirectoryMonitor {
         read(afterSettling: false)
     }
 
+    /// Lists the recipes with the summaries the cache holds, for the next stream to yield before its own read.
+    ///
+    /// The stream still reads the directory itself, and yields again only what changed since.
+    func readAhead() {
+        // Detached, so the recipes are ready even while the main actor is busy putting the first screen up.
+        readAheadTask = Task.detached(priority: .userInitiated) { [listDirectory, summarizer] in
+            let listing = try listDirectory()
+
+            return await summarizer.listedRecipes(for: listing.recipeFiles, pictures: listing.pictures)
+        }
+    }
+
     private func start() {
         let url = recipeDirectory.url
         isScoped = url.startAccessingSecurityScopedResource()
@@ -199,11 +212,17 @@ final class RecipeDirectoryMonitor {
         readTask?.cancel()
 
         let delay = afterSettling ? settleDelay : .zero
+        let readAhead = readAheadTask
 
         readTask = Task { [weak self, listDirectory, summarizer] in
             try? await Task.sleep(for: delay)
 
             guard !Task.isCancelled else {
+                return
+            }
+
+            // Every read waits for it until one yields it: its older listing, done later, drops newer files' summaries.
+            if let readAhead, await self?.yieldRecipes(of: readAhead) == false {
                 return
             }
 
@@ -237,49 +256,23 @@ final class RecipeDirectoryMonitor {
         }
     }
 
-    /// Reads off the main actor, where a directory in iCloud can take a while to answer.
-    @concurrent
-    nonisolated private static func readListing(
-        with listDirectory: @Sendable () throws -> RecipeDirectoryListing
-    ) async -> Result<RecipeDirectoryListing, Error> {
-        Result(catching: listDirectory)
-    }
-
-    /// Yields the recipes with the summaries the cache holds, then reads those it has none for, yielding the recipes
-    /// again as they land.
+    /// Yields the recipes the read ahead listed once it finishes, unless the read waiting on it is cancelled meanwhile.
     ///
-    /// The files on the device are read together. Holding no monitor, it leaves a released one free to go.
-    ///
-    /// - Parameter fetch: Fetches the files in iCloud among those handed to it, returning the files on the device
-    ///   that no fetch reads.
-    private static func readSummaries(
-        of listing: RecipeDirectoryListing,
-        with summarizer: RecipeSummarizer,
-        yield: @escaping @MainActor ([ListedRecipe]) -> Void,
-        fetch: @MainActor ([RecipeFile]) -> [RecipeFile]
-    ) async {
-        let yieldSummaries = {
-            let listedRecipes = await summarizer.listedRecipes(for: listing.recipeFiles, pictures: listing.pictures)
-
-            if !Task.isCancelled {
-                yield(listedRecipes)
-            }
-        }
-
-        await yieldSummaries()
-
-        let filesToRead = await summarizer.filesToRead(in: listing.recipeFiles)
+    /// - Returns: Whether the read goes on.
+    private func yieldRecipes(of readAhead: Task<[ListedRecipe], Error>) async -> Bool {
+        let listedRecipes = try? await readAhead.value
 
         guard !Task.isCancelled else {
-            return
+            return false
         }
 
-        let filesOnDevice = fetch(filesToRead)
+        readAheadTask = nil
 
-        if !filesOnDevice.isEmpty {
-            await summarizer.read(filesOnDevice)
-            await yieldSummaries()
+        if let listedRecipes {
+            yield(.success(listedRecipes))
         }
+
+        return true
     }
 
     /// Keeps a listing, watching the directories it holds and giving up on the fetches of files it no longer holds.
