@@ -27,8 +27,7 @@ final class RecipeDirectoryMonitor {
     private var lastListedRecipes: [ListedRecipe]?
     private var pictures: [String: RecipePicture] = [:]
     private var presenter: DirectoryPresenter?
-    // swiftlint:disable:next discouraged_optional_collection
-    private var readAheadTask: Task<[ListedRecipe]?, Never>?
+    private var readAheadTask: Task<[ListedRecipe], Error>?
     private var readTask: Task<Void, Never>?
     private var recipeFiles: [RecipeFile] = []
 
@@ -80,7 +79,6 @@ final class RecipeDirectoryMonitor {
     /// Lets go of what outlives a released monitor: `NSFileCoordinator` retains a file presenter,
     /// so a presenter left registered never reaches its own `deinit`.
     deinit {
-        readAheadTask?.cancel()
         readTask?.cancel()
         fetches.values.forEach({ $0.cancel() })
         continuation?.finish()
@@ -126,12 +124,9 @@ final class RecipeDirectoryMonitor {
     ///
     /// The stream still reads the directory itself, and yields again only what changed since.
     func readAhead() {
-        readAheadTask?.cancel()
         // Detached, so the recipes are ready even while the main actor is busy putting the first screen up.
         readAheadTask = Task.detached(priority: .userInitiated) { [listDirectory, summarizer] in
-            guard let listing = try? listDirectory() else {
-                return nil
-            }
+            let listing = try listDirectory()
 
             return await summarizer.listedRecipes(for: listing.recipeFiles, pictures: listing.pictures)
         }
@@ -229,7 +224,7 @@ final class RecipeDirectoryMonitor {
             }
 
             // Shown while the directory is listed again, now that it is watched.
-            if let listedRecipes = await readAhead?.value, !Task.isCancelled {
+            if let listedRecipes = try? await readAhead?.value, !Task.isCancelled {
                 self?.yield(.success(listedRecipes))
             }
 
