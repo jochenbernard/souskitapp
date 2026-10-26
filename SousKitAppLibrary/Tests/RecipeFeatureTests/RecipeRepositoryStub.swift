@@ -3,15 +3,18 @@ import Foundation
 import RecipeLibrary
 import SousKit
 
-/// A repository reading and exporting every recipe as one text, or failing every read where it holds none.
+/// A repository reading and exporting every recipe as one text, or failing every read where it holds none, and every
+/// export where it is told to.
 struct RecipeRepositoryStub: RecipeRepository {
     let name = "Recipes"
 
     private let parser = SousParser()
     private let text: String?
+    private let failsExport: Bool
 
-    init(text: String?) {
+    init(text: String?, failsExport: Bool = false) {
         self.text = text
+        self.failsExport = failsExport
     }
 
     func listedRecipes() -> AsyncStream<Result<[ListedRecipe], Error>> {
@@ -38,7 +41,7 @@ struct RecipeRepositoryStub: RecipeRepository {
 
     /// Writes the text to a file in a folder of its own under the temporary directory, named after the recipe's id.
     func exportRecipeFile(of entry: RecipeEntry) throws -> URL {
-        guard let text else {
+        guard let text, !failsExport else {
             throw CocoaError(.fileReadNoSuchFile)
         }
 

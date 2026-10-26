@@ -183,6 +183,26 @@ struct RecipeFeaturePresenter: RecipeFeaturePresenterProtocol {
         handler.recipeFeatureDidStartCooking(recipe: recipe.scaled)
     }
 
+    func didTapShare() async {
+        guard case .recipe = viewModel.recipeContent else {
+            return
+        }
+
+        // No sheet for a file that cannot be copied, or for one that arrives after the screen was left.
+        guard
+            let url = try? await recipeRepository.exportRecipeFile(of: viewModel.recipeEntry),
+            !Task.isCancelled
+        else {
+            return
+        }
+
+        viewModel.sharedFileURL = url
+    }
+
+    func didDismissSharing() {
+        viewModel.sharedFileURL = nil
+    }
+
     func didRequestCooking() {
         perform(.cooking)
     }

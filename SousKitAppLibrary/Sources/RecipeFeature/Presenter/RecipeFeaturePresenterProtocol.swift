@@ -28,6 +28,15 @@ protocol RecipeFeaturePresenterProtocol: ScaleSheetPresenterProtocol {
     @MainActor
     func didTapCook()
 
+    /// The share button was tapped, which opens the share sheet once the recipe's file is copied, unless the recipe is
+    /// not read or the call is cancelled first, as it is when the view leaves.
+    @MainActor
+    func didTapShare() async
+
+    /// The share sheet closed, whether or not it handed the recipe on.
+    @MainActor
+    func didDismissSharing()
+
     /// Cooking was asked for from outside the screen, as its button starts it, once the recipe is read.
     @MainActor
     func didRequestCooking()

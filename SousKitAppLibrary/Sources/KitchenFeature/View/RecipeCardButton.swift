@@ -50,7 +50,7 @@ struct RecipeCardButton: View {
         }
         .buttonStyle(.plain)
         .background {
-            RecipeShareSheet(fileURL: sharedFileURL, dismiss: presenter.didDismissSharing)
+            SousShareSheet(fileURL: sharedFileURL, dismiss: presenter.didDismissSharing)
         }
         .cardMenu(
             items: menuItems,
