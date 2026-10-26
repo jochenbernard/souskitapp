@@ -4,17 +4,15 @@ import Testing
 
 extension MockRecipeRepositoryTests {
     @MainActor
-    @Test("a recipe's file is exported holding its text, under its file's name")
+    @Test("a recipe's file is exported into a folder of its own, holding its text, under its file's name")
     func exportRecipeFile() async throws {
         let repository = makeRepository()
         let brioche = try await currentRecipeEntry(withID: "Baking/brioche.sous", of: repository)
 
         let url = try await repository.exportRecipeFile(of: brioche)
-        defer {
-            try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
-        }
 
         #expect(url.lastPathComponent == "brioche.sous")
+        #expect(Array(url.pathComponents.dropLast(2)) == exportFolderURL.pathComponents)
         #expect(try String(contentsOf: url, encoding: .utf8) == MockRecipes.brioche)
     }
 

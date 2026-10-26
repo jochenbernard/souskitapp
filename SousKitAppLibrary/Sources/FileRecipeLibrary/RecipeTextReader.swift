@@ -69,16 +69,18 @@ struct RecipeTextReader: Sendable {
         }
     }
 
-    /// Copies a recipe's file at its newest version into a folder, which is created where it is missing.
+    /// Copies a recipe's file at its newest version into a new folder of the copy's own, inside a folder that is
+    /// created where it is missing.
     ///
     /// The file is fetched first as ``read(path:)`` fetches it, and the copy is the file's own bytes, under its name.
     ///
     /// - Parameters:
     ///   - path: Where the file sits inside the recipe directory, extension included.
-    ///   - folderURL: The folder to copy the file into, outside the recipe directory.
+    ///   - exportFolderURL: The folder holding every copy, outside the recipe directory.
     /// - Returns: Where the copy sits.
     /// - Throws: Whatever fetching or copying the file throws, or `CancellationError` when the task is cancelled.
-    func copy(path: String, into folderURL: URL) async throws -> URL {
+    func copy(path: String, under exportFolderURL: URL) async throws -> URL {
+        let folderURL = exportFolderURL.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         let copyURL = folderURL.appending(path: URL(filePath: path).lastPathComponent)
 
         return try await readNewestVersion(path: path) { coordinatedURL in

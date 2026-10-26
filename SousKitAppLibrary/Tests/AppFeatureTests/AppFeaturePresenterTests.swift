@@ -17,6 +17,7 @@ final class AppFeaturePresenterTests {
     private let cachesURL: URL
     let suiteName: String
     private let symbolCacheURL: URL
+    private let temporaryURL: URL
     let userDefaults: UserDefaults
 
     let crepesRestoration = AppRestoration(kitchen: KitchenFeatureRestoration(recipeID: "crepes"))
@@ -26,6 +27,7 @@ final class AppFeaturePresenterTests {
         self.suiteName = "AppFeaturePresenterTests.\(UUID().uuidString)"
         self.cachesURL = URL.temporaryDirectory.appending(path: "\(suiteName).caches")
         self.symbolCacheURL = URL.temporaryDirectory.appending(path: "\(suiteName).json")
+        self.temporaryURL = URL.temporaryDirectory.appending(path: "\(suiteName).tmp", directoryHint: .isDirectory)
         self.userDefaults = try #require(UserDefaults(suiteName: suiteName))
     }
 
@@ -33,6 +35,7 @@ final class AppFeaturePresenterTests {
         userDefaults.removePersistentDomain(forName: suiteName)
         try? FileManager.default.removeItem(at: cachesURL)
         try? FileManager.default.removeItem(at: symbolCacheURL)
+        try? FileManager.default.removeItem(at: temporaryURL)
     }
 
     /// A store keeping what the app has open in this suite's defaults.
@@ -50,13 +53,15 @@ final class AppFeaturePresenterTests {
         UserDefaultsPreferredScaleStore(userDefaults: userDefaults)
     }
 
-    /// A store remembering the folder in this suite's defaults, and keeping what it reads in this suite's caches.
+    /// A store remembering the folder in this suite's defaults, and keeping what it reads in this suite's caches and
+    /// temporary directory.
     func makeRecipeRepositoryStore() -> FileRecipeRepositoryStore {
         FileRecipeRepositoryStore(
             parser: parser,
             symbolPicker: RecipeSymbolPickerStub(),
             userDefaults: userDefaults,
-            cachesDirectory: cachesURL
+            cachesDirectory: cachesURL,
+            temporaryDirectory: temporaryURL
         )
     }
 
@@ -75,7 +80,8 @@ final class AppFeaturePresenterTests {
             mockRecipeRepository: MockRecipeRepository(
                 parser: parser,
                 symbolPicker: RecipeSymbolPickerStub(),
-                symbolCacheURL: symbolCacheURL
+                symbolCacheURL: symbolCacheURL,
+                exportFolderURL: temporaryURL.appending(path: "MockRecipeExports", directoryHint: .isDirectory)
             ),
             onboardingFeatureFactory: OnboardingFeatureFactory(recipeRepositoryStore: recipeRepositoryStore),
             preferredScaleStore: preferredScaleStore,

@@ -12,12 +12,14 @@ final class FileRecipeRepositoryStoreTests {
     private let caches: TemporaryDirectory
     private let directory: TemporaryDirectory
     private let suiteName: String
+    private let temporary: TemporaryDirectory
     private let userDefaults: UserDefaults
 
     init() throws {
         self.caches = try TemporaryDirectory(named: "FileRecipeRepositoryStoreTests")
         self.directory = try TemporaryDirectory(named: "FileRecipeRepositoryStoreTests")
         self.suiteName = directory.url.lastPathComponent
+        self.temporary = try TemporaryDirectory(named: "FileRecipeRepositoryStoreTests")
         self.userDefaults = try #require(UserDefaults(suiteName: suiteName))
     }
 
@@ -25,14 +27,21 @@ final class FileRecipeRepositoryStoreTests {
         userDefaults.removePersistentDomain(forName: suiteName)
     }
 
-    /// A store remembering its directory in this suite's defaults, and keeping what it reads in this suite's caches.
+    /// A store remembering its directory in this suite's defaults, and keeping what it reads in this suite's caches
+    /// and temporary directory.
     private func makeStore() -> FileRecipeRepositoryStore {
         FileRecipeRepositoryStore(
             parser: parser,
             symbolPicker: RecipeSymbolPickerStub(),
             userDefaults: userDefaults,
-            cachesDirectory: caches.url
+            cachesDirectory: caches.url,
+            temporaryDirectory: temporary.url
         )
+    }
+
+    /// The names of what a directory holds.
+    private func contents(of directory: TemporaryDirectory) throws -> [String] {
+        try FileManager.default.contentsOfDirectory(atPath: directory.url.path(percentEncoded: false))
     }
 
     /// The path a URL points at, with the symlinks in front of a temporary directory taken out.
@@ -79,18 +88,23 @@ final class FileRecipeRepositoryStoreTests {
         #expect(store.makeRecipeRepository()?.name == "Elsewhere")
     }
 
-    @Test("clearing forgets the directory, and the summaries and thumbnails kept of its recipes")
-    func clearing() throws {
+    @Test("clearing forgets the directory, the summaries and thumbnails kept of its recipes, and their files exported")
+    func clearing() async throws {
         let store = makeStore()
-        _ = try store.connectRecipeDirectory(at: directory.url)
+        let recipeRepository = try store.connectRecipeDirectory(at: directory.url)
         try caches.writeFile(named: "RecipeSummaries.json")
         try caches.makeDirectory(named: "RecipeThumbnails")
         try caches.writeFile(named: "RecipeThumbnails/thumbnail")
+        let crepes = try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes\n---")
+        _ = try await recipeRepository.exportRecipeFile(of: crepes)
+        _ = try await recipeRepository.exportRecipeFile(of: crepes)
+        try #require(try !contents(of: temporary).isEmpty)
 
         store.clear()
 
         #expect(store.makeRecipeRepository() == nil)
-        #expect(try FileManager.default.contentsOfDirectory(atPath: caches.url.path(percentEncoded: false)).isEmpty)
+        #expect(try contents(of: caches).isEmpty)
+        #expect(try contents(of: temporary).isEmpty)
     }
 
     @Test("a bookmark that no longer resolves reads back as nothing remembered")

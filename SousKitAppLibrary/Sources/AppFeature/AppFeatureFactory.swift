@@ -38,7 +38,8 @@ struct AppFeatureFactory {
         self.mockRecipeRepository = MockRecipeRepository(
             parser: parser,
             symbolPicker: symbolPicker,
-            symbolCacheURL: URL.cachesDirectory.appending(path: "MockRecipeSymbols.json")
+            symbolCacheURL: URL.cachesDirectory.appending(path: "MockRecipeSymbols.json"),
+            exportFolderURL: URL.temporaryDirectory.appending(path: "MockRecipeExports", directoryHint: .isDirectory)
         )
         self.onboardingFeatureFactory = OnboardingFeatureFactory(recipeRepositoryStore: store)
         self.preferredScaleStore = scaleStore

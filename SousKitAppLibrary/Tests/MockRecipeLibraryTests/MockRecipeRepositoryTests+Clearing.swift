@@ -1,10 +1,11 @@
+import Foundation
 @testable import MockRecipeLibrary
 import RecipeLibrary
 import Testing
 
 extension MockRecipeRepositoryTests {
     @MainActor
-    @Test("clearing forgets the symbols picked and the recipes fetched, the kept picks included")
+    @Test("clearing forgets the symbols picked, the recipes fetched and the files exported, the kept picks included")
     func clearing() async throws {
         let picker = RecipeSymbolPickerStub()
         picker.symbols = ["Moules Marinieres": "fish"]
@@ -22,7 +23,9 @@ extension MockRecipeRepositoryTests {
             try await Task.sleep(for: .milliseconds(50))
         }
 
-        _ = try await repository.readRecipe(of: try await currentRecipeEntry(withID: "crepes.sous", of: repository))
+        let crepes = try await currentRecipeEntry(withID: "crepes.sous", of: repository)
+        _ = try await repository.readRecipe(of: crepes)
+        _ = try await repository.exportRecipeFile(of: crepes)
 
         repository.clear()
 
@@ -31,5 +34,6 @@ extension MockRecipeRepositoryTests {
         #expect(listedRecipes.allSatisfy({ $0.symbolPick == nil }))
         #expect(listedRecipes.first(where: { $0.entry.id == "crepes.sous" })?.entry.availability == .notDownloaded)
         #expect(MockSymbolCache(fileURL: symbolCacheURL).load().isEmpty)
+        #expect(!FileManager.default.fileExists(atPath: exportFolderURL.path(percentEncoded: false)))
     }
 }

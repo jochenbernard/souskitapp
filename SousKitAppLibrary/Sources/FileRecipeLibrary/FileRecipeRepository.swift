@@ -6,6 +6,7 @@ import SousKit
 /// The recipes in a directory and in the directories inside it, fetched from iCloud where they are not on the device,
 /// each with the symbol picked for it.
 struct FileRecipeRepository: RecipeRepository {
+    private let exportFolderURL: URL
     private let monitor: RecipeDirectoryMonitor
     private let parser: SousParser
     private let pictureReader: RecipePictureReader
@@ -26,6 +27,7 @@ struct FileRecipeRepository: RecipeRepository {
     ///   - symbolPicker: What the recipes' symbols are picked with.
     ///   - summaryCacheURL: Where the recipes' summaries are kept between launches, outside the directory.
     ///   - thumbnailCacheURL: Where the thumbnails of the recipes' pictures are kept, outside the directory.
+    ///   - exportFolderURL: Where the recipes' files are copied for handing them to other apps, outside the directory.
     ///   - fileStatus: What the file system reports of the file at a URL, or of the file iCloud promises there.
     ///   - startDownloading: Asks iCloud for a file's contents, returning before they arrive.
     init(
@@ -34,6 +36,7 @@ struct FileRecipeRepository: RecipeRepository {
         symbolPicker: RecipeSymbolPicker,
         summaryCacheURL: URL,
         thumbnailCacheURL: URL,
+        exportFolderURL: URL,
         fileStatus: @escaping @Sendable (URL) -> RecipeFileStatus? = RecipeFileStatus.read(at:),
         startDownloading: @escaping @Sendable (URL) throws -> Void = { url in
             try FileManager.default.startDownloadingUbiquitousItem(at: url)
@@ -50,6 +53,7 @@ struct FileRecipeRepository: RecipeRepository {
                 startDownloading: startDownloading
             )
         )
+        self.exportFolderURL = exportFolderURL
         self.monitor = RecipeDirectoryMonitor(
             recipeDirectory: recipeDirectory,
             summarizer: summarizer,
@@ -115,13 +119,9 @@ struct FileRecipeRepository: RecipeRepository {
         return thumbnailCache.thumbnail(of: picture, filling: pixelSize) ?? keptThumbnail
     }
 
-    /// Copies off the caller's actor, where a recipe still in iCloud has to be fetched first, into a folder of the
-    /// copy's own under the temporary directory.
+    /// Copies off the caller's actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
     func exportRecipeFile(of entry: RecipeEntry) async throws -> URL {
-        try await textReader.copy(
-            path: entry.path,
-            into: URL.temporaryDirectory.appending(path: UUID().uuidString, directoryHint: .isDirectory)
-        )
+        try await textReader.copy(path: entry.path, under: exportFolderURL)
     }
 }

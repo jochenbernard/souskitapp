@@ -34,6 +34,7 @@ final class FileRecipeRepositoryOutdatedPictureTests: Sendable {
             symbolPicker: RecipeSymbolPickerStub(isAvailable: false),
             summaryCacheURL: directory.summaryCacheURL,
             thumbnailCacheURL: directory.thumbnailCacheURL,
+            exportFolderURL: directory.exportFolderURL,
             fileStatus: fileStatuses.status,
             startDownloading: downloads.startDownloading
         )

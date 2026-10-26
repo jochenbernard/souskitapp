@@ -12,12 +12,18 @@ final class MockRecipeRepositoryTests {
     let symbolCacheURL = URL.temporaryDirectory.appending(
         path: "MockRecipeRepositoryTests-\(UUID().uuidString).json"
     )
+    let exportFolderURL = URL.temporaryDirectory.appending(
+        path: "MockRecipeRepositoryTests-\(UUID().uuidString)",
+        directoryHint: .isDirectory
+    )
 
     isolated deinit {
         try? FileManager.default.removeItem(at: symbolCacheURL)
+        try? FileManager.default.removeItem(at: exportFolderURL)
     }
 
-    /// A repository picking no symbols unless given a picker that can, keeping them in this suite's file.
+    /// A repository picking no symbols unless given a picker that can, keeping them in this suite's file, and exporting
+    /// into this suite's folder.
     @MainActor
     func makeRepository(
         symbolPicker: RecipeSymbolPicker = RecipeSymbolPickerStub(isAvailable: false)
@@ -26,6 +32,7 @@ final class MockRecipeRepositoryTests {
             parser: parser,
             symbolPicker: symbolPicker,
             symbolCacheURL: symbolCacheURL,
+            exportFolderURL: exportFolderURL,
             fetchDuration: .zero
         )
     }

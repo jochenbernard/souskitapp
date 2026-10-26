@@ -10,6 +10,7 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     private let cachesDirectory: URL
     private let parser: SousParser
     private let symbolPicker: RecipeSymbolPicker
+    private let temporaryDirectory: URL
     private let userDefaults: UserDefaults
 
     /// Creates a store.
@@ -19,15 +20,18 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     ///   - symbolPicker: What the recipes' symbols are picked with.
     ///   - userDefaults: Where the directory is remembered.
     ///   - cachesDirectory: Where what is read from the directory is kept, outside it.
+    ///   - temporaryDirectory: Where the directory's recipe files are copied for handing them to other apps.
     public init(
         parser: SousParser,
         symbolPicker: RecipeSymbolPicker,
         userDefaults: UserDefaults = .standard,
-        cachesDirectory: URL = .cachesDirectory
+        cachesDirectory: URL = .cachesDirectory,
+        temporaryDirectory: URL = .temporaryDirectory
     ) {
         self.cachesDirectory = cachesDirectory
         self.parser = parser
         self.symbolPicker = symbolPicker
+        self.temporaryDirectory = temporaryDirectory
         self.userDefaults = userDefaults
     }
 
@@ -63,6 +67,11 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
         cachesDirectory.appending(path: "RecipeThumbnails", directoryHint: .isDirectory)
     }
 
+    // Temporary: a copy is wanted only until the app it is handed to has taken it.
+    private var exportFolderURL: URL {
+        temporaryDirectory.appending(path: "RecipeExports", directoryHint: .isDirectory)
+    }
+
     public func makeRecipeRepository() -> RecipeRepository? {
         recipeDirectory.map(makeRecipeRepository(reading:))
     }
@@ -77,6 +86,7 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
         userDefaults.removeObject(forKey: Self.key)
         RecipeSummaryCache.clear(fileURL: summaryCacheURL)
         RecipeThumbnailCache.clear(folderURL: thumbnailCacheURL)
+        try? FileManager.default.removeItem(at: exportFolderURL)
     }
 
     private func makeRecipeRepository(reading recipeDirectory: RecipeDirectory) -> FileRecipeRepository {
@@ -85,7 +95,8 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
             recipeDirectory: recipeDirectory,
             symbolPicker: symbolPicker,
             summaryCacheURL: summaryCacheURL,
-            thumbnailCacheURL: thumbnailCacheURL
+            thumbnailCacheURL: thumbnailCacheURL,
+            exportFolderURL: exportFolderURL
         )
     }
 

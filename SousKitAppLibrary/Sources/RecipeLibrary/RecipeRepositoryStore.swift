@@ -18,7 +18,8 @@ public protocol RecipeRepositoryStore: Sendable {
     @MainActor
     func connectRecipeDirectory(at url: URL) throws -> RecipeRepository
 
-    /// Forgets the repository and everything kept of what it read, leaving the app nowhere to read recipes from.
+    /// Forgets the repository and everything kept or exported of what it read, leaving the app nowhere to read recipes
+    /// from.
     @MainActor
     func clear()
 }
