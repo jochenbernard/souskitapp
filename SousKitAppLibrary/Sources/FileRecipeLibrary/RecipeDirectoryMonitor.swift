@@ -27,6 +27,8 @@ final class RecipeDirectoryMonitor {
     private var lastListedRecipes: [ListedRecipe]?
     private var pictures: [String: RecipePicture] = [:]
     private var presenter: DirectoryPresenter?
+    // swiftlint:disable:next discouraged_optional_collection
+    private var readAheadTask: Task<[ListedRecipe]?, Never>?
     private var readTask: Task<Void, Never>?
     private var recipeFiles: [RecipeFile] = []
 
@@ -78,6 +80,7 @@ final class RecipeDirectoryMonitor {
     /// Lets go of what outlives a released monitor: `NSFileCoordinator` retains a file presenter,
     /// so a presenter left registered never reaches its own `deinit`.
     deinit {
+        readAheadTask?.cancel()
         readTask?.cancel()
         fetches.values.forEach({ $0.cancel() })
         continuation?.finish()
@@ -116,6 +119,22 @@ final class RecipeDirectoryMonitor {
     /// landed while the app was in the background.
     func refresh() {
         read(afterSettling: false)
+    }
+
+    /// Lists the recipes with the summaries the cache holds, before any stream asks, for the next stream to yield
+    /// before its own read.
+    ///
+    /// The stream still reads the directory itself, and yields again only what changed since.
+    func readAhead() {
+        readAheadTask?.cancel()
+        // Detached, so the recipes are ready even while the main actor is busy putting the first screen up.
+        readAheadTask = Task.detached(priority: .userInitiated) { [listDirectory, summarizer] in
+            guard let listing = try? listDirectory() else {
+                return nil
+            }
+
+            return await summarizer.listedRecipes(for: listing.recipeFiles, pictures: listing.pictures)
+        }
     }
 
     private func start() {
@@ -199,12 +218,19 @@ final class RecipeDirectoryMonitor {
         readTask?.cancel()
 
         let delay = afterSettling ? settleDelay : .zero
+        let readAhead = readAheadTask
+        readAheadTask = nil
 
         readTask = Task { [weak self, listDirectory, summarizer] in
             try? await Task.sleep(for: delay)
 
             guard !Task.isCancelled else {
                 return
+            }
+
+            // Shown while the directory is listed again, now that it is watched.
+            if let listedRecipes = await readAhead?.value, !Task.isCancelled {
+                self?.yield(.success(listedRecipes))
             }
 
             var result = await Self.readListing(with: listDirectory)
@@ -234,51 +260,6 @@ final class RecipeDirectoryMonitor {
             case .failure(let error):
                 self?.yield(.failure(error))
             }
-        }
-    }
-
-    /// Reads off the main actor, where a directory in iCloud can take a while to answer.
-    @concurrent
-    nonisolated private static func readListing(
-        with listDirectory: @Sendable () throws -> RecipeDirectoryListing
-    ) async -> Result<RecipeDirectoryListing, Error> {
-        Result(catching: listDirectory)
-    }
-
-    /// Yields the recipes with the summaries the cache holds, then reads those it has none for, yielding the recipes
-    /// again as they land.
-    ///
-    /// The files on the device are read together. Holding no monitor, it leaves a released one free to go.
-    ///
-    /// - Parameter fetch: Fetches the files in iCloud among those handed to it, returning the files on the device
-    ///   that no fetch reads.
-    private static func readSummaries(
-        of listing: RecipeDirectoryListing,
-        with summarizer: RecipeSummarizer,
-        yield: @escaping @MainActor ([ListedRecipe]) -> Void,
-        fetch: @MainActor ([RecipeFile]) -> [RecipeFile]
-    ) async {
-        let yieldSummaries = {
-            let listedRecipes = await summarizer.listedRecipes(for: listing.recipeFiles, pictures: listing.pictures)
-
-            if !Task.isCancelled {
-                yield(listedRecipes)
-            }
-        }
-
-        await yieldSummaries()
-
-        let filesToRead = await summarizer.filesToRead(in: listing.recipeFiles)
-
-        guard !Task.isCancelled else {
-            return
-        }
-
-        let filesOnDevice = fetch(filesToRead)
-
-        if !filesOnDevice.isEmpty {
-            await summarizer.read(filesOnDevice)
-            await yieldSummaries()
         }
     }
 

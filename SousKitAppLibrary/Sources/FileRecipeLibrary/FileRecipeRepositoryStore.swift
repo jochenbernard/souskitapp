@@ -73,13 +73,17 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     }
 
     private func makeRecipeRepository(reading recipeDirectory: RecipeDirectory) -> FileRecipeRepository {
-        FileRecipeRepository(
+        let recipeRepository = FileRecipeRepository(
             parser: parser,
             recipeDirectory: recipeDirectory,
             symbolPicker: symbolPicker,
             summaryCacheURL: Self.summaryCacheURL,
             thumbnailCacheURL: Self.thumbnailCacheURL
         )
+        // Made for a kitchen about to show it, so the recipes are listed while its screen is still being put up.
+        recipeRepository.readAhead()
+
+        return recipeRepository
     }
 
     private func rememberRecipeDirectory(at url: URL) throws {

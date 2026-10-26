@@ -85,6 +85,12 @@ struct FileRecipeRepository: RecipeRepository {
         await monitor.refresh()
     }
 
+    /// Lists the recipes ahead of ``listedRecipes()``, whose stream yields them first.
+    @MainActor
+    func readAhead() {
+        monitor.readAhead()
+    }
+
     /// Reads off the caller's actor, where a recipe still in iCloud has to be fetched first.
     @concurrent
     func readRecipe(of entry: RecipeEntry) async throws -> Parsed<Recipe> {
