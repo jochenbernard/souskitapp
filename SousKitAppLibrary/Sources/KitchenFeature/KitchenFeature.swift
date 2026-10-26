@@ -1,3 +1,4 @@
+import RecipeLibrary
 import SwiftUI
 
 /// Everything the app does once a recipe repository is connected: the recipes in it, one recipe, and
@@ -49,6 +50,18 @@ public struct KitchenFeature {
             viewModel: viewModel,
             toolbarItem: toolbarItem()
         )
+    }
+
+    /// Pushes the recipe in a file over the kitchen's own screen, in place of whatever is pushed, once that screen is
+    /// up: the recipe the kitchen lists for a file in its repository, once listed, and any other file read where it
+    /// sits.
+    ///
+    /// Nothing opens while cooking is open, and a recipe already on top stays as it is.
+    ///
+    /// - Parameter document: The file.
+    @MainActor
+    public func open(_ document: RecipeDocument) {
+        presenter.didOpen(document)
     }
 
     /// Keeps every screen of the kitchen showing the repository's recipes as they change, until the task running it

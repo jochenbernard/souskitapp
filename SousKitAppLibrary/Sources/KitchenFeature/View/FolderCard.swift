@@ -23,7 +23,7 @@ struct FolderCard: View {
     }
 
     var body: some View {
-        KitchenCard(
+        SousCard(
             title: folder.name,
             // Clipped, as the fan reaches past the picture's edges.
             picture: {

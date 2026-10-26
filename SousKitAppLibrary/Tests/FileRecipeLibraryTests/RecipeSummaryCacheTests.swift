@@ -81,6 +81,27 @@ final class RecipeSummaryCacheTests {
         #expect(directory.summaryCache.load().isEmpty)
     }
 
+    @Test("clearing removes the summaries, and leaves a cache made before writing nothing")
+    func clearing() {
+        let cache = directory.summaryCache
+        cache.save(["crepes.sous": record(title: "Crepes")])
+
+        RecipeSummaryCache.clear(fileURL: directory.summaryCacheURL)
+        cache.save(["brioche.sous": record(title: "Brioche")])
+
+        #expect(!FileManager.default.fileExists(atPath: directory.summaryCacheURL.path(percentEncoded: false)))
+    }
+
+    @Test("a cache made after clearing keeps summaries again")
+    func keepingAfterClearing() {
+        directory.summaryCache.save(["crepes.sous": record(title: "Crepes")])
+        RecipeSummaryCache.clear(fileURL: directory.summaryCacheURL)
+
+        directory.summaryCache.save(["brioche.sous": record(title: "Brioche")])
+
+        #expect(directory.summaryCache.load() == ["brioche.sous": record(title: "Brioche")])
+    }
+
     @Test("a cache that cannot be read loads as nothing")
     func unreadable() throws {
         try Data("not a cache".utf8).write(to: directory.summaryCacheURL)

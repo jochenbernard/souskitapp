@@ -115,4 +115,9 @@ public struct AlarmTimerScheduler: TimerScheduler {
         Store.shared.timers.removeAll(where: { $0.id == timer.id })
         Store.shared.publish()
     }
+
+    public func cancelAll() {
+        Store.shared.timers.removeAll()
+        Store.shared.publish()
+    }
 }

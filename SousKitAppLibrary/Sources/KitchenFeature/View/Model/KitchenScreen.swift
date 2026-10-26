@@ -7,4 +7,7 @@ enum KitchenScreen: Hashable {
 
     /// One recipe, as it is written.
     case recipe(RecipeEntry)
+
+    /// The recipe in a file from outside the repository, as it is written there.
+    case document(RecipeEntry)
 }

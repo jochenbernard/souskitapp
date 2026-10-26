@@ -8,4 +8,11 @@ enum RecipeContent {
 
     /// Reading the recipe failed, with the reason to show.
     case failure(String)
+
+    var isReading: Bool {
+        switch self {
+        case .reading: true
+        case .recipe, .failure: false
+        }
+    }
 }

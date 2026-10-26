@@ -1,5 +1,6 @@
 import DesignSystem
 import RecipeLibrary
+import SousKit
 import SwiftUI
 
 /// The top of the recipe screen: the recipe's picture, or its placeholder, with where the recipe sits and its title
@@ -295,7 +296,8 @@ private func previewViewModel(_ headerPicture: HeaderPicture) -> RecipeFeatureVi
             name: "madeleines",
             availability: .downloaded
         ),
-        folderPath: ["Recipes", "French", "Baking"]
+        folderPath: ["Recipes", "French", "Baking"],
+        placeholderRecipe: .placeholder(parser: SousParser())
     )
     viewModel.headerPicture = headerPicture
 

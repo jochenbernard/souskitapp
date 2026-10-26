@@ -37,19 +37,23 @@ struct RecipeMetadataView: View {
             header?
                 .sousCardPicture(endsCard: metadata.isEmpty && scale == nil)
 
-            factStrip
+            // The header is known before the recipe is read, and the rest is not.
+            VStack(alignment: .leading, spacing: 0.0) {
+                factStrip
 
-            labelsDivider
+                labelsDivider
 
-            labels
+                labels
 
-            ForEach(metadata.rows) { row in
-                rowDivider(row)
+                ForEach(metadata.rows) { row in
+                    rowDivider(row)
 
-                metadataRow(row)
+                    metadataRow(row)
+                }
+
+                scaleRow
             }
-
-            scaleRow
+            .sousLoadingPlaceholder()
         }
         // The header's picture takes the card's corners.
         .clipShape(.rect(cornerRadius: radius))
@@ -175,7 +179,8 @@ struct RecipeMetadataView: View {
         if !metadata.allergens.isEmpty {
             Label(
                 title: { Text("Contains \(RecipeDisplay.joinedList(metadata.allergens))", bundle: .module) },
-                icon: { Image(systemName: "allergens") }
+                // A placeholder for it comes out smaller, and the card standing in for this one would end shorter.
+                icon: { Image(systemName: "allergens").unredacted() }
             )
             .font(.subheadline)
             .foregroundStyle(.secondary)

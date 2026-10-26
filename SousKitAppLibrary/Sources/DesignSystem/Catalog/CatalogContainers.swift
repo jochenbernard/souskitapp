@@ -11,12 +11,12 @@ struct CatalogContainers: View {
 
             rowGroup
 
+            card
+
             Text(verbatim: "This recipe could not be read")
                 .sousCallout()
 
-            SousActivityNote {
-                Text(verbatim: "Fetching from iCloud.")
-            }
+            loadingPlaceholder
 
             chips
 
@@ -31,6 +31,22 @@ struct CatalogContainers: View {
                     .sousRowPadding()
             }
         }
+    }
+
+    private var card: some View {
+        SousCard(
+            title: "Crepes",
+            picture: { SousPlaceholder(symbol: "frying.pan", color: .orange) },
+            detail: { Text(verbatim: "35 min") }
+        )
+        .frame(width: 200.0)
+    }
+
+    private var loadingPlaceholder: some View {
+        Text(verbatim: "Boeuf Bourguignon")
+            .sousLoadingPlaceholder()
+            .sousRow()
+            .environment(\.isSousLoading, true)
     }
 
     private var chips: some View {

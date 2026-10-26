@@ -14,22 +14,28 @@ import Testing
 @Suite("App feature presenter")
 final class AppFeaturePresenterTests {
     private let parser = SousParser()
-    private let suiteName: String
+    private let cachesURL: URL
+    let suiteName: String
     private let symbolCacheURL: URL
-    private let userDefaults: UserDefaults
+    private let temporaryURL: URL
+    let userDefaults: UserDefaults
 
     let crepesRestoration = AppRestoration(kitchen: KitchenFeatureRestoration(recipeID: "crepes"))
     let settingsRestoration = AppRestoration(isShowingSettings: true)
 
     init() throws {
         self.suiteName = "AppFeaturePresenterTests.\(UUID().uuidString)"
+        self.cachesURL = URL.temporaryDirectory.appending(path: "\(suiteName).caches")
         self.symbolCacheURL = URL.temporaryDirectory.appending(path: "\(suiteName).json")
+        self.temporaryURL = URL.temporaryDirectory.appending(path: "\(suiteName).tmp", directoryHint: .isDirectory)
         self.userDefaults = try #require(UserDefaults(suiteName: suiteName))
     }
 
     isolated deinit {
         userDefaults.removePersistentDomain(forName: suiteName)
+        try? FileManager.default.removeItem(at: cachesURL)
         try? FileManager.default.removeItem(at: symbolCacheURL)
+        try? FileManager.default.removeItem(at: temporaryURL)
     }
 
     /// A store keeping what the app has open in this suite's defaults.
@@ -43,22 +49,25 @@ final class AppFeaturePresenterTests {
     }
 
     /// A store remembering the scale recipes open on in this suite's defaults.
-    private var preferredScaleStore: UserDefaultsPreferredScaleStore {
+    var preferredScaleStore: UserDefaultsPreferredScaleStore {
         UserDefaultsPreferredScaleStore(userDefaults: userDefaults)
     }
 
-    /// A store remembering the folder in this suite's defaults.
+    /// A store remembering the folder in this suite's defaults, and keeping what it reads in this suite's caches and
+    /// temporary directory.
     func makeRecipeRepositoryStore() -> FileRecipeRepositoryStore {
         FileRecipeRepositoryStore(
             parser: parser,
             symbolPicker: RecipeSymbolPickerStub(),
-            userDefaults: userDefaults
+            userDefaults: userDefaults,
+            cachesDirectory: cachesURL,
+            temporaryDirectory: temporaryURL
         )
     }
 
     /// A presenter opened on the screen the defaults call for, as a cold start opens one.
     func launch(
-        timers: [RunningTimer] = [],
+        timerScheduler: TimerSchedulerStub = TimerSchedulerStub(),
         restorationSettleTime: Duration = .zero
     ) -> AppFeaturePresenter {
         let recipeRepositoryStore = makeRecipeRepositoryStore()
@@ -71,7 +80,8 @@ final class AppFeaturePresenterTests {
             mockRecipeRepository: MockRecipeRepository(
                 parser: parser,
                 symbolPicker: RecipeSymbolPickerStub(),
-                symbolCacheURL: symbolCacheURL
+                symbolCacheURL: symbolCacheURL,
+                exportFolderURL: temporaryURL.appending(path: "MockRecipeExports", directoryHint: .isDirectory)
             ),
             onboardingFeatureFactory: OnboardingFeatureFactory(recipeRepositoryStore: recipeRepositoryStore),
             preferredScaleStore: preferredScaleStore,
@@ -84,7 +94,7 @@ final class AppFeaturePresenterTests {
                 preferredScaleStore: preferredScaleStore,
                 recipeRepositoryStore: recipeRepositoryStore
             ),
-            timerScheduler: TimerSchedulerStub(timers: timers)
+            timerScheduler: timerScheduler
         )
         _ = presenter.makeViewModel()
 
@@ -297,23 +307,6 @@ final class AppFeaturePresenterTests {
         #expect(kitchen(of: presenter)?.id != folderKitchen.id)
         #expect(presenter.viewModel?.openSettings?.id == settingsID)
         #expect(kitchen(of: launch())?.kind == .files)
-    }
-
-    @Test("a reset closes the settings and forgets the mock recipes and the scale along with the folder")
-    func resetForgetsTheMockRecipes() throws {
-        _ = try makeRecipeRepositoryStore().connectRecipeDirectory(at: URL.temporaryDirectory)
-        preferredScaleStore.remember(.servings(2.0))
-        let presenter = launch()
-
-        presenter.didTapSettings()
-        presenter.settingsFeatureDidSelectRecipeRepositoryKind(.mock)
-        presenter.settingsFeatureDidConfirmReset()
-
-        #expect(presenter.viewModel?.screen.identity == .onboarding)
-        #expect(presenter.viewModel?.openSettings == nil)
-        #expect(restorationStore.record()?.restoration == nil)
-        #expect(launch().viewModel?.screen.identity == .onboarding)
-        #expect(preferredScaleStore.preferredScale == .asWritten)
     }
 
     @Test("the scale picked is kept across instances, and as written once cleared")

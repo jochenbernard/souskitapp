@@ -42,6 +42,9 @@ extension KitchenFeaturePresenter {
         case .folder:
             // A folder pushed over a search field still active hangs UIKit in its search bar's layout.
             endSearch(on: origin)
+
+        case .document:
+            break
         }
 
         changePushedScreens(to: pushedScreens)
@@ -60,7 +63,7 @@ extension KitchenFeaturePresenter {
         case nil:
             endSearch(in: [])
 
-        case .recipe:
+        case .recipe, .document:
             break
         }
     }

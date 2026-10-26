@@ -137,20 +137,17 @@ final class RecipeTextReaderTests {
         }
     }
 
-    @Test("a recipe copies into a new folder under its file's name, byte for byte")
+    @Test("a recipe copies into a new folder in the export folder, under its file's name, byte for byte")
     func copy() async throws {
         let text = "Whisk @{\u{0663} g} caster sugar@ with @{\u{FF13}} eggs@."
         try directory.makeDirectory(named: "Baking")
         try directory.writeFile(named: "Baking/crepes.sous", text)
-        let folderURL = directory.url.appendingPathExtension("copies").appending(path: "share")
-        defer {
-            try? FileManager.default.removeItem(at: folderURL.deletingLastPathComponent())
-        }
 
         let reader = RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .userInitiated)
-        let copyURL = try await reader.copy(path: "Baking/crepes.sous", into: folderURL)
+        let copyURL = try await reader.copy(path: "Baking/crepes.sous", under: directory.exportFolderURL)
 
-        #expect(copyURL == folderURL.appending(path: "crepes.sous"))
+        #expect(copyURL.lastPathComponent == "crepes.sous")
+        #expect(Array(copyURL.pathComponents.dropLast(2)) == directory.exportFolderURL.pathComponents)
         #expect(try Data(contentsOf: copyURL) == Data(text.utf8))
     }
 
@@ -158,10 +155,6 @@ final class RecipeTextReaderTests {
     func copyFetchesFirst() async throws {
         try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes\n---")
         fileStatuses.set(.notDownloaded(modifiedAt: date), forFileNamed: "crepes.sous")
-        let folderURL = directory.url.appendingPathExtension("copies")
-        defer {
-            try? FileManager.default.removeItem(at: folderURL)
-        }
 
         let reader = RecipeTextReader(
             recipeDirectory: directory.recipeDirectory,
@@ -169,22 +162,17 @@ final class RecipeTextReaderTests {
             fileStatus: fileStatuses.status,
             startDownloading: downloads.startDownloading
         )
-        _ = try await reader.copy(path: "crepes.sous", into: folderURL)
+        _ = try await reader.copy(path: "crepes.sous", under: directory.exportFolderURL)
 
         #expect(downloads.fileNames == ["crepes.sous"])
     }
 
     @Test("copying a recipe that is gone throws")
     func copyMissingRecipe() async throws {
-        let folderURL = directory.url.appendingPathExtension("copies")
-        defer {
-            try? FileManager.default.removeItem(at: folderURL)
-        }
-
         let reader = RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .userInitiated)
 
         await #expect(throws: (any Error).self) {
-            try await reader.copy(path: "crepes.sous", into: folderURL)
+            try await reader.copy(path: "crepes.sous", under: directory.exportFolderURL)
         }
     }
 }

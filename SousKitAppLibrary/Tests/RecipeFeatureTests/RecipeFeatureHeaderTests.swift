@@ -103,6 +103,7 @@ struct RecipeFeatureHeaderTests {
         let viewModel = RecipeFeatureViewModel(
             recipeEntry: brioche,
             folderPath: ["Recipes"],
+            placeholderRecipe: .placeholder(parser: parser),
             thumbnail: card
         )
 
@@ -120,6 +121,7 @@ struct RecipeFeatureHeaderTests {
         let viewModel = RecipeFeatureViewModel(
             recipeEntry: brioche,
             folderPath: ["Recipes"],
+            placeholderRecipe: .placeholder(parser: parser),
             thumbnail: try picture(width: 537, height: 336)
         )
         let presenter = makePresenter(viewModel: viewModel, recipeRepository: PictureRepositorySpy(thumbnail: nil))

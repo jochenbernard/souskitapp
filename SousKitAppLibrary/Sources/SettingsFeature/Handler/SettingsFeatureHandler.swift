@@ -18,7 +18,7 @@ public protocol SettingsFeatureHandler {
     @MainActor
     func settingsFeatureDidSelectRecipeRepositoryKind(_ recipeRepositoryKind: RecipeRepositoryKind)
 
-    /// A reset of the app was confirmed, which a debug build offers, and what the app remembers is to go.
+    /// A reset of the app was confirmed, which a debug build offers, and the app is to be as freshly installed.
     @MainActor
     func settingsFeatureDidConfirmReset()
 }

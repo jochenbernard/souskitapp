@@ -83,32 +83,56 @@ struct RecipeFeatureView: View {
 
     @ViewBuilder
     private var page: some View {
-        if isSideBySide, case .recipe(let recipe) = viewModel.recipeContent, let metadata = bodyMetadata(of: recipe) {
-            // Each column scrolls on its own, so the ingredients stay beside the steps however long the method is.
-            RecipeBodyView(
-                presenter: presenter,
-                recipe: recipe,
-                metadata: metadata,
-                expandedSections: viewModel.expandedSections,
-                overviewWidth: overviewWidth,
-                header: header(.card)
+        if isSideBySide {
+            SousLoadingStack(
+                isLoading: viewModel.recipeContent.isReading,
+                content: { sideBySideContent },
+                placeholders: { columns(viewModel.placeholderRecipe) }
             )
         } else {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0.0) {
-                    hero
-
-                    content
-                        .sousPagePadding()
-                        // As far below the hero as in from the screen's sides, which the page's padding alone is not.
-                        .padding(.top, isSideBySide ? 0.0 : SousSpacing.large - SousSpacing.small)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            // The hero reaches the top of the screen, and the bar's edge comes back with the title.
-            .ignoresSafeArea(.container, edges: isSideBySide ? [] : .top)
-            .scrollEdgeEffectHidden(!isSideBySide && !isTitleInBar, for: .top)
+            scrollingPage
         }
+    }
+
+    @ViewBuilder
+    private var sideBySideContent: some View {
+        switch viewModel.recipeContent {
+        case .reading:
+            EmptyView()
+
+        case .recipe(let recipe):
+            columns(recipe)
+
+        case .failure:
+            scrollingPage
+        }
+    }
+
+    @ViewBuilder
+    private func columns(_ recipe: ScaledRecipe) -> some View {
+        if let metadata = bodyMetadata(of: recipe) {
+            // Each column scrolls on its own, so the ingredients stay beside the steps however long the method is.
+            bodyView(recipe, metadata: metadata, header: header(.card))
+        } else {
+            scrollingPage
+        }
+    }
+
+    private var scrollingPage: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0.0) {
+                hero
+
+                content
+                    .sousPagePadding()
+                    // As far below the hero as in from the screen's sides, which the page's padding alone is not.
+                    .padding(.top, isSideBySide ? 0.0 : SousSpacing.large - SousSpacing.small)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        // The hero reaches the top of the screen, and the bar's edge comes back with the title.
+        .ignoresSafeArea(.container, edges: isSideBySide ? [] : .top)
+        .scrollEdgeEffectHidden(!isSideBySide && !isTitleInBar, for: .top)
     }
 
     /// The header the metadata shows, or `nil` for a recipe of neither steps nor a header, which shows a note.
@@ -116,6 +140,21 @@ struct RecipeFeatureView: View {
         let metadata = RecipeDisplay.metadata(of: recipe.scaled.metadata)
 
         return recipe.scaled.steps.isEmpty && metadata.isEmpty ? nil : metadata
+    }
+
+    private func bodyView(
+        _ recipe: ScaledRecipe,
+        metadata: MetadataDisplay,
+        header: RecipeHeaderView?
+    ) -> RecipeBodyView {
+        RecipeBodyView(
+            presenter: presenter,
+            recipe: recipe,
+            metadata: metadata,
+            expandedSections: viewModel.expandedSections,
+            overviewWidth: overviewWidth,
+            header: header
+        )
     }
 
     private func header(_ placement: RecipeHeaderView.Placement) -> RecipeHeaderView {
@@ -141,16 +180,11 @@ struct RecipeFeatureView: View {
         VStack(alignment: .leading, spacing: SousSpacing.xxLarge) {
             headerCard
 
-            switch viewModel.recipeContent {
-            case .reading:
-                readingNote
-
-            case .recipe(let recipe):
-                recipeBody(recipe)
-
-            case .failure(let message):
-                failureNote(message)
-            }
+            SousLoadingStack(
+                isLoading: viewModel.recipeContent.isReading,
+                content: { readContent },
+                placeholders: { recipeBody(viewModel.placeholderRecipe) }
+            )
         }
     }
 
@@ -166,23 +200,24 @@ struct RecipeFeatureView: View {
         }
     }
 
-    private var readingNote: some View {
-        SousActivityNote {
-            readingMessage
+    @ViewBuilder
+    private var readContent: some View {
+        switch viewModel.recipeContent {
+        case .reading:
+            EmptyView()
+
+        case .recipe(let recipe):
+            recipeBody(recipe)
+
+        case .failure(let message):
+            failureNote(message)
         }
     }
 
     @ViewBuilder
     private func recipeBody(_ recipe: ScaledRecipe) -> some View {
         if let metadata = bodyMetadata(of: recipe) {
-            RecipeBodyView(
-                presenter: presenter,
-                recipe: recipe,
-                metadata: metadata,
-                expandedSections: viewModel.expandedSections,
-                overviewWidth: overviewWidth,
-                header: nil
-            )
+            bodyView(recipe, metadata: metadata, header: nil)
         } else {
             emptyNote
         }
@@ -197,20 +232,43 @@ struct RecipeFeatureView: View {
         SousFailureNote(Text("This recipe could not be read", bundle: .module), message: message)
     }
 
-    @ViewBuilder
-    private var readingMessage: some View {
-        if viewModel.recipeEntry.availability == .downloaded {
-            Text("Reading the recipe.", bundle: .module)
-        } else {
-            Text("Fetching from iCloud.", bundle: .module)
+    private var cookBar: some View {
+        // Over one another, so the note and the button take turns in one place.
+        ZStack {
+            switch viewModel.recipeContent {
+            case .reading:
+                readingNote
+
+            case .recipe(let recipe):
+                if !recipe.scaled.steps.isEmpty {
+                    cookButton
+                }
+
+            case .failure:
+                EmptyView()
+            }
         }
+        // With the placeholders, so the bar changes as the recipe arrives.
+        .sousLoadingArrival(isLoading: viewModel.recipeContent.isReading)
     }
 
-    @ViewBuilder
-    private var cookBar: some View {
-        if case .recipe(let recipe) = viewModel.recipeContent, !recipe.scaled.steps.isEmpty {
-            cookButton
-        }
+    private var readingNote: some View {
+        readingMessage
+            .foregroundStyle(.secondary)
+            // Only a recipe coming down from iCloud says what it waits on, since that wait is the long one.
+            .opacity(isFetching ? 1.0 : 0.0)
+            .frame(maxWidth: .infinity)
+            .sousPagePadding()
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(readingMessage)
+    }
+
+    private var isFetching: Bool {
+        viewModel.recipeEntry.availability != .downloaded
+    }
+
+    private var readingMessage: Text {
+        isFetching ? Text("Fetching from iCloud.", bundle: .module) : Text("Reading the recipe.", bundle: .module)
     }
 
     private var cookButton: some View {
@@ -302,7 +360,8 @@ private func previewViewModel(
             name: "boeuf bourguignon",
             availability: availability
         ),
-        folderPath: ["Recipes", "French", "Classic"]
+        folderPath: ["Recipes", "French", "Classic"],
+        placeholderRecipe: .placeholder(parser: SousParser())
     )
     viewModel.recipeContent = recipeContent
 

@@ -19,7 +19,9 @@ public struct SousLockup: View {
 
     public var body: some View {
         HStack(spacing: SousSpacing.xSmall) {
+            // The wordmark names the lockup, so the mark's own label would read "Sous" twice.
             SousMark(size: markSize)
+                .accessibilityHidden(true)
 
             Text(verbatim: "Sous")
                 .font(.system(size: wordmarkSize, weight: .semibold))

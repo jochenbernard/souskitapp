@@ -112,11 +112,15 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
         case .recipe(let recipeEntry):
             // A recipe a cold start opened again slides, as a zoom out of no card leaves its swipe back dead.
             if viewModel.zoomedRecipeIDs.contains(recipeEntry.id) {
-                recipeScreen(for: recipeEntry)
+                recipeScreen(for: recipeEntry, on: screen)
                     .navigationTransition(.zoom(sourceID: recipeEntry.id, in: cardTransition))
             } else {
-                recipeScreen(for: recipeEntry)
+                recipeScreen(for: recipeEntry, on: screen)
             }
+
+        case .document(let recipeEntry):
+            // Opened from a file rather than a card, so it slides in.
+            recipeScreen(for: recipeEntry, on: screen)
         }
     }
 
@@ -136,7 +140,7 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
     }
 
     @ViewBuilder
-    private func recipeScreen(for recipeEntry: RecipeEntry) -> some View {
+    private func recipeScreen(for recipeEntry: RecipeEntry, on screen: KitchenScreen) -> some View {
         if let openRecipe = viewModel.openRecipe, openRecipe.recipeEntry == recipeEntry {
             // No subtitle: the recipe's header says where it sits.
             openRecipe.feature.makeView(
@@ -147,8 +151,10 @@ struct KitchenFeatureView<ToolbarItemContent: View>: View {
                 cookingTransition: cookingTransition
             )
             .background {
-                AppearanceReport(action: { presenter.screenDidAppear(.recipe(recipeEntry)) })
+                AppearanceReport(action: { presenter.screenDidAppear(screen) })
             }
+            // A file opened over a recipe takes its place on the stack, and reads itself rather than keeping that view.
+            .id(screen)
         }
     }
 
