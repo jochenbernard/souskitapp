@@ -66,6 +66,15 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didChooseScaling(_ recipeEntry: RecipeEntry, from origin: KitchenScreen?)
 
+    /// A recipe card's menu chose to share the recipe's file, which opens the share sheet over the card once the file
+    /// is on the device, unless a screen was pushed or popped or something opened over the kitchen meanwhile.
+    @MainActor
+    func didChooseSharing(_ recipeEntry: RecipeEntry) async
+
+    /// The share sheet closed, whether or not it handed the recipe on.
+    @MainActor
+    func didDismissSharing()
+
     /// The menu of a recipe a search found chose to show the folder the recipe sits in, which pushes the folder.
     ///
     /// - Parameters:

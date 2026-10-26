@@ -55,6 +55,12 @@ struct RecipeFeatureView: View {
                 ToolbarItem(placement: .principal) {
                     barTitle
                 }
+
+                if let sharedRecipe = viewModel.sharedRecipe {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        shareLink(sharedRecipe)
+                    }
+                }
             }
             .sheet(isPresented: isScaling) {
                 scaleSheet
@@ -276,6 +282,22 @@ struct RecipeFeatureView: View {
             .opacity(isTitleInBar ? 1.0 : 0.0)
             .animation(.spring(duration: 0.3, bounce: 0.0), value: isTitleInBar)
             .accessibilityHidden(!isTitleInBar)
+    }
+
+    private func shareLink(_ sharedRecipe: SharedRecipe) -> some View {
+        ShareLink(item: sharedRecipe, preview: SharePreview(viewModel.title))
+            // Before the read the sheet waits on the fetch, and after a failed one its actions hand on nothing.
+            .disabled(!isRecipeRead)
+    }
+
+    private var isRecipeRead: Bool {
+        switch viewModel.recipeContent {
+        case .recipe:
+            true
+
+        case .reading, .failure:
+            false
+        }
     }
 
     @ViewBuilder

@@ -20,4 +20,8 @@ struct EmptyRecipeRepository: RecipeRepository {
     func readThumbnail(of _: RecipePicture, filling _: CGSize) throws -> CGImage {
         throw CocoaError(.fileReadNoSuchFile)
     }
+
+    func exportRecipeFile(of _: RecipeEntry) throws -> URL {
+        throw CocoaError(.fileReadNoSuchFile)
+    }
 }

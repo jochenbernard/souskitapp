@@ -136,4 +136,55 @@ final class RecipeTextReaderTests {
             try await readText(of: RecipeEntry(path: "broken.sous", availability: .downloaded))
         }
     }
+
+    @Test("a recipe copies into a new folder under its file's name, byte for byte")
+    func copy() async throws {
+        let text = "Whisk @{\u{0663} g} caster sugar@ with @{\u{FF13}} eggs@."
+        try directory.makeDirectory(named: "Baking")
+        try directory.writeFile(named: "Baking/crepes.sous", text)
+        let folderURL = directory.url.appendingPathExtension("copies").appending(path: "share")
+        defer {
+            try? FileManager.default.removeItem(at: folderURL.deletingLastPathComponent())
+        }
+
+        let reader = RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .userInitiated)
+        let copyURL = try await reader.copy(path: "Baking/crepes.sous", into: folderURL)
+
+        #expect(copyURL == folderURL.appending(path: "crepes.sous"))
+        #expect(try Data(contentsOf: copyURL) == Data(text.utf8))
+    }
+
+    @Test("a recipe held only in iCloud is fetched before it is copied")
+    func copyFetchesFirst() async throws {
+        try directory.writeFile(named: "crepes.sous", "---\ntitle: Crepes\n---")
+        fileStatuses.set(.notDownloaded(modifiedAt: date), forFileNamed: "crepes.sous")
+        let folderURL = directory.url.appendingPathExtension("copies")
+        defer {
+            try? FileManager.default.removeItem(at: folderURL)
+        }
+
+        let reader = RecipeTextReader(
+            recipeDirectory: directory.recipeDirectory,
+            qualityOfService: .userInitiated,
+            fileStatus: fileStatuses.status,
+            startDownloading: downloads.startDownloading
+        )
+        _ = try await reader.copy(path: "crepes.sous", into: folderURL)
+
+        #expect(downloads.fileNames == ["crepes.sous"])
+    }
+
+    @Test("copying a recipe that is gone throws")
+    func copyMissingRecipe() async throws {
+        let folderURL = directory.url.appendingPathExtension("copies")
+        defer {
+            try? FileManager.default.removeItem(at: folderURL)
+        }
+
+        let reader = RecipeTextReader(recipeDirectory: directory.recipeDirectory, qualityOfService: .userInitiated)
+
+        await #expect(throws: (any Error).self) {
+            try await reader.copy(path: "crepes.sous", into: folderURL)
+        }
+    }
 }

@@ -49,6 +49,9 @@ struct RecipeCardButton: View {
             )
         }
         .buttonStyle(.plain)
+        .background {
+            RecipeShareSheet(fileURL: sharedFileURL, dismiss: presenter.didDismissSharing)
+        }
         .cardMenu(
             items: menuItems,
             open: open,
@@ -69,6 +72,11 @@ struct RecipeCardButton: View {
             in: cardTransition,
             configuration: { $0.clipShape(.rect(cornerRadius: radius)) }
         )
+    }
+
+    /// The file the share sheet is open for, where it is this card's recipe's.
+    private var sharedFileURL: URL? {
+        viewModel.sharedFile?.recipeID == card.recipeEntry.id ? viewModel.sharedFile?.url : nil
     }
 
     private var screen: KitchenScreen {
@@ -93,6 +101,11 @@ struct RecipeCardButton: View {
                 title: String(localized: "Scale", bundle: .module),
                 systemImage: "chevron.up.chevron.down",
                 action: scale
+            ),
+            CardMenuItem(
+                title: String(localized: "Share", bundle: .module),
+                systemImage: "square.and.arrow.up",
+                action: share
             )
         ]
 
@@ -125,6 +138,12 @@ struct RecipeCardButton: View {
 
     private func scale() {
         presenter.didChooseScaling(card.recipeEntry, from: origin)
+    }
+
+    private func share() {
+        Task {
+            await presenter.didChooseSharing(card.recipeEntry)
+        }
     }
 
     private func showFolder() {

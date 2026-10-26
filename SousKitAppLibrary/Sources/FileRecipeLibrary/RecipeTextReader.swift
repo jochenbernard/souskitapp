@@ -1,6 +1,6 @@
 import Foundation
 
-/// Reads a recipe's text, fetching it from iCloud where it is not on the device.
+/// Reads a recipe's file, fetching it from iCloud where it is not on the device.
 struct RecipeTextReader: Sendable {
     /// What reading a recipe returns.
     struct Contents: Sendable {
@@ -59,6 +59,41 @@ struct RecipeTextReader: Sendable {
     /// - Returns: The recipe's contents.
     /// - Throws: Whatever fetching or reading the file throws, or `CancellationError` when the task is cancelled.
     func read(path: String) async throws -> Contents {
+        try await readNewestVersion(path: path) { coordinatedURL in
+            Contents(
+                text: try String(contentsOf: coordinatedURL, encoding: .utf8),
+                modificationDate: try? coordinatedURL.resourceValues(
+                    forKeys: [.contentModificationDateKey]
+                ).contentModificationDate
+            )
+        }
+    }
+
+    /// Copies a recipe's file at its newest version into a folder, which is created where it is missing.
+    ///
+    /// The file is fetched first as ``read(path:)`` fetches it, and the copy is the file's own bytes, under its name.
+    ///
+    /// - Parameters:
+    ///   - path: Where the file sits inside the recipe directory, extension included.
+    ///   - folderURL: The folder to copy the file into, outside the recipe directory.
+    /// - Returns: Where the copy sits.
+    /// - Throws: Whatever fetching or copying the file throws, or `CancellationError` when the task is cancelled.
+    func copy(path: String, into folderURL: URL) async throws -> URL {
+        let copyURL = folderURL.appending(path: URL(filePath: path).lastPathComponent)
+
+        return try await readNewestVersion(path: path) { coordinatedURL in
+            try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: coordinatedURL, to: copyURL)
+
+            return copyURL
+        }
+    }
+
+    /// Reads a recipe's file at its newest version with the directory's security scope open, through `read`.
+    private func readNewestVersion<T: Sendable>(
+        path: String,
+        _ read: @escaping @Sendable (URL) throws -> T
+    ) async throws -> T {
         let url = recipeDirectory.url.appending(path: path)
 
         return try await recipeDirectory.url.withSecurityScope {
@@ -80,14 +115,7 @@ struct RecipeTextReader: Sendable {
                 }
             }
 
-            return try await CancellableFileCoordination.read(at: url, queue: queue) { coordinatedURL in
-                Contents(
-                    text: try String(contentsOf: coordinatedURL, encoding: .utf8),
-                    modificationDate: try? coordinatedURL.resourceValues(
-                        forKeys: [.contentModificationDateKey]
-                    ).contentModificationDate
-                )
-            }
+            return try await CancellableFileCoordination.read(at: url, queue: queue, read)
         }
     }
 
