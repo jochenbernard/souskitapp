@@ -78,6 +78,11 @@ struct RecipeDocumentRepository: RecipeRepository {
         throw CocoaError(.fileReadNoPermission)
     }
 
+    /// Keeps none, as it reads none.
+    func cachedThumbnail(of _: RecipePicture) -> CGImage? {
+        nil
+    }
+
     func recipeID(forFileAt url: URL) -> String? {
         url.standardizedFileURL == self.url.standardizedFileURL ? entry.id : nil
     }

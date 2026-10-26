@@ -53,7 +53,7 @@ final class RecipeSearchIndex {
         }
 
         let builtRecipes = listedRecipes
-            .sorted(by: { KitchenFolderTree.isOrderedBefore($0.entry, $1.entry) })
+            .sorted(by: { RecipeListingOrder.isOrderedBefore($0.entry, $1.entry) })
             .map({ IndexedRecipe(entry: $0.entry, terms: RecipeSearchTerms($0)) })
         indexedRecipes = builtRecipes
 

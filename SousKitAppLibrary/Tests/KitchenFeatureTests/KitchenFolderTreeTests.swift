@@ -140,4 +140,55 @@ struct KitchenFolderTreeTests {
         #expect(baking.stackedCards.map(\.id) == ["Baking/brioche", "Baking/crepes", "Baking/madeleines"])
         #expect(baking.stackedCards.map(\.recipeEntry.picture?.id) == [nil, nil, "Baking/images/madeleines.jpg"])
     }
+
+    @Test("the pictures shown first are those of the top's folders' stacks, then those of its cards")
+    func firstPictures() {
+        // Each file named against its title, so ordering by either gives a different answer.
+        let titles = [
+            "a1": "vinaigrette",
+            "a2": "boeuf-bourguignon",
+            "Baking/b1": "quiche-lorraine",
+            "Baking/b2": "crepes",
+            "Baking/b3": "madeleines",
+            "Baking/b4": "brioche",
+            "Baking/b5": "bouillabaisse",
+            "Baking/Breads/c1": "brioche",
+            "Lunch/Toasts/d1": "boeuf-bourguignon",
+            "Lunch/d2": "croque-monsieur"
+        ]
+        let entries = titles.keys.sorted().map { path in
+            let entry = RecipeEntry.stubbed(at: path)
+            let picture = RecipePicture(
+                id: "\(path).jpg",
+                modificationDate: nil,
+                availability: .downloaded
+            )
+
+            return RecipeEntry(
+                id: entry.id,
+                name: titles[path] ?? path,
+                availability: entry.availability,
+                folderPath: entry.folderPath,
+                picture: path == "Baking/b4" ? nil : picture
+            )
+        }
+        let folder = KitchenFolderTree.folder(at: [], holding: entries)
+        let shownCards = folder.folders.flatMap(\.stackedCards) + folder.cards
+        let pictures = RecipeListingOrder.firstPictures(of: entries, cardCount: 0)
+
+        #expect(pictures == shownCards.compactMap(\.recipeEntry.picture))
+    }
+
+    @Test("a listing with no recipe read yet knows the picture of no card, stacked or in a folder")
+    func unreadListing() throws {
+        let entries = ["crepes", "Baking/brioche", "Baking/Classic/madeleines"].map(RecipeEntry.stubbed(at:))
+
+        let folder = KitchenFolderTree.folder(at: [], holding: entries, isListingRead: false)
+        let baking = try #require(folder.folder(at: ["Baking"]))
+        let classic = try #require(folder.folder(at: ["Baking", "Classic"]))
+        let isEveryPictureKnownOnceRead = top(holding: ["crepes"]).cards.allSatisfy(\.isPictureKnown)
+
+        #expect((folder.cards + baking.cards + baking.stackedCards + classic.cards).allSatisfy({ !$0.isPictureKnown }))
+        #expect(isEveryPictureKnownOnceRead)
+    }
 }

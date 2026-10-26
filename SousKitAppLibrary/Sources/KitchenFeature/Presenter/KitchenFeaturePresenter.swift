@@ -13,6 +13,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
     private let recipeFeatureFactory: RecipeFeatureFactory
     let recipeRepository: RecipeRepository
     let restorationKeeper: KitchenRestorationKeeper
+    let screenCapacity = KitchenScreenCapacity()
     let searchIndex = RecipeSearchIndex()
     let thumbnailMemory: RecipeThumbnailMemory
     let viewModel: KitchenFeatureViewModel
@@ -44,6 +45,7 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
         // What the folders were built from last, symbols aside, or `nil` where none are shown.
         // swiftlint:disable:next discouraged_optional_collection
         var shownRecipes: [ListedRecipe]?
+        var hasShownCards = false
 
         for await result in await recipeRepository.listedRecipes() {
             switch result {
@@ -61,7 +63,18 @@ struct KitchenFeaturePresenter: KitchenFeaturePresenterProtocol, RecipeFeatureHa
 
                 shownRecipes = unpickedRecipes
                 let recipeEntries = listedRecipes.map(\.entry)
-                let folder = KitchenFolderTree.folder(at: [], holding: recipeEntries)
+                let folder = KitchenFolderTree.folder(
+                    at: [],
+                    holding: recipeEntries,
+                    // Until one is, a recipe naming no picture cannot be told from one not read yet.
+                    isListingRead: recipeEntries.contains(where: { $0.summary != nil })
+                )
+
+                if !hasShownCards {
+                    hasShownCards = true
+                    await keepCachedThumbnails(of: recipeEntries)
+                }
+
                 searchIndex.update(listedRecipes)
                 viewModel.recipeList = .recipes(folder)
                 showSearchResults()

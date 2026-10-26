@@ -121,6 +121,11 @@ public final class MockRecipeRepository: RecipeRepository {
         return try await Self.draw(mockPicture, filling: pixelSize)
     }
 
+    /// Keeps none: every picture is drawn when it is read.
+    nonisolated public func cachedThumbnail(of _: RecipePicture) -> CGImage? {
+        nil
+    }
+
     /// Finds no recipe: the recipes kept in the app are in no file.
     nonisolated public func recipeID(forFileAt _: URL) -> String? {
         nil

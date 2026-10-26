@@ -3,8 +3,8 @@ import Foundation
 import RecipeLibrary
 import SousKit
 
-/// A repository listing whatever a test sends it, counting its refreshes and reads, reading the thumbnails a test
-/// gives it, and holding the files a test names.
+/// A repository listing whatever a test sends it, counting its refreshes and reads, reading and keeping the thumbnails
+/// a test gives it, and holding the files a test names.
 @MainActor
 final class RecipeRepositorySpy: RecipeRepository {
     nonisolated let name = "Recipes"
@@ -16,6 +16,9 @@ final class RecipeRepositorySpy: RecipeRepository {
 
     /// The thumbnail read for each picture, by its id; any other picture fails to read.
     var thumbnails: [String: CGImage] = [:]
+
+    /// The thumbnail kept for each picture, by its id; any other picture has none kept.
+    var cachedThumbnails: [String: CGImage] = [:]
 
     /// What every export throws, or `nil` for exports that succeed.
     var exportError: Error?
@@ -58,6 +61,10 @@ final class RecipeRepositorySpy: RecipeRepository {
         }
 
         return thumbnail
+    }
+
+    func cachedThumbnail(of picture: RecipePicture) -> CGImage? {
+        cachedThumbnails[picture.id]
     }
 
     nonisolated func recipeID(forFileAt url: URL) -> String? {

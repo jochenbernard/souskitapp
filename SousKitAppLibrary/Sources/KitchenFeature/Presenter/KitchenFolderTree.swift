@@ -1,18 +1,19 @@
-import Foundation
 import RecipeLibrary
 
 /// Builds the folders the kitchen lists out of the recipes a repository yields, each carrying the path of its folder.
 enum KitchenFolderTree {
-    /// The most recipes a folder's picture stacks.
-    static let stackedCardLimit = 4
-
     /// The folder at a path, holding the folders below it that hold recipes and the recipes directly in it.
     ///
     /// - Parameters:
     ///   - path: The names of the folders leading down to it, or none for the top of the repository.
     ///   - recipeEntries: The recipes somewhere below it, each with a folder path starting with `path`.
+    ///   - isListingRead: Whether any recipe listed has been read, so the pictures the recipes name are known.
     /// - Returns: The folder.
-    static func folder(at path: [String], holding recipeEntries: [RecipeEntry]) -> KitchenFolder {
+    static func folder(
+        at path: [String],
+        holding recipeEntries: [RecipeEntry],
+        isListingRead: Bool = true
+    ) -> KitchenFolder {
         var ownEntries: [RecipeEntry] = []
         var innerEntries: [String: [RecipeEntry]] = [:]
 
@@ -24,49 +25,25 @@ enum KitchenFolderTree {
             }
         }
 
-        let folders = innerEntries.keys.sorted(by: isOrderedBefore).map { name in
-            folder(at: path + [name], holding: innerEntries[name] ?? [])
+        let folders = innerEntries.keys.sorted(by: RecipeListingOrder.isOrderedBefore).map { name in
+            folder(
+                at: path + [name],
+                holding: innerEntries[name] ?? [],
+                isListingRead: isListingRead
+            )
         }
-        let cards = ownEntries.sorted(by: isOrderedBefore).map(KitchenRecipeCard.init)
+        let cards = ownEntries.sorted(by: RecipeListingOrder.isOrderedBefore).map { recipeEntry in
+            KitchenRecipeCard(recipeEntry: recipeEntry, isPictureKnown: isListingRead)
+        }
         // Its own recipes first, then those in the folders inside it.
-        let stackedCards = cards.prefix(stackedCardLimit) + folders.lazy.flatMap(\.stackedCards)
+        let stackedCards = cards.prefix(RecipeListingOrder.folderRecipeLimit) + folders.lazy.flatMap(\.stackedCards)
 
         return KitchenFolder(
             path: path,
             folders: folders,
             cards: cards,
             recipeCount: recipeEntries.count,
-            stackedCards: Array(stackedCards.prefix(stackedCardLimit))
+            stackedCards: Array(stackedCards.prefix(RecipeListingOrder.folderRecipeLimit))
         )
-    }
-
-    /// Whether one folder is listed before another: by name, then by the name's exact characters, so names differing
-    /// only in case keep one order.
-    private static func isOrderedBefore(_ lhs: String, _ rhs: String) -> Bool {
-        switch lhs.localizedStandardCompare(rhs) {
-        case .orderedAscending:
-            true
-
-        case .orderedDescending:
-            false
-
-        case .orderedSame:
-            lhs < rhs
-        }
-    }
-
-    /// Whether one recipe is listed before another: by the title its card shows, then by what the repository finds it
-    /// by, so recipes sharing a title keep one order.
-    static func isOrderedBefore(_ lhs: RecipeEntry, _ rhs: RecipeEntry) -> Bool {
-        switch lhs.title.localizedStandardCompare(rhs.title) {
-        case .orderedAscending:
-            true
-
-        case .orderedDescending:
-            false
-
-        case .orderedSame:
-            lhs.id.localizedStandardCompare(rhs.id) == .orderedAscending
-        }
     }
 }

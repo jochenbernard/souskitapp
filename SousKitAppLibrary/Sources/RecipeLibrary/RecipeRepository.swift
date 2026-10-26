@@ -43,6 +43,14 @@ public protocol RecipeRepository: Sendable {
     /// - Throws: Whatever fetching or reading the picture throws, or what its contents not being a picture does.
     func readThumbnail(of picture: RecipePicture, filling pixelSize: CGSize) async throws -> CGImage
 
+    /// The thumbnail an earlier read of a picture kept, at the smallest size kept.
+    ///
+    /// Never reads the picture itself, so a picture no read has kept a thumbnail of gives none at once.
+    ///
+    /// - Parameter picture: The picture, as an entry lists it.
+    /// - Returns: The thumbnail, decoded, or `nil` where none is kept of the picture's current contents.
+    func cachedThumbnail(of picture: RecipePicture) async -> CGImage?
+
     /// The id of the recipe a file holds, where the file is one of the repository's recipes.
     ///
     /// - Parameter url: Where the file sits.

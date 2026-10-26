@@ -105,6 +105,12 @@ protocol KitchenFeaturePresenterProtocol {
     @MainActor
     func didChangeIsSearchPresented(_ isPresented: Bool, in folderPath: [String])
 
+    /// A screen of the kitchen took its size.
+    ///
+    /// - Parameter cardCount: How many cards fill the screen at most.
+    @MainActor
+    func screenDidResize(holding cardCount: Int)
+
     /// A card showing a recipe's picture is on screen, and the call is cancelled when it leaves or its size changes.
     ///
     /// - Parameters:

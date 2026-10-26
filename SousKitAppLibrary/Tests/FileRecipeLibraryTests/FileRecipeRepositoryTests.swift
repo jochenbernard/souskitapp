@@ -168,7 +168,7 @@ final class FileRecipeRepositoryTests: Sendable {
         #expect(try String(contentsOf: second, encoding: .utf8) == "---\ntitle: Vinaigrette\n---")
     }
 
-    private func writeGratin(width: Int, height: Int) throws {
+    func writeGratin(width: Int, height: Int) throws {
         try directory.writePicture(
             named: "gratin-dauphinois.png",
             width: width,
@@ -177,7 +177,7 @@ final class FileRecipeRepositoryTests: Sendable {
     }
 
     /// The picture of the file at a path, as the directory lists it now.
-    private func picture(at path: String) throws -> RecipePicture {
+    func picture(at path: String) throws -> RecipePicture {
         try #require(RecipeDirectoryReader(recipeDirectory: directory.recipeDirectory).readListing().pictures[path])
     }
 

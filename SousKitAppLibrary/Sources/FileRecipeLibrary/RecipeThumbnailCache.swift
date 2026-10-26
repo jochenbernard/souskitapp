@@ -69,6 +69,32 @@ struct RecipeThumbnailCache: Sendable {
         return try? RecipeThumbnailMaker.thumbnail(ofImageAt: fileURL, filling: pixelSize)
     }
 
+    /// The thumbnail kept for a picture as it is now at the smallest kept size, for a box not known yet.
+    ///
+    /// - Parameter picture: The picture.
+    /// - Returns: The thumbnail, decoded, or `nil` where none is kept.
+    func smallestThumbnail(of picture: RecipePicture) -> CGImage? {
+        guard let prefix = fileNamePrefix(of: picture) else {
+            return nil
+        }
+
+        let keptFiles = names().compactMap { name in
+            Self.keptSize(inFileName: name, after: prefix).map({ (name: name, size: $0) })
+        }
+
+        // Most often a card's; a recipe screen's takes many times the memory, and a card needing more reads its own.
+        guard
+            let smallest = keptFiles.min(by: { $0.size.width * $0.size.height < $1.size.width * $1.size.height })
+        else {
+            return nil
+        }
+
+        return try? RecipeThumbnailMaker.thumbnail(
+            ofImageAt: folderURL.appending(path: smallest.name),
+            filling: smallest.size
+        )
+    }
+
     /// Keeps a picture's thumbnail made to fill the kept size holding a box.
     ///
     /// A thumbnail that cannot be written is made again the next time, so a failure is dropped.
@@ -191,6 +217,21 @@ struct RecipeThumbnailCache: Sendable {
     // Hashed with the directory, so two directories' pictures at one path never share a thumbnail.
     private func pictureKey(of picture: RecipePicture) -> String {
         "\(Self.digest(of: "\(directoryPath)\n\(picture.id)"))-"
+    }
+
+    /// The kept size a thumbnail's file is named for, or `nil` where the name does not start with a prefix.
+    private static func keptSize(inFileName name: String, after prefix: String) -> CGSize? {
+        guard name.hasPrefix(prefix) else {
+            return nil
+        }
+
+        let lengths = name.dropFirst(prefix.count).split(separator: "x").compactMap({ Double($0) })
+
+        guard lengths.count == 2 else {
+            return nil
+        }
+
+        return CGSize(width: lengths[0], height: lengths[1])
     }
 
     private static func keptLength(holding length: Double) -> Double {

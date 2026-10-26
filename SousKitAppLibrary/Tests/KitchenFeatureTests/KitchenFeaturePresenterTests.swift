@@ -85,6 +85,19 @@ struct KitchenFeaturePresenterTests {
     }
 
     @MainActor
+    @Test("a listing with no recipe read yet knows none of their pictures, and one with a recipe read knows them all")
+    func knownPictures() async {
+        let vinaigrette = recipeEntry(named: "vinaigrette")
+        let crepes = recipeEntry(id: "crepes", header: "---\ntitle: Crepes\n---\n")
+
+        let unreadCards = await cards(listing: [recipeEntry(named: "crepes"), vinaigrette])
+        let readCards = await cards(listing: [crepes, vinaigrette])
+
+        #expect(unreadCards.map(\.isPictureKnown) == [false, false])
+        #expect(readCards.map(\.isPictureKnown) == [true, true])
+    }
+
+    @MainActor
     @Test("the view model starts out reading")
     func readingBeforeTheFirstRead() {
         guard case .reading = makeViewModel().recipeList else {

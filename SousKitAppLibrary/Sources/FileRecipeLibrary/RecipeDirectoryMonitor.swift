@@ -122,13 +122,18 @@ final class RecipeDirectoryMonitor {
     /// Lists the recipes with the summaries the cache holds, for the next stream to yield before its own read.
     ///
     /// The stream still reads the directory itself, and yields again only what changed since.
-    func readAhead() {
+    ///
+    /// - Returns: The listing, for reading ahead what the recipes are shown with.
+    func readAhead() -> Task<[ListedRecipe], Error> {
         // Detached, so the recipes are ready even while the main actor is busy putting the first screen up.
-        readAheadTask = Task.detached(priority: .userInitiated) { [listDirectory, summarizer] in
+        let readAhead = Task.detached(priority: .userInitiated) { [listDirectory, summarizer] in
             let listing = try listDirectory()
 
             return await summarizer.listedRecipes(for: listing.recipeFiles, pictures: listing.pictures)
         }
+        readAheadTask = readAhead
+
+        return readAhead
     }
 
     private func start() {

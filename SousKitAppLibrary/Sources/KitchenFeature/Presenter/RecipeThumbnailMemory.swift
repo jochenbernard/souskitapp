@@ -83,6 +83,14 @@ final class RecipeThumbnailMemory {
         shownThumbnails[picture] = nil
     }
 
+    /// Lets go of the thumbnail kept for a picture whose read failed, and notes the failure for its card.
+    ///
+    /// - Parameter picture: The picture.
+    func readDidFail(of picture: RecipePicture) {
+        forget(picture)
+        shownThumbnails.readDidFail(of: picture)
+    }
+
     private static func byteCount(of thumbnail: CGImage) -> Int {
         thumbnail.bytesPerRow * thumbnail.height
     }
