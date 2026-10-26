@@ -7,17 +7,10 @@ import SousKit
 public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     private static let key = "FileRecipeRepositoryStore.bookmark"
 
-    // Caches, not the recipe directory: the summaries are rebuilt from the recipes wherever the system clears them.
-    private static let summaryCacheURL = URL.cachesDirectory.appending(path: "RecipeSummaries.json")
-
-    // Caches as well: a thumbnail is made again from its picture wherever the system clears it.
-    private static let thumbnailCacheURL = URL.cachesDirectory.appending(
-        path: "RecipeThumbnails",
-        directoryHint: .isDirectory
-    )
-
+    private let cachesDirectory: URL
     private let parser: SousParser
     private let symbolPicker: RecipeSymbolPicker
+    private let temporaryDirectory: URL
     private let userDefaults: UserDefaults
 
     /// Creates a store.
@@ -26,13 +19,19 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
     ///   - parser: What the recipes in the directory are read with.
     ///   - symbolPicker: What the recipes' symbols are picked with.
     ///   - userDefaults: Where the directory is remembered.
+    ///   - cachesDirectory: Where what is read from the directory is kept, outside it.
+    ///   - temporaryDirectory: Where the directory's recipe files are copied for handing them to other apps.
     public init(
         parser: SousParser,
         symbolPicker: RecipeSymbolPicker,
-        userDefaults: UserDefaults = .standard
+        userDefaults: UserDefaults = .standard,
+        cachesDirectory: URL = .cachesDirectory,
+        temporaryDirectory: URL = .temporaryDirectory
     ) {
+        self.cachesDirectory = cachesDirectory
         self.parser = parser
         self.symbolPicker = symbolPicker
+        self.temporaryDirectory = temporaryDirectory
         self.userDefaults = userDefaults
     }
 
@@ -58,6 +57,21 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
         return RecipeDirectory(url: url)
     }
 
+    // Caches, not the recipe directory: the summaries are rebuilt from the recipes wherever the system clears them.
+    private var summaryCacheURL: URL {
+        cachesDirectory.appending(path: "RecipeSummaries.json")
+    }
+
+    // Caches as well: a thumbnail is made again from its picture wherever the system clears it.
+    private var thumbnailCacheURL: URL {
+        cachesDirectory.appending(path: "RecipeThumbnails", directoryHint: .isDirectory)
+    }
+
+    // Temporary: a copy is wanted only until the app it is handed to has taken it.
+    private var exportFolderURL: URL {
+        temporaryDirectory.appending(path: "RecipeExports", directoryHint: .isDirectory)
+    }
+
     public func makeRecipeRepository() -> RecipeRepository? {
         recipeDirectory.map(makeRecipeRepository(reading:))
     }
@@ -68,8 +82,21 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
         return makeRecipeRepository(reading: RecipeDirectory(url: url))
     }
 
+    public func openRecipeDocument(at url: URL) -> RecipeDocument {
+        let recipeRepository = RecipeDocumentRepository(url: url, parser: parser, exportFolderURL: exportFolderURL)
+
+        return RecipeDocument(
+            url: url,
+            entry: recipeRepository.entry,
+            recipeRepository: recipeRepository
+        )
+    }
+
     public func clear() {
         userDefaults.removeObject(forKey: Self.key)
+        RecipeSummaryCache.clear(fileURL: summaryCacheURL)
+        RecipeThumbnailCache.clear(folderURL: thumbnailCacheURL)
+        try? FileManager.default.removeItem(at: exportFolderURL)
     }
 
     private func makeRecipeRepository(reading recipeDirectory: RecipeDirectory) -> FileRecipeRepository {
@@ -77,8 +104,9 @@ public struct FileRecipeRepositoryStore: RecipeRepositoryStore {
             parser: parser,
             recipeDirectory: recipeDirectory,
             symbolPicker: symbolPicker,
-            summaryCacheURL: Self.summaryCacheURL,
-            thumbnailCacheURL: Self.thumbnailCacheURL
+            summaryCacheURL: summaryCacheURL,
+            thumbnailCacheURL: thumbnailCacheURL,
+            exportFolderURL: exportFolderURL
         )
         // Made for a kitchen about to show it, so the recipes are listed while its screen is still being put up.
         recipeRepository.readAhead()

@@ -34,4 +34,15 @@ final class StartedTimerStoreTests {
         #expect(startedTimers[customID]?.cookingTimer == customTimer.cookingTimer)
         #expect(startedTimers.count == 2)
     }
+
+    @Test("clearing forgets every timer, leaving nothing kept")
+    func clearing() {
+        let store = StartedTimerStore(userDefaults: userDefaults)
+        store.add(StartedTimer(cookingTimer: .custom(.seconds(90)), endDate: .now.addingTimeInterval(90.0)), id: UUID())
+
+        store.clear()
+
+        #expect(StartedTimerStore(userDefaults: userDefaults).startedTimers().isEmpty)
+        #expect(userDefaults.persistentDomain(forName: suiteName)?.isEmpty ?? true)
+    }
 }

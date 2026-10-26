@@ -1,8 +1,13 @@
 import CookingFeature
 
-/// A timer scheduler whose running timers never change, which starts none.
-struct TimerSchedulerStub: TimerScheduler {
-    var timers: [RunningTimer] = []
+/// A timer scheduler whose running timers change only when all of them are cancelled, which starts none.
+@MainActor
+final class TimerSchedulerStub: TimerScheduler {
+    private(set) var timers: [RunningTimer]
+
+    init(timers: [RunningTimer] = []) {
+        self.timers = timers
+    }
 
     func currentRunningTimers() -> [RunningTimer] {
         timers
@@ -18,4 +23,8 @@ struct TimerSchedulerStub: TimerScheduler {
     func start(_: CookingTimer) {}
 
     func cancel(_: RunningTimer) {}
+
+    func cancelAll() {
+        timers = []
+    }
 }

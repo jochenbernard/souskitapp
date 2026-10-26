@@ -69,6 +69,14 @@ public struct AlarmTimerScheduler: TimerScheduler {
         startedTimerStore.remove(id: timer.id)
     }
 
+    public func cancelAll() {
+        for alarm in (try? AlarmManager.shared.alarms) ?? [] {
+            try? silence(id: alarm.id, isRinging: alarm.state == .alerting)
+        }
+
+        startedTimerStore.clear()
+    }
+
     // An alarm whose record is gone still rings, with no screen showing it or able to stop it.
     @MainActor
     private func cancelUntrackedTimers() {

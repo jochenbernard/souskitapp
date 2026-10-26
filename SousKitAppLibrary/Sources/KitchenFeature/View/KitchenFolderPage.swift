@@ -47,9 +47,13 @@ struct KitchenFolderPage: View {
                 .sousPage()
         } else {
             ScrollView {
-                folderContents
-                    .sousPagePadding()
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                SousLoadingStack(
+                    isLoading: isReading,
+                    content: { folderContents },
+                    placeholders: { PlaceholderCardGrid(minimumColumnWidth: minimumColumnWidth) }
+                )
+                .sousPagePadding()
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             // With the bars, which a preview may cover.
             .onGeometryChange(
@@ -91,11 +95,18 @@ struct KitchenFolderPage: View {
         return search.text
     }
 
+    private var isReading: Bool {
+        switch viewModel.recipeList {
+        case .reading: true
+        case .recipes, .failure: false
+        }
+    }
+
     @ViewBuilder
     private var folderContents: some View {
         switch viewModel.recipeList {
         case .reading:
-            readingNote
+            EmptyView()
 
         case .recipes(let topFolder):
             if let search = viewModel.searches[path], search.isSearching {
@@ -108,12 +119,6 @@ struct KitchenFolderPage: View {
 
         case .failure(let message):
             failureNote(message)
-        }
-    }
-
-    private var readingNote: some View {
-        SousActivityNote {
-            Text("Reading the folder.", bundle: .module)
         }
     }
 

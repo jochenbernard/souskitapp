@@ -12,7 +12,7 @@ import SousKit
 /// Builds ``AppFeature`` and everything under it.
 struct AppFeatureFactory {
     private let kitchenFeatureFactory: KitchenFeatureFactory
-    private let mockRecipeRepository: RecipeRepository
+    private let mockRecipeRepository: MockRecipeRepository
     private let onboardingFeatureFactory: OnboardingFeatureFactory
     private let preferredScaleStore: UserDefaultsPreferredScaleStore
     private let recipeRepositoryKindStore: RecipeRepositoryKindStore
@@ -38,7 +38,8 @@ struct AppFeatureFactory {
         self.mockRecipeRepository = MockRecipeRepository(
             parser: parser,
             symbolPicker: symbolPicker,
-            symbolCacheURL: URL.cachesDirectory.appending(path: "MockRecipeSymbols.json")
+            symbolCacheURL: URL.cachesDirectory.appending(path: "MockRecipeSymbols.json"),
+            exportFolderURL: URL.temporaryDirectory.appending(path: "MockRecipeExports", directoryHint: .isDirectory)
         )
         self.onboardingFeatureFactory = OnboardingFeatureFactory(recipeRepositoryStore: store)
         self.preferredScaleStore = scaleStore

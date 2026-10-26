@@ -32,6 +32,10 @@ struct RecipeRepositoryStub: RecipeRepository {
         throw CocoaError(.fileReadNoSuchFile)
     }
 
+    func recipeID(forFileAt _: URL) -> String? {
+        nil
+    }
+
     /// Writes the text to a file in a folder of its own under the temporary directory, named after the recipe's id.
     func exportRecipeFile(of entry: RecipeEntry) throws -> URL {
         guard let text else {

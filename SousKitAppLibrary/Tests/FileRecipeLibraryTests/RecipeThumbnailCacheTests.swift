@@ -179,6 +179,35 @@ final class RecipeThumbnailCacheTests {
         #expect(kept(modifiedAt: modificationDate) != nil)
     }
 
+    @Test("clearing removes every thumbnail, and leaves a cache made before keeping nothing")
+    func clearing() throws {
+        let cache = makeCache()
+        try keep(gray: 0.2, modifiedAt: modificationDate)
+
+        RecipeThumbnailCache.clear(folderURL: directory.thumbnailCacheURL)
+        cache.save(
+            try TemporaryDirectory.picture(
+                width: 480,
+                height: 360,
+                gray: 0.2
+            ),
+            of: picture(modifiedAt: modificationDate),
+            filling: pixelSize
+        )
+
+        #expect(!FileManager.default.fileExists(atPath: directory.thumbnailCacheURL.path()))
+    }
+
+    @Test("a cache made after clearing keeps thumbnails again")
+    func keepingAfterClearing() throws {
+        try keep(gray: 0.2, modifiedAt: modificationDate)
+        RecipeThumbnailCache.clear(folderURL: directory.thumbnailCacheURL)
+
+        try keep(gray: 0.2, modifiedAt: modificationDate)
+
+        #expect(kept(modifiedAt: modificationDate) != nil)
+    }
+
     @Test("a picture telling no date is never kept, since it could never be told apart from its replacement")
     func noDate() throws {
         try keep(gray: 0.2, modifiedAt: nil)

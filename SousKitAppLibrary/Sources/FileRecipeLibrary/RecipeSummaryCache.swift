@@ -37,6 +37,17 @@ struct RecipeSummaryCache: Sendable {
         self.write = write
     }
 
+    /// Removes the summaries kept in a file, leaving every cache made for it before writing nothing.
+    ///
+    /// - Parameter fileURL: The file.
+    static func clear(fileURL: URL) {
+        // Held while removing, so a save already writing finishes first.
+        writers.withLock { writers in
+            writers[fileURL] = nil
+            try? FileManager.default.removeItem(at: fileURL)
+        }
+    }
+
     /// The summaries kept, by the path of the recipe inside the directory.
     ///
     /// - Returns: The records, or none where the file is gone, unreadable, or kept for another directory.

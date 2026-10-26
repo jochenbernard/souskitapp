@@ -1,6 +1,7 @@
 import CookingFeature
 import Foundation
 import KitchenFeature
+import MockRecipeLibrary
 import OnboardingFeature
 import RecipeLibrary
 import SettingsFeature
@@ -13,7 +14,7 @@ final class AppFeaturePresenter:
     var viewModel: AppFeatureViewModel?
 
     private let kitchenFeatureFactory: KitchenFeatureFactory
-    private let mockRecipeRepository: RecipeRepository
+    private let mockRecipeRepository: MockRecipeRepository
     private let onboardingFeatureFactory: OnboardingFeatureFactory
     private let preferredScaleStore: UserDefaultsPreferredScaleStore
     private let recipeRepositoryKindStore: RecipeRepositoryKindStore
@@ -31,10 +32,13 @@ final class AppFeaturePresenter:
     /// Whether a cold start found the settings open, and has yet to open them again.
     private var restoresSettings = false
 
+    /// The recipe file handed to the app while onboarding, which the first kitchen opens.
+    private var waitingDocument: RecipeDocument?
+
     @MainActor
     init(
         kitchenFeatureFactory: KitchenFeatureFactory,
-        mockRecipeRepository: RecipeRepository,
+        mockRecipeRepository: MockRecipeRepository,
         onboardingFeatureFactory: OnboardingFeatureFactory,
         preferredScaleStore: UserDefaultsPreferredScaleStore,
         recipeRepositoryKindStore: RecipeRepositoryKindStore,
@@ -111,6 +115,28 @@ final class AppFeaturePresenter:
         closeSettings()
     }
 
+    func didOpenFile(at url: URL) {
+        guard url.isFileURL else {
+            return
+        }
+
+        let document = recipeRepositoryStore.openRecipeDocument(at: url)
+
+        switch viewModel?.screen {
+        case .kitchen(let kitchenFeature, _):
+            // The recipe opens on the kitchen, not under the settings.
+            restoresSettings = false
+            if viewModel?.openSettings != nil {
+                closeSettings()
+            }
+            kitchenFeature.open(document)
+
+        case .onboarding, nil:
+            // The kitchen has nothing to open it on until a folder is picked.
+            waitingDocument = document
+        }
+    }
+
     func didEnterBackground() {
         restorationStore.recordUse()
     }
@@ -163,9 +189,11 @@ final class AppFeaturePresenter:
     }
 
     func settingsFeatureDidConfirmReset() {
+        timerScheduler.cancelAll()
         preferredScaleStore.clear()
         recipeRepositoryKindStore.clear()
         recipeRepositoryStore.clear()
+        mockRecipeRepository.clear()
         closeSettings()
         viewModel?.screen = makeScreen()
     }
@@ -230,15 +258,18 @@ final class AppFeaturePresenter:
         }
 
         recipeRepositoryName = recipeRepository.name
-
-        return .kitchen(
-            kitchenFeatureFactory.makeKitchenFeature(
-                recipeRepository: recipeRepository,
-                restoration: restoration,
-                handler: self
-            ),
-            id: UUID()
+        let kitchenFeature = kitchenFeatureFactory.makeKitchenFeature(
+            recipeRepository: recipeRepository,
+            restoration: restoration,
+            handler: self
         )
+
+        if let waitingDocument {
+            self.waitingDocument = nil
+            kitchenFeature.open(waitingDocument)
+        }
+
+        return .kitchen(kitchenFeature, id: UUID())
     }
 
     /// Puts a kitchen reading another repository under the settings, which stay open and show that repository.

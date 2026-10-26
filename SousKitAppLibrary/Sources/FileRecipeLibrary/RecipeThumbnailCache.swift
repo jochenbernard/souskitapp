@@ -3,6 +3,7 @@ import CryptoKit
 import Foundation
 import ImageIO
 import RecipeLibrary
+import Synchronization
 import UniformTypeIdentifiers
 
 /// The thumbnails of one directory's pictures, kept between launches in a folder the system may clear.
@@ -16,6 +17,10 @@ struct RecipeThumbnailCache: Sendable {
     // Four sizes to an octave: a box growing by up to a fifth reads the same thumbnail.
     private static let sizesPerOctave = 4.0
 
+    // By folder: how often it was cleared, so a cache made before keeps nothing there again.
+    private static let clearCounts = Mutex<[URL: Int]>([:])
+
+    private let clearCount: Int
     private let directoryPath: String
     private let folderURL: URL
 
@@ -25,6 +30,7 @@ struct RecipeThumbnailCache: Sendable {
     ///   - recipeDirectory: The directory whose pictures are kept.
     ///   - folderURL: Where the thumbnails are kept, outside the directory.
     init(recipeDirectory: RecipeDirectory, folderURL: URL) {
+        self.clearCount = Self.clearCounts.withLock({ $0[folderURL, default: 0] })
         self.directoryPath = recipeDirectory.url.standardizedFileURL.path(percentEncoded: false)
         self.folderURL = folderURL
     }
@@ -35,6 +41,17 @@ struct RecipeThumbnailCache: Sendable {
     /// - Returns: The smallest of a few sizes holding the box, in pixels.
     static func keptSize(holding pixelSize: CGSize) -> CGSize {
         CGSize(width: keptLength(holding: pixelSize.width), height: keptLength(holding: pixelSize.height))
+    }
+
+    /// Removes every thumbnail kept in a folder, leaving every cache made for it before keeping nothing there.
+    ///
+    /// - Parameter folderURL: The folder.
+    static func clear(folderURL: URL) {
+        // Held while removing, so a thumbnail already being written lands first.
+        clearCounts.withLock { clearCounts in
+            clearCounts[folderURL, default: 0] += 1
+            try? FileManager.default.removeItem(at: folderURL)
+        }
     }
 
     /// The thumbnail kept for a picture as it is now, scaled down to fill a box.
@@ -95,10 +112,8 @@ struct RecipeThumbnailCache: Sendable {
             return
         }
 
-        try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
-
         guard
-            (try? data.write(to: fileURL, options: .atomic)) != nil,
+            write(data as Data, to: fileURL),
             let prefix = fileNamePrefix(of: picture)
         else {
             return
@@ -118,6 +133,20 @@ struct RecipeThumbnailCache: Sendable {
     func removeThumbnails(keeping pictures: Set<RecipePicture>) async {
         let prefixes = pictures.compactMap({ fileNamePrefix(of: $0) })
         removeThumbnails(where: { name in !prefixes.contains(where: { name.hasPrefix($0) }) })
+    }
+
+    /// Writes a thumbnail, unless the folder was cleared since the cache was made.
+    private func write(_ data: Data, to fileURL: URL) -> Bool {
+        // Held while writing, so a clear meanwhile never has the folder written into again.
+        Self.clearCounts.withLock { clearCounts in
+            guard clearCounts[folderURL, default: 0] == clearCount else {
+                return false
+            }
+
+            try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+
+            return (try? data.write(to: fileURL, options: .atomic)) != nil
+        }
     }
 
     private func removeThumbnails(where isRemoved: (String) -> Bool) {
