@@ -40,6 +40,10 @@ final class PictureRepositorySpy: RecipeRepository {
         return thumbnail
     }
 
+    nonisolated func cachedThumbnail(of _: RecipePicture) -> CGImage? {
+        nil
+    }
+
     nonisolated func recipeID(forFileAt _: URL) -> String? {
         nil
     }

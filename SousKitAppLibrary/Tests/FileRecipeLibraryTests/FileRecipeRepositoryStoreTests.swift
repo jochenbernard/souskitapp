@@ -1,3 +1,4 @@
+import CoreGraphics
 @testable import FileRecipeLibrary
 import Foundation
 import RecipeLibrary
@@ -105,6 +106,71 @@ final class FileRecipeRepositoryStoreTests {
         #expect(store.makeRecipeRepository() == nil)
         #expect(try contents(of: caches).isEmpty)
         #expect(try contents(of: temporary).isEmpty)
+    }
+
+    @Test("a repository a store makes reads the thumbnails kept for the first pictures ahead of the kitchen")
+    func thumbnailsReadAhead() async throws {
+        let store = makeStore()
+        let pictures = try await keepThumbnails(named: ["brioche", "crepes"], with: store)
+        // Connected again rather than made from the bookmark, which resolves the temporary directory's path otherwise.
+        let recipeRepository = try store.connectRecipeDirectory(at: directory.url)
+
+        #expect(await recipeRepository.cachedThumbnail(of: pictures[0]) != nil)
+
+        try FileManager.default.removeItem(at: caches.url.appending(path: "RecipeThumbnails"))
+
+        #expect(await recipeRepository.cachedThumbnail(of: pictures[1]) != nil)
+    }
+
+    @Test("clearing while a repository reads ahead leaves nothing in the caches")
+    func clearingDuringReadAhead() async throws {
+        let store = makeStore()
+        let pictures = try await keepThumbnails(named: ["brioche", "crepes"], with: store)
+        // Connected again rather than made from the bookmark, which resolves the temporary directory's path otherwise.
+        let recipeRepository = try store.connectRecipeDirectory(at: directory.url)
+
+        store.clear()
+
+        for picture in pictures {
+            _ = await recipeRepository.cachedThumbnail(of: picture)
+        }
+
+        #expect(try contents(of: caches).isEmpty)
+    }
+
+    /// Connects the directory holding recipes of the names given, each naming a picture, and reads their summaries and
+    /// thumbnails, so the caches hold both as after an earlier launch.
+    ///
+    /// - Returns: The pictures, in the order of the names.
+    private func keepThumbnails(
+        named names: [String],
+        with store: FileRecipeRepositoryStore
+    ) async throws -> [RecipePicture] {
+        for name in names {
+            try directory.writePicture(
+                named: "\(name).png",
+                width: 800,
+                height: 500
+            )
+            try directory.writeFile(named: "\(name).sous", "---\ntitle: \(name)\nimage: \(name).png\n---")
+        }
+
+        let recipeRepository = try store.connectRecipeDirectory(at: directory.url)
+        var pictures: [RecipePicture] = []
+
+        for await result in await recipeRepository.listedRecipes() {
+            pictures = try result.get().compactMap(\.entry.picture)
+
+            if pictures.count == names.count {
+                break
+            }
+        }
+
+        for picture in pictures {
+            _ = try await recipeRepository.readThumbnail(of: picture, filling: CGSize(width: 400.0, height: 250.0))
+        }
+
+        return pictures
     }
 
     @Test("a bookmark that no longer resolves reads back as nothing remembered")

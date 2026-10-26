@@ -110,6 +110,38 @@ final class RecipeThumbnailCacheTests {
         #expect(sizes.map({ kept(modifiedAt: modificationDate, filling: $0) != nil }) == [false, true, true])
     }
 
+    @Test("the largest thumbnail kept for a picture is read for a box not known yet, filling the larger kept size")
+    func largestThumbnail() throws {
+        let smallBox = CGSize(width: 240.0, height: 180.0)
+        let largeBox = CGSize(width: 342.0, height: 256.0)
+        try keep(
+            gray: 0.2,
+            modifiedAt: modificationDate,
+            filling: largeBox
+        )
+        try keep(
+            gray: 0.2,
+            modifiedAt: modificationDate,
+            filling: smallBox
+        )
+
+        let largest = try #require(makeCache().largestThumbnail(of: picture(modifiedAt: modificationDate)))
+        let keptSize = RecipeThumbnailCache.keptSize(holding: largeBox)
+
+        #expect(Double(largest.width) >= keptSize.width)
+        #expect(Double(largest.height) >= keptSize.height)
+    }
+
+    @Test("a picture never kept, replaced since, or telling no date has no largest thumbnail")
+    func noLargestThumbnail() throws {
+        #expect(makeCache().largestThumbnail(of: picture(modifiedAt: modificationDate)) == nil)
+
+        try keep(gray: 0.2, modifiedAt: modificationDate)
+
+        #expect(makeCache().largestThumbnail(of: picture(modifiedAt: modificationDate.addingTimeInterval(60.0))) == nil)
+        #expect(makeCache().largestThumbnail(of: picture(modifiedAt: nil)) == nil)
+    }
+
     @Test("a box is kept at the smallest of a few sizes holding it, so a box resized a little keeps the same size")
     func keptSize() {
         let keptSizes = [

@@ -3,8 +3,8 @@ import RecipeLibrary
 
 /// Reads the pictures recipes name, fetching them from iCloud where they are not on the device at their newest version.
 struct RecipePictureReader: Sendable {
-    // Two at a time: decoding a large photo takes a while, and one waiting holds up no other.
-    private static let concurrentReadCount = 2
+    // Four at a time: decoding a large photo takes a while, and one waiting holds up no other.
+    private static let concurrentReadCount = 4
     // How often, and how many times, an outdated copy on the device is checked for the newer one before it is read.
     private static let newestVersionCheckInterval: Duration = .milliseconds(200)
     private static let newestVersionChecks = 50

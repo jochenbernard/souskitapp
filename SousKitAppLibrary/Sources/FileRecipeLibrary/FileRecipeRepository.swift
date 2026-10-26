@@ -14,6 +14,7 @@ struct FileRecipeRepository: RecipeRepository {
     private let symbolQueue: RecipeSymbolQueue
     private let textReader: RecipeTextReader
     private let thumbnailCache: RecipeThumbnailCache
+    private let thumbnailReadAhead = RecipeThumbnailReadAhead()
 
     var name: String {
         recipeDirectory.name
@@ -89,10 +90,11 @@ struct FileRecipeRepository: RecipeRepository {
         await monitor.refresh()
     }
 
-    /// Lists the recipes ahead of ``listedRecipes()``, whose stream yields them first.
+    /// Lists the recipes ahead of ``listedRecipes()``, whose stream yields them first, and reads the thumbnails kept
+    /// for the pictures shown first ahead of ``cachedThumbnail(of:)``.
     @MainActor
     func readAhead() {
-        monitor.readAhead()
+        thumbnailReadAhead.start(after: monitor.readAhead(), from: thumbnailCache)
     }
 
     /// Reads off the caller's actor, where a recipe still in iCloud has to be fetched first.
@@ -123,6 +125,17 @@ struct FileRecipeRepository: RecipeRepository {
 
         // Read back from the kept file, so the first read shows the picture as every later one does.
         return thumbnailCache.thumbnail(of: picture, filling: pixelSize) ?? keptThumbnail
+    }
+
+    /// Reads off the caller's actor, from the thumbnails read ahead once they are, or from the cache for a picture
+    /// they leave out.
+    @concurrent
+    func cachedThumbnail(of picture: RecipePicture) async -> CGImage? {
+        if let thumbnail = await thumbnailReadAhead.thumbnail(of: picture) {
+            return thumbnail
+        }
+
+        return thumbnailCache.largestThumbnail(of: picture)
     }
 
     func recipeID(forFileAt url: URL) -> String? {
